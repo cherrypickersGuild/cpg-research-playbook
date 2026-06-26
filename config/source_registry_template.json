@@ -1,0 +1,81 @@
+{
+  "_about": "Curated per-platform follow-lists that 1B monitors. 'targets[]' is the normalized superset 1B/1C read; 'platform_fields' documents the original columns per platform so you can import/export your Notion tables faithfully. cherry_category uses category_enum.",
+
+  "category_enum": [
+    "ai_education",
+    "big-tech-trends",
+    "case-studies",
+    "dev-tools",
+    "domain-applications",
+    "frameworks",
+    "insights-opinions"
+  ],
+
+  "platform_fields": {
+    "linkedin": ["Name", "LinkedIn", "Cherry Category", "Top Audience", "Why I follow", "source_type", "browser_use_only"],
+    "twitter":  ["Name", "Twitter Handle", "Top Audience", "Why I follow", "Cherry Category (deprecated)"],
+    "youtube":  ["Name", "Youtube", "Cherry Category", "Why I follow", "Top Audience"],
+    "threads":  ["Name", "Threads", "Why I follow", "Cherry Category", "Top Audience"],
+    "substack": ["Website Name", "Reviewer Notes", "Substack", "Follow", "Created By", "Category"],
+    "email":    ["Name", "URL", "Why I follow", "Targets"],
+    "custom":   ["Name", "URL", "Why I follow", "Cherry Category", "Comment", "Assignee", "source_type", "browser_use_only"],
+    "reddit":   ["Name", "Reddit", "Cherry Category"],
+    "medium":   ["Name", "URL (medium)", "Cherry Category", "Reviewer Notes", "Top Audience", "Why I follow"]
+  },
+
+  "_normalized_target_fields": "Every targets[] row uses this superset; unused fields are null. platform-specific columns map into these names: handle/url -> source_url, 'Why I follow' -> why_follow, 'Top Audience' -> top_audience, 'Cherry Category'/'Category' -> cherry_category, 'Reviewer Notes' -> reviewer_notes, 'Created By' -> created_by, 'Targets' -> targets, 'Follow' -> follow.",
+
+  "targets": [
+    {
+      "registry_id": "li-0001",
+      "platform": "linkedin",
+      "name": "Example Person",
+      "source_url": "https://www.linkedin.com/in/example",
+      "cherry_category": "case-studies",
+      "top_audience": "enterprise AI leaders",
+      "why_follow": "posts concrete production AX rollouts with numbers",
+      "reviewer_notes": null,
+      "created_by": null,
+      "targets": null,
+      "assignee": null,
+      "comment": null,
+      "source_type": "creator",
+      "browser_use_only": true,
+      "follow": true
+    },
+    {
+      "registry_id": "sub-0001",
+      "platform": "substack",
+      "name": "Example Newsletter",
+      "source_url": "https://example.substack.com",
+      "cherry_category": "ai_education",
+      "top_audience": "practitioners",
+      "why_follow": "weekly deep dives on agent workflows",
+      "reviewer_notes": "high signal, low hype",
+      "created_by": "Jane Doe",
+      "targets": null,
+      "assignee": null,
+      "comment": null,
+      "source_type": "newsletter",
+      "browser_use_only": false,
+      "follow": true
+    },
+    {
+      "registry_id": "rd-0001",
+      "platform": "reddit",
+      "name": "r/Example",
+      "source_url": "https://www.reddit.com/r/example",
+      "cherry_category": "insights-opinions",
+      "top_audience": null,
+      "why_follow": null,
+      "reviewer_notes": null,
+      "created_by": null,
+      "targets": null,
+      "assignee": null,
+      "comment": null,
+      "source_type": "community",
+      "browser_use_only": false,
+      "follow": true
+    }
+  ]
+}
