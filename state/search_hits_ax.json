@@ -1,0 +1,802 @@
+{
+  "_about": "Stage 1B search-only hits for the 'AX cases' topic (AI Transformation enterprise case studies). URL+title+snippet captured from Google; pages were NOT crawled. Use as input for deeper crawl/extraction.",
+  "topic": "AX cases",
+  "run_date": "2026-06-28",
+  "source_db": "state/search_strategy_db.json",
+  "total_queries": 14,
+  "total_hits": 111,
+  "results": [
+    {
+      "strategy_id": "ax-001",
+      "query": "AI transformation ROI enterprise case study",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://jisem-journal.com/index.php/journal/article/view/4539",
+          "title": "Enterprise AI Transformation Case Studies on Successful Implementations",
+          "snippet": "Academic paper exploring case studies of successful AI implementations across various industries, highlighting key success factors.",
+          "domain": "jisem-journal.com"
+        },
+        {
+          "url": "https://www.deloitte.com/nl/en/issues/generative-ai/ai-roi-the-paradox-of-rising-investment-and-elusive-returns.html",
+          "title": "AI ROI: The Paradox of Rising Investment and Elusive Returns - Deloitte",
+          "snippet": "A Deloitte 2025 survey of 1,854 executives finds that while AI spending is rising, ROI remains elusive. Leaders treat AI strategically, using generative AI for quick wins.",
+          "domain": "deloitte.com"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/10-roi-ai-case-studies-show-real-world-results-rob-petersen-ao43e",
+          "title": "10 ROI of AI Case Studies Show Real-World Results - LinkedIn",
+          "snippet": "Notes that 78% of organizations will use AI in at least one business function, yet only 25% deliver the expected ROI. Includes 10 concrete case studies.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.cio.com/article/4122937/davos-from-hype-to-ai-transformation-in-the-economy.html",
+          "title": "WEF Highlights 32 AI Case Studies with Real-World Business Impact - CIO.com",
+          "snippet": "Fujitsu (Japan) AI agents in supply chain reduced warehousing costs by $15 million and halved staffing needs; Lenovo (China) AI agent deployments driving measurable impact.",
+          "domain": "cio.com"
+        },
+        {
+          "url": "https://www.crescendo.ai/blog/ai-in-business-examples",
+          "title": "AI in Business: 7 Examples with Real Case Studies - Crescendo.ai",
+          "snippet": "Covers real-world AI examples from brands like Duolingo, Starbucks, Rachio, and Zoom, showing how AI slashes costs and drives efficiency.",
+          "domain": "crescendo.ai"
+        },
+        {
+          "url": "https://www.microsoft.com/en-us/microsoft-cloud/blog/2025/07/24/ai-powered-success-with-1000-stories-of-customer-transformation-and-innovation/",
+          "title": "AI-Powered Success - 1,000+ Stories of Customer Transformation - Microsoft",
+          "snippet": "Microsoft's collection of over 1,000 real-life examples of organizations leveraging their AI capabilities to drive measurable impact.",
+          "domain": "microsoft.com"
+        },
+        {
+          "url": "https://medium.com/@adnanmasood/high-impact-ai-for-the-boardroom-steering-the-enterprise-toward-sustained-roi-7ead26cefdf6",
+          "title": "High-Impact AI for the Boardroom - Steering Toward Sustained ROI - Medium",
+          "snippet": "Includes a practical ROI formula: an AI system bringing $500K annual savings on a $200K investment equals 150% ROI.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://www.mckinsey.com/capabilities/tech-and-ai/case-studies",
+          "title": "Case Studies | Tech and AI | McKinsey & Company",
+          "snippet": "Features case studies including DBS Bank (Singapore) transforming customer experiences and Freeport-McMoRan leveraging AI in mining operations.",
+          "domain": "mckinsey.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-002",
+      "query": "enterprise AI rollout productivity metrics",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://getdx.com/blog/ai-measurement-hub/",
+          "title": "How to Measure AI's Impact on Developer Productivity - DX",
+          "snippet": "Covers frameworks for tracking how AI coding assistants and autonomous agents affect developer productivity, code quality, and business outcomes.",
+          "domain": "getdx.com"
+        },
+        {
+          "url": "https://usekoda.com/blog/ai-implementation-success-metrics-definition/",
+          "title": "AI Implementation Success Metrics - KPIs for Enterprise - Koda",
+          "snippet": "Highlights the 10-20-70 rule: 10% technology, 20% data, 70% people and processes. Discusses agent productivity patterns and how to define success metrics.",
+          "domain": "usekoda.com"
+        },
+        {
+          "url": "https://www.ibm.com/think/insights/top-5-tips-measuring-productivity-gen-AI-enterprise",
+          "title": "Top 5 Tips for Measuring Productivity of Gen AI in the Enterprise - IBM",
+          "snippet": "Practical guidance including thinking contextually, measuring key metrics against a control group, engaging users with varying skill levels, and measuring how quickly humans adapt.",
+          "domain": "ibm.com"
+        },
+        {
+          "url": "https://www.researchgate.net/publication/383064720_Measuring_the_Impact_of_AI_Initiatives_on_Organizational_Productivity_Best_Practices_and_Tips",
+          "title": "Measuring the Impact of AI Initiatives on Organizational Productivity - ResearchGate",
+          "snippet": "Academic research indicating systematic measurement frameworks can yield a 25% increase in productivity and a 30% improvement in related outcomes.",
+          "domain": "researchgate.net"
+        },
+        {
+          "url": "https://www.tractiontechnology.com/blog/evaluating-ai-productivity-tools-for-enterprise-benefits-security-and-vendor-selection",
+          "title": "Evaluating AI Productivity Tools for Enterprise - Traction Technology",
+          "snippet": "Categorizes metrics into tangible (cost savings, increased revenue, productivity improvements) and intangible (enhanced customer satisfaction, improved data quality).",
+          "domain": "tractiontechnology.com"
+        },
+        {
+          "url": "https://www.gartner.com/peer-community/post/how-organizations-measuring-value-ai-productivity-tools-such-m365-copilot-metrics-kpis-tracking-beyond-time-saved-how-justifying",
+          "title": "Measuring the Value and ROI of AI Productivity Tools - Gartner Peer Community",
+          "snippet": "Discussion on how organizations track KPIs for tools like M365 Copilot beyond simple time-saved metrics.",
+          "domain": "gartner.com"
+        },
+        {
+          "url": "https://www.anthropic.com/research/estimating-productivity-gains",
+          "title": "Estimating AI Productivity Gains - Anthropic",
+          "snippet": "Across roughly 100,000 real-world conversations, Claude estimates AI reduces task completion time by 80%.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://about.gitlab.com/blog/measuring-ai-effectiveness-beyond-developer-productivity-metrics/",
+          "title": "Measuring AI Effectiveness Beyond Developer Productivity - GitLab",
+          "snippet": "Explores how AI-powered tools automate repetitive coding tasks and why metrics should go beyond traditional developer productivity measures.",
+          "domain": "about.gitlab.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-003",
+      "query": "generative AI deployment cost savings",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.virtasant.com/ai-today/ai-cost-savings-opportunity",
+          "title": "AI Cost Savings: Navigating the Implementation Expenses of GenAI - Virtasant",
+          "snippet": "Explores the cost savings potential in a $15 trillion AI market. Highlights that 50% of custom AI projects may fail by 2028 and offers guidance on maximizing ROI.",
+          "domain": "virtasant.com"
+        },
+        {
+          "url": "https://www.bain.com/insights/zero-based-redesign-the-key-to-realizing-gen-ai-cost-savings-potential/",
+          "title": "Zero-Based Redesign: The Key to Realizing Gen AI's Cost Savings - Bain & Company",
+          "snippet": "Leading companies are achieving cost savings of up to 25% by combining end-to-end process redesign with generative AI tool deployment.",
+          "domain": "bain.com"
+        },
+        {
+          "url": "https://indatalabs.com/blog/ai-cost-reduction",
+          "title": "AI Efficiency: Cost Reduction with Artificial Intelligence - InData Labs",
+          "snippet": "According to Accenture (2025), companies that have fully scaled AI report average cost savings of 20-30% in automated functions, with additional McKinsey data cited.",
+          "domain": "indatalabs.com"
+        },
+        {
+          "url": "https://www.alphabold.com/cost-analysis-implementing-generative-ai-in-your-organization/",
+          "title": "Cost Analysis: Implementing Generative AI in Your Organization - AlphaBold",
+          "snippet": "Provides a clear breakdown of generative AI costs from setup to ROI, with guidance on how to plan, budget, and implement AI efficiently.",
+          "domain": "alphabold.com"
+        },
+        {
+          "url": "https://www.bcg.com/publications/2025/from-buzz-to-bottom-line-cost-reductions-using-genai",
+          "title": "GenAI in Procurement: From Buzz to Bottom-Line Cost Reductions - BCG",
+          "snippet": "Procurement functions using AI can reduce overall costs by roughly 15% to 45% (depending on the category), based on BCG's work with companies.",
+          "domain": "bcg.com"
+        },
+        {
+          "url": "https://caylent.com/blog/reducing-gen-ai-cost-5-strategies",
+          "title": "Reducing GenAI Cost: 5 Strategies - Caylent",
+          "snippet": "Explores five key technical strategies for managing and mitigating the costs associated with generative AI deployment without compromising performance.",
+          "domain": "caylent.com"
+        },
+        {
+          "url": "https://coworker.ai/blog/enterprise-ai-cost-savings",
+          "title": "Enterprise AI Cost Savings: ROI You Can Measure - Coworker AI",
+          "snippet": "Highlights that enterprise AI can deliver 30-60% reductions in labor costs along with significant savings across various operational areas.",
+          "domain": "coworker.ai"
+        },
+        {
+          "url": "https://towardsai.net/p/machine-learning/ai-cost-reduction-outlook-how-to-cut-operational-expenses-smartly",
+          "title": "AI Cost Reduction Outlook: How to Cut Operational Expenses Smartly - Towards AI",
+          "snippet": "Reports that expert-guided AI implementations consistently reduce operational costs by 20-35% within the first year, compared to organizations merely experimenting.",
+          "domain": "towardsai.net"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-004",
+      "query": "GenAI enterprise value realization",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.linkedin.com/pulse/enterprise-value-realization-new-mandate-ai-mario-guerendo-1r9xf",
+          "title": "Enterprise Value Realization: The New Mandate for AI Investments - LinkedIn",
+          "snippet": "Emphasizes redeploying AI talent to high-impact domains and treating GenAI as a growth catalyst rather than a cost center.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://medium.com/@adnanmasood/strategic-ai-transformation-value-realization-from-digital-to-agentic-ai-52ab5308dd63",
+          "title": "Strategic AI Transformation: Value Realization from Digital to Agentic AI - Medium",
+          "snippet": "Discusses how the Augmented/GenAI phase represents a shift as organizations begin treating AI not as experiments but as enterprise capabilities.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://www.gartner.com/en/chief-information-officer/mcp/accelerate-enterprise-ai-value",
+          "title": "Accelerate Enterprise AI Value Realization - Gartner CIO Guide",
+          "snippet": "A CIO-focused guide offering proven steps, benchmarks, and tools to achieve measurable AI value at scale and drive concrete business outcomes.",
+          "domain": "gartner.com"
+        },
+        {
+          "url": "https://www.inmorphis.com/insights/blogs/value-realization-framework-for-genai-a-guide-for-business-leaders",
+          "title": "Guide for Value Realization Framework for GenAI - inMorphis",
+          "snippet": "Explains a value realization framework as a strategic method to help organizations discover, deploy, and scale GenAI technologies.",
+          "domain": "inmorphis.com"
+        },
+        {
+          "url": "https://aws.amazon.com/marketplace/pp/prodview-3hx2fkbxvhwtw",
+          "title": "AWS Marketplace: GenAI Value-Realization Quick Start Program",
+          "snippet": "A 12-week program offering a value-centric, disciplined approach to identifying and deploying GenAI use cases within an enterprise.",
+          "domain": "aws.amazon.com"
+        },
+        {
+          "url": "https://www.pwc.com/gx/en/issues/technology/path-to-generative-ai-value.html",
+          "title": "The Path to Generative AI Value: Setting the Flywheel in Motion - PwC",
+          "snippet": "Reports that 70% of CEOs expect GenAI to significantly change how their company creates, delivers, and captures value within three years. Introduces the GenAI Value Realization Flywheel.",
+          "domain": "pwc.com"
+        },
+        {
+          "url": "https://www.deloitte.com/nl/en/services/consulting/perspectives/how-to-master-value-realisation-with-your-ai-customer-agents.html",
+          "title": "How to Master Value Realisation with Your AI Customer Agents - Deloitte",
+          "snippet": "Focuses on value realization for developing customer-centric AI solutions and proving AI Customer Agents in business settings.",
+          "domain": "deloitte.com"
+        },
+        {
+          "url": "https://hexaware.com/blogs/enterprise-ai-strategy-best-practices-for-value-creation/",
+          "title": "Enterprise AI Strategy: How to Build AI-Ready Data - Hexaware",
+          "snippet": "Covers how AI-ready data, governance, and the right enterprise AI strategy can accelerate transformation and value creation.",
+          "domain": "hexaware.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-005",
+      "query": "Microsoft Copilot ROI study",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.microsoft.com/en-us/microsoft-365/blog/2024/10/17/microsoft-365-copilot-drove-up-to-353-roi-for-small-and-medium-businesses-new-study/",
+          "title": "Microsoft 365 Copilot Drove Up to 353% ROI for Small and Medium Businesses: New Study - Microsoft",
+          "snippet": "Microsoft's own study showing Microsoft 365 Copilot drove up to 353% ROI for small and medium businesses.",
+          "domain": "microsoft.com"
+        },
+        {
+          "url": "https://tei.forrester.com/go/microsoft/M365Copilot/?lang=en-us",
+          "title": "Forrester Total Economic Impact Study: Microsoft 365 Copilot",
+          "snippet": "A composite organization experienced benefits of $36.8 million over three years, with a 116% ROI over three years for a 25,000-employee enterprise and nearly $20M net present value.",
+          "domain": "tei.forrester.com"
+        },
+        {
+          "url": "https://www.pure-ip.com/blog/the-truth-about-microsoft-copilot-roi",
+          "title": "The Truth About Microsoft Copilot ROI - Pure IP",
+          "snippet": "Forrester reports a 116% ROI over three years for a 25,000-employee enterprise, with nearly $20M in net present value.",
+          "domain": "pure-ip.com"
+        },
+        {
+          "url": "https://lanternstudios.com/insights/blog/the-roi-for-copilot-for-microsoft-365/",
+          "title": "The ROI for Copilot for Microsoft 365 - Lantern Studios",
+          "snippet": "Breakdown: 140% ROI if users save 1 hour/month, 261% ROI at 1.5 hours, 381% ROI at 2 hours, and 501% ROI if users save more.",
+          "domain": "lanternstudios.com"
+        },
+        {
+          "url": "https://www.forbes.com/sites/larryenglish/2025/09/24/getting-started-with-microsoft-copilot-a-guide-to-driving-roi/",
+          "title": "Getting Started With Microsoft Copilot: A Guide To Driving ROI - Forbes",
+          "snippet": "A randomized study by Microsoft researchers of 6,000 employees across 56 firms found Copilot users spent 30 fewer minutes on email each week.",
+          "domain": "forbes.com"
+        },
+        {
+          "url": "https://devitpl.com/ai-ml/microsoft-copilot-roi-cost-analysis/",
+          "title": "Microsoft Copilot ROI Cost Analysis - DevITPL",
+          "snippet": "Many businesses report ROI ranging from 150% to 350% within the first year, with projected ROI between 112% and 457%.",
+          "domain": "devitpl.com"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/discover-roi-microsoft-365-copilot-pascal-brunner-lobre",
+          "title": "Discover the ROI of Microsoft 365 Copilot - LinkedIn",
+          "snippet": "Three-year net income increase of 2.9% to 7.6% due to increased revenues and decreased costs.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.microsoft.com/en-us/microsoft-365-copilot/",
+          "title": "Microsoft 365 Copilot | AI Productivity Tools for Work - Microsoft",
+          "snippet": "Covers the broader Microsoft Copilot ecosystem including Copilot Notebooks for organizing/analyzing content and AI-generated summaries.",
+          "domain": "microsoft.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-006",
+      "query": "GitHub Copilot enterprise productivity",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://github.com/features/copilot",
+          "title": "GitHub Copilot: Your AI Pair Programmer",
+          "snippet": "Official GitHub Copilot feature page highlighting how it helps you code, command, and collaborate, making your editor your most powerful accelerator.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://github.blog/news-insights/product-news/github-copilot-enterprise-is-now-generally-available/",
+          "title": "GitHub Copilot Enterprise is Now Generally Available - GitHub Blog",
+          "snippet": "Announces Copilot Enterprise streamlines code navigation and comprehension, enabling faster feature implementation, issue resolution, and code understanding at enterprise scale.",
+          "domain": "github.blog"
+        },
+        {
+          "url": "https://github.com/features/copilot/copilot-business",
+          "title": "GitHub Copilot Business",
+          "snippet": "Copilot provides AI assistance from the IDE to GitHub to the CLI, with agents that review and suggest changes, reducing developer toil.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://xebia.com/blog/github-copilot-productivity/",
+          "title": "GitHub Copilot & Productivity - Xebia",
+          "snippet": "Blog analyzing productivity impact, noting pricing (Business license ~$19/month, Enterprise license ~$49/month) and ROI considerations for engineering teams.",
+          "domain": "xebia.com"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/training/modules/introduction-to-github-copilot-enterprise/",
+          "title": "Introduction to GitHub Copilot Enterprise - Microsoft Learn",
+          "snippet": "Training module covering specific use cases for Copilot Enterprise, how customers are enhancing productivity, and how to enable it in your organization.",
+          "domain": "learn.microsoft.com"
+        },
+        {
+          "url": "https://visualstudio.microsoft.com/github-copilot/",
+          "title": "Visual Studio with GitHub Copilot - AI Pair Programming",
+          "snippet": "Highlights AI-powered coding assistance that reasons through problems, coordinates next steps, applies changes, and iterates on errors directly within Visual Studio.",
+          "domain": "visualstudio.microsoft.com"
+        },
+        {
+          "url": "https://docs.github.com/en/copilot/get-started/what-is-github-copilot",
+          "title": "What is GitHub Copilot? - GitHub Docs",
+          "snippet": "Official documentation explaining that Copilot is an AI coding assistant that helps you write code faster and with less effort.",
+          "domain": "docs.github.com"
+        },
+        {
+          "url": "https://azure.microsoft.com/en-us/products/github/copilot",
+          "title": "GitHub Copilot - Microsoft Azure",
+          "snippet": "Describes how Copilot speeds up software development by generating project-specific code using natural language prompts.",
+          "domain": "azure.microsoft.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-007",
+      "query": "Klarna AI customer service results",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.klarna.com/international/press/klarna-ai-assistant-handles-two-thirds-of-customer-service-chats-in-its-first-month/",
+          "title": "Klarna AI Assistant Handles Two-Thirds of Customer Service Chats in Its First Month - Klarna",
+          "snippet": "Initial AI launch (2024): 2.3 million conversations handled in the first month, replacing the equivalent work of 700 full-time employees, handling 66% of all chats. Resolution time dropped from 11 minutes to 2 minutes (82% reduction).",
+          "domain": "klarna.com"
+        },
+        {
+          "url": "https://www.customerexperiencedive.com/news/klarna-reinvests-human-talent-customer-service-AI-chatbot/747586/",
+          "title": "Klarna Reinvests in Human Talent for Customer Service - Customer Experience Dive",
+          "snippet": "Klarna rolled back its AI-only approach and began rehiring human agents after a reported $40B valuation drop; the CEO pledged customers can 'always speak to a human.'",
+          "domain": "customerexperiencedive.com"
+        },
+        {
+          "url": "https://blog.promptlayer.com/klarna-customer-service-from-ai-first-to-human-hybrid-balance/",
+          "title": "Klarna Customer Service: From AI-First to Human-Hybrid Balance - PromptLayer",
+          "snippet": "Details Klarna's pivot from AI-first to a human-hybrid model after the limitations of an AI-only approach became clear.",
+          "domain": "blog.promptlayer.com"
+        },
+        {
+          "url": "https://www.cxtoday.com/contact-center/klarnas-ai-merry-go-round-enough-to-put-anyones-head-in-a-spin/",
+          "title": "Klarna's AI Merry-Go-Round - CX Today",
+          "snippet": "Klarna now uses a human-hybrid balance with AI still playing a crucial role; the CEO clarified they are actually giving AI more work, not less, but with human oversight.",
+          "domain": "cxtoday.com"
+        },
+        {
+          "url": "https://www.twig.so/blog/how-klarna-is-revolutionizing-customer-support-with-ai",
+          "title": "How Klarna Is Revolutionizing Customer Support with AI - Twig.so",
+          "snippet": "Detailed breakdown of 'what they built, what broke, and what to replicate' from Klarna's customer-service AI journey.",
+          "domain": "twig.so"
+        },
+        {
+          "url": "https://poly.ai/blog/klarna-ai-customer-service-lessons",
+          "title": "Klarna AI Customer Service: Lessons - PolyAI",
+          "snippet": "Practical lessons for other companies drawn from Klarna's AI customer-service deployment and rollback.",
+          "domain": "poly.ai"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=pNd4KlccWAY",
+          "title": "Klarna AI Customer Service Interview - YouTube",
+          "snippet": "Interview covering Klarna's pivot to a hybrid model with both human agents and AI in customer service operations.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://www.bigtechnology.com/p/wait-are-74-of-businesses-actually",
+          "title": "Wait, Are 74% of Businesses Actually Seeing AI ROI? - Big Technology",
+          "snippet": "Critical analysis of Klarna-style AI cost-cutting claims and the methodology behind optimistic vendor surveys.",
+          "domain": "bigtechnology.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-008",
+      "query": "JPMorgan LLM Suite deployment",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://thedigitalbanker.com/jpmorgan-chases-llm-suite-drives-ai-transformation-across-the-enterprise/",
+          "title": "JPMorgan Chase's LLM Suite Drives AI Transformation Across the Enterprise - The Digital Banker",
+          "snippet": "Since its initial rollout, LLM Suite has undergone eight major upgrades, each expanding functionality to meet evolving user needs; covers enterprise-wide deployment.",
+          "domain": "thedigitalbanker.com"
+        },
+        {
+          "url": "https://play.google.com/store/apps/details?id=net.jpmchase.mclandroid.llmsuite&hl=en_US",
+          "title": "LLM Suite - Apps on Google Play",
+          "snippet": "LLM Suite brings the power of Large Language Model technology to the firm by offering scalable solutions for integrating LLM capabilities; mobile deployment for employees.",
+          "domain": "play.google.com"
+        },
+        {
+          "url": "https://www.jpmorganchase.com/about/technology/blog/llmsuite-ab-award",
+          "title": "LLM Suite Named 2025 'Innovation of the Year' by American Banker - JPMorgan Chase",
+          "snippet": "Official JPMorgan source noting developers are working on making LLM Suite even more efficient and powerful now that it is in the hands of employees.",
+          "domain": "jpmorganchase.com"
+        },
+        {
+          "url": "https://developer.payments.jpmorgan.com/blog/guides/ai-software-development",
+          "title": "How J.P. Morgan Developers Leverage AI - J.P. Morgan",
+          "snippet": "LLM Suite is tailored for specific use cases such as software development, aiding in tasks like code review, writing unit tests, and more.",
+          "domain": "developer.payments.jpmorgan.com"
+        },
+        {
+          "url": "https://www.gsdcouncil.org/blogs/next-gen-ai-in-action-how-jpmorgan-chase-s-llm-suite-is-revolutionizing-financial-research",
+          "title": "Next Gen AI in Action: How JPMorgan Chase's LLM Suite is Revolutionizing Financial Research - GSD Council",
+          "snippet": "In 2024, JPMorgan Chase unveiled its LLM Suite, described as the biggest leap in AI-facilitated automation for financial research.",
+          "domain": "gsdcouncil.org"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/dr-mongi-hamdi-22372724_jpmorgan-chases-llm-suite-this-video-details-activity-7435849305527152640-BYUQ",
+          "title": "JPMorgan Chase's LLM Suite: AI-Driven Efficiency in Financial Services - LinkedIn",
+          "snippet": "Details JPMorgan Chase's strategic use of LLM Suite as a comprehensive generative AI platform.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.hulkapps.com/blogs/ecommerce-hub/jpmorgans-adoption-of-generative-ai-with-llm-suite-transforming-the-financial-landscape",
+          "title": "JPMorgan's Adoption of Generative AI with LLM Suite - HulkApps",
+          "snippet": "LLM Suite is an in-house chatbot based on generative AI, designed to automate data analysis and research tasks.",
+          "domain": "hulkapps.com"
+        },
+        {
+          "url": "https://www.facebook.com/jpmorganchase/posts/llm-suite-is-jpmorganchases-proprietary-generative-ai-platform-with-over-230000-/1173752834794400/",
+          "title": "LLM Suite: JPMorgan Chase's Proprietary Generative AI Platform - Facebook",
+          "snippet": "LLM Suite is JPMorganChase's proprietary generative AI platform with over 230,000 users, starting with 50,000 employees at launch.",
+          "domain": "facebook.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-009",
+      "query": "site:substack.com AI transformation case study",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://productagent.substack.com/p/ai-case-study-lessons-from-an-ai",
+          "title": "AI Case Study: Lessons from an AI Project to Save GBP 2.3m in Hospital - Product Agent",
+          "snippet": "Documents an approach to enterprise healthcare AI transformation proven successful across multiple complex operational environments.",
+          "domain": "productagent.substack.com"
+        },
+        {
+          "url": "https://substack.com/home/post/p-161898862",
+          "title": "AI Transformation: The Costly Mistakes Companies Keep Making - Mohak Shah, PhD",
+          "snippet": "A case study from Nike's attempt in manufacturing transformation highlighting common pitfalls companies face during AI transformation.",
+          "domain": "substack.com"
+        },
+        {
+          "url": "https://kristenberman.substack.com/p/want-your-teams-to-use-ai-more-try",
+          "title": "Want Your Teams to Use AI More? Try This - Kristen Berman",
+          "snippet": "Explores why handing employees a blank page limits AI transformation, with real case studies on driving AI adoption within teams.",
+          "domain": "kristenberman.substack.com"
+        },
+        {
+          "url": "https://paulkoullick.substack.com/p/product-strategy-transformation-in",
+          "title": "Product Strategy Transformation in the AI Era - Paul Koullick",
+          "snippet": "Uses 'Keeper' as an example of AI transformation, including human-grade document ingestion using transformer models for tax documents.",
+          "domain": "paulkoullick.substack.com"
+        },
+        {
+          "url": "https://aiinaction.substack.com/p/ai-in-action-april-15-2026",
+          "title": "AI in Action - April 15, 2026 - AI in Action",
+          "snippet": "Case study on Publicis Groupe's AI transformation from agency to intelligent system.",
+          "domain": "aiinaction.substack.com"
+        },
+        {
+          "url": "https://amirelion.substack.com/p/think-big-newsletter-16-think-big",
+          "title": "Think Big - Strategic AI Transformation Framework - Amir Elion",
+          "snippet": "Covers leadership principles in the age of AI, a strategic AI transformation framework, and AI tool guidance including Claude for Excel.",
+          "domain": "amirelion.substack.com"
+        },
+        {
+          "url": "https://thedigitalleader.substack.com/p/chasing-the-ai-illusion",
+          "title": "Chasing the AI Illusion - The Digital Leader by John Rossman",
+          "snippet": "Discusses how CEO active involvement in AI transformation is the single most impactful element influencing EBIT attributable to generative AI.",
+          "domain": "thedigitalleader.substack.com"
+        },
+        {
+          "url": "https://thisweekinaiclub.substack.com/s/transfirm-ai",
+          "title": "Transfirm AI - This Week in AI Club",
+          "snippet": "A dedicated section featuring AI transformation case studies, plus guides like the best voice dictation apps in 2026.",
+          "domain": "thisweekinaiclub.substack.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-010",
+      "query": "site:medium.com generative AI ROI",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://medium.com/data-science-collective/scaling-roi-with-generative-ai-6273c2b4ccce",
+          "title": "Scaling ROI with Generative AI - Sascha Heyer (Data Science Collective)",
+          "snippet": "Dives into why generative AI reshapes industries and how companies can leverage it for growth, with lessons from 400+ companies.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@pegasusone-usa/whats-the-roi-with-generative-ai-can-the-numbers-tell-the-story-5c620af9b280",
+          "title": "What's the ROI with Generative AI? Can the Numbers Tell the Story? - Pegasus One",
+          "snippet": "Highlights that companies realize $3.70 in return for every $1 invested in generative AI, with top performers achieving even more.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@gopalakrishnabehara/measuring-roi-of-generative-ai-adoption-eaa92a3a22bb",
+          "title": "Measuring ROI of Generative AI Adoption - Gopalakrishna Behara",
+          "snippet": "Covers the steps for calculating ROI for GenAI adoption, including cost savings and revenue generation.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@snptechnologiesinc/how-do-businesses-measure-roi-from-generative-ai-initiatives-bf389349ebea",
+          "title": "How Do Businesses Measure ROI from Generative AI Initiatives? - SNP Technologies",
+          "snippet": "Explores how advanced analytics and generative AI services help map AI use cases to business KPIs for aligned value creation.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@adnanmasood/high-impact-ai-for-the-boardroom-steering-the-enterprise-toward-sustained-roi-7ead26cefdf6",
+          "title": "High-Impact AI for the Boardroom - Steering Toward Sustained ROI - Adnan Masood",
+          "snippet": "Emphasizes that calculating ROI for AI/GenAI projects demands more than a formula, requiring both quantitative and qualitative factors.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@Lumenore_/the-potential-of-generative-ai-a-guide-to-measuring-roi-6de1e2282791",
+          "title": "The Potential of Generative AI: A Guide to Measuring ROI - Lumenore",
+          "snippet": "Notes that generative AI could add $2.6 to $4.4 trillion annually to the global economy, and provides a guide to measuring ROI.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://arvind-mehrotra.medium.com/how-to-measure-the-roi-of-generative-ai-in-an-enterprise-a-playbook-8e0f03fdd27e",
+          "title": "How to Measure the ROI of Generative AI in an Enterprise: A Playbook - Arvind Mehrotra",
+          "snippet": "A detailed enterprise playbook cautioning that measuring GenAI ROI requires a nuanced approach, especially given the technology's early stage.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@karenpfeifer/ai-roi-reality-check-why-70-of-enterprises-still-struggle-with-measurable-value-creation-6a1ea45aebfd",
+          "title": "AI ROI Reality Check: Why 70% of Enterprises Still Struggle with Measurable Value Creation - Karen Pfeifer",
+          "snippet": "A critical perspective noting that despite generative AI's trillions in potential economic impact, 70% of enterprises still struggle to create measurable value.",
+          "domain": "medium.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-011",
+      "query": "enterprise AI transformation stalled",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.ibm.com/think/insights/why-most-enterprise-ai-projects-stall-before-scale",
+          "title": "Why Most Enterprise AI Projects Stall Before They Scale - IBM",
+          "snippet": "Gartner reports at least 50% of generative AI projects are abandoned after proof of concept due to poor data quality and inadequate risk controls.",
+          "domain": "ibm.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1s02oaq/enterprise_ai_has_an_80_failure_rate_the_models/",
+          "title": "Enterprise AI Has an 80% Failure Rate - Reddit",
+          "snippet": "Practitioner discussion arguing the models are not the problem; the real issue is the context problem - model demos work, but retrieval and integration into real business workflows fail.",
+          "domain": "reddit.com"
+        },
+        {
+          "url": "https://www.cio.com/article/4184158/why-most-enterprise-ai-programs-fail-and-how-to-turn-them-around.html",
+          "title": "Why Most Enterprise AI Programs Fail - CIO.com",
+          "snippet": "Identifies root causes including fragmented data ecosystems (siloed data across functions) and lack of clear business ownership; AI cannot scale when data foundations are weak.",
+          "domain": "cio.com"
+        },
+        {
+          "url": "https://medium.com/@adnanmasood/why-most-enterprise-ai-efforts-stall-and-how-to-fix-it-ebc1a41cf2d7",
+          "title": "Why Most Enterprise AI Efforts Stall - and How to Fix It - Adnan Masood (Medium)",
+          "snippet": "Recommends ensuring architecture supports robust APIs, event buses, and RPA connectors to plug AI outputs back into enterprise workflows.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://www.unframe.ai/blog/why-enterprise-ai-adoption-fails-and-the-framework-to-fix-it",
+          "title": "The Real Reason Enterprise AI Adoption Fails - Unframe.ai",
+          "snippet": "Proposes an adoption-first framework to move beyond the 'pilot graveyard,' arguing most failures happen because organizations focus on technology rather than adoption and change management.",
+          "domain": "unframe.ai"
+        },
+        {
+          "url": "https://www.alation.com/blog/why-enterprise-ai-projects-fail/",
+          "title": "Why Enterprise AI Projects Fail: 6 Root Causes - Alation",
+          "snippet": "Summarizes core failures as poor data foundations, stale context, and generic agents that lack the specificity needed for enterprise use cases.",
+          "domain": "alation.com"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/why-enterprise-ai-keeps-failing-how-fix-alex-lieberman-s2hpe",
+          "title": "10 Reasons Enterprise AI Fails - LinkedIn",
+          "snippet": "Blunt list including 'treating data like trash,' 'running business on vibes,' AI hallucinations, the pilot graveyard, and the myth that great talent alone equals success.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.consultingmag.com/2026/02/04/why-enterprise-ai-stalled-and-what-is-finally-changing-in-2026/",
+          "title": "Why Enterprise AI Stalled and What Is Finally Changing in 2026 - Consulting Magazine",
+          "snippet": "Argues enterprise AI stalled because organizations tried to modernize intelligence without modernizing how work gets done; suggests 2026 marks a shift toward operational redesign.",
+          "domain": "consultingmag.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-012",
+      "query": "generative AI ROI disappointing survey",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://exec-ed.berkeley.edu/2025/09/beyond-roi-are-we-using-the-wrong-metric-in-measuring-ai-success/",
+          "title": "Beyond ROI: Are We Using the Wrong Metric in Measuring AI Success? - Berkeley Executive Education",
+          "snippet": "A recent MIT report claiming that 95% of generative AI projects fail to deliver measurable return on investment has sent shockwaves through the business world.",
+          "domain": "exec-ed.berkeley.edu"
+        },
+        {
+          "url": "https://www.fullstack.com/labs/resources/blog/generative-ai-roi-why-80-of-companies-see-no-results",
+          "title": "Generative AI ROI: Why 80% of Companies See No Results - FullStack",
+          "snippet": "A Gallup poll from late 2024 found that only 15% of US employees report their workplaces have communicated a clear AI strategy, suggesting widespread disappointment in AI ROI.",
+          "domain": "fullstack.com"
+        },
+        {
+          "url": "https://xenoss.io/blog/gen-ai-roi-reality-check",
+          "title": "Gen AI ROI Reality Check - Xenoss",
+          "snippet": "IBM surveyed CEOs and found that only 25% of their AI initiatives delivered ROI, and just 16% scaled enterprise-wide.",
+          "domain": "xenoss.io"
+        },
+        {
+          "url": "https://cloud.google.com/transform/survey-generating-value-from-generative-ai-roi-study",
+          "title": "Generating Value from Generative AI: Global Survey Results - Google Cloud",
+          "snippet": "Google Cloud global survey finding 74% of enterprises using gen AI are currently seeing ROI, with an additional 30-35% anticipating ROI within the next 12 months.",
+          "domain": "cloud.google.com"
+        },
+        {
+          "url": "https://www.bigtechnology.com/p/wait-are-74-of-businesses-actually",
+          "title": "Wait, Are 74% of Businesses Actually Seeing AI ROI? - Big Technology",
+          "snippet": "Critical analysis of the Google Cloud survey, noting the optimistic number is among businesses that actually measure ROI.",
+          "domain": "bigtechnology.com"
+        },
+        {
+          "url": "https://www.mckinsey.com/featured-insights/week-in-charts/gen-ais-roi",
+          "title": "Gen AI's ROI - McKinsey",
+          "snippet": "Breaks down ROI by use case, with software engineering showing the strongest returns (57% of adopters seeing some level of ROI).",
+          "domain": "mckinsey.com"
+        },
+        {
+          "url": "https://www.snowflake.com/en/lp/radical-roi-generative-ai/",
+          "title": "Radical ROI of Generative AI - Snowflake",
+          "snippet": "32% of respondents report having agentic AI solutions in production, with senior executives expecting up to a 47% return on agentic investments in the next 12 months.",
+          "domain": "snowflake.com"
+        },
+        {
+          "url": "https://www.deloitte.com/nl/en/issues/generative-ai/ai-roi-the-paradox-of-rising-investment-and-elusive-returns.html",
+          "title": "AI ROI: The Paradox of Rising Investment and Elusive Returns - Deloitte",
+          "snippet": "2025 Deloitte survey of 1,854 executives finding AI spending is rising while ROI remains elusive for most organizations.",
+          "domain": "deloitte.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-013",
+      "query": "Harvard Business Review AI transformation index",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 7,
+      "hits": [
+        {
+          "url": "https://hbr.org/2026/04/how-to-move-from-ai-experimentation-to-ai-transformation",
+          "title": "How to Move from AI Experimentation to AI Transformation - Harvard Business Review",
+          "snippet": "Many companies are investing heavily in AI but failing to translate isolated productivity gains into meaningful business results.",
+          "domain": "hbr.org"
+        },
+        {
+          "url": "https://www.harvardbusiness.org/insight/the-ai-frontier-from-exploration-to-enduring-transformation/",
+          "title": "The AI Frontier: From Exploration to Enduring Transformation - Harvard Business Publishing",
+          "snippet": "Covers how to build AI fluency broadly, rethink operating models and decision-making, and prepare leaders to guide teams through ongoing ambiguity.",
+          "domain": "harvardbusiness.org"
+        },
+        {
+          "url": "https://www.workato.com/the-connector/hbr-enterprise-ai-trust-gap/",
+          "title": "Harvard Business Review Report: The Enterprise AI Trust Gap - Workato",
+          "snippet": "A study by HBR in partnership with Workato and AWS on the enterprise AI trust gap that modern businesses face.",
+          "domain": "workato.com"
+        },
+        {
+          "url": "https://www.library.hbs.edu/working-knowledge/ai-trends-for-2026-building-change-fitness-and-balancing-trade-offs",
+          "title": "AI Trends for 2026: Building 'Change Fitness' and Balancing Trade-offs - Harvard Business School",
+          "snippet": "HBS faculty share key considerations for leaders planning to scale artificial intelligence, including change fitness and trade-offs.",
+          "domain": "library.hbs.edu"
+        },
+        {
+          "url": "https://hbr.org/topic/subject/generative-ai",
+          "title": "Generative AI - HBR Topic Feed",
+          "snippet": "Collection of HBR articles covering how AI is transforming companies, from coaching and reskilling to workforce planning.",
+          "domain": "hbr.org"
+        },
+        {
+          "url": "https://cloud.google.com/resources/hbr-data-and-ai-report",
+          "title": "HBR Data and AI Report - Google Cloud",
+          "snippet": "Harvard Business Review Pulse Report surveying data leaders on transforming data to create business value through analytics and AI.",
+          "domain": "cloud.google.com"
+        },
+        {
+          "url": "https://hbsp.harvard.edu/catalog/collections/AI-at-work-implications-for-companies-and-employees",
+          "title": "AI at Work: Implications for Companies and Employees - Harvard Business Publishing",
+          "snippet": "Collection exploring how AI transforms work, with deeper dives into AI governance and responsible AI usage.",
+          "domain": "hbsp.harvard.edu"
+        }
+      ]
+    },
+    {
+      "strategy_id": "ax-014",
+      "query": "McKinsey QuantumBlack insights index",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
+          "title": "The State of AI: Global Survey 2025 - McKinsey",
+          "snippet": "The 2025 edition of the annual McKinsey Global Survey on AI, covering current trends driving real value from artificial intelligence in organizations.",
+          "domain": "mckinsey.com"
+        },
+        {
+          "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights",
+          "title": "Insights on Artificial Intelligence - QuantumBlack - McKinsey",
+          "snippet": "QuantumBlack, AI by McKinsey's hub for the latest thinking on how organizations can effectively and responsibly use AI to create business value.",
+          "domain": "mckinsey.com"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/oryadler_the-state-of-ai-in-2025-agents-innovation-activity-7393650411699781632-qw1B",
+          "title": "QuantumBlack Survey: AI Adoption by Senior Leadership Drives Results - LinkedIn",
+          "snippet": "Discussion of QuantumBlack's survey results regarding senior leadership AI adoption and outcomes.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/quantumblack_stateofai2025-technology-ai-activity-7392229318459965441-JMRd",
+          "title": "StateOfAI2025 Report - QuantumBlack on LinkedIn",
+          "snippet": "Key finding: only 6% of organizations are realizing more than 5% EBIT gains from AI.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=x9T5oF7avo8",
+          "title": "The Value Chain of AI | Presented By QuantumBlack - YouTube",
+          "snippet": "A video presentation on the first wave of generative AI and large language model capabilities.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://www.mckinsey.com/capabilities/quantumblack/how-we-help-clients/generative-ai",
+          "title": "Generative AI - Artificial Intelligence (QuantumBlack) - McKinsey",
+          "snippet": "Focuses on how generative AI is reshaping industries through new human-machine language interactions.",
+          "domain": "mckinsey.com"
+        },
+        {
+          "url": "https://www.facebook.com/McKinsey/videos/only-11-of-companies-are-fully-leveraging-the-potential-of-gen-ai-quantumblack-a/932826565549113/",
+          "title": "Only 11% of Companies Fully Leveraging Gen AI - McKinsey/QuantumBlack Video",
+          "snippet": "QuantumBlack video noting only 11% of companies are fully leveraging the potential of generative AI.",
+          "domain": "facebook.com"
+        },
+        {
+          "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai-2024",
+          "title": "The State of AI in Early 2024 - McKinsey",
+          "snippet": "The 2024 survey showing 65% of respondents' organizations regularly using generative AI.",
+          "domain": "mckinsey.com"
+        }
+      ]
+    }
+  ]
+}

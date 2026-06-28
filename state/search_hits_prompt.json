@@ -1,0 +1,724 @@
+{
+  "_about": "Stage 1B search-only hits for the 'prompt' topic. URL+title+snippet captured from Google; pages were NOT crawled. Use as input for deeper crawl/extraction.",
+  "topic": "prompt",
+  "run_date": "2026-06-28",
+  "source_db": "state/search_strategy_db.json",
+  "total_queries": 12,
+  "total_hits": 101,
+  "results": [
+    {
+      "strategy_id": "prompt-001",
+      "query": "prompt engineering quality improvement metrics",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 9,
+      "hits": [
+        {
+          "url": "https://portkey.ai/blog/evaluating-prompt-effectiveness-key-metrics-and-tools/",
+          "title": "Evaluating Prompt Effectiveness: Key Metrics and Tools",
+          "snippet": "Guide on how to evaluate prompt effectiveness for AI models, including essential metrics and tools to refine prompts, enhance accuracy, and improve user experience.",
+          "domain": "portkey.ai"
+        },
+        {
+          "url": "https://www.braintrust.dev/articles/what-is-prompt-evaluation",
+          "title": "What is Prompt Evaluation?",
+          "snippet": "Guide on systematically evaluating prompts using golden datasets, LLM-as-a-judge scoring, rubrics, and regression testing.",
+          "domain": "braintrust.dev"
+        },
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1luitra/built_a_prompt_quality_scoring_system_feedback_on/",
+          "title": "Built a Prompt Quality Scoring System",
+          "snippet": "Community-built scoring system with axes for Clarity (1-5), Specificity (1-5), and Ambiguity (1-5) for evaluating prompts.",
+          "domain": "reddit.com/r/PromptEngineering"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=_uOlxNkHIYo",
+          "title": "Evaluating Prompt Performance: Metrics and Best Practices",
+          "snippet": "Video covering prompt performance evaluation as a critical skill for maximizing AI efficacy.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://latitude.so/blog/qualitative-metrics-for-prompt-evaluation",
+          "title": "Qualitative Metrics for Prompt Evaluation",
+          "snippet": "Explores qualitative metrics focusing on clarity, relevance, and coherence to enhance user experience.",
+          "domain": "latitude.so"
+        },
+        {
+          "url": "https://arxiv.org/abs/2603.10477",
+          "title": "PEEM: Prompt Engineering Evaluation Metrics",
+          "snippet": "Defines a structured rubric with 9 axes: 3 prompt criteria (clarity/structure, linguistic quality, fairness) and 6 response criteria.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://www.ituonline.com/blogs/evaluating-prompt-effectiveness-metrics-and-kpis-for-ai-projects/",
+          "title": "Evaluating Prompt Effectiveness: Metrics and KPIs for AI Projects",
+          "snippet": "Covers common KPIs such as success rate of correct responses, user engagement levels, and reduction in rework/error rates.",
+          "domain": "ituonline.com"
+        },
+        {
+          "url": "https://www.getmaxim.ai/articles/prompt-evaluation-frameworks-measuring-quality-consistency-and-cost-at-scale/",
+          "title": "Prompt Evaluation Frameworks",
+          "snippet": "Focuses on quantifying three key dimensions at scale: Quality (correctness, faithfulness, relevance), Consistency, and Cost.",
+          "domain": "getmaxim.ai"
+        },
+        {
+          "url": "https://medium.com/mantisnlp/automatic-prompt-engineering-part-iv-hands-on-evaluation-cb8299f4b17b",
+          "title": "Automatic Prompt Engineering: Hands-on Evaluation",
+          "snippet": "Discusses using ROUGE and BLEU as additional automated metrics for the evaluation process.",
+          "domain": "medium.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-002",
+      "query": "prompt optimization ROI enterprise",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 10,
+      "hits": [
+        {
+          "url": "https://pmsquare.com/resource/blogs/7-powerful-prompt-engineering-techniques/",
+          "title": "7 Powerful Prompt Engineering Techniques to Boost Enterprise AI ROI",
+          "snippet": "Expert tips, tricks, and pitfalls for prompt engineering, with best practices to turn data into a competitive edge.",
+          "domain": "pmsquare.com"
+        },
+        {
+          "url": "https://medium.com/@dejanmarkovic_53716/ai-prompt-optimization-enterprise-engineering-essentials-4899fbf20a9c",
+          "title": "AI Prompt Optimization: Enterprise Engineering Essentials",
+          "snippet": "Covers how enterprises can measure and quantify the ROI of prompt optimization through comprehensive ROI measurement frameworks.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://www.aspiresys.com/blog/data-and-ai-solutions/enterprise-ai/how-automated-prompt-optimization-eliminates-ai-guesswork-and-boosts-response-accuracy-for-enterprise/",
+          "title": "How Automated Prompt Optimization Eliminates AI Guesswork and Boosts Response Accuracy",
+          "snippet": "Enterprises leveraging structured prompt optimization observe up to 35%-40% increases in response accuracy, dramatically improving outcomes.",
+          "domain": "aspiresys.com"
+        },
+        {
+          "url": "https://community.sap.com/t5/artificial-intelligence-blogs-posts/prompt-optimization-unlocking-hidden-power-for-enterprise-ai-success/ba-p/14283344",
+          "title": "Prompt Optimization: Unlocking Hidden Power for Enterprise AI Success",
+          "snippet": "Companies that master prompt engineering achieve significantly higher ROI compared to those relying on basic or ad hoc prompting.",
+          "domain": "community.sap.com"
+        },
+        {
+          "url": "https://www.databricks.com/blog/building-state-art-enterprise-agents-90x-cheaper-automated-prompt-optimization",
+          "title": "Building State-of-the-Art Enterprise Agents 90x Cheaper with Automated Prompt Optimization",
+          "snippet": "Explores automatic prompt optimization (GEPA) as a systematic method for raising model performance, achieving up to 90x cost reduction for enterprise AI agents.",
+          "domain": "databricks.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1i3b2qr/managing_prompt_costs_at_enterprise_scale/",
+          "title": "Managing Prompt Costs at Enterprise Scale",
+          "snippet": "Community discussion on approaches for managing and optimizing prompt costs in enterprise settings.",
+          "domain": "reddit.com/r/PromptEngineering"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/reconstructed-boards-prompt-engineering-fallacy-ai-roi-agarwaal-btzpf",
+          "title": "The Prompt Engineering Fallacy: A Quantifiable Playbook for AI ROI",
+          "snippet": "Argues prompt engineering has become the most visible part of enterprise AI and the least durable lever for ROI; quick to demo but limited durability.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://blog.promptlayer.com/enterprise-ai-prompts/",
+          "title": "Enterprise AI Prompts: Customization, Security & Insights",
+          "snippet": "Explores how customized enterprise AI prompts enhance security, boost ROI, and drive business success with precise, goal-focused strategies.",
+          "domain": "blog.promptlayer.com"
+        },
+        {
+          "url": "https://arize.com/blog/prompt-optimization-few-shot-prompting/",
+          "title": "Prompt Optimization Using Few-Shot Prompting",
+          "snippet": "Technical deep dive into refining prompts (adjusting wording, structuring inputs, few-shot techniques) to improve model outputs.",
+          "domain": "arize.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=rHcpRJvd798",
+          "title": "How I Built Enterprise AI Agents 90x Cheaper with Automated Prompt Optimization",
+          "snippet": "Video walkthrough of GEPA, an open-sourced automated prompt optimization tool from Databricks that can make AI agents 90 times cheaper.",
+          "domain": "youtube.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-003",
+      "query": "prompt template reuse productivity",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 10,
+      "hits": [
+        {
+          "url": "https://www.linkedin.com/posts/priyadeep-sinha_i-wasted-time-everyday-writing-the-same-activity-7427210358681018369-LDXR",
+          "title": "Boost AI Productivity with Reusable Prompt Templates",
+          "snippet": "Discusses how reusable prompt templates save time by enabling context-aware chat tools, image generators, and other AI workflows to operate more efficiently without rewriting prompts each time.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://latitude.so/blog/reusable-prompts-structured-design-frameworks",
+          "title": "Reusable Prompts: Structured Design Frameworks",
+          "snippet": "Covers how to develop and maintain prompt templates for reuse, schedule regular reviews based on data insights, and use shared dashboards to track progress.",
+          "domain": "latitude.so"
+        },
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1qi45f0/i_got_tired_of_rewriting_prompts_so_i_turned_them/",
+          "title": "I Got Tired of Rewriting Prompts, So I Turned Them into Reusable Templates",
+          "snippet": "Community discussion on storing prompts in a Git repo as structured templates with placeholders for topic, audience, tone, and constraints.",
+          "domain": "reddit.com/r/PromptEngineering"
+        },
+        {
+          "url": "https://www.ibm.com/docs/en/watsonx/saas?topic=lab-building-reusable-prompts",
+          "title": "Building Reusable Prompts",
+          "snippet": "Official IBM watsonx documentation explaining how foundation model input variables can generalize a prompt for easier reuse across different tasks and contexts.",
+          "domain": "ibm.com"
+        },
+        {
+          "url": "https://university.forwardfuture.ai/lessons/lesson-5-designing-reusable-prompt-templates",
+          "title": "How to Build Reusable Prompt Templates for AI Workflows",
+          "snippet": "A lesson on designing modular, reusable AI prompt templates with variables, roles, format rules, and structure for scaling prompts across multiple tasks.",
+          "domain": "university.forwardfuture.ai"
+        },
+        {
+          "url": "https://www.facebook.com/groups/learningaitogether/posts/1471088621289303/",
+          "title": "Building Reusable Prompt Templates for AI Interactions",
+          "snippet": "Recommends a simple template structure: Act as -> Goal -> Constraints -> Format -> Evaluate for, to stop rewriting prompts from scratch each time.",
+          "domain": "facebook.com"
+        },
+        {
+          "url": "https://medium.com/@bhagyarana80/10-ways-i-use-prompt-templates-for-repeatable-llm-tasks-f5eb07358510",
+          "title": "10 Ways I Use Prompt Templates for Repeatable LLM Tasks",
+          "snippet": "Practical examples including a content outline generator, product descriptions, email/doc summarization, and cold email drafts powered by reusable templates.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://mortezariahi.com/reusable-prompt-templates-any-task/",
+          "title": "How to Create Reusable Prompt Templates for Any Task",
+          "snippet": "A comprehensive guide covering reusable templates for writing, planning, analysis, customer support, and learning tasks.",
+          "domain": "mortezariahi.com"
+        },
+        {
+          "url": "https://iavva.ai/ai-business-strategy/prompting-for-productivity-12-reusable-team-prompts/",
+          "title": "Prompting for Productivity: 12 Reusable Team Prompts",
+          "snippet": "Presents 12 ready-to-use prompt patterns teams can reuse immediately to streamline email, updates, support, and sales communications.",
+          "domain": "iavva.ai"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=340QiBxxHnw",
+          "title": "Mastering AI Prompt Templates for Enhanced Productivity",
+          "snippet": "A video tutorial exploring prompt templates, their benefits, and best practices for organizing prompts through a prompt library.",
+          "domain": "youtube.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-004",
+      "query": "OpenAI prompt engineering case study",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 10,
+      "hits": [
+        {
+          "url": "https://developers.openai.com/api/docs/guides/prompt-engineering",
+          "title": "Prompt Engineering | OpenAI API",
+          "snippet": "OpenAI's official guide on the process of writing effective instructions for models to consistently generate content that meets your requirements.",
+          "domain": "developers.openai.com"
+        },
+        {
+          "url": "https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api",
+          "title": "Best Practices for Prompt Engineering with the OpenAI API",
+          "snippet": "Official OpenAI help article presenting prompt formats and tips that work well, pointing to the official prompt engineering guide as the best starting point.",
+          "domain": "help.openai.com"
+        },
+        {
+          "url": "https://community.openai.com/t/how-prompt-engineering-outperformed/1377966",
+          "title": "How Prompt Engineering Outperformed - Use Cases and Examples",
+          "snippet": "An experimental case study shared by a community member detailing extensive work with prompt engineering techniques and seeking insights from others.",
+          "domain": "community.openai.com"
+        },
+        {
+          "url": "https://www.skillsoft.com/course/case-studies-in-prompt-engineering-1313fa99-6fb9-465d-8ec0-30361e1a5a40",
+          "title": "Case Studies in Prompt Engineering",
+          "snippet": "A Skillsoft course covering starter code prompts, converting code between languages, and prompting models to explain code.",
+          "domain": "skillsoft.com"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/prompt-engineering",
+          "title": "Prompt Engineering Techniques - Microsoft Foundry (Azure OpenAI)",
+          "snippet": "Learn how to use prompt engineering to optimize your work with Azure OpenAI.",
+          "domain": "learn.microsoft.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=kr5X3QvPzvM",
+          "title": "Advanced Prompt Engineering: OpenAI Hackathon",
+          "snippet": "Video on designing effective prompts to guide AI models, presented in a hackathon context.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1pptev8/openai_engineers_use_a_prompt_technique/",
+          "title": "OpenAI Engineers Use a Prompt Technique Internally",
+          "snippet": "Discussion on 'reverse prompting', a technique reportedly used by OpenAI engineers internally.",
+          "domain": "reddit.com/r/PromptEngineering"
+        },
+        {
+          "url": "https://mirascope.com/blog/prompt-engineering-examples",
+          "title": "Prompt Engineering Examples and Techniques",
+          "snippet": "Three levels of prompt engineering examples, from basic everyday tasks to advanced usage.",
+          "domain": "mirascope.com"
+        },
+        {
+          "url": "https://www.coursera.org/articles/prompt-engineering-examples",
+          "title": "6 Prompt Engineering Examples",
+          "snippet": "Examples including natural language processing and chatbots to help reach your audience effectively.",
+          "domain": "coursera.org"
+        },
+        {
+          "url": "https://launchdarkly.com/blog/prompt-engineering-best-practices/",
+          "title": "Prompt Engineering Best Practices: Tutorial & Examples",
+          "snippet": "Guidance on preventing problems and achieving optimal results through proper prompt engineering techniques.",
+          "domain": "launchdarkly.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-005",
+      "query": "Promptbase enterprise deployment",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://promptbase.com/prompt/enterprise-platform-architecture-kit",
+          "title": "Enterprise Platform Architecture Kit ChatGPT Prompt - PromptBase",
+          "snippet": "A prompt designed to create a structured AI platform covering data pipelines and governance for enterprise AI initiatives that fail due to fragmented architecture and unclear governance.",
+          "domain": "promptbase.com"
+        },
+        {
+          "url": "https://promptbase.com/",
+          "title": "PromptBase: The #1 Marketplace for AI Prompts",
+          "snippet": "The #1 marketplace for AI prompts, featuring 270,000+ prompts for ChatGPT, Gemini, Midjourney, and more.",
+          "domain": "promptbase.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=r5t-Ji6qOKM",
+          "title": "How To Make Money Selling AI Prompts On PromptBase",
+          "snippet": "A step-by-step guide on whether selling AI prompts is a real side hustle in 2026.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://enterprisedna.co/directories/apps/promptbase/",
+          "title": "PromptBase - Apps and SaaS Directory - Enterprise DNA",
+          "snippet": "Overview of PromptBase as a marketplace where users can buy and sell prompts for AI tools like ChatGPT, Gemini, and Midjourney.",
+          "domain": "enterprisedna.co"
+        },
+        {
+          "url": "https://medium.com/@brian-curry-research/from-prototype-to-production-a-practical-guide-to-deploying-ai-agents-in-the-enterprise-e942920cd877",
+          "title": "A Practical Guide to Deploying AI Agents in the Enterprise",
+          "snippet": "A deep dive into tools, tradeoffs, and deployment patterns that don't fall apart in real-world enterprise AI agent deployments.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://claudereadiness.com/blog/prompt-engineering-enterprise-guide/",
+          "title": "Enterprise Prompt Engineering Guide - ClaudeReadiness",
+          "snippet": "Master the skill that drives 40% productivity gains across 200+ enterprise Claude deployments. Covers system prompts, chain of thought reasoning, and more.",
+          "domain": "claudereadiness.com"
+        },
+        {
+          "url": "https://promptbase.com/prompt-guidelines",
+          "title": "Prompt Submission Guidelines - PromptBase",
+          "snippet": "Guidelines on what prompt submissions are allowed on PromptBase, helping you submit prompts efficiently and get them live.",
+          "domain": "promptbase.com"
+        },
+        {
+          "url": "https://github.com/microsoft/promptbase",
+          "title": "microsoft/promptbase: All Things Prompt Engineering",
+          "snippet": "Microsoft's evolving collection of resources, best practices, and example scripts for eliciting the best performance from foundation models like GPT-4.",
+          "domain": "github.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-006",
+      "query": "site:substack.com prompt engineering",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://nazuk.substack.com/p/the-good-and-bad-news-about-prompt",
+          "title": "The Good and Bad News About Prompt Engineering",
+          "snippet": "Prompt engineering sits at the intersection of logic and language; it borrows the structure of programming but the craft comes from clear writing.",
+          "domain": "nazuk.substack.com"
+        },
+        {
+          "url": "https://msukhareva.substack.com/p/why-prompt-engineering-should-not",
+          "title": "Why Prompt Engineering Should Not Be Taken Seriously",
+          "snippet": "Argues that prompt engineering is essentially just providing tokens to narrow the model's next generational step.",
+          "domain": "msukhareva.substack.com"
+        },
+        {
+          "url": "https://aimaker.substack.com/p/prompt-engineering-deep-dive-guide-simple-steps-10x-ai-results",
+          "title": "Prompt Engineering 101: Simple Steps to 10x Your AI Results",
+          "snippet": "A deep dive guide on extracting exactly what you need from AI tools by speaking their language.",
+          "domain": "aimaker.substack.com"
+        },
+        {
+          "url": "https://cameronrwolfe.substack.com/p/modern-advances-in-prompt-engineering",
+          "title": "Modern Advances in Prompt Engineering",
+          "snippet": "Covers prompt engineering as a relatively new discipline for developing and optimizing prompts for LMs across various applications.",
+          "domain": "cameronrwolfe.substack.com"
+        },
+        {
+          "url": "https://open.substack.com/pub/artificialcorner/p/google-prompt-engineering",
+          "title": "I Took Google's Prompt Engineering Course. Here's What Actually...",
+          "snippet": "A firsthand account of everything learned from Google's Prompt Engineering course.",
+          "domain": "open.substack.com"
+        },
+        {
+          "url": "https://productmindset.substack.com/p/prompt-engineering-explained",
+          "title": "Prompt Engineering, Explained",
+          "snippet": "Explains prompt engineering as preparing step-by-step instructions for different topics to achieve better LLM results.",
+          "domain": "productmindset.substack.com"
+        },
+        {
+          "url": "https://engincanveske.substack.com/p/effective-prompt-engineering",
+          "title": "Effective Prompt Engineering",
+          "snippet": "Describes prompt engineering as developing and optimizing prompts to efficiently use language models.",
+          "domain": "engincanveske.substack.com"
+        },
+        {
+          "url": "https://aixd.substack.com/p/prompt-engineering-try-prompt-vibing",
+          "title": "Prompt Engineering? Try \"Prompt Vibing\"",
+          "snippet": "Proposes the concept of 'Prompt Vibing' as an alternative framing to traditional prompt engineering.",
+          "domain": "aixd.substack.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-007",
+      "query": "site:reddit.com prompt engineering",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1byj8pd/prompt_engineering_101/",
+          "title": "Prompt Engineering 101",
+          "snippet": "Discussion on how ChatGPT itself can be the best prompt creator, with tips on iterative prompt refinement.",
+          "domain": "reddit.com/r/PromptEngineering"
+        },
+        {
+          "url": "https://www.reddit.com/r/artificial/comments/1tt03d8/what_actually_is_prompt_engineering/",
+          "title": "What actually is \"Prompt Engineering\"?",
+          "snippet": "Describes prompt engineering as the art of using activation weights in attention heads to extract useful outputs from LLMs.",
+          "domain": "reddit.com/r/artificial"
+        },
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1oj5yp7/is_prompt_engineering_still_a_viable_skill_in/",
+          "title": "Is prompt engineering still a viable skill in 2025, or is it fading fast?",
+          "snippet": "Consensus: prompt engineering is evolving from 'clever prompts' toward structured prompting using system messages and tool calls.",
+          "domain": "reddit.com/r/PromptEngineering"
+        },
+        {
+          "url": "https://www.reddit.com/r/datascience/comments/1ijfjh6/what_does_prompt_engineering_entail_in_a_data/",
+          "title": "What does prompt engineering entail in a Data Scientist role?",
+          "snippet": "Practical breakdown: creating intermediate prompts to generate queries, then formatting answers into useful outputs.",
+          "domain": "reddit.com/r/datascience"
+        },
+        {
+          "url": "https://www.reddit.com/r/aiwars/comments/1jq6j9v/prompt_engineering_is_literally_just/",
+          "title": "\"Prompt Engineering\" is literally just communication skills",
+          "snippet": "Argues prompt engineering is the craft of asking questions with impeccable clarity and intent.",
+          "domain": "reddit.com/r/aiwars"
+        },
+        {
+          "url": "https://www.reddit.com/r/learnmachinelearning/comments/1ehpifv/how_useful_is_it_to_learn_prompt_engineering/",
+          "title": "How useful is it to learn prompt engineering?",
+          "snippet": "Community discussion on whether investing time in prompt engineering courses is worth it.",
+          "domain": "reddit.com/r/learnmachinelearning"
+        },
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1uf9qx4/honest_question_is_prompt_engineering_still_a/",
+          "title": "Is \"prompt engineering\" still a skill, or did the models make it obsolete?",
+          "snippet": "Defines prompt engineering as applying engineering practices to inputs for generative models like GPT.",
+          "domain": "reddit.com/r/PromptEngineering"
+        },
+        {
+          "url": "https://www.reddit.com/r/PromptEngineering/comments/1uged7m/best_source_of_learning_prompt_engineering/",
+          "title": "Best source of learning prompt engineering",
+          "snippet": "Community recommendations for prompt engineering learning resources.",
+          "domain": "reddit.com/r/PromptEngineering"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-008",
+      "query": "site:medium.com prompt optimization",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://medium.com/@Micheal-Lanham/prompt-engineering-vs-prompt-optimization-what-every-ai-beginner-needs-to-know-bda2a1dbfb14",
+          "title": "Prompt Engineering vs. Prompt Optimization: What Every AI Beginner Needs to Know",
+          "snippet": "Covers the distinction between prompt engineering and prompt optimization, describing optimization as systematic, data-driven, and increasingly algorithmic.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/data-science-collective/the-science-of-prompt-optimization-and-automated-refinement-044b4b8e5353",
+          "title": "The Science of Prompt Optimization and Automated Refinement",
+          "snippet": "Introduces 'Prompt Optimizer', a tool that treats prompt engineering as an algorithmic process for automated refinement.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@akankshasinha247/prompt-engineering-part-4-architecting-reliable-outputs-with-optimization-techniques-7bfa0b1b98c7",
+          "title": "Architecting Reliable Outputs with Optimization Techniques",
+          "snippet": "Describes prompt optimization as designing intelligent interactions with a probabilistic engine, beyond simple prompt tuning.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://billtcheng2013.medium.com/automated-prompt-engineering-part-2-c5745039cd81",
+          "title": "Automated Prompt Engineering: Part 2",
+          "snippet": "Discusses optimizing single prompts and contrasts with DSPy's approach to optimizing entire compound AI systems.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://aakashgupta.medium.com/i-studied-1-500-academic-papers-on-prompt-engineering-heres-why-everything-you-know-is-wrong-391838b33468",
+          "title": "I Studied 1500 Academic Papers on Prompt Engineering",
+          "snippet": "Highlights research showing continuous prompt optimization can compound to 156% performance improvement over 12 months.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@iammasariya/prompt-engineering-techniques-for-llm-optimization-5245a45155d2",
+          "title": "Prompt Engineering Techniques for LLM Optimization",
+          "snippet": "Covers core techniques: Role Prompting, Chain-of-Thought, Few-Shot Learning, Self-Consistency, and ReAct.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@austin-starks/im-sick-and-tired-of-prompt-engineering-so-i-m-making-a-prompt-optimizer-part-2-9ff3aa47641d",
+          "title": "I'm Sick and Tired of Prompt Engineering - So I Made an Automated Prompt Optimizer",
+          "snippet": "Shares promising experimental results from building an automated prompt optimization tool.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@tobias_pfuetze/the-prompt-engineering-emperors-new-clothes-why-prompt-optimization-is-just-expensive-babc27a73c42",
+          "title": "The Prompt Engineering Emperor's New Clothes",
+          "snippet": "A contrarian view arguing 'prompt optimization' is expensive procrastination and questions the hype.",
+          "domain": "medium.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-009",
+      "query": "prompt engineering ROI disappointing",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.wheresyoured.at/ai-doesnt-have-roi/",
+          "title": "AI Doesn't Have ROI",
+          "snippet": "Argues nobody can measure AI's return on investment because it doesn't have one; if AI had ROI, job losses would be impossible to ignore.",
+          "domain": "wheresyoured.at"
+        },
+        {
+          "url": "https://jenstirrup.com/2026/06/06/the-prompt-engineering-fallacy-why-data-quality-still-determines-ai-roi/",
+          "title": "The Prompt Engineering Fallacy: Why Data Quality Still Determines AI ROI",
+          "snippet": "Argues AI ROI is a function of data quality, not 'linguistic gymnastics' in prompt engineering. Discusses the Insight Gap and the need for a firm data foundation.",
+          "domain": "jenstirrup.com"
+        },
+        {
+          "url": "https://www.rewarx.com/blogs/prompt-engineering-gap-ai-roi",
+          "title": "The Prompt Engineering Gap Killing Your AI ROI",
+          "snippet": "Cites Stanford research finding that poorly constructed prompts waste ~70% of AI tool potential, leaving most ecommerce businesses with disappointing returns.",
+          "domain": "rewarx.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1raubf45/",
+          "title": "When do you actually invest time in prompt engineering vs...?",
+          "snippet": "Community discussion questioning whether prompt engineering is even worth the effort, suggesting automated tools may remove the need for manual prompt engineering.",
+          "domain": "reddit.com/r/AI_Agents"
+        },
+        {
+          "url": "https://thegenai.ai/prompt-engineering-ai-training/why-prompt-engineering-still-matters-for-ai-roi-2/",
+          "title": "Why Prompt Engineering Still Matters for AI ROI",
+          "snippet": "Argues bad prompts lead to wasted time and poor ROI, while good prompts drive results across healthcare, staffing, finance, and sales.",
+          "domain": "thegenai.ai"
+        },
+        {
+          "url": "https://pmsquare.com/resource/blogs/7-powerful-prompt-engineering-techniques/",
+          "title": "7 Powerful Prompt Engineering Techniques to Boost Enterprise AI ROI",
+          "snippet": "Offers expert tips, tricks, and pitfalls to maximize ROI from prompt engineering.",
+          "domain": "pmsquare.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=ehLyn3n_F0I",
+          "title": "Unlock 1000% ROI with Prompt Engineering!",
+          "snippet": "Podcast featuring Lev Malinin from the Salvation Army sharing how his organization achieved massive ROI through prompt engineering.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/why-prompt-engineering-secret-getting-roi-from-ai-tools-mdxmf",
+          "title": "Why Prompt Engineering is the Secret to Getting ROI from AI Tools",
+          "snippet": "Argues that poor prompting increases errors while good prompts minimize mistakes and boost marketing performance.",
+          "domain": "linkedin.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-010",
+      "query": "prompt brittleness production failure",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://deepchecks.com/llm-production-challenges-prompt-update-incidents/",
+          "title": "How To Solve LLM Production Challenges & How Prompt Updates...",
+          "snippet": "Explains why prompt updates trigger most LLM incidents and how to prevent production failures through testing, monitoring, and rollout control.",
+          "domain": "deepchecks.com"
+        },
+        {
+          "url": "https://medium.com/@adnanmasood/a-field-guide-to-llm-failure-modes-5ffaeeb08e80",
+          "title": "A Field Guide to LLM Failure Modes",
+          "snippet": "Practitioner's overview of recurring LLM failures including confident fabrications, context misuse, brittle prompts, and tool-call errors that 'look' correct but do the wrong thing.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://arxiv.org/html/2509.07869v1",
+          "title": "Are Humans as Brittle as Large Language Models?",
+          "snippet": "Research paper finding that both humans and LLMs exhibit increased brittleness in response to certain types of prompt modifications.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://hackernoon.com/why-llms-fail-in-production-and-how-to-fix-them",
+          "title": "Why LLMs Fail in Production and How to Fix Them",
+          "snippet": "Describes prompt brittleness as the 'famous silent killer', where a developer tests with a handful of prompts but the system breaks in production when inputs vary.",
+          "domain": "hackernoon.com"
+        },
+        {
+          "url": "https://aclanthology.org/2025.naacl-srw.51/",
+          "title": "Towards LLMs Robustness to Changes in Prompt Format Styles",
+          "snippet": "Proposes 'Mixture of Formats' (MOF), a technique to address prompt brittleness by diversifying the formatting styles used in prompts during training and inference.",
+          "domain": "aclanthology.org"
+        },
+        {
+          "url": "https://direct.mit.edu/tacl/article/doi/10.1162/tacl_a_00710/125176/Beyond-Prompt-Brittleness-Evaluating-the",
+          "title": "Beyond Prompt Brittleness: Evaluating the Reliability and Consistency of Political Worldviews in LLMs",
+          "snippet": "An academic evaluation that goes beyond prompt brittleness to assess how reliably and consistently LLMs maintain political worldviews.",
+          "domain": "direct.mit.edu"
+        },
+        {
+          "url": "https://www.linkedin.com/top-content/technology/tech-product-management/reasons-llm-projects-fail-and-how-to-prevent-them/",
+          "title": "Reasons LLM Projects Fail and How to Prevent Them",
+          "snippet": "Discusses common LLM project failures stemming from technical design choices, unclear processes, and overlooked operational needs, with prevention strategies.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://shiftasia.com/community/8-llm-production-challenges-problems-solutions/",
+          "title": "8 LLM Production Challenges: Problems & Solutions",
+          "snippet": "Covers eight common production problems: hallucinations, prompt injection, context window limits, inconsistent outputs, and more.",
+          "domain": "shiftasia.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-011",
+      "query": "Prompt Engineering Guide index",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 6,
+      "hits": [
+        {
+          "url": "https://www.promptingguide.ai/",
+          "title": "Prompt Engineering Guide (DAIR.AI)",
+          "snippet": "Open-source guide covering introduction, LLM settings, techniques (Zero-shot, Few-shot, CoT, Self-Consistency, etc.), applications, models, risks, and papers.",
+          "domain": "promptingguide.ai"
+        },
+        {
+          "url": "https://github.com/dair-ai/prompt-engineering-guide",
+          "title": "dair-ai/Prompt-Engineering-Guide",
+          "snippet": "GitHub repository for the DAIR.AI Prompt Engineering Guide; open-source reference covering prompting techniques, applications, models, and risks.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://www.ibm.com/think/prompt-engineering",
+          "title": "IBM - The 2026 Guide to Prompt Engineering",
+          "snippet": "A practical resource from IBM explaining how to craft effective prompts for AI models with an enterprise perspective.",
+          "domain": "ibm.com"
+        },
+        {
+          "url": "https://www.gptaiflow.com/assets/files/2025-01-18-pdf-1-TechAI-Goolge-whitepaper_Prompt%2520Engineering_v4-af36dcc7a49bb7269a58b1c9b89a8ae1.pdf",
+          "title": "Google's Prompt Engineering Whitepaper",
+          "snippet": "A 68-page whitepaper by Lee Boonstra covering introduction, fundamental prompting techniques, prompting best practices, and advanced techniques (Few-shot, CoT, ReAct, etc.).",
+          "domain": "gptaiflow.com"
+        },
+        {
+          "url": "https://learnprompting.org/docs/introduction",
+          "title": "LearnPrompting.org - Ultimate Guide to Generative AI",
+          "snippet": "A free, comprehensive guide suitable for both beginners and advanced users covering a wide range of prompt engineering topics.",
+          "domain": "learnprompting.org"
+        },
+        {
+          "url": "https://www.researchgate.net/publication/388450257_Step-by-Step_Guide_to_Implementing_Prompt_Engineering",
+          "title": "Step-by-Step Guide to Implementing Prompt Engineering",
+          "snippet": "Academic paper outlining the systematic process of designing, refining, and optimizing prompts.",
+          "domain": "researchgate.net"
+        }
+      ]
+    },
+    {
+      "strategy_id": "prompt-012",
+      "query": "OpenAI blog prompt technique posts",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api",
+          "title": "Best practices for prompt engineering with the OpenAI API",
+          "snippet": "OpenAI Help Center article recommending using the latest models, writing clear instructions, splitting complex tasks into simpler ones, and providing reference text.",
+          "domain": "help.openai.com"
+        },
+        {
+          "url": "https://developers.openai.com/api/docs/guides/prompt-engineering",
+          "title": "Prompt Engineering | OpenAI API",
+          "snippet": "Official OpenAI guide defining prompt engineering and walking through techniques for writing effective, consistent model instructions.",
+          "domain": "developers.openai.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/ChatGPT/comments/18jdfex/openai_prompt_engineering_guide/",
+          "title": "OpenAI Prompt Engineering Guide",
+          "snippet": "Community summary of OpenAI's official guide: write clear instructions, provide reference text, split complex tasks, and more.",
+          "domain": "reddit.com/r/ChatGPT"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/prompt-engineering",
+          "title": "Prompt engineering techniques - Microsoft Foundry (Azure OpenAI)",
+          "snippet": "Covers being specific, descriptive, and using analogies to restrict the model's operational space.",
+          "domain": "learn.microsoft.com"
+        },
+        {
+          "url": "https://launchdarkly.com/blog/prompt-engineering-best-practices/",
+          "title": "Prompt Engineering Best Practices: Tutorial & Examples",
+          "snippet": "Covers structural, content, and compression techniques for strengthening prompts.",
+          "domain": "launchdarkly.com"
+        },
+        {
+          "url": "https://www.newline.co/@Dipen/top-openai-prompt-engineering-techniques-for-developers--95dafab1",
+          "title": "Top OpenAI Prompt Engineering Techniques for Developers",
+          "snippet": "Developer-oriented guide to crafting precise prompts and leveraging advanced techniques.",
+          "domain": "newline.co"
+        },
+        {
+          "url": "https://www.ibm.com/think/topics/prompt-engineering-techniques",
+          "title": "Prompt Engineering Techniques | IBM",
+          "snippet": "Enterprise-level overview of strategies for designing and structuring prompts.",
+          "domain": "ibm.com"
+        },
+        {
+          "url": "https://www.k2view.com/blog/prompt-engineering-techniques/",
+          "title": "Prompt Engineering Techniques: Top 6 for 2026",
+          "snippet": "Covers zero-shot, few-shot, chain-of-thought, meta-prompting, self-consistency, and role-based prompting.",
+          "domain": "k2view.com"
+        }
+      ]
+    }
+  ]
+}

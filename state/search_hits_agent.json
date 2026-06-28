@@ -1,0 +1,859 @@
+{
+  "_about": "Stage 1B search-only hits for the 'agent' topic. URL+title+snippet captured from Google; pages were NOT crawled. Use as input for deeper crawl/extraction.",
+  "topic": "agent",
+  "run_date": "2026-06-28",
+  "source_db": "state/search_strategy_db.json",
+  "total_queries": 15,
+  "total_hits": 119,
+  "results": [
+    {
+      "strategy_id": "agent-001",
+      "query": "AI agent cost savings enterprise case study",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.nice.com/agentic-ai/cost-reduction-with-autonomous-ai-agents",
+          "title": "Achieving Cost Reduction with Autonomous AI Agents - NiCE",
+          "snippet": "Autonomous agents reduce labor costs through higher self-service containment, shorter handle times, and fewer escalations, rather than by replacing human workers.",
+          "domain": "nice.com"
+        },
+        {
+          "url": "https://www.bcg.com/publications/2025/how-four-companies-use-ai-for-cost-transformation",
+          "title": "How Four Companies Capitalize on AI to Deliver Cost Transformations - BCG",
+          "snippet": "Covers four real-world company case studies. IBM reportedly unlocked roughly $3.5 billion in cost savings and a 50% increase in enterprise operations productivity over two years.",
+          "domain": "bcg.com"
+        },
+        {
+          "url": "https://www.intellectyx.com/ai-agent-useful-case-study-10-real-world-examples-applications/",
+          "title": "10 AI Agent Use Cases with Real Results - Intellectyx",
+          "snippet": "Businesses leveraging AI agents report 30%+ efficiency gains, cost reductions, and improved customer experiences. Includes 10 real-world examples.",
+          "domain": "intellectyx.com"
+        },
+        {
+          "url": "https://papers.ssrn.com/sol3/Delivery.cfm/6405998.pdf?abstractid=6405998&mirid=1",
+          "title": "Enterprise Usage of AI Agents: A Comprehensive Survey",
+          "snippet": "Academic survey examining architectural paradigms and multi-agent collaboration in enterprise AI agent deployments.",
+          "domain": "papers.ssrn.com"
+        },
+        {
+          "url": "https://indatalabs.com/blog/ai-agent-useful-case-studies",
+          "title": "Top 6 AI Agent Case Studies - InData Labs",
+          "snippet": "Six case studies showcasing real-world AI agent applications with measurable results.",
+          "domain": "indatalabs.com"
+        },
+        {
+          "url": "https://sema4.ai/blog/ai-agent-use-cases/",
+          "title": "10 AI Agent Use Cases Transforming Enterprises in 2026 - Sema4.ai",
+          "snippet": "Use cases spanning customer support, finance, supply chain, and workflow automation.",
+          "domain": "sema4.ai"
+        },
+        {
+          "url": "https://fin.ai/learn/ai-customer-service-business-case-template",
+          "title": "AI Customer Service Business Case Template 2026 - Fin",
+          "snippet": "A CFO-ready business case with ROI data, cost models, and 2026 benchmarks for AI customer service.",
+          "domain": "fin.ai"
+        },
+        {
+          "url": "https://enterpriseaiexecutive.ai/p/40-must-read-ai-enterprise-case-studies",
+          "title": "40 Must-Read Enterprise AI Case Studies - Enterprise AI Executive",
+          "snippet": "A curated collection of thousands of case studies covering AI agents, agentic AI, and generative AI.",
+          "domain": "enterpriseaiexecutive.ai"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-002",
+      "query": "autonomous agent productivity gains company metrics",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://hdsr.mitpress.mit.edu/pub/0mrfxamu",
+          "title": "The Agent-Centric Enterprise: Why 2-10x Productivity Gains - Harvard Data Science Review",
+          "snippet": "Autonomous AI agents are poised to deliver 2-10x productivity gains, but most companies currently capture only marginal benefits. Explores what is required for transformational impact.",
+          "domain": "hdsr.mitpress.mit.edu"
+        },
+        {
+          "url": "https://cloud.google.com/transform/the-kpis-that-actually-matter-for-production-ai-agents",
+          "title": "The KPIs That Actually Matter for Production AI Agents - Google Cloud",
+          "snippet": "A strategic KPI framework for agentic AI organized around operational reliability, workflow adoption, and quantified business impact in production.",
+          "domain": "cloud.google.com"
+        },
+        {
+          "url": "https://www.bcg.com/capabilities/artificial-intelligence/ai-agents",
+          "title": "AI Agents: What They Are and Their Business Impact - BCG",
+          "snippet": "BCG outlines how AI agents analyze performance data, compare results against expectations, and drive business impact across functions.",
+          "domain": "bcg.com"
+        },
+        {
+          "url": "https://coworker.ai/blog/agent-performance-metrics",
+          "title": "25 Best Agent Performance Metrics to Track - Coworker AI",
+          "snippet": "A comprehensive guide covering 25 essential metrics for measuring agent productivity in 2026, spanning efficiency, quality, and adoption dimensions.",
+          "domain": "coworker.ai"
+        },
+        {
+          "url": "https://www.mindstudio.ai/blog/ai-agent-success-metrics",
+          "title": "Measuring AI Agent Success: Key Metrics to Track - MindStudio",
+          "snippet": "Covers the metrics that matter, including technical performance, business impact, and user experience measurement frameworks.",
+          "domain": "mindstudio.ai"
+        },
+        {
+          "url": "https://blog.workday.com/en-us/performance-driven-agent-setting-kpis-measuring-ai-effectiveness.html",
+          "title": "The Performance-Driven Agent: Setting KPIs - Workday Blog",
+          "snippet": "AI agents' impact goes beyond technical metrics, directly influencing business outcomes, customer satisfaction, and operational efficiency.",
+          "domain": "blog.workday.com"
+        },
+        {
+          "url": "https://www.creatio.com/glossary/autonomous-ai-agents",
+          "title": "What Are Autonomous AI Agents? - Creatio",
+          "snippet": "Highlights how autonomous agents drive operational efficiency and cost reduction by minimizing manual work and eliminating bottlenecks.",
+          "domain": "creatio.com"
+        },
+        {
+          "url": "https://www.cio.com/article/4090235/measuring-and-scaling-ai-agent-value-beyond-productivity-gains.html",
+          "title": "Measuring and Scaling AI Agent Value Beyond Productivity Gains - CIO",
+          "snippet": "Provides a concrete example of cutting claims processing time by 40% through an autonomous agent that aggregates data, validates information, and initiates payouts.",
+          "domain": "cio.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-003",
+      "query": "agentic workflow cycle time reduction production",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://arxiv.org/html/2601.22037v2",
+          "title": "Optimizing Agentic Workflows using Meta-tools - arXiv",
+          "snippet": "Introduces Agent Workflow Optimization (AWO), a generic framework for improving the efficiency, utility, and runtime cost of agentic workflows.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://www.moveworks.com/us/en/resources/blog/agentic-ai-manufacturing-it-workflows",
+          "title": "Agentic AI in Manufacturing: Use Cases That Drive ROI - Moveworks",
+          "snippet": "Highlights work order cycle time as a key KPI, measuring whether faster, more accurate drafting and routing reduces request-to-completion time.",
+          "domain": "moveworks.com"
+        },
+        {
+          "url": "https://teamvoy.com/blog/agentic-ai-in-manufacturing/",
+          "title": "A Guide on Integrating Agentic AI in Manufacturing - Teamvoy",
+          "snippet": "Covers main agentic AI applications in manufacturing and tips for redesigning processes around AI to cut production cycle times.",
+          "domain": "teamvoy.com"
+        },
+        {
+          "url": "https://www.trootech.com/blog/agentic-ai-in-manufacturing",
+          "title": "Agentic AI in Manufacturing: Predictive Maintenance and Workflow - Trootech",
+          "snippet": "Describes how agentic AI equips plants with autonomous systems that detect issues, coordinate maintenance, and rebalance workflows in real time.",
+          "domain": "trootech.com"
+        },
+        {
+          "url": "https://opsima.com/blog/operational-insights/agentic-workflows-field-operations/",
+          "title": "Agentic Workflows in Field Operations: 2026 Guide - Opsima",
+          "snippet": "Notes that basic agentic deployments targeting a single well-defined use case can reach production within 90 days (e.g., equipment fault routing).",
+          "domain": "opsima.com"
+        },
+        {
+          "url": "https://xccelera.ai/blogs/from-pilot-to-production-a-blueprint-for-maximizing-roi-in-agentic-workflows/",
+          "title": "Scaling Agentic AI Workflows: From Pilot to Enterprise Production - Xccelera",
+          "snippet": "A blueprint for scaling agentic workflows from pilot validation to production-grade systems while maximizing measurable ROI.",
+          "domain": "xccelera.ai"
+        },
+        {
+          "url": "https://www.netsuite.com/portal/resource/articles/erp/agentic-workflows.shtml",
+          "title": "What Are Agentic Workflows? - NetSuite",
+          "snippet": "Cites PwC data showing AI-driven invoice extraction and PO matching can reduce cycle times by up to 80% through faster data processing.",
+          "domain": "netsuite.com"
+        },
+        {
+          "url": "https://www.blueprism.com/guides/ai/agentic-workflows/",
+          "title": "Understanding Agentic Workflows - Blue Prism",
+          "snippet": "Describes the measurable impact of agentic workflows: efficiency gains, faster cycle times, and better business outcomes.",
+          "domain": "blueprism.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-004",
+      "query": "AI agent deployment ROI enterprise results",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.digitalapplied.com/blog/ai-agent-adoption-2026-enterprise-data-points",
+          "title": "AI Agent Adoption 2026: 120+ Enterprise Data Points - Digital Applied",
+          "snippet": "22% of agent deployments report negative ROI at 12 months. 56% of enterprises now have a formal AI agent owner or agentic ops lead, up significantly from prior years.",
+          "domain": "digitalapplied.com"
+        },
+        {
+          "url": "https://onereach.ai/blog/what-is-the-roi-from-investments-in-enterprise-ai-agents/",
+          "title": "How Enterprise AI Agents Can Deliver 10X ROI in 2026 - OneReach AI",
+          "snippet": "ROI can exceed 5x-10x per dollar invested, with many reports showing 3x to 6x returns within the first year.",
+          "domain": "onereach.ai"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/acrosstek_ai-agents-are-the-new-default-activity-7472547437182640129-E0cu",
+          "title": "AI Agent Adoption Surges in Enterprise, But Most Fail to Deliver ROI - AcrossTek (LinkedIn)",
+          "snippet": "Adoption surged from 33% in 2024, yet 22% of deployments report negative ROI, attributed to implementation and governance failures rather than weak models.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://agility-at-scale.com/ai/agents/enterprise-ai-agent-roi/",
+          "title": "Enterprise AI Agent ROI: How to Measure, Calculate, and Maximize - Agility at Scale",
+          "snippet": "74% of enterprises see first-year returns from AI agents. Companies report 15-25% increases in IT satisfaction scores post-deployment.",
+          "domain": "agility-at-scale.com"
+        },
+        {
+          "url": "https://www.googlecloudpresscorner.com/2025-09-04-Google-Cloud-Study-Reveals-52-of-Executives-Say-Their-Organizations-Have-Deployed-AI-Agents,-Unlocking-a-New-Wave-of-Business-Value,1",
+          "title": "Google Cloud Study: 52% of Executives Say Organizations Have Deployed AI Agents - Google Cloud",
+          "snippet": "53% of executives reporting increased revenue cite 6-10% revenue growth from generative AI, holding steady year-over-year.",
+          "domain": "googlecloudpresscorner.com"
+        },
+        {
+          "url": "https://www.pagerduty.com/resources/ai/learn/companies-expecting-agentic-ai-roi-2025/",
+          "title": "More than Half of Companies (51%) Already Deployed AI Agents - PagerDuty",
+          "snippet": "62% expect more than 100% ROI, with an average expected return of 171% on their investment. U.S. companies lead in deployment numbers.",
+          "domain": "pagerduty.com"
+        },
+        {
+          "url": "https://hackernoon.com/from-experiment-to-enterprise-governing-ai-agents-for-measurable-roi",
+          "title": "From Experiment to Enterprise: Governing AI Agents for Measurable ROI - HackerNoon",
+          "snippet": "Despite 79% of organizations implementing AI agents, only 39% report significant impact on EBIT, highlighting the gap between adoption and measurable financial results.",
+          "domain": "hackernoon.com"
+        },
+        {
+          "url": "https://nevermined.ai/blog/agentic-ai-enterprise-adoption",
+          "title": "55 Agentic AI Enterprise Adoption Trends - Nevermined",
+          "snippet": "Grand View Research tracks the enterprise AI agent market at $2.58B in 2024, projecting growth to $24.50B by 2030 at a 46.2% CAGR.",
+          "domain": "nevermined.ai"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-005",
+      "query": "Salesforce Agentforce customer results",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 7,
+      "hits": [
+        {
+          "url": "https://www.salesforce.com/agentforce/customer-stories/",
+          "title": "Agentforce Customer Stories - Salesforce",
+          "snippet": "Salesforce's official hub for Agentforce customer stories, exploring how Agentforce transforms businesses and brings them into the agentic future.",
+          "domain": "salesforce.com"
+        },
+        {
+          "url": "https://www.salesforce.com/news/stories/agentforce-customer-success-stories/",
+          "title": "Agentforce in Action: Customer Success Stories - Salesforce News",
+          "snippet": "Learn how dozens of businesses are using Agentforce to deploy AI agents that improve customer experiences and achieve cost efficiencies.",
+          "domain": "salesforce.com"
+        },
+        {
+          "url": "https://www.salesforce.com/customer-stories/wiley/",
+          "title": "Wiley Customer Story - 213% ROI - Salesforce",
+          "snippet": "Agentforce boosted self-service and efficiency by over 40%, outperforming Wiley's previous chatbot. Wiley achieved a 213% return on investment through their Service Cloud implementation.",
+          "domain": "salesforce.com"
+        },
+        {
+          "url": "https://www.valantic.com/en/blog/agentforce-success-stories-industries/",
+          "title": "Salesforce Agentforce Success Stories - valantic Blog",
+          "snippet": "Success stories showing how companies use Salesforce Agentforce to automate processes and improve customer experience across various industries.",
+          "domain": "valantic.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/salesforce/comments/1qfjtrv/can_anyone_share_an_agent_force_success_story/",
+          "title": "Reddit Discussion - Agentforce Success Stories",
+          "snippet": "Community discussion where an early Agentforce customer at a large company reports being very successful, noting that larger companies may not publicly share many success stories.",
+          "domain": "reddit.com/r/salesforce"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=nhuHjvYMwSo",
+          "title": "How Salesforce Uses Agentforce to Deliver Customer Success - YouTube",
+          "snippet": "How Salesforce itself uses Agentforce to provide high-quality, real-time support while enhancing self-service and increasing case resolution.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://www.youtube.com/playlist?list=PLnobS_RgN7JZ1Schmo8cO4gqaDpTSOW0L",
+          "title": "Customer Success Stories Playlist - YouTube",
+          "snippet": "A playlist of videos showing how businesses use Salesforce to scale globally and personalize service interactions.",
+          "domain": "youtube.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-006",
+      "query": "LangChain production agent metrics",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.langchain.com/blog/production-monitoring",
+          "title": "Agent Observability: How to Monitor and Evaluate LLM Agents - LangChain",
+          "snippet": "Beyond standard latency and error rates, agent production observability needs metrics specific to how agents actually behave.",
+          "domain": "langchain.com"
+        },
+        {
+          "url": "https://academy.langchain.com/courses/production-monitoring",
+          "title": "Production Monitoring for AI Agents with LangSmith - LangChain Academy",
+          "snippet": "A free course covering how to track costs, uncover trends with trace analysis, and monitor quality and latency of agents in production.",
+          "domain": "academy.langchain.com"
+        },
+        {
+          "url": "https://changelog.langchain.com/announcements/view-deployment-metrics-in-langgraph-platform",
+          "title": "View Agent Deployment Metrics in LangSmith - Changelog",
+          "snippet": "Monitor agent deployments directly from the LangSmith UI, including CPU and memory usage and API request latency via LangGraph Platform.",
+          "domain": "changelog.langchain.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/LangChain/comments/1u995vz/how_are_you_measuring_the_performance_of/",
+          "title": "How are you measuring the performance of production AI agents? - r/LangChain",
+          "snippet": "A community discussion where practitioners share what metrics they track, how they evaluate agent quality and reliability over time, and which observability tools they use.",
+          "domain": "reddit.com/r/LangChain"
+        },
+        {
+          "url": "https://uptrace.dev/blog/langchain-observability",
+          "title": "LangChain Observability: Monitoring Guide for Production Apps - Uptrace",
+          "snippet": "A practical guide on monitoring LangChain applications in production, including tracking token costs, debugging chain failures, and using OpenTelemetry.",
+          "domain": "uptrace.dev"
+        },
+        {
+          "url": "https://arize.com/blog-course/langchain-llm-agent-monitoring/",
+          "title": "How To Use LangChain With Monitoring To Fine-Tune Your LLM Agent - Arize",
+          "snippet": "Detailed article on monitoring LLM applications in production, including fine-tuning workflows and agent-specific metrics.",
+          "domain": "arize.com"
+        },
+        {
+          "url": "https://last9.io/blog/langchain-langgraph-the-frameworks-powering-production-ai-agents/",
+          "title": "LangChain and LangGraph: Frameworks Powering Production AI Agents - Last9",
+          "snippet": "Covers how LangChain and LangGraph help build production-grade agents and why observability is critical for running them reliably.",
+          "domain": "last9.io"
+        },
+        {
+          "url": "https://propelius.tech/blogs/building-production-ai-agents-langchain/",
+          "title": "Building Production AI Agents with LangChain - Propelius",
+          "snippet": "A practical guide covering tool integration, agent patterns, error handling, observability, and deployment best practices.",
+          "domain": "propelius.tech"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-007",
+      "query": "CrewAI enterprise deployment case",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://crewai.com/case-studies/pwc-accelerates-enterprise-scale-genai-adoption-with-crewai",
+          "title": "PwC accelerates enterprise-scale GenAI adoption with CrewAI",
+          "snippet": "PwC uses CrewAI to orchestrate multi-agent workflows, reportedly building, deploying, and scaling AI-powered tools 10x faster than traditional methods.",
+          "domain": "crewai.com"
+        },
+        {
+          "url": "https://crewai.com/case-studies",
+          "title": "CrewAI Case Studies Hub",
+          "snippet": "Lists multiple enterprise deployments, including IBM (automating federal eligibility), AWS (powering Bedrock Agents), and Gelato (accelerating fulfillment via agentic integration).",
+          "domain": "crewai.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=3EqSV-CYDZA",
+          "title": "How to Deploy a Crew to CrewAI Enterprise using the CLI - YouTube",
+          "snippet": "Walkthrough covering the Enterprise dashboard, execution tracing, cost analysis, and Kanban-based crew testing.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/build-agentic-systems-with-crewai-and-amazon-bedrock/",
+          "title": "Build agentic systems with CrewAI and Amazon Bedrock - AWS",
+          "snippet": "Official AWS post on combining CrewAI's open-source framework with Amazon Bedrock for sophisticated multi-agent systems.",
+          "domain": "aws.amazon.com"
+        },
+        {
+          "url": "https://www.truefoundry.com/blog/how-to-deploy-multiagent-workflow-using-crewai-on-truefoundry",
+          "title": "Deploy Multi-Agent Workflows with CrewAI on TrueFoundry",
+          "snippet": "Guide on simplifying AI deployment of CrewAI workflows with minimal DevOps overhead.",
+          "domain": "truefoundry.com"
+        },
+        {
+          "url": "https://www.zenml.io/llmops-database/building-and-orchestrating-multi-agent-systems-at-scale-with-crewai",
+          "title": "Building and Orchestrating Multi-Agent Systems at Scale with CrewAI - ZenML",
+          "snippet": "Covers CrewAI's production-ready framework with internal use-case demonstrations.",
+          "domain": "zenml.io"
+        },
+        {
+          "url": "https://www.agilesoftlabs.com/blog/2026/06/crewai-in-production-2026-real-lessons",
+          "title": "CrewAI in Production 2026: Real Lessons from Deploying Multi-Agent Systems - AgileSoftLabs",
+          "snippet": "Case studies on content generation and enterprise research automation outcomes with CrewAI.",
+          "domain": "agilesoftlabs.com"
+        },
+        {
+          "url": "https://www.insightpartners.com/ideas/crewai-launches-multi-agentic-platform-to-deliver-on-the-promise-of-generative-ai-for-enterprise/",
+          "title": "CrewAI Launches Multi-Agentic Platform - Insight Partners",
+          "snippet": "Announces the CrewAI Enterprise platform enabling teams to build, deploy, and iterate multi-agent crews.",
+          "domain": "insightpartners.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-008",
+      "query": "AutoGen multi-agent case study",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://microsoft.github.io/autogen/0.2/docs/Use-Cases/agent_chat/",
+          "title": "Multi-agent Conversation Framework - AutoGen 0.2",
+          "snippet": "AutoGen abstracts and implements conversable agents designed to solve tasks through inter-agent conversations. Official use-case documentation.",
+          "domain": "microsoft.github.io"
+        },
+        {
+          "url": "https://arxiv.org/abs/2308.08155",
+          "title": "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation Framework",
+          "snippet": "The foundational AutoGen paper describing an open-source framework for building LLM applications via multiple agents that converse to accomplish tasks.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://www.datacamp.com/tutorial/autogen-tutorial",
+          "title": "AutoGen Tutorial: Build Multi-Agent AI Applications - DataCamp",
+          "snippet": "A comprehensive tutorial covering AutoGen as an open-source framework for creating multi-agent AI applications that operate semi-autonomously and fully autonomously.",
+          "domain": "datacamp.com"
+        },
+        {
+          "url": "https://medium.com/@vishwajeetv2003/building-multi-agent-ai-applications-with-autogen-complete-tutorial-2026-2fbd9af73a9c",
+          "title": "Building Multi-Agent AI Applications with AutoGen - Medium",
+          "snippet": "A complete tutorial drawing an analogy between the shift from single-agent to multi-agent systems and the shift from a lone freelancer to a corporate team.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://galileo.ai/blog/autogen-framework-multi-agents",
+          "title": "How AutoGen Framework Helps You Build Multi-Agent Systems - Galileo AI",
+          "snippet": "Explains how AutoGen is Microsoft's open-source framework for orchestrating multiple AI agents through natural-language conversations.",
+          "domain": "galileo.ai"
+        },
+        {
+          "url": "https://www.projectpro.io/article/autogen-projects-and-examples/1129",
+          "title": "7 AutoGen Projects to Build Multi-Agent Systems - ProjectPro",
+          "snippet": "A collection of practical AutoGen projects demonstrating multi-agent conversations, code execution, and AI coordination for complex workflows.",
+          "domain": "projectpro.io"
+        },
+        {
+          "url": "https://www.analyticsvidhya.com/blog/2023/11/launching-into-autogen-exploring-the-basics-of-a-multi-agent-framework/",
+          "title": "Building Multi Agent Framework with AutoGen - Analytics Vidhya",
+          "snippet": "Explores Microsoft's framework, LLM agents, and real-world use cases for multi-agent systems.",
+          "domain": "analyticsvidhya.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=muSam6Yy8lM",
+          "title": "Create MultiAgent with Autogen - YouTube",
+          "snippet": "Video walkthrough for building multi-agent applications with AutoGen.",
+          "domain": "youtube.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-009",
+      "query": "site:substack.com AI agent case study",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://ai2roi.substack.com/p/ai-to-roi-case-study-walmarts-autonomous",
+          "title": "AI to ROI Case Study: Walmart's Autonomous Procurement Agent",
+          "snippet": "Detailed case study on Walmart's autonomous procurement AI agent. 68%-72% of invited suppliers reached a final agreement with the AI agent, with 83% positive outcomes overall.",
+          "domain": "ai2roi.substack.com"
+        },
+        {
+          "url": "https://open.substack.com/pub/bytebytego/p/how-grab-is-using-ai-agents-to-boost",
+          "title": "How Grab is Using AI Agents to Boost Team Productivity - ByteByteGo",
+          "snippet": "Explores how Grab, the ride-hailing giant, deploys AI agents internally to improve productivity across teams.",
+          "domain": "open.substack.com"
+        },
+        {
+          "url": "https://cobusgreyling.substack.com/p/the-four-debts-of-agentic-ai",
+          "title": "The Four Debts of Agentic AI - Cobus Greyling",
+          "snippet": "Uses Klarna as a case study, examining how Klarna's AI agent handled two-thirds of all customer inquiries and the hidden debts of agentic AI deployment.",
+          "domain": "cobusgreyling.substack.com"
+        },
+        {
+          "url": "https://aiforinsightsleaders.substack.com/p/agentic-ai-in-the-wild-real-use-cases",
+          "title": "Agentic AI in the Wild: Real Use Cases - Kristi Zuhlke",
+          "snippet": "Covers real-world deployments, including an organization that used an AI agent for automated lead assignment based on intent and fit.",
+          "domain": "aiforinsightsleaders.substack.com"
+        },
+        {
+          "url": "https://cobusgreyling.substack.com/p/the-ai-agent-reality-gap",
+          "title": "The AI Agent Reality Gap - Cobus Greyling",
+          "snippet": "Researches AI agents in production and explores the gap between demo and deployment.",
+          "domain": "cobusgreyling.substack.com"
+        },
+        {
+          "url": "https://thestrategystack.substack.com/p/the-stack-to-enlightnment-on-ai-agents",
+          "title": "The AI Agent Strategy Stack: How CSOs Can Generate Value",
+          "snippet": "Includes a practical use-case assessment framework, with examples like implementing an AI agent for customer service automation.",
+          "domain": "thestrategystack.substack.com"
+        },
+        {
+          "url": "https://askachiefofstaff.substack.com/p/issue-46-the-rise-of-ai-agents",
+          "title": "Issue 46: The Rise of AI Agents - Clara Ma",
+          "snippet": "Discusses AI agent adoption from the perspective of Chiefs of Staff, including trust and reliability concerns.",
+          "domain": "askachiefofstaff.substack.com"
+        },
+        {
+          "url": "https://debmalyabiswas.substack.com/p/designing-efficient-agentic-ai-workflows",
+          "title": "Designing Efficient Agentic AI Workflows - Debmalya Biswas",
+          "snippet": "Covers practical workflow design for agentic AI systems.",
+          "domain": "debmalyabiswas.substack.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-010",
+      "query": "site:reddit.com autonomous agent enterprise",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.reddit.com/r/SaaS/comments/1rsm8t2/i_analyzed_7_autonomous_ai_agents_for_business_in/",
+          "title": "I analyzed 7 autonomous AI agents for business in 2026 - r/SaaS",
+          "snippet": "Discusses the best autonomous AI tools for enterprises, recommending Claude's API as a reasoning layer inside n8n workflows rather than any standalone autonomous agent platform.",
+          "domain": "reddit.com/r/SaaS"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1u97juz/why_is_every_autonomous_agent_built_for_companies/",
+          "title": "Why is every 'autonomous agent' built for companies and not for the... - r/AI_Agents",
+          "snippet": "A critique that nearly every autonomous agent product this year is essentially a sales deck for companies (e.g., Devin codes for engineering teams).",
+          "domain": "reddit.com/r/AI_Agents"
+        },
+        {
+          "url": "https://www.reddit.com/r/aiagents/comments/1rgo08x/agents_in_enterprise/",
+          "title": "Agents in Enterprise - r/aiagents",
+          "snippet": "Highlights legitimate enterprise security concerns: audit trails, data governance, and access controls that an autonomous agent must address.",
+          "domain": "reddit.com/r/aiagents"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1qoidvo/stop_selling_autonomous_agents_to_businesses_you/",
+          "title": "Stop selling 'Autonomous Agents' to businesses. You are setting... - r/AI_Agents",
+          "snippet": "Compares autonomous agents to an infinite supply of interns, noting you would not let a fast-working intern sign a contract on day one.",
+          "domain": "reddit.com/r/AI_Agents"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1juvk0x/how_are_you_building_truly_autonomous_ai_agents/",
+          "title": "How are you building TRULY autonomous AI agents that work like... - r/AI_Agents",
+          "snippet": "Discussion of building truly autonomous agents, with mentions of Manus AI.",
+          "domain": "reddit.com/r/AI_Agents"
+        },
+        {
+          "url": "https://www.reddit.com/r/AgentsOfAI/comments/1tt8mhe/the_agentic_ai_implementations_that_are_actually/",
+          "title": "The Agentic AI implementations that are actually working in... - r/AgentsOfAI",
+          "snippet": "Argues for reframing from autonomous agent to automated workflows, suggesting narrow scope of autonomy with predictable failure modes works better.",
+          "domain": "reddit.com/r/AgentsOfAI"
+        },
+        {
+          "url": "https://www.reddit.com/r/developers/comments/1p6jk78/autonomous_ai_dev_team_multiagent_system_that/",
+          "title": "Autonomous AI Dev Team - Multi-agent system that codes, reviews... - r/developers",
+          "snippet": "Describes a growing autonomous agent system for development needs, including code review and testing.",
+          "domain": "reddit.com/r/developers"
+        },
+        {
+          "url": "https://www.reddit.com/r/openclaw/comments/1r6gbra/openclaw_is_the_linux_moment_for_autonomous/",
+          "title": "OpenClaw is the Linux moment for autonomous agents - r/openclaw",
+          "snippet": "Positions autonomous agent infrastructure as critical enterprise tooling, the new operating system.",
+          "domain": "reddit.com/r/openclaw"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-011",
+      "query": "site:medium.com agentic workflow production",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://luluyan.medium.com/the-agentic-workflow-landscape-my-par-for-making-sense-of-the-complexity-34108044f7a3",
+          "title": "The Agentic Workflow Landscape: My 'PAR' for Making Sense of the Complexity - Medium",
+          "snippet": "A framework for understanding agentic workflows, organized around Perception, Planning, Reasoning, and Execution.",
+          "domain": "luluyan.medium.com"
+        },
+        {
+          "url": "https://odsc.medium.com/when-to-use-agentic-ai-workflows-and-when-simpler-is-better-3be18a5d59ad",
+          "title": "When to Use Agentic AI Workflows - and When Simpler Is Better - ODSC",
+          "snippet": "Discusses how agentic workflows differ from standard workflows by giving a language model discretion, and when simpler approaches are preferable.",
+          "domain": "odsc.medium.com"
+        },
+        {
+          "url": "https://medium.com/netflix-techblog/a-human-augmenting-agentic-workflow-for-causal-inference-4623f0a9c5af",
+          "title": "A Human-Augmenting Agentic Workflow for Causal Inference - Netflix Tech Blog",
+          "snippet": "A production agentic workflow for observational causal inference under unconfoundedness, designed for software agents.",
+          "domain": "medium.com/netflix-techblog"
+        },
+        {
+          "url": "https://medium.com/@visrow/multi-agent-agentic-workflow-ad91e0d56273",
+          "title": "Multi Agent Agentic Workflow - Medium",
+          "snippet": "Describes agentic workflows as modular, intelligent systems of interconnected agents collaborating like a team.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@quokkalabs135/how-agentic-ai-handles-complex-workflows-in-production-92e6c86c2859",
+          "title": "How Agentic AI Handles Complex Workflows in Production - Quokka Labs",
+          "snippet": "Focuses on mature agentic workflow automation in production, including recovery paths and partial execution awareness, treating failure as input.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/codex/from-prompt-to-purpose-architecting-agentic-ai-workflows-for-autonomous-problem-solving-87c2c14afd1c",
+          "title": "From Prompt to Purpose: Architecting Agentic AI Workflows for Autonomous Problem Solving - Medium Codex",
+          "snippet": "Covers the anatomy of agentic workflows built around goal-oriented loops.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/generative-ai-revolution-ai-native-transformation/agentic-ai-engineering-the-blueprint-for-production-grade-ai-agents-20358468b0b1",
+          "title": "Agentic AI Engineering: The Blueprint for Production-Grade AI Agents - Medium",
+          "snippet": "Discusses Agentic Workflow Engineering as a discipline for structuring complex tasks into modular, multi-step, production-grade processes.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://medium.com/@sathishkraju/the-ai-agentic-workflow-patterns-that-actually-matter-in-2026-08955ac6f398",
+          "title": "The AI Agentic Workflow Patterns That Actually Matter in 2026 - Medium",
+          "snippet": "Seven agentic workflow patterns shaping production systems.",
+          "domain": "medium.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-012",
+      "query": "AI agent rollout failed enterprise",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://itsm.tools/ai-agent-deployment/",
+          "title": "AI Agent Research: 1 in 4 Deployments Aren't Paying Back - ITSM.tools",
+          "snippet": "AI agents fail in production for the same reasons any autonomous system fails: unclear access controls, no decision audit trail, and no rollback mechanisms.",
+          "domain": "itsm.tools"
+        },
+        {
+          "url": "https://aiassemblylines.com/post/enterprise-ai-agents-fail-production-2026",
+          "title": "Why Enterprise AI Pilots Fail Before Production: 5 Structural Causes - AI Assembly Lines",
+          "snippet": "Root causes cluster around three areas: data fragmentation, integration complexity, and governance gaps, none of which surface during a pilot.",
+          "domain": "aiassemblylines.com"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=gCIZNY8FFEk&vl=en",
+          "title": "Why AI Agent Deployments Fail - YouTube",
+          "snippet": "A video discussion on preventing expensive AI implementation failures, drawn from real enterprise deployment lessons.",
+          "domain": "youtube.com"
+        },
+        {
+          "url": "https://agility-at-scale.com/ai/agents/enterprise-ai-agent-challenges-and-troubleshooting/",
+          "title": "Enterprise AI Agent Challenges: How to Diagnose and Overcome - Agility at Scale",
+          "snippet": "Deployments fail from four root causes: people, data, governance, or incentives. This guide helps diagnose the actual blocker.",
+          "domain": "agility-at-scale.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1s02oaq/enterprise_ai_has_an_80_failure_rate_the_models/",
+          "title": "Enterprise AI Has an 80% Failure Rate. The Models Aren't the Problem - r/AI_Agents",
+          "snippet": "Community discussion noting that every enterprise has an AI demo that impressed the board, but most never make it to production.",
+          "domain": "reddit.com/r/AI_Agents"
+        },
+        {
+          "url": "https://forgeworkflows.com/blog/enterprise-ai-agent-deployment-failures-2026",
+          "title": "Why Enterprise AI Agent Deployments Keep Failing - ForgeWorkflows",
+          "snippet": "Deployments are failing not from lack of capability, but from missing governance and poor orchestration design.",
+          "domain": "forgeworkflows.com"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/most-enterprise-ai-agents-fail-production-here-precisely-avin-jain-mmroc",
+          "title": "Most Enterprise AI Agents Fail in Production. Here Is Precisely Why - LinkedIn (Avin Jain)",
+          "snippet": "Three consistent failure buckets: retrieval failures, orchestration breakdowns, and evaluation gaps.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://blaxel.ai/blog/how-to-deploy-ai-agents",
+          "title": "How to Deploy AI Agents to Production: A Complete Guide - Blaxel",
+          "snippet": "Success or failure hinges on the surrounding system, not just the model, especially for coding agents and PR review agents.",
+          "domain": "blaxel.ai"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-013",
+      "query": "agent pilot abandoned production",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 7,
+      "hits": [
+        {
+          "url": "https://www.linkedin.com/posts/eugeniasurucinski_95-of-ai-pilots-get-abandoned-before-reaching-activity-7469606648605597697-MQXY",
+          "title": "95% of AI pilots get abandoned before reaching production - Eugenia Surucinski (LinkedIn)",
+          "snippet": "95% of AI pilots get abandoned before reaching production, not because the technology fails, but because nobody planned for what comes after the pilot.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://naveeratech.com/blog/why-86-of-ai-agent-pilots-never-reach-production-and-how-to-be-in-the-14/",
+          "title": "Why 86% of AI Agent Pilots Never Reach Production - Naveera Tech",
+          "snippet": "Most pilots stall due to lack of governance and workflow orchestration.",
+          "domain": "naveeratech.com"
+        },
+        {
+          "url": "https://zenvanriel.com/ai-engineer-blog/ai-agent-scaling-gap-pilot-production-2026/",
+          "title": "Why 78% of AI Agent Pilots Never Reach Production - Zen van Riel",
+          "snippet": "A March 2026 survey reveals the gap from pilot to production is organizational, not technical.",
+          "domain": "zenvanriel.com"
+        },
+        {
+          "url": "https://www.kore.ai/blog/why-enterprise-ai-fails-in-production",
+          "title": "Why AI Pilots Succeed but Production Fails - Kore.AI",
+          "snippet": "The problem is not the model, it is the operational infrastructure around it.",
+          "domain": "kore.ai"
+        },
+        {
+          "url": "https://hendricks.ai/insights/why-ai-agent-projects-fail-production",
+          "title": "Why AI Agent Projects Never Reach Production - Hendricks",
+          "snippet": "Only 11% of organizations have AI agents in production; Gartner projects 40%+ will fail by 2027.",
+          "domain": "hendricks.ai"
+        },
+        {
+          "url": "https://grail.computer/guides/how-to-go-from-pilot-to-production-with-ai-agents",
+          "title": "How to Go from Pilot to Production with AI Agents - Grail Computer",
+          "snippet": "A practical guide on ownership, controls, and measurable value to cross from pilot to production.",
+          "domain": "grail.computer"
+        },
+        {
+          "url": "https://www.salesforce.com/blog/ai-agent-production-tips/",
+          "title": "Salesforce Blog - AI Agent Production Tips",
+          "snippet": "Lessons from 5 companies that successfully shipped agents to production.",
+          "domain": "salesforce.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-014",
+      "query": "Anthropic news index recurring agent coverage",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 10,
+      "hits": [
+        {
+          "url": "https://www.anthropic.com/economic-index",
+          "title": "Anthropic Economic Index: Understanding AI's Effects on the Economy",
+          "snippet": "The Anthropic Economic Index reveals the shape of AI adoption across the world, with explorable data behind research on how people are using AI.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://www.anthropic.com/research/measuring-agent-autonomy",
+          "title": "Measuring AI Agent Autonomy in Practice - Anthropic",
+          "snippet": "Findings show agents are used in risky domains but not yet at scale. Most agent actions on their public API are low-risk and reversible, particularly in software engineering.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://arxiv.org/html/2602.17753v1",
+          "title": "The 2025 AI Agent Index: Documenting Technical and Safety... - arXiv",
+          "snippet": "An in-depth index providing information on 30 agentic systems across 6 categories: legal, technical capabilities, autonomy and control, ecosystem, and more.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://www.anthropic.com/research/AI-fluency-index",
+          "title": "Anthropic Education Report: The AI Fluency Index",
+          "snippet": "Anthropic's AI Fluency Index measures 11 observable behaviors across thousands of Claude.ai conversations to understand how people develop AI fluency.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://www.mindstudio.ai/blog/anthropic-ai-exposure-index-explained",
+          "title": "What Is the Anthropic AI Exposure Index? - MindStudio",
+          "snippet": "Explains how Anthropic's AI Exposure Index maps 800+ occupations against real Claude usage data, and what it means for careers.",
+          "domain": "mindstudio.ai"
+        },
+        {
+          "url": "https://aiagentindex.mit.edu/data/2025-AI-Agent-Index.pdf",
+          "title": "The 2025 AI Agent Index (PDF) - MIT",
+          "snippet": "Notes that 15 of 30 agents reference AI safety frameworks like Anthropic's Responsible Scaling Policy, OpenAI's Preparedness Framework, or Microsoft's Responsible AI standards.",
+          "domain": "aiagentindex.mit.edu"
+        },
+        {
+          "url": "https://medialyst.ai/agents",
+          "title": "Medialyst for Agents - REST API and MCP Server",
+          "snippet": "A tool to search news, create media-list workflows, enrich journalists, and share review links over a REST API or remote MCP server.",
+          "domain": "medialyst.ai"
+        },
+        {
+          "url": "https://www.cosmicjs.com/blog/anthropic-agent-autonomy-research-content-operations",
+          "title": "What Anthropic's Agent Autonomy Research Means for Your Operations - Cosmic JS",
+          "snippet": "Explores how Anthropic's research on AI agents gaining autonomy and trust in real-world workflows impacts content operations.",
+          "domain": "cosmicjs.com"
+        },
+        {
+          "url": "https://www.thealgorithmicbridge.com/p/anthropics-new-ai-report-accidentally",
+          "title": "Anthropic's New AI Report Accidentally Reveals an Industry-Sized Gap - The Algorithmic Bridge",
+          "snippet": "Analysis of Anthropic's report on Labor market impacts of AI: A new measure and early evidence, and a new metric built by the authors.",
+          "domain": "thealgorithmicbridge.com"
+        },
+        {
+          "url": "https://aiweekly.co/ai-news-today/anthropic-news",
+          "title": "Anthropic AI News - Latest Updates, Tracker and Coverage - AI Weekly",
+          "snippet": "A live tracker of Anthropic AI news with mention trends and newsletter coverage, tracking Anthropic across 480+ issues of AI Weekly.",
+          "domain": "aiweekly.co"
+        }
+      ]
+    },
+    {
+      "strategy_id": "agent-015",
+      "query": "LangChain blog agent case studies",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 7,
+      "hits": [
+        {
+          "url": "https://www.langchain.com/blog",
+          "title": "LangChain Blog",
+          "snippet": "The official LangChain blog featuring tutorials, case studies, and technical insights on building AI agents with LangSmith, Deep Agents, LangGraph, and LangChain.",
+          "domain": "langchain.com"
+        },
+        {
+          "url": "https://docs.langchain.com/oss/javascript/langgraph/case-studies",
+          "title": "Case Studies - LangGraph Docs",
+          "snippet": "A curated list of companies using LangGraph with their success stories, compiled from public sources.",
+          "domain": "docs.langchain.com"
+        },
+        {
+          "url": "https://www.langchain.com/blog/top-5-langgraph-agents-in-production-2024",
+          "title": "Top 5 LangGraph Agents in Production 2024 - LangChain",
+          "snippet": "Highlights how Replit, LinkedIn, Uber, Elastic, and AppFolio built production-ready AI agents with LangGraph in 2024, including real case studies and lessons learned.",
+          "domain": "langchain.com"
+        },
+        {
+          "url": "https://www.langchain.com/stateofaiagents",
+          "title": "State of AI Agents Report - LangChain",
+          "snippet": "A survey of over 1,300 professionals revealing 2024 trends in AI agents.",
+          "domain": "langchain.com"
+        },
+        {
+          "url": "https://www.langchain.com/customers",
+          "title": "LangChain Customer Stories",
+          "snippet": "Customer stories from companies using LangChain, LangSmith, and LangGraph for GenAI applications.",
+          "domain": "langchain.com"
+        },
+        {
+          "url": "https://www.muttdata.ai/case-study/2024-02-05-langchain",
+          "title": "Muttdata LangChain Case Study",
+          "snippet": "A crossover post about using LangSmith to build a Custom Evaluator.",
+          "domain": "muttdata.ai"
+        },
+        {
+          "url": "https://www.reddit.com/r/LangChain/comments/1tfdgqr/know_any_good_case_studies_or_resources_of_ai/",
+          "title": "Reddit Discussion - Know any good case studies or resources of AI agents?",
+          "snippet": "Community-sourced recommendations for AI agent case studies and learning resources.",
+          "domain": "reddit.com/r/LangChain"
+        }
+      ]
+    }
+  ]
+}

@@ -1,1 +1,1131 @@
-{"topics":[],"refresh_days":90,"strategies":[]}
+{
+  "_about": "Stage 1A Search Strategy DB — every search query this project has expanded from the seed topics (agent, mcp, prompt, skills, AX cases), with refresh-cycle metadata. Read by Stage 1B (Crawl Executor) as the input worklist; stamped by 1B with last_run_at / run_count / yield_count after each pass. Read by Stage 1D (Refresh Scheduler) to decide which queries are stale (age(last_updated) >= refresh_days). Paused (not deleted) when a query stops yielding. Schema lives in agents/stage1/1A_strategy_builder.md.",
+  "topics": [
+    "agent",
+    "mcp",
+    "prompt",
+    "skills",
+    "AX cases"
+  ],
+  "refresh_days": 90,
+  "strategies": [
+    {
+      "strategy_id": "agent-001",
+      "topic": "agent",
+      "query": "AI agent cost savings enterprise case study",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-002",
+      "topic": "agent",
+      "query": "autonomous agent productivity gains company metrics",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-003",
+      "topic": "agent",
+      "query": "agentic workflow cycle time reduction production",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-004",
+      "topic": "agent",
+      "query": "AI agent deployment ROI enterprise results",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-005",
+      "topic": "agent",
+      "query": "Salesforce Agentforce customer results",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 7
+    },
+    {
+      "strategy_id": "agent-006",
+      "topic": "agent",
+      "query": "LangChain production agent metrics",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-007",
+      "topic": "agent",
+      "query": "CrewAI enterprise deployment case",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-008",
+      "topic": "agent",
+      "query": "AutoGen multi-agent case study",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-009",
+      "topic": "agent",
+      "query": "site:substack.com AI agent case study",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "substack"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-010",
+      "topic": "agent",
+      "query": "site:reddit.com autonomous agent enterprise",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-011",
+      "topic": "agent",
+      "query": "site:medium.com agentic workflow production",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "medium"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-012",
+      "topic": "agent",
+      "query": "AI agent rollout failed enterprise",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "agent-013",
+      "topic": "agent",
+      "query": "agent pilot abandoned production",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 7
+    },
+    {
+      "strategy_id": "agent-014",
+      "topic": "agent",
+      "query": "Anthropic news index - recurring agent coverage",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://www.anthropic.com/news"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 10
+    },
+    {
+      "strategy_id": "agent-015",
+      "topic": "agent",
+      "query": "LangChain blog - agent case studies",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://www.langchain.com/blog"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 7
+    },
+    {
+      "strategy_id": "mcp-001",
+      "topic": "mcp",
+      "query": "MCP integration engineering velocity",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-002",
+      "topic": "mcp",
+      "query": "Model Context Protocol developer productivity",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 5
+    },
+    {
+      "strategy_id": "mcp-003",
+      "topic": "mcp",
+      "query": "MCP server deployment time savings",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-004",
+      "topic": "mcp",
+      "query": "Anthropic MCP adoption enterprise",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-005",
+      "topic": "mcp",
+      "query": "Cursor MCP integration case study",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-006",
+      "topic": "mcp",
+      "query": "Replit MCP implementation",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-007",
+      "topic": "mcp",
+      "query": "site:substack.com Model Context Protocol",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "substack"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-008",
+      "topic": "mcp",
+      "query": "site:reddit.com MCP integration",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-009",
+      "topic": "mcp",
+      "query": "MCP adoption challenges enterprise",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-010",
+      "topic": "mcp",
+      "query": "Model Context Protocol limitations production",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "mcp-011",
+      "topic": "mcp",
+      "query": "Anthropic blog - MCP announcements",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://www.anthropic.com/news"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 6
+    },
+    {
+      "strategy_id": "mcp-012",
+      "topic": "mcp",
+      "query": "Model Context Protocol spec site",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://modelcontextprotocol.io/"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "prompt-001",
+      "topic": "prompt",
+      "query": "prompt engineering quality improvement metrics",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 9
+    },
+    {
+      "strategy_id": "prompt-002",
+      "topic": "prompt",
+      "query": "prompt optimization ROI enterprise",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 10
+    },
+    {
+      "strategy_id": "prompt-003",
+      "topic": "prompt",
+      "query": "prompt template reuse productivity",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 10
+    },
+    {
+      "strategy_id": "prompt-004",
+      "topic": "prompt",
+      "query": "OpenAI prompt engineering case study",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 10
+    },
+    {
+      "strategy_id": "prompt-005",
+      "topic": "prompt",
+      "query": "Promptbase enterprise deployment",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "prompt-006",
+      "topic": "prompt",
+      "query": "site:substack.com prompt engineering",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "substack"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "prompt-007",
+      "topic": "prompt",
+      "query": "site:reddit.com prompt engineering",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "prompt-008",
+      "topic": "prompt",
+      "query": "site:medium.com prompt optimization",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "medium"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "prompt-009",
+      "topic": "prompt",
+      "query": "prompt engineering ROI disappointing",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "prompt-010",
+      "topic": "prompt",
+      "query": "prompt brittleness production failure",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "prompt-011",
+      "topic": "prompt",
+      "query": "Prompt Engineering Guide index",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://www.promptingguide.ai"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 6
+    },
+    {
+      "strategy_id": "prompt-012",
+      "topic": "prompt",
+      "query": "OpenAI blog - prompt technique posts",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://openai.com/blog"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-001",
+      "topic": "skills",
+      "query": "Claude Skills workflow automation",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-002",
+      "topic": "skills",
+      "query": "agent skills reuse productivity",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-003",
+      "topic": "skills",
+      "query": "skill library enterprise deployment",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-004",
+      "topic": "skills",
+      "query": "Anthropic Skills enterprise case",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-005",
+      "topic": "skills",
+      "query": "Claude Skills customer results",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-006",
+      "topic": "skills",
+      "query": "site:substack.com Claude Skills",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "substack"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-007",
+      "topic": "skills",
+      "query": "site:reddit.com Anthropic skills",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-008",
+      "topic": "skills",
+      "query": "agent skills maintenance overhead",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-009",
+      "topic": "skills",
+      "query": "skill library scalability issues",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-010",
+      "topic": "skills",
+      "query": "Anthropic news - Skills announcements",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://www.anthropic.com/news"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "skills-011",
+      "topic": "skills",
+      "query": "Claude documentation - Skills",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://docs.claude.com"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-001",
+      "topic": "AX cases",
+      "query": "AI transformation ROI enterprise case study",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-002",
+      "topic": "AX cases",
+      "query": "enterprise AI rollout productivity metrics",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-003",
+      "topic": "AX cases",
+      "query": "generative AI deployment cost savings",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-004",
+      "topic": "AX cases",
+      "query": "GenAI enterprise value realization",
+      "query_type": "workflow_metric",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-005",
+      "topic": "AX cases",
+      "query": "Microsoft Copilot ROI study",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-006",
+      "topic": "AX cases",
+      "query": "GitHub Copilot enterprise productivity",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-007",
+      "topic": "AX cases",
+      "query": "Klarna AI customer service results",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-008",
+      "topic": "AX cases",
+      "query": "JPMorgan LLM Suite deployment",
+      "query_type": "entity",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-009",
+      "topic": "AX cases",
+      "query": "site:substack.com AI transformation case study",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "substack"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-010",
+      "topic": "AX cases",
+      "query": "site:medium.com generative AI ROI",
+      "query_type": "platform_scoped",
+      "target_platforms": [
+        "medium"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-011",
+      "topic": "AX cases",
+      "query": "enterprise AI transformation stalled",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-012",
+      "topic": "AX cases",
+      "query": "generative AI ROI disappointing survey",
+      "query_type": "failure",
+      "target_platforms": [
+        "web",
+        "reddit"
+      ],
+      "seed_source_urls": [],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    },
+    {
+      "strategy_id": "ax-013",
+      "topic": "AX cases",
+      "query": "Harvard Business Review - AI transformation index",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://hbr.org"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 7
+    },
+    {
+      "strategy_id": "ax-014",
+      "topic": "AX cases",
+      "query": "McKinsey QuantumBlack insights index",
+      "query_type": "broad_seed",
+      "target_platforms": [
+        "web"
+      ],
+      "seed_source_urls": [
+        "https://www.mckinsey.com/capabilities/quantumblack/our-insights"
+      ],
+      "status": "active",
+      "created_at": "2026-06-26",
+      "last_run_at": "2026-06-28",
+      "last_updated_at": "2026-06-26",
+      "next_refresh_due": "2026-09-24",
+      "run_count": 1,
+      "yield_count": 8
+    }
+  ]
+}

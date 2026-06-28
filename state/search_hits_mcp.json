@@ -1,0 +1,664 @@
+{
+  "_about": "Stage 1B search-only hits for the 'mcp' topic. URL+title+snippet captured from Google; pages were NOT crawled. Use as input for deeper crawl/extraction.",
+  "topic": "mcp",
+  "run_date": "2026-06-28",
+  "source_db": "state/search_strategy_db.json",
+  "total_queries": 12,
+  "total_hits": 91,
+  "results": [
+    {
+      "strategy_id": "mcp-001",
+      "query": "MCP integration engineering velocity",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://abnormal.ai/blog/abnormal-accelerates-developer-velocity-with-mcp",
+          "title": "How Abnormal Accelerates Developer Velocity with MCP",
+          "snippet": "Case study on how Abnormal AI built a secure, in-house Model Context Protocol (MCP) integrating tools like GitHub to accelerate developer velocity.",
+          "domain": "abnormal.ai"
+        },
+        {
+          "url": "https://newsletter.pragmaticengineer.com/p/mcp-deepdive",
+          "title": "Building MCP Servers in the Real World — The Pragmatic Engineer",
+          "snippet": "A deep dive into how engineers and teams use MCP servers in practice—from debugging to working with legacy systems and giving non-developers more access.",
+          "domain": "newsletter.pragmaticengineer.com"
+        },
+        {
+          "url": "https://www.keboola.com/blog/mcp-server-integration-one-month-of-ai-powered-data-engineering",
+          "title": "MCP Server Integration: One Month of AI-Powered Data Engineering — Keboola",
+          "snippet": "An account of MCP enabling conversational data engineering, where the barrier between human intent and technical implementation dissolves.",
+          "domain": "keboola.com"
+        },
+        {
+          "url": "https://mcpmanager.ai/blog/best-mcp-gateway-for-engineering/",
+          "title": "12 Best MCP Gateways for Engineering Teams (2026) — MCP Manager",
+          "snippet": "A guide comparing the top MCP gateway options available for engineering teams in 2026.",
+          "domain": "mcpmanager.ai"
+        },
+        {
+          "url": "https://www.invatechs.com/mcp-server-development",
+          "title": "MCP Server Development & AI Integration — Invatechs",
+          "snippet": "Highlights how a unified protocol for connecting services boosts engineering velocity through faster prototyping, internal tooling, and testing.",
+          "domain": "invatechs.com"
+        },
+        {
+          "url": "https://www.anthropic.com/engineering/code-execution-with-mcp",
+          "title": "Code Execution with MCP: Building More Efficient AI Agents — Anthropic",
+          "snippet": "Anthropic's engineering post on using MCP as an open standard for connecting AI agents to external systems and tools.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://jellyfish.co/blog/what-will-mcp-mean-for-engineering-management/",
+          "title": "What Will MCP Mean for Engineering Management? — Jellyfish",
+          "snippet": "Explores MCP's implications for engineering management, including how it exposes services to LLMs so they can call APIs to accomplish tasks.",
+          "domain": "jellyfish.co"
+        },
+        {
+          "url": "https://natoma.ai/blog/model-context-protocol-how-one-standard-eliminates-months-of-ai-integration-work",
+          "title": "Model Context Protocol: Eliminate Months of Integrating AI — Natoma.ai",
+          "snippet": "Discusses how MCP replaces 3–5 months of custom AI integration with 15–30 minute configuration, enabling enterprises to deploy 50+ AI tools rapidly.",
+          "domain": "natoma.ai"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-002",
+      "query": "Model Context Protocol developer productivity",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 5,
+      "hits": [
+        {
+          "url": "https://devops.com/how-model-context-protocol-mcp-is-fueling-the-next-era-of-developer-productivity/",
+          "title": "How Model Context Protocol (MCP) is Fueling the Next Era of Developer Productivity — DevOps.com",
+          "snippet": "By standardizing the interaction between AI agents and tools, MCP addresses critical fragmentation issues and enhances developer productivity.",
+          "domain": "devops.com"
+        },
+        {
+          "url": "https://modelcontextprotocol.io/docs/getting-started/intro",
+          "title": "Model Context Protocol – Official Documentation",
+          "snippet": "The official MCP docs note that MCP reduces development time and complexity when building or integrating with AI applications and agents.",
+          "domain": "modelcontextprotocol.io"
+        },
+        {
+          "url": "https://cloud.google.com/discover/what-is-model-context-protocol",
+          "title": "What is Model Context Protocol (MCP)? A Guide — Google Cloud",
+          "snippet": "Explains how the MCP standard allows LLMs to safely access external data and use tools, making AI more powerful and reliable.",
+          "domain": "cloud.google.com"
+        },
+        {
+          "url": "https://blog.devgenius.io/boosting-developer-productivity-with-claude-and-model-context-protocol-mcp-servers-1d1851a8d55e",
+          "title": "Boosting Developer Productivity with Claude and MCP Servers — DevGenius (Medium)",
+          "snippet": "Explores the latest and most useful MCP servers that integrate with Claude to supercharge developer workflows.",
+          "domain": "blog.devgenius.io"
+        },
+        {
+          "url": "https://www.anthropic.com/news/model-context-protocol",
+          "title": "Introducing the Model Context Protocol — Anthropic",
+          "snippet": "The original announcement describing MCP as an open standard that enables developers to build secure, two-way connections between data sources and AI-powered tools.",
+          "domain": "anthropic.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-003",
+      "query": "MCP server deployment time savings",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://github.com/meridianmindx/meridian-mcp-deploy",
+          "title": "meridian-mcp-deploy (GitHub)",
+          "snippet": "Reports 22x faster deployment: team was spending 3–5 hours deploying each MCP server; now takes 2 minutes with meridian-mcp-deploy.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://www.anthropic.com/engineering/code-execution-with-mcp",
+          "title": "Code execution with MCP: building more efficient AI agents — Anthropic",
+          "snippet": "Highlights a 98.7% reduction in token usage (from 150,000 tokens down to 2,000 tokens); Cloudflare reported similar findings.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://medium.com/devops-ai-decoded/10-mcp-servers-revolutionizing-devops-in-2026-deploy-like-a-pro-no-expertise-needed-752f345918ed",
+          "title": "10 MCP Servers Revolutionizing DevOps in 2026 — Medium",
+          "snippet": "Targets high-toil DevOps areas with measurable savings: IaC ~40% time savings, incidents ~30% faster MTTR.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://www.mintmcp.com/blog/enterprise-mcp-deployment-guide-engineering-teams",
+          "title": "Enterprise MCP Deployment Guide — MintMCP",
+          "snippet": "Organizations report ~30% time savings in information gathering and synthesis tasks for MCP deployments.",
+          "domain": "mintmcp.com"
+        },
+        {
+          "url": "https://kaslin.rocks/podcast-assistant-mcp/",
+          "title": "Podcast Assistant MCP — kaslin.rocks",
+          "snippet": "Saves ~1 hour per week in podcast publishing using a podcast assistant MCP server.",
+          "domain": "kaslin.rocks"
+        },
+        {
+          "url": "https://mcpmanager.ai/blog/secure-mcp-server-deployment-at-scale-the-complete-guide/",
+          "title": "Secure MCP Deployment at Scale — MCP Manager",
+          "snippet": "Guide on identity, provisioning, and governance for deploying MCP servers at scale.",
+          "domain": "mcpmanager.ai"
+        },
+        {
+          "url": "https://mcpservers.org/servers/krittaprot/mcp-deployment-aws",
+          "title": "MCP Deployment on AWS — mcpservers.org",
+          "snippet": "Notes on startup times (35s–2min) for enterprise MCP deployments on AWS.",
+          "domain": "mcpservers.org"
+        },
+        {
+          "url": "https://circleci.com/blog/deploy-mcp-servers-to-aws-app-runner/",
+          "title": "CI/CD with MCP on AWS App Runner — CircleCI",
+          "snippet": "Complete CI/CD pipeline using FastMCP + CircleCI for deploying MCP servers to AWS App Runner.",
+          "domain": "circleci.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-004",
+      "query": "Anthropic MCP adoption enterprise",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.anthropic.com/news/model-context-protocol",
+          "title": "Introducing the Model Context Protocol — Anthropic",
+          "snippet": "Anthropic's original MCP announcement, including pre-built MCP servers for popular enterprise systems like Google Drive, Slack, GitHub, and Git.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://www.synvestable.com/model-context-protocol.html",
+          "title": "Model Context Protocol for Enterprises: Implementation Guide — Synvestable",
+          "snippet": "A complete enterprise adoption guide covering MCP specification, tool call payloads, and observability. Notes that 28% of Fortune 500 companies have deployed MCP.",
+          "domain": "synvestable.com"
+        },
+        {
+          "url": "https://www.atolio.com/blog/enterprise-mcp-limitations-risk-scale",
+          "title": "Enterprise MCP: Limitations, Security Risks, and Scale Considerations — Atolio",
+          "snippet": "Discusses MCP's explosive adoption since Anthropic introduced it in late 2024. Explores limitations, security risks, and the fact that for most organizations, the adoption path runs through AI agents.",
+          "domain": "atolio.com"
+        },
+        {
+          "url": "https://guptadeepak.com/the-complete-guide-to-model-context-protocol-mcp-enterprise-adoption-market-trends-and-implementation-strategies/",
+          "title": "Model Context Protocol (MCP): Enterprise Adoption Guide — Deepak Gupta",
+          "snippet": "Market projection data: the MCP ecosystem is projected to grow from $1.2 billion (2022) to $4.5 billion (2025), with estimates suggesting 90% of enterprises will adopt in some form.",
+          "domain": "guptadeepak.com"
+        },
+        {
+          "url": "https://www.cdata.com/blog/2026-year-enterprise-ready-mcp-adoption",
+          "title": "2026: The Year for Enterprise-Ready MCP Adoption — CData Software",
+          "snippet": "Analysts project the MCP market to reach $10.3B by 2025 with a 34.6% CAGR. Positions 2026 as the tipping point for enterprise-ready adoption.",
+          "domain": "cdata.com"
+        },
+        {
+          "url": "https://epinium.com/en/blog/mcp-anthropic-2/",
+          "title": "Anthropic MCP: What Brands Need to Know — Epinium",
+          "snippet": "Highlights that OpenAI, Google, Microsoft, and AWS all adopted MCP through 2025, making it the AI integration backbone—not just an Anthropic-specific feature.",
+          "domain": "epinium.com"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/transforming-enterprise-ai-integration-architecture-mcp-ramachandran-xhtue",
+          "title": "Transforming Enterprise AI Integration — LinkedIn Article",
+          "snippet": "Describes MCP as a transformative open standard designed to streamline and standardize AI integration across enterprise systems.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://medium.com/@anilAmbharii/empowering-enterprise-ai-leveraging-anthropics-model-context-protocol-mcp-e4a95b64e844",
+          "title": "Leveraging Anthropic's Model Context Protocol — Medium (Anil Prasad)",
+          "snippet": "Positions MCP as a critical enabler for enterprises seeking to harness the power of LLMs through standardized integration.",
+          "domain": "medium.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-005",
+      "query": "Cursor MCP integration case study",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.truefoundry.com/blog/cursor-ai-mcp-server-configuration",
+          "title": "Cursor AI MCP Server Configuration: A Complete Setup Guide — TrueFoundry",
+          "snippet": "A comprehensive guide covering MCP server configuration in Cursor, including setup, authentication, and best practices for building agent-driven workflows.",
+          "domain": "truefoundry.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/cursor/comments/1j3nnbz/explain_actual_real_life_use_cases_where_mcp/",
+          "title": "Explain actual real life use cases where MCP servers actually help you — Reddit r/cursor",
+          "snippet": "A community discussion on real-world MCP use cases, explaining how MCP servers let Cursor (or other AI apps) automate tasks you'd otherwise do manually.",
+          "domain": "reddit.com/r/cursor"
+        },
+        {
+          "url": "https://www.apideck.com/blog/unlocking-ai-potential-how-to-quickly-set-up-a-cursor-mcp-server",
+          "title": "Unlocking AI's potential: How to quickly set up a Cursor MCP Server — APIDeck",
+          "snippet": "A quick-start tutorial on setting up an MCP server in Cursor and leveraging the Model Context Protocol to standardize LLM integration with external tools.",
+          "domain": "apideck.com"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/gavinching_using-the-cursor-ide-and-wondering-how-to-activity-7302738352116576256-SzwV",
+          "title": "How to integrate MCP with Cursor IDE — Gavin Ching on LinkedIn",
+          "snippet": "A hands-on case-study-style tutorial showcasing connecting Cursor to a Linear workspace and coding directly from Linear tickets—a concrete integration example.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://forum.cursor.com/t/guide-maximizing-coding-efficiency-with-mcp-sequential-thinking-openrouter-ai/66461",
+          "title": "Maximizing Coding Efficiency with MCP Sequential Thinking + OpenRouter AI — Cursor Forum",
+          "snippet": "A detailed guide on integrating MCP Sequential Thinking with OpenRouter AI to create a dynamic, continuously improving coding environment.",
+          "domain": "forum.cursor.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/mcp/comments/1iibeu7/quick_video_for_getting_started_with_mcp_in_cursor/",
+          "title": "Quick Video for Getting Started with MCP in Cursor — Reddit r/mcp",
+          "snippet": "A beginner-friendly video resource with a community tip: use claude-3.5-sonnet for best MCP compatibility in Cursor.",
+          "domain": "reddit.com/r/mcp"
+        },
+        {
+          "url": "https://natoma.ai/blog/how-to-enabling-mcp-in-cursor",
+          "title": "Cursor MCP Setup Guide (2026): Connect Jira, GitHub & More — Natoma AI",
+          "snippet": "An up-to-date guide on enabling MCP in Cursor and connecting to popular services like Jira and GitHub, covering Cursor's native MCP server support.",
+          "domain": "natoma.ai"
+        },
+        {
+          "url": "https://medium.com/@lovelyndavid/mcp-in-cursor-ai-02e3d96eb593",
+          "title": "MCP in Cursor AI — Medium",
+          "snippet": "An overview article explaining how MCP servers connect AI models to data sources and tools for file operations, database interactions, and web tasks.",
+          "domain": "medium.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-006",
+      "query": "Replit MCP implementation",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://docs.replit.com/platforms/mcp-server",
+          "title": "Replit MCP Server — Replit Docs",
+          "snippet": "Replit's official MCP server lets external clients create, update, and manage full-stack applications on Replit using the Model Context Protocol.",
+          "domain": "docs.replit.com"
+        },
+        {
+          "url": "https://docs.replit.com/build/connect-via-mcp",
+          "title": "Connect via MCP — Replit Docs",
+          "snippet": "Replit ships with a curated list of MCP servers for popular services like Stripe, Linear, Notion, Sentry. Connecting is a single sign-in click.",
+          "domain": "docs.replit.com"
+        },
+        {
+          "url": "https://docs.replit.com/learn/model-context-protocol",
+          "title": "Model Context Protocol – Replit Docs",
+          "snippet": "Explains MCP servers vs. Skills and how they extend AI agents in the Replit environment.",
+          "domain": "docs.replit.com"
+        },
+        {
+          "url": "https://docs.replit.com/references/mcp/overview",
+          "title": "MCP List – Replit Docs",
+          "snippet": "A catalog of MCP servers that Replit Agent connects to for external tools and data sources.",
+          "domain": "docs.replit.com"
+        },
+        {
+          "url": "https://github.com/NOVA-3951/Replit-MCP",
+          "title": "Replit MCP Server by NOVA-3951 (GitHub)",
+          "snippet": "A community MCP server enabling AI assistants to interact with Replit workspaces directly, without needing an agentic browser.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/repl-it_were-excited-to-announce-custom-mcp-integration-activity-7403851625297354753-n-1X",
+          "title": "Replit Agent Integrates with MCP (LinkedIn announcement)",
+          "snippet": "Official announcement of custom MCP integration for Replit Agent.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/replit/comments/1jd3rae/i_love_replit_its_intuitive_but_what_is_the/",
+          "title": "Future of Replit regarding MCP, Cursor? — Reddit r/replit",
+          "snippet": "Community discussion comparing Replit to other AI IDEs in the context of MCP support.",
+          "domain": "reddit.com/r/replit"
+        },
+        {
+          "url": "https://www.reddit.com/r/replit/comments/1sopyfm/replit_claude_shell_mcpcli/",
+          "title": "Replit + Claude (shell) + MCP/CLI — Reddit r/replit",
+          "snippet": "Developer experience combining Replit with Claude shell and MCP/CLI tools.",
+          "domain": "reddit.com/r/replit"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-007",
+      "query": "site:substack.com Model Context Protocol",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://niallmcnulty.substack.com/p/the-model-context-protocol",
+          "title": "The Model Context Protocol — Niall McNulty",
+          "snippet": "MCP is an open standard that lets AI models connect directly to external data sources and tools, rather than relying on isolated, siloed integrations.",
+          "domain": "niallmcnulty.substack.com"
+        },
+        {
+          "url": "https://bhavishyapandit9.substack.com/p/mcp-the-context-system-that-makes",
+          "title": "Model Context Protocol: The Context System That Makes AI Smarter — Bhavishya Pandit",
+          "snippet": "Explores how MCP standardizes the way AI models (especially LLMs) integrate with and share data across external tools and data sources.",
+          "domain": "bhavishyapandit9.substack.com"
+        },
+        {
+          "url": "https://cobusgreyling.substack.com/p/model-context-protocol-mcp-a-primer",
+          "title": "Model Context Protocol (MCP): A Primer — Cobus Greyling",
+          "snippet": "A framework that standardizes how AI models represent and process context for more consistent and reliable behavior.",
+          "domain": "cobusgreyling.substack.com"
+        },
+        {
+          "url": "https://lex.substack.com/p/ai-how-stripe-block-and-paypal-are",
+          "title": "AI: How Stripe, Block, and PayPal are Using Model Context Protocol — Lex",
+          "snippet": "Highlights real-world adoption of Anthropic's open framework for seamless interactions between AI models and products at major fintech companies.",
+          "domain": "lex.substack.com"
+        },
+        {
+          "url": "https://iaee.substack.com/p/model-context-protocol-intuitively",
+          "title": "Model Context Protocol — Intuitively and Exhaustively Explained — IAEE",
+          "snippet": "A deep dive explaining MCP as a new standard allowing AI to communicate with external systems.",
+          "domain": "iaee.substack.com"
+        },
+        {
+          "url": "https://dataintelligenceplatform.substack.com/p/model-context-protocol-for-ai-applications",
+          "title": "Model Context Protocol for AI Applications — Data Intelligence Platform",
+          "snippet": "Discusses MCP as a standardized approach gaining momentum for obtaining context in a fast and predictable way.",
+          "domain": "dataintelligenceplatform.substack.com"
+        },
+        {
+          "url": "https://chinai.substack.com/p/chinai-338-model-context-protocol",
+          "title": "ChinAI #338: Model Context Protocol — One Year In — ChinAI",
+          "snippet": "Compares MCP to a USB port for AI applications, reflecting on the protocol one year after Anthropic's launch.",
+          "domain": "chinai.substack.com"
+        },
+        {
+          "url": "https://mlpills.substack.com/p/issue-98-introduction-to-the-model",
+          "title": "Issue #98 — Introduction to the Model Context Protocol (MCP) — ML Pills",
+          "snippet": "Breaks down the three foundational primitives that MCP servers expose to AI clients.",
+          "domain": "mlpills.substack.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-008",
+      "query": "site:reddit.com MCP integration",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.reddit.com/r/ClaudeAI/comments/1ioxu5r/still_confused_about_how_mcp_works_heres_the/",
+          "title": "Still Confused About How MCP Works? Here's the Explanation — r/ClaudeAI",
+          "snippet": "MCP (Model Context Protocol) server is an interface for LLMs to access tools and data. It's a protocol created by Anthropic specifically to...",
+          "domain": "reddit.com/r/ClaudeAI"
+        },
+        {
+          "url": "https://www.reddit.com/r/mcp/comments/1kal8a1/is_anyone_building_agents_with_mcp_or_is_it_just/",
+          "title": "Is anyone building agents with MCP (or is it just for Claude/Cursor...) — r/mcp",
+          "snippet": "Users discuss building agents with MCP—found it great for getting started quickly, with lots of integrations and tool interfaces ready to go.",
+          "domain": "reddit.com/r/mcp"
+        },
+        {
+          "url": "https://www.reddit.com/r/mcp/",
+          "title": "Model Context Protocol (MCP) — Subreddit",
+          "snippet": "The Model Context Protocol is an open standard that enables developers to build secure, two-way connections between their data sources and AI tools.",
+          "domain": "reddit.com/r/mcp"
+        },
+        {
+          "url": "https://www.reddit.com/r/mcp/comments/1mw7ck9/what_mcp_or_other_integrations_have_you_added_to/",
+          "title": "What MCP or other integrations have you added to your AI...? — r/mcp",
+          "snippet": "Discussion about turning AI into a self-executing marketing and sales assistant that acts instantly on contextual data.",
+          "domain": "reddit.com/r/mcp"
+        },
+        {
+          "url": "https://www.reddit.com/r/LLMDevs/comments/1jbqegg/model_context_protocol_mcp_clearly_explained/",
+          "title": "Model Context Protocol (MCP) Clearly Explained — r/LLMDevs",
+          "snippet": "MCP is a standardized protocol that connects AI agents to various external tools and data sources.",
+          "domain": "reddit.com/r/LLMDevs"
+        },
+        {
+          "url": "https://www.reddit.com/r/mcp/comments/1j7btok/has_anyone_connected_a_model_context_protocol_mcp/",
+          "title": "Has Anyone Connected a Model Context Protocol (MCP) System to...? — r/mcp",
+          "snippet": "Using LangChain as middleware works well—it has adapters for both the MCP protocol and various AI frameworks.",
+          "domain": "reddit.com/r/mcp"
+        },
+        {
+          "url": "https://www.reddit.com/r/mcp/comments/1s4gdo2/are_companies_actually_struggling_with_mcp/",
+          "title": "Are companies actually struggling with MCP integrations, or...? — r/mcp",
+          "snippet": "Discussion exploring the MCP space and trying to understand where the real pain points are in integration.",
+          "domain": "reddit.com/r/mcp"
+        },
+        {
+          "url": "https://www.reddit.com/r/Rag/comments/1j4xmbw/what_is_mcp_and_how_does_it_relate_to_rag/",
+          "title": "What is MCP and how does it relate to RAG? — r/Rag",
+          "snippet": "MCP is a protocol—a way to build integrations between applications with a foundation model and other resources.",
+          "domain": "reddit.com/r/Rag"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-009",
+      "query": "MCP adoption challenges enterprise",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://blog.christianposta.com/enterprise-challenges-with-mcp-adoption/",
+          "title": "Enterprise Challenges With MCP Adoption — Christian Posta",
+          "snippet": "Enterprises frown on anonymous client registration because it opens up challenges around monitoring, auditing, and revocation.",
+          "domain": "blog.christianposta.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/mcp/comments/1npaqmn/biggest_challenges_for_enterprise_mcp_adoption/",
+          "title": "Biggest challenges for enterprise MCP adoption — Reddit",
+          "snippet": "Community discussion covering practical pain points like verbose logging for MCP traffic and integrating MCP logs into existing systems.",
+          "domain": "reddit.com/r/mcp"
+        },
+        {
+          "url": "https://airia.com/why-enterprise-mcp-adoption-stalls-and-how-to-fix-it/",
+          "title": "Overcoming Security Barriers to Enterprise MCP Adoption — Airia",
+          "snippet": "Addresses critical security challenges including tool poisoning, data leakage, and strategies to fix MCP implementation stalls.",
+          "domain": "airia.com"
+        },
+        {
+          "url": "https://www.descope.com/blog/post/enterprise-mcp",
+          "title": "5 Enterprise Challenges in Deploying Remote MCP Servers — Descope",
+          "snippet": "Covers the five key blockers: availability, security, permissions, and SSO integration for enterprise MCP adoption.",
+          "domain": "descope.com"
+        },
+        {
+          "url": "https://portkey.ai/blog/the-hidden-challenge-of-mcp-adoption-in-enterprises",
+          "title": "The hidden challenge of MCP adoption in enterprises in 2025 — Portkey",
+          "snippet": "Highlights IT teams struggling to track what exists, end users not knowing which servers are safe, and growing security concerns.",
+          "domain": "portkey.ai"
+        },
+        {
+          "url": "https://www.flybridge.com/ideas/the-bow/the-4-big-myths-holding-back-mcp-adoption-and-how-to-fix-them",
+          "title": "The 4 Big Myths Holding Back MCP Adoption — Flybridge",
+          "snippet": "Tackles misconceptions around security, scalability, and other myths slowing MCP adoption.",
+          "domain": "flybridge.com"
+        },
+        {
+          "url": "https://k2view.com/blog/mcp-enterprise",
+          "title": "MCP Enterprise Deployments — K2View",
+          "snippet": "Discusses challenges facing agentic RAG systems in enterprise MCP deployments, including LLM credibility concerns.",
+          "domain": "k2view.com"
+        },
+        {
+          "url": "https://www.cdata.com/blog/2026-year-enterprise-ready-mcp-adoption",
+          "title": "2026: The Year for Enterprise-Ready MCP Adoption — CData",
+          "snippet": "Covers challenges like tool overexposure, context window limitations, and thoughtful adoption strategies.",
+          "domain": "cdata.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-010",
+      "query": "Model Context Protocol limitations production",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://medium.com/aimonks/model-context-protocol-mcp-key-limitations-for-regulated-industries-fb351cfae1a1",
+          "title": "Model Context Protocol (MCP): Key limitations for regulated industries",
+          "snippet": "Addresses limitations including protocol mismatch (translating MCP into formats legacy systems understand can introduce data integrity risks) and high implementation cost for regulated industries.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://eccenca.com/blog/article/model-context-protocol-mcp-definitely-a-milestone-for-ai-integration-but-what-are-the-limitations",
+          "title": "MCP Explained: Benefits, Limitations & the Role of Knowledge Graphs — eccenca",
+          "snippet": "Comprehensive overview of MCP's benefits and limitations, arguing that knowledge graphs are essential for reliable, scalable AI integration in production environments.",
+          "domain": "eccenca.com"
+        },
+        {
+          "url": "https://arxiv.org/html/2511.20920v1",
+          "title": "Securing the Model Context Protocol (MCP): Risks, Controls, and Production Concerns — arXiv",
+          "snippet": "Academic paper emphasizing that security is critical when MCP connects to production systems—e.g., connecting an agent directly to a database introduces serious risks.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://media.defense.gov/2026/Jun/02/2003943289/-1/-1/0/CSI_MCP_SECURITY.PDF",
+          "title": "MCP Security Design Considerations (PDF)",
+          "snippet": "A government/defense report outlining observed security concerns and patterns from real-world deployments, with practical recommendations for organizations.",
+          "domain": "media.defense.gov"
+        },
+        {
+          "url": "https://www.redhat.com/en/blog/model-context-protocol-mcp-understanding-security-risks-and-controls",
+          "title": "Understanding Security Risks and Controls — Red Hat",
+          "snippet": "Practical guide to the security risks encountered with MCP in production and how to mitigate them.",
+          "domain": "redhat.com"
+        },
+        {
+          "url": "https://www.thoughtworks.com/en-us/insights/blog/generative-ai/model-context-protocol-beneath-hype",
+          "title": "Getting Beneath the Hype — Thoughtworks",
+          "snippet": "A critical, engineering-minded perspective on MCP, examining what the protocol actually standardizes and where it falls short.",
+          "domain": "thoughtworks.com"
+        },
+        {
+          "url": "https://cloud.google.com/discover/what-is-model-context-protocol",
+          "title": "What is MCP? — Google Cloud",
+          "snippet": "Google's overview of how MCP standardizes safe access to external data and tools for LLMs.",
+          "domain": "cloud.google.com"
+        },
+        {
+          "url": "https://www.databricks.com/blog/what-is-model-context-protocol",
+          "title": "What is the Model Context Protocol? — Databricks",
+          "snippet": "Data-platform perspective on how MCP connects AI applications with external data sources, tools, and systems.",
+          "domain": "databricks.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-011",
+      "query": "Anthropic blog MCP announcements",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 6,
+      "hits": [
+        {
+          "url": "https://www.anthropic.com/news/model-context-protocol",
+          "title": "Introducing the Model Context Protocol — Anthropic",
+          "snippet": "The original November 2024 announcement where Anthropic open-sourced the Model Context Protocol (MCP), a new standard for connecting AI assistants to the systems where data lives.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://www.anthropic.com/engineering/code-execution-with-mcp",
+          "title": "Code execution with MCP: building more efficient AI agents — Anthropic Engineering Blog",
+          "snippet": "A detailed engineering blog post about building more efficient AI agents using MCP. Since launching MCP in November 2024, adoption has been rapid, with the community building thousands of MCP servers and SDKs available for all major platforms.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation",
+          "title": "Donating the Model Context Protocol — Anthropic",
+          "snippet": "Anthropic announced donating MCP to the Linux Foundation's new Agentic AI Foundation, where it will join other projects like goose by Block.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://blog.modelcontextprotocol.io/",
+          "title": "Model Context Protocol Blog (Official MCP Blog)",
+          "snippet": "The official MCP blog covering protocol updates, including the release candidate for MCP 2026-07-28—the largest revision since launch.",
+          "domain": "blog.modelcontextprotocol.io"
+        },
+        {
+          "url": "https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/",
+          "title": "One Year of MCP: November 2025 Spec Release",
+          "snippet": "A retrospective on MCP's first year, along with full details of the November 2025 specification release.",
+          "domain": "blog.modelcontextprotocol.io"
+        },
+        {
+          "url": "https://www.marktechpost.com/2025/11/08/anthropic-turns-mcp-agents-into-code-first-systems-with-code-execution-with-mcp-approach/",
+          "title": "Anthropic Turns MCP Agents Into Code First Systems — MarkTechPost",
+          "snippet": "Analysis of Anthropic's proposal to place MCP inside a code execution loop.",
+          "domain": "marktechpost.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "mcp-012",
+      "query": "Model Context Protocol spec site",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://modelcontextprotocol.io/specification/2025-06-18",
+          "title": "Specification – Model Context Protocol",
+          "snippet": "The official MCP specification page (version 2025-06-18). MCP is an open protocol that enables seamless integration between LLM applications and external data sources and tools.",
+          "domain": "modelcontextprotocol.io"
+        },
+        {
+          "url": "https://github.com/modelcontextprotocol",
+          "title": "Model Context Protocol – GitHub",
+          "snippet": "The official GitHub organization for MCP, hosting SDKs, reference implementations, and the protocol's source repositories.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://github.com/modelcontextprotocol/modelcontextprotocol",
+          "title": "Specification and documentation for MCP – GitHub",
+          "snippet": "The repo containing the specification and documentation for the Model Context Protocol. Official docs are built with Mintlify and hosted at modelcontextprotocol.io.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://www.anthropic.com/news/model-context-protocol",
+          "title": "Introducing the Model Context Protocol – Anthropic",
+          "snippet": "Anthropic's announcement post. Describes MCP as an open standard enabling developers to build secure, two-way connections between data sources and AI-powered tools.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://modelcontextprotocol.io/specification/draft/server/tools",
+          "title": "Tools – Model Context Protocol Spec (Draft)",
+          "snippet": "Part of the spec detailing the Tools capability—how servers expose tools that language models can invoke to interact with external systems.",
+          "domain": "modelcontextprotocol.io"
+        },
+        {
+          "url": "https://modelcontextprotocol.io/specification/2025-03-26/server/tools",
+          "title": "Tools – MCP Spec (2025-03-26)",
+          "snippet": "The previous spec version's Tools section, useful for version comparison.",
+          "domain": "modelcontextprotocol.io"
+        },
+        {
+          "url": "https://cloud.google.com/discover/what-is-model-context-protocol",
+          "title": "What is Model Context Protocol (MCP)? – Google Cloud",
+          "snippet": "A Google Cloud guide explaining how the MCP standard allows LLMs to safely access external data and use tools.",
+          "domain": "cloud.google.com"
+        },
+        {
+          "url": "https://www.databricks.com/blog/what-is-model-context-protocol",
+          "title": "What is the Model Context Protocol (MCP)? – Databricks",
+          "snippet": "A Databricks blog post explaining MCP as an open standard for connecting AI applications with external data sources, tools, and systems.",
+          "domain": "databricks.com"
+        }
+      ]
+    }
+  ]
+}

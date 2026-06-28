@@ -1,0 +1,7 @@
+# Tarballs — release artifacts, not source. Individual files are committed instead.
+*.tar.gz
+
+# macOS / editor noise
+.DS_Store
+*.swp
+*~

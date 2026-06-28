@@ -1,0 +1,637 @@
+{
+  "_about": "Stage 1B search-only hits for the 'skills' topic (Anthropic Claude Skills focus). URL+title+snippet captured from Google; pages were NOT crawled. Use as input for deeper crawl/extraction.",
+  "topic": "skills",
+  "run_date": "2026-06-28",
+  "source_db": "state/search_strategy_db.json",
+  "total_queries": 11,
+  "total_hits": 88,
+  "results": [
+    {
+      "strategy_id": "skills-001",
+      "query": "Claude Skills workflow automation",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://code.claude.com/docs/en/skills",
+          "title": "Extend Claude with skills - Claude Code Docs",
+          "snippet": "Official guide on creating, managing, and sharing skills to extend Claude's capabilities, including custom commands and bundled skills.",
+          "domain": "code.claude.com"
+        },
+        {
+          "url": "https://github.com/ComposioHQ/awesome-claude-skills",
+          "title": "ComposioHQ/awesome-claude-skills - GitHub",
+          "snippet": "A curated collection of reusable Claude Skills. Each skill is a folder with a SKILL.md that teaches the agent how to handle a specific class of tasks.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://yu-wenhao.com/en/blog/claude-skills-guide/",
+          "title": "Claude Skills Guide: Build AI Workflow Automation From Scratch",
+          "snippet": "A practical, example-driven guide covering how skills work, the three-layer loading architecture, and trigger mechanics.",
+          "domain": "yu-wenhao.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/DigitalMarketing/comments/1snt8az/using_claude_code_skills_to_build_specialized/",
+          "title": "Using Claude Code Skills to build specialized workflows - Reddit",
+          "snippet": "Community-shared setup guide and lessons learned for building specialized workflows with Claude Code Skills.",
+          "domain": "reddit.com/r/DigitalMarketing"
+        },
+        {
+          "url": "https://mcpmarket.com/tools/skills/workflow-automation",
+          "title": "Workflow Automation Claude Code Skill - MCP Market",
+          "snippet": "A ready-made skill for building resilient AI agents using Temporal, n8n, and Inngest for durable execution and orchestration.",
+          "domain": "mcpmarket.com"
+        },
+        {
+          "url": "https://snyk.io/articles/top-claude-skills-developers/",
+          "title": "Top 8 Claude Skills for Developers - Snyk",
+          "snippet": "Covers the full developer workflow: planning, code implementation, testing, code review, and web performance.",
+          "domain": "snyk.io"
+        },
+        {
+          "url": "https://dev.to/suraj_khaitan_f893c243958/i-tried-100-claude-skills-these-are-the-best-1m4a",
+          "title": "I Tried 100 Claude Skills. These Are The Best. - DEV Community",
+          "snippet": "First-hand review of which Skills are genuinely worth installing and the workflow patterns that make a difference.",
+          "domain": "dev.to"
+        },
+        {
+          "url": "https://skills.make.com/",
+          "title": "Make Skills for Claude",
+          "snippet": "Official Make.com skills that let Claude handle app discovery, module setup, connections, and deployment within Make workflows.",
+          "domain": "skills.make.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-002",
+      "query": "agent skills reuse productivity",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.linkedin.com/pulse/why-agent-skills-next-productivity-unlock-igor-ron%C4%8Devi%C4%87-k1c7f",
+          "title": "Why agent skills are the next productivity unlock - LinkedIn",
+          "snippet": "Skills are a way to reuse prompts in a more structured and meaningful way, thinking carefully about the problem domain to drive productivity gains.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
+          "title": "Equipping agents for the real world with Agent Skills - Anthropic",
+          "snippet": "How Anthropic builds AI agents with practical capabilities through modular skills, enabling them to handle complex real-world tasks.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://addozhang.medium.com/agent-skills-deep-dive-building-a-reusable-skills-ecosystem-for-ai-agents-ccb1507b2c0f",
+          "title": "Building a Reusable Skills Ecosystem for AI Agents - Addo Zhang (Medium)",
+          "snippet": "Explores Agent Skills as an open format specification for empowering AI agents with new capabilities through discoverable instructions.",
+          "domain": "addozhang.medium.com"
+        },
+        {
+          "url": "https://arxiv.org/html/2512.17102v1",
+          "title": "Reinforcement Learning for Self-Improving Agent with Skill Library - arXiv",
+          "snippet": "Explores implementing skill libraries that allow agents to learn, validate, and apply new skills.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://www.researchgate.net/publication/400576541_Agent_Skills_A_Data-Driven_Analysis_of_Claude_Skills_for_Extending_Large_Language_Model_Functionality",
+          "title": "Agent Skills: A Data-Driven Analysis of Claude Skills - ResearchGate",
+          "snippet": "Analyzes agent skills as reusable, program-like modules that extend LLM functionality with defined triggering conditions.",
+          "domain": "researchgate.net"
+        },
+        {
+          "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices",
+          "title": "Skill authoring best practices - Claude Platform Docs",
+          "snippet": "Practical guide for writing concise, well-structured, and tested Skills that Claude can effectively use.",
+          "domain": "platform.claude.com"
+        },
+        {
+          "url": "https://github.com/VoltAgent/awesome-agent-skills",
+          "title": "VoltAgent/awesome-agent-skills - GitHub",
+          "snippet": "A curated collection of 1000+ agent skills from official dev teams and the community, compatible with Claude Code, Codex, Gemini CLI, Cursor, and more.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://docs.gumloop.com/core-concepts/skills",
+          "title": "Agent Skills - Gumloop Docs",
+          "snippet": "Skills are reusable knowledge packs that teach agents how to do specific work and get better over time.",
+          "domain": "docs.gumloop.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-003",
+      "query": "skill library enterprise deployment",
+      "query_type": "workflow_metric",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/enterprise",
+          "title": "Skills for enterprise - Claude Platform Docs",
+          "snippet": "A guide for enterprise admins and architects covering how to vet, evaluate, deploy, and manage Agent Skills across an organization at scale.",
+          "domain": "platform.claude.com"
+        },
+        {
+          "url": "https://www.gend.co/blog/deploy-manage-claude-skills",
+          "title": "Deploy Claude Skills at scale: admin, directory, open standard - Gend.co",
+          "snippet": "Explains how Claude Skills now deploy like mature enterprise features with central admin, a partner directory, and an open, portable spec.",
+          "domain": "gend.co"
+        },
+        {
+          "url": "https://github.com/anthropics/skills",
+          "title": "anthropics/skills: Public repository for Agent Skills - GitHub",
+          "snippet": "Anthropic's official public repository of Agent Skills: folders of instructions, scripts, and resources that Claude loads dynamically to improve performance on specialized tasks.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/agent-framework/agents/skills",
+          "title": "Agent Skills - Microsoft Learn",
+          "snippet": "Describes Agent Skills as portable packages of instructions, scripts, and resources that give agents specialized capabilities and domain expertise.",
+          "domain": "learn.microsoft.com"
+        },
+        {
+          "url": "https://windowsforum.com/threads/claude-skills-modular-versioned-ai-capabilities-for-enterprise.386468/",
+          "title": "Claude Skills: Modular, Versioned AI Capabilities for Enterprise - Windows Forum",
+          "snippet": "Covers the ability to upload new Skill versions, mark them as latest, or pin deployments to specific version identifiers, and inspect Skill metadata.",
+          "domain": "windowsforum.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/AISEOInsider/comments/1ob2lyj/claude_skills_how_to_package_your_ai_workflows/",
+          "title": "Claude Skills: How To Package Your AI Workflows - Reddit",
+          "snippet": "Walks through building a Claude Skills library, noting that the Enterprise tier includes Claude Skills while the Free tier does not.",
+          "domain": "reddit.com/r/AISEOInsider"
+        },
+        {
+          "url": "https://strapi.io/blog/what-are-agent-skills-and-how-to-use-them",
+          "title": "What Are Agent Skills and How To Use Them - Strapi",
+          "snippet": "Explains how Agent Skills are folders of instructions that package repeated workflows, specialized knowledge, or new capabilities for AI agents.",
+          "domain": "strapi.io"
+        },
+        {
+          "url": "https://blog.serghei.pl/posts/agent-skills-101/",
+          "title": "Agent Skills 101: A Practical Guide for Engineers - Serghei's Blog",
+          "snippet": "A practical engineering guide on how to build, design, and deploy Agent Skills using the open standard for teaching AI agents team workflows.",
+          "domain": "blog.serghei.pl"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-004",
+      "query": "Anthropic Skills enterprise case",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
+          "title": "Equipping agents for the real world with Agent Skills - Anthropic",
+          "snippet": "Engineering blog post detailing how Anthropic builds AI agents with modular skills that enable them to handle complex real-world tasks.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://anthropic.skilljar.com/driving-enterprise-adoption-of-claude",
+          "title": "Driving Enterprise Adoption of Claude - Anthropic Skilljar",
+          "snippet": "Training resource covering the three-phase framework Anthropic's most successful enterprise customers use to transform their organizations with Claude.",
+          "domain": "anthropic.skilljar.com"
+        },
+        {
+          "url": "https://www-cdn.anthropic.com/e5c9de22bc8884089970bd262ca0c8b952cb9136.pdf",
+          "title": "Building Trusted AI in the Enterprise - Anthropic (PDF)",
+          "snippet": "Anthropic-produced PDF guide covering enterprise use cases such as agent assist, data analysis, and document processing.",
+          "domain": "www-cdn.anthropic.com"
+        },
+        {
+          "url": "https://optif.ai/media/articles/anthropic-claude-skills/",
+          "title": "Anthropic's Claude Skills: What SMB Sales Teams Need to Know - Optif.ai",
+          "snippet": "Analysis covering customer case studies (Rakuten, Canva, Box), verifying productivity claims and comparing Anthropic's Skills architecture against OpenAI Custom GPTs.",
+          "domain": "optif.ai"
+        },
+        {
+          "url": "https://www.reddit.com/r/ClaudeAI/comments/1r3hr40/anthropic_released_32_page_detailed_guide_on/",
+          "title": "Anthropic Released 32-Page Detailed Guide on Building Claude Skills - Reddit",
+          "snippet": "Community discussion around Anthropic's official 32-page guide on building Claude Skills.",
+          "domain": "reddit.com/r/ClaudeAI"
+        },
+        {
+          "url": "https://www.anthropic.com/research/how-ai-is-transforming-work-at-anthropic",
+          "title": "How AI Is Transforming Work at Anthropic - Anthropic Research",
+          "snippet": "Anthropic's own internal research on productivity gains, noting that employees developed strategic AI delegation skills.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://www.anthropic.com/research/AI-assistance-coding-skills",
+          "title": "How AI Assistance Impacts the Formation of Coding Skills - Anthropic",
+          "snippet": "Research finding that developers using AI assistance scored 17% lower on comprehension tests when learning new coding libraries.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://www.infoq.com/news/2026/02/ai-coding-skill-formation/",
+          "title": "Anthropic Study: AI Coding Assistance Reduces Developer Skill - InfoQ",
+          "snippet": "Coverage of Anthropic's research on AI assistance and the formation of coding skills.",
+          "domain": "infoq.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-005",
+      "query": "Claude Skills customer results",
+      "query_type": "entity",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.reddit.com/r/CustomerSuccess/comments/1tk5m29/claude_skills_and_improving_efficiency/",
+          "title": "Claude Skills and Improving Efficiency - r/CustomerSuccess (Reddit)",
+          "snippet": "A Customer Success professional shares how Claude generates a Daily Call Prep Brief every morning at 8:30am, reviewing their calendar and pulling insights from relevant customer Slack channels.",
+          "domain": "reddit.com/r/CustomerSuccess"
+        },
+        {
+          "url": "https://aiblewmymind.substack.com/p/claude-skills-36-examples",
+          "title": "39 Claude Skills Examples to Transform How You Work",
+          "snippet": "A collection of 39 real-world Claude Skills examples, including one that builds deep customer persona profiles with problems, triggers, language patterns, and decision journey mapping.",
+          "domain": "aiblewmymind.substack.com"
+        },
+        {
+          "url": "https://medium.com/@DaveThackeray/claude-skills-workshop-how-to-get-the-right-results-every-time-73f250500ec7",
+          "title": "Claude Skills Workshop: How to Get the Right Results, Every Time! (Medium)",
+          "snippet": "A practical workshop-style guide on getting consistent results from Claude Skills, including using a Skills Seeker app cloned from GitHub to scrape Stripe refund-related pages.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://www.vitally.io/post/claude-skills-for-csms-scaled-cs",
+          "title": "Claude Skills for CSMs: How AI Can Help You Scale - Vitally",
+          "snippet": "Vitally breaks down how Customer Success Managers (CSMs) can use Claude Skills to speed up and automate their CS workflows. Includes a downloadable skill.",
+          "domain": "vitally.io"
+        },
+        {
+          "url": "https://customer.io/learn/how-we-work/claude-skills-for-marketers",
+          "title": "Claude Skills for Marketers - Customer.io",
+          "snippet": "Customer.io shares free and buildable Claude Skills for lifecycle and growth marketers, covering campaign strategy, performance analysis, segmentation, and copy generation.",
+          "domain": "customer.io"
+        },
+        {
+          "url": "https://www.enterpret.com/blog/claude-skill-for-customer-feedback-analysis-a-guide",
+          "title": "Claude Skill for Customer Feedback Analysis: A Guide - Enterpret",
+          "snippet": "A detailed guide on building a Claude Skill that surfaces customer feedback at the moment of decision, including a SKILL.md example walkthrough and integration tips.",
+          "domain": "enterpret.com"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/alexturkovic_ai-claudeai-productivity-activity-7446877698154536961-9VK0",
+          "title": "Unlock Claude with Skills for Customer Success - LinkedIn (Alex Turkovic)",
+          "snippet": "A LinkedIn post emphasizing that Claude Skills are a big unlock for customer-facing work, especially when starting from a structured baseline.",
+          "domain": "linkedin.com"
+        },
+        {
+          "url": "https://awesomeskill.ai/skill/coreyhaines31-marketingskills-customer-research",
+          "title": "customer-research - Claude Skill (Awesome Skills)",
+          "snippet": "A dedicated customer-research skill that helps users systematically uncover and understand customer needs, behaviors, and preferences.",
+          "domain": "awesomeskill.ai"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-006",
+      "query": "site:substack.com Claude Skills",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://ruben.substack.com/p/claude-skills",
+          "title": "Claude Skills - by Ruben Hassid - How to AI",
+          "snippet": "A quick-start guide: your first 30 minutes with Claude Skills, including using Cowork's skill-creator and building your first skill.",
+          "domain": "ruben.substack.com"
+        },
+        {
+          "url": "https://aiblewmymind.substack.com/p/claude-skills-ai-write-like-you",
+          "title": "The Claude Skills That Finally Made AI Write Like Me",
+          "snippet": "How to build Claude Skills for writing - Voice DNA, Audience Profiles, and Business Context - so AI output matches your voice.",
+          "domain": "aiblewmymind.substack.com"
+        },
+        {
+          "url": "https://corpwaters.substack.com/p/the-ultimate-guide-to-claude-code",
+          "title": "The Ultimate Guide to Claude Code Skills - Corporate Waters",
+          "snippet": "Explains that skills are essentially prompt injections - markdown files in your ~/.claude/skills/ directory loaded into Claude's context.",
+          "domain": "corpwaters.substack.com"
+        },
+        {
+          "url": "https://aimaker.substack.com/p/claude-skills-playbook",
+          "title": "The Claude Skills Playbook I Wish I Had on Day One - The AI Maker",
+          "snippet": "Describes Claude Skills as reusable instruction packages: repeatable procedures or SOPs you can run again and again.",
+          "domain": "aimaker.substack.com"
+        },
+        {
+          "url": "https://departmentofproduct.substack.com/p/what-are-claude-skills-and-how-can",
+          "title": "What Are Claude Skills and How Can You Use Them for Product... - Department of Product",
+          "snippet": "Claude Skills explained as folders containing information Claude loads when relevant, with a product management angle.",
+          "domain": "departmentofproduct.substack.com"
+        },
+        {
+          "url": "https://joseparreogarcia.substack.com/p/claude-code-skills-explained",
+          "title": "What the Docs Don't Tell You About Claude Code Skills",
+          "snippet": "A deeper dive into the .claude/skills/ directory structure and practical tips beyond the official docs.",
+          "domain": "joseparreogarcia.substack.com"
+        },
+        {
+          "url": "https://theaicorner1.substack.com/p/claude-skills-complete-guide-2026",
+          "title": "Claude Skills 2.0: Complete Guide 2026 - The AI Corner",
+          "snippet": "Called the highest-ROI thing in the Claude ecosystem - covers templates, evals, and A/B testing for skills.",
+          "domain": "theaicorner1.substack.com"
+        },
+        {
+          "url": "https://lazyai.substack.com/p/what-are-skills-in-claude",
+          "title": "What Are SKILLS in Claude? - by Ankur Jhaveri - Lazy AI",
+          "snippet": "A beginner-friendly explanation: a Skill is a set of written instructions you give Claude once, that it then reuses.",
+          "domain": "lazyai.substack.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-007",
+      "query": "site:reddit.com Anthropic skills",
+      "query_type": "platform_scoped",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.reddit.com/r/ClaudeAI/comments/1r3hr40/anthropic_released_32_page_detailed_guide_on/",
+          "title": "Anthropic Released 32 Page Detailed Guide on Building Claude Skills - r/ClaudeAI",
+          "snippet": "Recommends building small, focused micro-skills that chain together instead of one giant monolithic skill, and always hand-editing the skills Claude generates.",
+          "domain": "reddit.com/r/ClaudeAI"
+        },
+        {
+          "url": "https://www.reddit.com/r/ClaudeAI/comments/1oalv0o/what_are_claude_skills_really/",
+          "title": "What are Claude Skills really? - r/ClaudeAI",
+          "snippet": "Describes skills as essentially a weaker agent system, fitting Anthropic's careful company style.",
+          "domain": "reddit.com/r/ClaudeAI"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1ohc97r/claude_agent_skills_are_really_awesome_and_much/",
+          "title": "Claude Agent Skills are really awesome, and much better with MCP... - r/AI_Agents",
+          "snippet": "Examples of personal assistant skills like event management (fetching emails, calendar events, scheduling meetings) and meeting prep.",
+          "domain": "reddit.com/r/AI_Agents"
+        },
+        {
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1pk7cbr/youve_probably_seen_anthropics_skills_i_built/",
+          "title": "I built Skills for any LLM - r/AI_Agents",
+          "snippet": "An Anthropic-style Skills infrastructure that runs with any LLM, letting you bundle metadata, instructions, and references.",
+          "domain": "reddit.com/r/AI_Agents"
+        },
+        {
+          "url": "https://www.reddit.com/r/ClaudeCode/comments/1rj8xao/anthropic_updated_the_skillcreator_skill_has/",
+          "title": "Anthropic updated the skill-creator skill - r/ClaudeCode",
+          "snippet": "Discussion of the new eval loop process (improve, test, review, repeat) for tightening a skill over iterations.",
+          "domain": "reddit.com/r/ClaudeCode"
+        },
+        {
+          "url": "https://www.reddit.com/r/Anthropic/comments/1phrhs2/agent_skills_am_i_missing_something_or_is_it_just/",
+          "title": "Agent Skills - Am I missing something or is it just conditional context... - r/Anthropic",
+          "snippet": "Community reflections on whether Skills are essentially conditional context injection.",
+          "domain": "reddit.com/r/Anthropic"
+        },
+        {
+          "url": "https://www.reddit.com/r/claudeskills/",
+          "title": "r/claudeskills - Subreddit",
+          "snippet": "A dedicated subreddit describing skills as folders of instructions, scripts, and resources that Claude loads dynamically to improve performance on specialized tasks.",
+          "domain": "reddit.com/r/claudeskills"
+        },
+        {
+          "url": "https://www.reddit.com/r/Anthropic/comments/1rl9yk2/why_skills_not_ragmcp_are_the_future_of_agents/",
+          "title": "Why Skills, not RAG/MCP, are the future of Agents - r/Anthropic",
+          "snippet": "Discusses Anthropic splitting Skills into two distinct categories, each with its own evaluation priority.",
+          "domain": "reddit.com/r/Anthropic"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-008",
+      "query": "agent skills maintenance overhead",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://addozhang.medium.com/agent-skills-deep-dive-building-a-reusable-skills-ecosystem-for-ai-agents-ccb1507b2c0f",
+          "title": "Building a Reusable Skills Ecosystem for AI Agents - Addo Zhang (Medium)",
+          "snippet": "Directly addresses the pain points of agent skills, including maintenance difficulties (modifying one feature requires refactoring the entire skill) and context explosion where prompts become too long and costs skyrocket.",
+          "domain": "addozhang.medium.com"
+        },
+        {
+          "url": "https://www.ability.ai/blog/ai-agent-maintenance-ownership",
+          "title": "AI agent maintenance: the critical skill teams skip in 2026 - Ability.ai",
+          "snippet": "Focuses on why AI agent maintenance is the most critical skill teams overlook, and how to move from prompts to jobs with a clear ownership model.",
+          "domain": "ability.ai"
+        },
+        {
+          "url": "https://www.reddit.com/r/AgentsOfAI/comments/1ri5lt6/how_much_does_your_agent_actually_cost_to_keep/",
+          "title": "How much does your agent actually cost to keep alive - Reddit (r/AgentsOfAI)",
+          "snippet": "Community discussion on the ongoing operational overhead and cost of maintaining AI agents.",
+          "domain": "reddit.com/r/AgentsOfAI"
+        },
+        {
+          "url": "https://www.reddit.com/r/ClaudeAI/comments/1ppw38d/agent_skills_is_now_an_open_standard/",
+          "title": "Agent Skills is now an open standard - Reddit (r/ClaudeAI)",
+          "snippet": "Discussion on skills vs. MCP (Model Context Protocol), touching on the overhead of managing skills versus tool-calling approaches.",
+          "domain": "reddit.com/r/ClaudeAI"
+        },
+        {
+          "url": "https://agentskills.io/home",
+          "title": "Agent Skills Overview - agentskills.io",
+          "snippet": "Describes Agent Skills as a lightweight, open format for extending AI agent capabilities.",
+          "domain": "agentskills.io"
+        },
+        {
+          "url": "https://www.deeplearning.ai/courses/agent-skills-with-anthropic",
+          "title": "Agent Skills with Anthropic - DeepLearning.AI",
+          "snippet": "Course on how skills work, best practices for creating them, and managing them at scale.",
+          "domain": "deeplearning.ai"
+        },
+        {
+          "url": "https://agentskillshub.top/best/skill-management-tools/",
+          "title": "Skill & Agent Management: 12 Open-Source Tools Compared",
+          "snippet": "Compares desktop apps, CLI package managers, and session managers for organizing skills across 15+ AI coding tools.",
+          "domain": "agentskillshub.top"
+        },
+        {
+          "url": "https://github.com/infracost/agent-skills",
+          "title": "Infracost AI Agent Skills - GitHub",
+          "snippet": "Example of integrating specialized skills into AI coding agents with cost estimation workflows.",
+          "domain": "github.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-009",
+      "query": "skill library scalability issues",
+      "query_type": "failure",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://arxiv.org/html/2504.06188v2",
+          "title": "SkillFlow: Scalable and Efficient Agent Skill Retrieval System - arXiv",
+          "snippet": "An arXiv paper proposing a scalable system for efficient agent skill retrieval. Benchmarks tasks (SkillsBench) that are challenging for agent models, especially involving multi-step workflows where skill availability matters.",
+          "domain": "arxiv.org"
+        },
+        {
+          "url": "https://www.emergentmind.com/topics/skill-library",
+          "title": "Skill Library: Modular Capabilities - Emergent Mind",
+          "snippet": "Discusses challenges in extracting and abstracting skills from large-scale unstructured data, and how policy learning methods interact with skill library approaches.",
+          "domain": "emergentmind.com"
+        },
+        {
+          "url": "https://nestorup.com/blog/how-to-start-creating-a-skills-library-in-your-organization/",
+          "title": "How to Start Creating a Skills Library in Your Organization - Nestor",
+          "snippet": "A practical HR/talent management perspective on building a skills library to identify skill gaps, design meaningful learning paths, and map internal mobility with data.",
+          "domain": "nestorup.com"
+        },
+        {
+          "url": "https://addozhang.medium.com/agent-skills-deep-dive-building-a-reusable-skills-ecosystem-for-ai-agents-ccb1507b2c0f",
+          "title": "Building a Reusable Skills Ecosystem for AI Agents - Addo Zhang",
+          "snippet": "Directly addresses scalability problems: heavy maintenance burden, error-proneness, and poor scalability where adding more skills leads to a bloated list and degraded performance.",
+          "domain": "addozhang.medium.com"
+        },
+        {
+          "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices",
+          "title": "Skill Authoring Best Practices - Claude Platform Docs",
+          "snippet": "Anthropic's official guide providing practical authoring decisions for writing Skills that Claude can discover and use effectively, addressing information density and discoverability.",
+          "domain": "platform.claude.com"
+        },
+        {
+          "url": "https://dl.acm.org/doi/full/10.1145/3736751",
+          "title": "Maintainability and Scalability in Machine Learning - ACM",
+          "snippet": "Presents a catalogue of 41 maintainability and 13 scalability challenges and solutions across data and model engineering - relevant to ML-based skill library systems.",
+          "domain": "dl.acm.org"
+        },
+        {
+          "url": "https://openreview.net/pdf?id=RQuOPsCKnc",
+          "title": "More Skills, Worse Agents? Skill Shadowing Degrades Performance",
+          "snippet": "Key finding: performance degrades as skill libraries grow - by up to 21% when scaling from a small set of helpful skills to a 202-skill library. Introduces the concept of Skill Shadowing as a root cause.",
+          "domain": "openreview.net"
+        },
+        {
+          "url": "https://www.anthropic.com/research/AI-assistance-coding-skills",
+          "title": "How AI Assistance Impacts the Formation of Coding Skills - Anthropic",
+          "snippet": "An observational study on Claude.ai data examining how AI assistance affects human skill formation, touching on long-term skill development concerns.",
+          "domain": "anthropic.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-010",
+      "query": "Anthropic news Skills announcements",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
+          "title": "Equipping agents for the real world with Agent Skills - Anthropic",
+          "snippet": "Anthropic introduces Agent Skills, a new modular way to build specialized agents with practical capabilities for real-world tasks.",
+          "domain": "anthropic.com"
+        },
+        {
+          "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview",
+          "title": "Agent Skills - Claude Platform Docs",
+          "snippet": "Documentation describing pre-built Agent Skills for common document tasks (PowerPoint, Excel, Word, PDF) and how to create custom Skills.",
+          "domain": "platform.claude.com"
+        },
+        {
+          "url": "https://thenewstack.io/agent-skills-anthropics-next-bid-to-define-ai-standards/",
+          "title": "Agent Skills: Anthropic's Next Bid to Define AI Standards - The New Stack",
+          "snippet": "Reports that Anthropic is opening up its Agent Skills spec, following the same playbook that turned MCP (Model Context Protocol) into an industry standard. (Dec 18, 2025)",
+          "domain": "thenewstack.io"
+        },
+        {
+          "url": "https://siliconangle.com/2025/12/18/anthropic-makes-agent-skills-open-standard/",
+          "title": "Anthropic makes agent Skills an open standard - SiliconANGLE",
+          "snippet": "Covers Anthropic's announcement updating the Skills feature, enabling companies to teach Claude how to perform specialized tasks. (Dec 18, 2025)",
+          "domain": "siliconangle.com"
+        },
+        {
+          "url": "https://www.theverge.com/ai-artificial-intelligence/800868/anthropic-claude-skills-ai-agents",
+          "title": "Anthropic turns to 'skills' to make Claude more useful at work - The Verge",
+          "snippet": "The Verge reports on the new Skills feature for the Claude AI chatbot designed to make AI agents more useful.",
+          "domain": "theverge.com"
+        },
+        {
+          "url": "https://www.computerworld.com/article/4074959/claude-just-got-a-skill-upgrade-and-its-coming-for-your-workflows.html",
+          "title": "Claude just got a skill upgrade - Computerworld",
+          "snippet": "Discusses how the new Skills feature lets Claude autonomously perform structured tasks, signaling AI agents moving beyond simple chat.",
+          "domain": "computerworld.com"
+        },
+        {
+          "url": "https://medium.com/data-science-collective/anthropic-didnt-invent-skills-it-made-clear-how-to-use-the-ones-we-have-459e2823e5a5",
+          "title": "Anthropic Didn't Invent Skills - Medium (Data Science Collective)",
+          "snippet": "Analysis arguing the Skills announcement changed who can benefit from the architecture, rather than changing what AI can do.",
+          "domain": "medium.com"
+        },
+        {
+          "url": "https://www.linkedin.com/posts/janbeitner_claude-skills-customize-ai-for-your-workflows-activity-7386692236299907073-LeuY",
+          "title": "Jan Beitner, PhD on LinkedIn",
+          "snippet": "Describes Skills as detailed instructions for how an LLM should tackle a task, calling it a significant AI development.",
+          "domain": "linkedin.com"
+        }
+      ]
+    },
+    {
+      "strategy_id": "skills-011",
+      "query": "Claude documentation Skills",
+      "query_type": "broad_seed",
+      "run_at": "2026-06-28",
+      "hit_count": 8,
+      "hits": [
+        {
+          "url": "https://code.claude.com/docs/en/skills",
+          "title": "Extend Claude with skills - Claude Code Docs",
+          "snippet": "Official Claude Code documentation on how to create, manage, and share skills to extend Claude's capabilities, including custom commands and bundled skills.",
+          "domain": "code.claude.com"
+        },
+        {
+          "url": "https://github.com/anthropics/skills",
+          "title": "anthropics/skills: Public repository for Agent Skills - GitHub",
+          "snippet": "Anthropic's official public repository for Agent Skills. Skills teach Claude how to complete specific tasks in a repeatable way - such as creating documents with brand guidelines or analyzing data.",
+          "domain": "github.com"
+        },
+        {
+          "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview",
+          "title": "Agent Skills - Claude Platform Docs",
+          "snippet": "Describes Agent Skills as modular capabilities that extend Claude's functionality. Each Skill packages instructions, metadata, and optional resources like scripts.",
+          "domain": "platform.claude.com"
+        },
+        {
+          "url": "https://www.reddit.com/r/ClaudeAI/comments/1qjaq92/30_skills_collection_for_claude_code_dev_planning/",
+          "title": "30+ skills collection for Claude Code - Reddit",
+          "snippet": "A community-curated collection of 30+ Claude Code skills covering development workflows, planning, documentation, architecture, diagrams, and more.",
+          "domain": "reddit.com/r/ClaudeAI"
+        },
+        {
+          "url": "https://juejin.cn/post/7588034035286458383",
+          "title": "Claude Code Document-Skills plugin complete guide - Juejin",
+          "snippet": "A comprehensive Chinese-language guide to Claude Code's Document-Skills plugin, covering UI/frontend design, document processing (Word/PDF/PPT/Excel), creative design, and development tools.",
+          "domain": "juejin.cn"
+        },
+        {
+          "url": "https://zackproser.com/blog/claude-skills-internal-training",
+          "title": "Claude Skills as Self-Documenting Runbooks/Processes",
+          "snippet": "A blog post explaining Claude Skills as packaged workflows that teach Claude to accomplish specific tasks - useful for internal training and process documentation.",
+          "domain": "zackproser.com"
+        },
+        {
+          "url": "https://awesomeskill.ai/skill/ai-agent-skills-code-documentation",
+          "title": "code-documentation - Claude Skill - Awesome Skills",
+          "snippet": "A specific skill designed to help developers create comprehensive documentation for codebases, APIs, and developer guides.",
+          "domain": "awesomeskill.ai"
+        },
+        {
+          "url": "https://claudeskills.info/",
+          "title": "Claude Skills Marketplace",
+          "snippet": "A marketplace for discovering and downloading Claude Code Skills across categories: development tools, document processors, creative applications, and communication tools.",
+          "domain": "claudeskills.info"
+        }
+      ]
+    }
+  ]
+}
