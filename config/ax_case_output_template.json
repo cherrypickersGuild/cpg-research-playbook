@@ -1,0 +1,127 @@
+{
+  "run_metadata": {
+    "run_id": "ax-2026-06-26-001",
+    "generated_at": "2026-06-26T09:00:00Z",
+    "schema_version": "1.0",
+    "date_filter": {
+      "transformation_date_range": { "start": "2023-01-01", "end": "2026-06-26" },
+      "publication_date_range": { "start": "2024-01-01", "end": "2026-06-26" },
+      "out_of_window_policy": "reject",
+      "date_confidence": "require_explicit"
+    },
+    "target_case_count": 200,
+    "total_cases": 1
+  },
+
+  "coverage_summary": {
+    "by_pattern": {
+      "customer_service": 0,
+      "marketing_content": 1,
+      "finance_backoffice": 0,
+      "software_development": 0,
+      "knowledge_work": 0,
+      "manufacturing_rnd": 0,
+      "other": 0
+    },
+    "by_industry": { "fintech_payments": 1 },
+    "by_status": { "production": 1, "pilot": 0, "announced": 0 },
+    "by_confidence_band": {
+      "0.90-1.00": 0,
+      "0.70-0.89": 1,
+      "0.50-0.69": 0,
+      "below_0.50": 0
+    },
+    "failure_case_pct": 0.0,
+    "non_us_hq_pct": 1.0,
+    "thin_cells": [
+      "customer_service x healthcare",
+      "finance_backoffice x insurance",
+      "manufacturing_rnd x automotive"
+    ]
+  },
+
+  "cases": [
+    {
+      "case_id": "klarna-marketing-genai-2024",
+      "company": "Klarna",
+      "geography": { "hq_country": "Sweden", "deployment_regions": ["global"] },
+      "industry": "fintech_payments",
+      "company_size": { "revenue_band": "$2B+", "employee_band": "5000-10000" },
+      "business_function": "Marketing / creative production",
+      "ax_pattern": "marketing_content",
+      "ax_subpattern": "image_generation",
+      "old_workflow": "Campaign imagery sourced via external agencies and stock libraries; production measured in weeks.",
+      "new_ai_workflow": "Generative image tools produce campaign visuals in-house; marketers prompt, curate, and refine outputs before publishing.",
+      "ai_system_or_vendor": ["Midjourney", "DALL-E", "Adobe Firefly"],
+      "ai_modality": "generative_image",
+      "kpi": [
+        {
+          "metric": "Annual marketing cost savings",
+          "direction": "decrease_cost",
+          "baseline": { "raw": "unknown", "value_numeric": null, "unit": "USD_per_year" },
+          "after":    { "raw": "unknown", "value_numeric": null, "unit": "USD_per_year" },
+          "delta":    { "raw": "~$10M/year saved", "value_numeric": 10000000, "unit": "USD_per_year" },
+          "time_period": "2024",
+          "verified": true,
+          "source_ref": "src-1"
+        },
+        {
+          "metric": "Image production cycle time",
+          "direction": "decrease",
+          "baseline": { "raw": "6 weeks", "value_numeric": 42, "unit": "days" },
+          "after":    { "raw": "7 days",  "value_numeric": 7,  "unit": "days" },
+          "delta":    { "raw": "-83%",    "value_numeric": -83, "unit": "percent" },
+          "time_period": "2024-Q1",
+          "verified": true,
+          "source_ref": "src-1"
+        },
+        {
+          "metric": "Images produced",
+          "direction": "increase",
+          "baseline": { "raw": "unknown", "value_numeric": null, "unit": "images" },
+          "after":    { "raw": "1000+",   "value_numeric": 1000, "unit": "images" },
+          "delta":    { "raw": "unknown", "value_numeric": null, "unit": "images" },
+          "time_period": "2024-Q1 (first three months)",
+          "verified": true,
+          "source_ref": "src-1"
+        }
+      ],
+      "investment_or_cost": "unknown",
+      "scale": "Company-wide marketing creative production",
+      "human_role_change": "Marketers move from briefing external agencies to prompting, selecting, and editing AI outputs; reduced reliance on external image suppliers.",
+      "governance_risk_controls": "unknown",
+      "deployment_status": "production",
+      "evidence_strength": "production_reported",
+      "transformation_date": "2024-01",
+      "publication_date": "2024-05-28",
+      "date_inferred": false,
+      "sources": [
+        {
+          "id": "src-1",
+          "tier": "A",
+          "type": "news",
+          "outlet": "Reuters",
+          "title": "Klarna using GenAI to cut marketing costs by $10 mln annually",
+          "url": "https://www.reuters.com/technology/klarna-using-genai-cut-marketing-costs-by-10-mln-annually-2024-05-28/",
+          "date": "2024-05-28"
+        }
+      ],
+      "corroboration_count": 1,
+      "contradictory_evidence": "Klarna's separate AI customer-service claims later drew scrutiny over service quality; that dispute does not bear on the marketing KPIs above. Verify before reuse.",
+      "transferability": "High — applies to most consumer brands with high-volume creative production.",
+      "confidence": 0.85,
+      "failure_case": false,
+      "notes": "KPIs are company-reported figures relayed by Reuters; the savings figure has no disclosed baseline, which caps confidence below 0.9."
+    }
+  ],
+
+  "pattern_index": {
+    "customer_service": [],
+    "marketing_content": ["klarna-marketing-genai-2024"],
+    "finance_backoffice": [],
+    "software_development": [],
+    "knowledge_work": [],
+    "manufacturing_rnd": [],
+    "other": []
+  }
+}
