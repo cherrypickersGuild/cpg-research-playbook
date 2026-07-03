@@ -14,7 +14,7 @@ Given ONE topic, find the canonical "awesome-`<topic>`" GitHub list(s), fetch th
 | agent | https://github.com/e2b-dev/awesome-ai-agents |
 | mcp | https://github.com/punkpeye/awesome-mcp-servers |
 | prompt | https://github.com/promptslab/Awesome-Prompt-Engineering (f/awesome-chatgpt-prompts and dair-ai/Prompt-Engineering-Guide are prompt/tutorial *content*, not curated link-out lists — keep as secondary content sources, not primary seeds) |
-| skill | https://github.com/VoltAgent/awesome-agent-skills, https://github.com/hesreallyhim/awesome-claude-code |
+| skill | https://github.com/VoltAgent/awesome-agent-skills, https://github.com/hesreallyhim/awesome-claude-code, https://www.mdskills.ai (non-GitHub marketplace — crawl its own `/skills` listing + `/docs/*` pages the same way, not just the landing page) |
 | ax-cases | https://github.com/themanojdesai/genai-llm-ml-case-studies (Shubhamsaboo/awesome-llm-apps curates runnable OSS demo agents, not real-company transformation narratives — do not use as primary seed) |
 
 If the topic has no seed URL, or a seed URL looks stale or dead (404, archived, no commits in 2+ years), search for a replacement: `github.com awesome <topic> list AI 2025`, `awesome-<topic> stars:>100`. Prefer the most-starred, actively-maintained curated list — something explicitly organized as a curated list (has "awesome" in the name, or a clearly categorized README), not a single tool's own repo.

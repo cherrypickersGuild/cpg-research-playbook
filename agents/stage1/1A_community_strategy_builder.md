@@ -61,6 +61,11 @@ These are the known niche source communities. Add new entries; never delete — 
 | github-awesome-llm-apps | github | https://github.com/Shubhamsaboo/awesome-llm-apps | agent (OSS demo apps, not AX cases — do not use for AX cases) |
 | github-prompt-eng-guide | github | https://github.com/dair-ai/Prompt-Engineering-Guide | prompt, skills (content guide, not link-out — secondary) |
 | github-genai-case-studies | github | https://github.com/themanojdesai/genai-llm-ml-case-studies | AX cases |
+
+### Marketplaces (non-GitHub skill/tool directories)
+| community_id | platform | source_url | topics |
+|---|---|---|---|
+| mdskills-marketplace | web | https://www.mdskills.ai | skills |
 | github-langchain-disc | github | https://github.com/langchain-ai/langchain/discussions | agent, mcp |
 | github-awesome-agent-skills | github | https://github.com/VoltAgent/awesome-agent-skills | skills |
 | github-awesome-claude-code | github | https://github.com/hesreallyhim/awesome-claude-code | skills, agent |

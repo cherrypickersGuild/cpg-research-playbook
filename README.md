@@ -56,6 +56,7 @@ Two URL kinds matter (rule 5 of the discovery spec):
 
 ## Recent activity
 
+- **2026-07-03** — Added `mdskills.ai` (a non-GitHub AI-agent-skills marketplace) to `reports/awesome-lists/awesome_skill.md`, deep-verified across its own `/skills` listing and `/docs/*` subpages. Registered it as a `skill`-topic source in both the `awesome-list-crawler` seed table and the Community Registry (new "Marketplaces" category, since it isn't a GitHub repo).
 - **2026-07-03** — Added the `awesome-list-crawler` subagent and ran it for all five seed topics, producing `reports/awesome-lists/awesome_{agent,mcp,prompt,skill,ax-cases}.md`. Updated the Community Registry's GitHub rows in `agents/stage1/1A_community_strategy_builder.md`: added seeds for `skill` (previously unregistered), and swapped the `prompt`/`AX cases` seeds for lists that are actually curated link-out lists (the prior seeds turned out to be prompt/tutorial content, not link lists).
 - **2026-06-28** — Stage 1B search-only run: 64 queries → 510 hits. See `reports/2026-06-28_stage1B_search_iteration_001.md`.
 - **2026-06-26** — Stage 1A iteration 001: populated `search_strategy_db.json` from empty seed. See `reports/2026-06-26_stage1A_iteration_001.md`.

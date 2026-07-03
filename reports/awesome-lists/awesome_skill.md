@@ -5,7 +5,7 @@
 - [VoltAgent/awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) — 27,177 stars, last push 2026-06-30. "A curated collection of 1000+ agent skills from official dev teams and the community, compatible with Claude Code, Codex, Gemini CLI, Cursor, and more." (Entries link out to a companion aggregator site, `officialskills.sh`, run by the VoltAgent team, rather than directly to source repos.)
 - [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) — 47,845 stars, last push 2026-07-03. Broad curated list of Claude Code resources; several sections (Start Here, From Anthropic, Documentation & Learning, Research) are directly relevant to the Skills feature.
 
-No substitutions were needed — both seed URLs were live and current. 42 entries were reviewed (all subpages fetched successfully; 0 failures).
+No substitutions were needed — both seed URLs were live and current. 42 entries were reviewed (all subpages fetched successfully; 0 failures), plus mdskills.ai — a standalone marketplace outside both seed lists, deep-verified across 6 of its own subpages — added below.
 
 ---
 
@@ -90,6 +90,18 @@ No substitutions were needed — both seed URLs were live and current. 42 entrie
 | Bloom | https://github.com/Li-Evan/Bloom | Verified: 180-star AI tutoring system implementing Bloom's "2-Sigma Problem" research; offers a CLI mode built as a Claude Code skill plus a self-hostable web app, generating adaptive syllabi/lessons that respond to learner feedback. | Directly relevant to an AI-transformation *education* program — a skill built specifically for adaptive teaching. |
 | cc-thinking-skills | https://github.com/tjboudreaux/cc-thinking-skills | Verified: 602-star collection of 39 critical-thinking/mental-model frameworks (first-principles reasoning, theory of constraints, etc.) packaged as invokable Claude Code skills; maintainer transparently reports that none have yet passed a rigorous "Elevate-or-Kill" accuracy evaluation. | Useful cautionary example: shows both the promise of "reasoning framework" skills and the discipline of honestly reporting when a skill hasn't proven its value — good teaching material on evaluating skill efficacy. |
 | AI Research Skills | https://github.com/WenyuChiou/ai-research-skills | Verified: 118-star catalog of 15 skills spanning an 8-stage academic research pipeline (literature triage, gap analysis via a 3-gate framework, drafting, multi-AI handoff across Claude/Codex/Gemini). | Strong example of a *domain-specific skill suite* built to solve real workflow pain points (hallucinated citations, redundant research) — a template for how an AX program could build its own skill catalog. |
+
+---
+
+## Additional resource: mdskills.ai (marketplace, not a GitHub awesome-list)
+
+Found outside the two seed lists above. Deep-verified across 6 subpages (root + `/ko` locale, `/ko/skills` listing, `/ko/docs/skill-advisor`, `/ko/docs/install-skills`, `/ko/docs/what-are-skills`, and an individual skill detail page), not just the landing page — all 6 fetched successfully, 0 failures.
+
+| Name | Link | What it is | Why it matters for skill |
+|---|---|---|---|
+| mdskills.ai | https://www.mdskills.ai/ko | Verified: open-source community marketplace (created by Rob Gourley) for discovering, creating, and sharing AI agent skills. The listing page shows a specific count — 1,287 skills, not a rounded marketing figure — across 25-31 categories (Git & Version Control: 363, DevOps & Infrastructure: 238, AI & Machine Learning: 230, Security: 180, Web Development: 145). Individual skills seen include "Markitdown MCP," "UI UX Pro Max," "Claude Code Game Studios" (36 abilities), and "Financial UI Patterns" (by @rgourley). Targets Claude Code, Cursor, GitHub Copilot, Codex, Gemini CLI, and other agents; also lists MCP servers alongside skills. `/ko` is a Korean-locale variant of the same site/structure, not distinct content. | A second, independent aggregator (distinct from VoltAgent's `officialskills.sh`) — shows the skill-marketplace pattern is being built by multiple unaffiliated community groups. |
+| mdskills.ai — CLI install | https://www.mdskills.ai/ko/docs/install-skills | Verified: documents a real, concrete CLI — `npx mdskills install <skill-name>`, e.g. `npx mdskills install rgourley/financial-ui-patterns` — plus a manual git-clone/copy-folder alternative. Note: the same docs also reference a differently-namespaced `npx skills add <owner>/<repo>` command, an inconsistency (legacy reference or a separate related tool) worth flagging rather than treating as a typo-free spec. | Concrete install-mechanism example an AX program could reference when designing internal skill-distribution tooling. |
+| mdskills.ai — Skill Advisor | https://www.mdskills.ai/ko/docs/skill-advisor | Verified: a substantiated (not just marketing-copy) review system — a defined 3-axis rubric (Functionality / Quality / Security), a 1-10 scoring band with named tiers, and six named red-flag categories. Explicitly discloses reviews are "generated by Claude using a structured evaluation prompt" and are content-inspection-based, **not** runtime/sandboxed testing. Applied in practice: the Financial UI Patterns detail page shows a real score (8.7) and a specific flagged concern (undocumented shell/network permissions). | A concrete, working example of AI-generated skill quality/security scoring with an honest capability disclaimer (inspection vs. runtime testing) — directly useful for an AX program designing its own skill-vetting gate. |
 
 ---
 
