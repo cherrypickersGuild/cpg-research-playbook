@@ -32,8 +32,12 @@ Persistent state lives in `state/`; per-run artifacts land in `runs/<timestamp>/
 - `state/source_registry.json` — curated per-platform follow-lists (LinkedIn / X / Substack / Reddit / Medium / etc.).
 - `state/visited_url_ledger.json` — every URL ever fetched; enforces fetch-once on `news_url`s.
 
+### Interactive subagents (`.claude/agents/`)
+- `.claude/agents/awesome-list-crawler.md` — on-demand subagent (invoke directly, not via the bash pipeline) that, given one seed topic (`mcp`, `agent`, `prompt`, `skill`, `ax-cases`), resolves that topic's GitHub "awesome-`<topic>`" list(s), fetches every linked entry's own subpage to verify and describe it, and writes a report to `reports/awesome-lists/`.
+
 ### Reports
 - `reports/` — one markdown file per pipeline iteration. Read these to understand what each run did, what issues hit, and what changed. Start with `reports/2026-06-28_stage1B_search_iteration_001.md` for the most recent run.
+- `reports/awesome-lists/awesome_<topic>.md` — one per seed topic, produced by the `awesome-list-crawler` subagent; each catalogs and verifies the entries in that topic's GitHub awesome-list(s) rather than just relisting the source blurb.
 
 ## Running the pipeline
 
@@ -52,5 +56,6 @@ Two URL kinds matter (rule 5 of the discovery spec):
 
 ## Recent activity
 
+- **2026-07-03** — Added the `awesome-list-crawler` subagent and ran it for all five seed topics, producing `reports/awesome-lists/awesome_{agent,mcp,prompt,skill,ax-cases}.md`. Updated the Community Registry's GitHub rows in `agents/stage1/1A_community_strategy_builder.md`: added seeds for `skill` (previously unregistered), and swapped the `prompt`/`AX cases` seeds for lists that are actually curated link-out lists (the prior seeds turned out to be prompt/tutorial content, not link lists).
 - **2026-06-28** — Stage 1B search-only run: 64 queries → 510 hits. See `reports/2026-06-28_stage1B_search_iteration_001.md`.
 - **2026-06-26** — Stage 1A iteration 001: populated `search_strategy_db.json` from empty seed. See `reports/2026-06-26_stage1A_iteration_001.md`.
