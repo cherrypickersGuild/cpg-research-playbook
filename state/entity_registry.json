@@ -1,0 +1,6 @@
+{
+  "_about": "The persistent, cumulative registry of structured entities (agent frameworks, MCP servers, prompt techniques/libraries, skills) extracted from hit URLs by Stage 1G (agents/stage1/1G_entity_extractor.md). Sibling to state/ax_case_db.json, which covers the 'AX cases' topic exclusively — this file covers the other four seed topics. Populated by merge_entity_registry.sh, called from run_stage1.sh and discover.sh's news path. Entities are deduped by entity_key (topic|lowercase(name)); repeat matches raise corroboration_count and upgrade description_source (verified beats snippet-only) rather than creating a duplicate.",
+  "schema_version": 1,
+  "last_merged_at": null,
+  "entities": []
+}

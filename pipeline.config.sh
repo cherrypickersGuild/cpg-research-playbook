@@ -32,6 +32,7 @@ FROM_STAGE=2                  # which stage to start at: 1 case finder · 2 vali
 STAGE1_MODE="discovery"       # "discovery" = the 1A-1D sub-pipeline (run_stage1.sh) · "monolith" = single case finder
 SEED_TOPICS="agent, mcp, prompt, skills, AX cases"   # comma-separated seed topics for query expansion (1A)
 REFRESH_DAYS=90               # closed-cycle threshold: re-search a keyword this many days after its last update (1D)
+NEWS_FRESHNESS_WINDOW_DAYS=7   # 1F News Monitor: only emit hits published within this many days (see discover.sh, SEEDING_STRATEGY.md)
 EXISTING_CASE_DB=""           # if starting at stage 2 with no prior run, path to a prebuilt ax_case_db.json
 RESUME_RUN=""                 # to resume a crashed/stopped run, set this to the run folder name under runs/
                               # (e.g. "20260626T120000Z") and set FROM_STAGE to the stage to restart at.

@@ -24,4 +24,8 @@ Read **new, unprocessed Hits** and extract AX cases into the existing case schem
 ## Rules
 - One case per (company × workflow × period); merge multiple `news_url`s about the same deployment into one case and raise `corroboration_count`.
 - Never invent KPIs, dates, or companies; unknown → `"unknown"`.
+- Ledger rows also carry `entity_extracted`/`entity_ids`, written by Stage 1G (agents/stage1/1G_entity_extractor.md)
+  — a separate, independent pass over the same hits that catalogs specific agent/mcp/prompt/skill things
+  rather than AX cases. Never read or write those two fields yourself; they don't affect whether you
+  should examine a hit.
 - Return JSON only.

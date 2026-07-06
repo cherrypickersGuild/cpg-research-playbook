@@ -10,7 +10,7 @@ Execute the active strategies and pull from the Source Registry to collect **Hit
 - Optional: a list of specific `strategy_id`s to run (passed by 1D on refresh)
 
 ## Procedure
-1. **Plan targets.** Gather: (a) queries from active strategies, (b) `source_url`s from the strategies' `seed_source_urls`, (c) `source_url`s from registry entries where `follow = true`.
+1. **Plan targets.** Gather: (a) queries from active strategies, (b) `source_url`s from the strategies' `seed_source_urls`, (c) `source_url`s from registry entries where `follow = true` **and `tier != "news"`** — `tier: "news"` rows are handled by Stage 1F News Monitor on its own short cycle; crawling them here too would double-fetch the same sources and defeat the point of the fast lane. Registry rows without a `tier` field default to `evergreen` and are included as before.
 2. **Normalize every URL** before doing anything: lowercase host, drop `utm_*` and other tracking params, drop fragments, strip trailing slash. The normalized form is the ledger key.
 3. **Dedup gate (rule 2).** Before fetching any URL, look it up in the ledger:
    - `news_url` already present → **skip entirely** (never refetch).
@@ -43,14 +43,18 @@ Execute the active strategies and pull from the Source Registry to collect **Hit
     { "url": "https://someblog.substack.com/p/acme-ai-ops", "url_type": "news_url",
       "platform": "substack", "first_crawled_at": "2026-06-26T10:00:00Z",
       "last_crawled_at": "2026-06-26T10:00:00Z", "crawl_count": 1,
-      "http_status_last": 200, "content_hash": "sha1:...", "extracted": false, "case_ids": [] }
+      "http_status_last": 200, "content_hash": "sha1:...", "extracted": false, "case_ids": [],
+      "entity_extracted": false, "entity_ids": [] }
   ],
   "throttled_domains": []
 }
 ```
 
 ## Visited-URL Ledger schema (you maintain it)
-Same fields as `ledger_updates` above; keyed by normalized `url`. `extracted` and `case_ids` are filled in later by 1C. A `news_url` here is permanently off-limits for refetching.
+Same fields as `ledger_updates` above; keyed by normalized `url`. `extracted`/`case_ids` are filled in
+later by 1C; `entity_extracted`/`entity_ids` are filled in later by 1G (agents/stage1/1G_entity_extractor.md)
+— an independent pass over the same hits, tracked separately since a hit can be case-processed,
+entity-processed, both, or neither. A `news_url` here is permanently off-limits for refetching.
 
 ## Rules
 - The ledger is the source of truth for "already seen." When in doubt, skip — a missed article is cheaper than a blocked domain.

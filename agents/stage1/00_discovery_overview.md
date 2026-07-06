@@ -45,8 +45,27 @@ The ledger therefore treats the two differently: `news_url` → fetch-once; `sou
 1B must: normalize URLs before the ledger check (lowercase host, strip `utm_*`/fragments/trailing slash) so trivially-different URLs aren't re-fetched; respect per-domain rate limits and back off on 429/403; and route any registry entry marked `browser_use_only = true` (e.g. LinkedIn, X) to a browser-agent path rather than plain fetch, since those platforms block headless crawling.
 
 ## Where this sits in the whole pipeline
-1C's output is the same `ax_case_db.json` the Validator (Stage 2) already consumes — so Stages 2–4 are unchanged. Discovered `news_url`s become each case's `source[].url`, which the Validator then re-checks for accessibility; `browser_use_only` flows through so the Validator knows to verify those via browser, not fetch.
+1C's output merges into the cumulative `state/ax_case_db.json` (dedup'd by `case_key`, not a per-run
+snapshot) — Stages 2–4 read that master file, so they're otherwise unchanged. Discovered `news_url`s
+become each case's `source[].url`, which the Validator then re-checks for accessibility; `browser_use_only`
+flows through so the Validator knows to verify those via browser, not fetch.
+
+## Extensions: 1E Category Discovery, 1F News Monitor, 1G Entity Extractor
+Three more agents extend this sub-pipeline — see `../../SEEDING_STRATEGY.md` for the full strategy,
+schedule, and workflow:
+- **1E Category Discovery** (`1E_category_discovery.md`) — slow cadence (monthly/quarterly); proposes
+  new seed topics beyond the initial five into `state/category_registry.json`, gated on human review
+  before any candidate becomes active.
+- **1F News Monitor** (`1F_news_monitor.md`) — fast cadence (daily / every 6-12h); crawls `tier: "news"`
+  sources across all active topics with a short freshness window, feeding 1C and 1G directly rather than
+  waiting for a 1D refresh.
+- **1G Entity Extractor** (`1G_entity_extractor.md`) — 1C's sibling, run on the same hits: where 1C
+  extracts AX transformation cases, 1G extracts structured records for specific `agent`/`mcp`/`prompt`/
+  `skill` things (a named framework, MCP server, prompt technique, or skill) into `state/entity_registry.json`,
+  deduped by `entity_key` via `merge_entity_registry.sh` — the same corroboration pattern
+  `merge_case_db.sh` uses for cases.
 
 ## Run entry points
-- `bash run_stage1.sh` — one discovery pass (1A if strategies missing/stale → 1B → 1C), writes this run's `01_case_db.json`.
+- `bash run_stage1.sh` — one discovery pass (1A if strategies missing/stale → 1B → 1C → 1G), writes this run's `01_case_db.json` and folds both the case DB and the entity registry into their master state/ files.
 - `bash refresh.sh` — the closed cycle (1D): refreshes only stale keywords. Schedule it (cron / Task Scheduler) every few days; it does nothing until something crosses `REFRESH_DAYS`.
+- `bash discover.sh` — 1F News Monitor (feeding 1C + 1G) and/or 1E Category Discovery; see `SEEDING_STRATEGY.md`.

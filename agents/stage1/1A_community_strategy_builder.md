@@ -144,6 +144,8 @@ personal blog "<topic>" engineering 2025
       "topics": ["prompt"],
       "status": "active",
       "browser_use_only": true,
+      "tier": "news",
+      "check_frequency_days": 1,
       "added_at": "2026-06-30",
       "last_crawled_at": null,
       "next_crawl_due": "2026-07-30",
@@ -203,4 +205,5 @@ personal blog "<topic>" engineering 2025
 4. **One community = one source_url** in the communities array. Generate multiple strategy rows if a community needs multiple query angles.
 5. **Discovery candidates** require human review before `status` is changed to `"active"`. Flag with `"pending_review"`.
 6. **Set `next_refresh_due = last_run_at + refresh_days`** on every create/update.
-7. Return JSON only (the full updated `niche_strategy_db.json`). No prose, no fences.
+7. **Set `tier`** on every community: `"news"` for live-activity feeds (Reddit `/new/` listings, HackerNews search) — these are picked up by 1F News Monitor on a short cycle instead of waiting for 1D's `refresh_days`; `"evergreen"` (default) for everything else (Substack archives, GitHub awesome-lists, YouTube channels, LinkedIn newsletters) — these stay on the normal `refresh_days` cycle. Set `check_frequency_days` only for `news` rows (typically `1`); leave `null` for `evergreen` rows. See `SEEDING_STRATEGY.md`.
+8. Return JSON only (the full updated `niche_strategy_db.json`). No prose, no fences.

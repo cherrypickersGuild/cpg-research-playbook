@@ -1,0 +1,4 @@
+{
+  "_about": "Lifecycle for seed topics themselves (candidate -> active -> paused -> rejected) — separate from cherry_category (content-type tags in source_registry_template.json) and from per-topic source lists (community_strategy_db.json). Written by Stage 1E (agents/stage1/1E_category_discovery.md). On promotion to active, the category_id is appended to SEED_TOPICS in pipeline.config.sh and 1A/1A-community pick it up on their next run. See SEEDING_STRATEGY.md.",
+  "categories": []
+}

@@ -25,6 +25,8 @@
 
   "_normalized_target_fields": "Every targets[] row uses this superset; unused fields are null. platform-specific columns map into these names: handle/url -> source_url, 'Why I follow' -> why_follow, 'Top Audience' -> top_audience, 'Cherry Category'/'Category' -> cherry_category, 'Reviewer Notes' -> reviewer_notes, 'Created By' -> created_by, 'Targets' -> targets, 'Follow' -> follow.",
 
+  "_tier_fields": "tier ('evergreen' default, or 'news') and check_frequency_days (per-row override; null means use the global REFRESH_DAYS) route a row to the right cadence: 1B/1D crawl 'evergreen' rows on the normal REFRESH_DAYS cycle; 1F News Monitor crawls 'news' rows on a short freshness window instead — see SEEDING_STRATEGY.md. 1B skips tier:'news' rows so they're never double-crawled.",
+
   "targets": [
     {
       "registry_id": "li-0001",
@@ -41,7 +43,9 @@
       "comment": null,
       "source_type": "creator",
       "browser_use_only": true,
-      "follow": true
+      "follow": true,
+      "tier": "evergreen",
+      "check_frequency_days": null
     },
     {
       "registry_id": "sub-0001",
@@ -58,7 +62,9 @@
       "comment": null,
       "source_type": "newsletter",
       "browser_use_only": false,
-      "follow": true
+      "follow": true,
+      "tier": "evergreen",
+      "check_frequency_days": null
     },
     {
       "registry_id": "rd-0001",
@@ -75,7 +81,9 @@
       "comment": null,
       "source_type": "community",
       "browser_use_only": false,
-      "follow": true
+      "follow": true,
+      "tier": "news",
+      "check_frequency_days": 1
     }
   ]
 }

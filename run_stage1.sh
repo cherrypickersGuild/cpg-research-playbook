@@ -50,3 +50,20 @@ jq -s '(.[1].ledger_patch // []) as $p
    && mv "$STATE/ledger.tmp" "$STATE/visited_url_ledger.json"
 
 echo "[stage1] cases: $(jq '.cases|length' "$OUT_DB" 2>/dev/null || echo 0) -> $OUT_DB"
+
+echo "[merge] folding into master state/ax_case_db.json"
+bash "$ROOT/merge_case_db.sh" "$OUT_DB" "$STATE/ax_case_db.json"
+
+echo "[1G] entity extractor (agent/mcp/prompt/skill things, independent of 1C's case extraction)"
+claude -p "Follow your system instructions. Hits: $STATE/hits.json. Visited-URL ledger: $STATE/visited_url_ledger.json (use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
+  --append-system-prompt "$(cat "$S1/1G_entity_extractor.md")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
+  2> "$STATE/1G.err" | jq -r '.result' | clean > "$STATE/entity_batch.json"
+# merge this stage's own ledger_patch (entity_extracted/entity_ids) into the ledger
+jq -s '(.[1].ledger_patch // []) as $p
+       | {ledger: [ .[0].ledger[] | (. as $e | ($p[] | select(.url==$e.url)) // {} ) as $u | $e + $u ]}' \
+   "$STATE/visited_url_ledger.json" "$STATE/entity_batch.json" > "$STATE/ledger.tmp" \
+   && mv "$STATE/ledger.tmp" "$STATE/visited_url_ledger.json"
+
+echo "[stage1] entities: $(jq '.entities|length' "$STATE/entity_batch.json" 2>/dev/null || echo 0)"
+echo "[merge] folding into master state/entity_registry.json"
+bash "$ROOT/merge_entity_registry.sh" "$STATE/entity_batch.json" "$STATE/entity_registry.json"
