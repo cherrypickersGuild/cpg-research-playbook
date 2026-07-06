@@ -7,7 +7,7 @@
 #   Usage: bash calibrate_seeding.sh
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
 command -v jq >/dev/null 2>&1 || { echo "ERROR: jq not found."; exit 1; }
 

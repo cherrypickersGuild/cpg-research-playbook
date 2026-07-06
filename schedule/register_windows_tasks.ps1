@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
   Registers (or removes) Windows Task Scheduler jobs for the seeding schedule
-  described in SEEDING_STRATEGY.md section 5 - the Windows equivalent of crontab.txt.
+  described in docs/SEEDING_STRATEGY.md section 5 - the Windows equivalent of crontab.txt.
 
 .DESCRIPTION
   Each task calls a bash script (Git Bash / bash.exe) at the cadence in the
@@ -48,11 +48,11 @@ New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
 # name -> { script args; trigger }
 $Tasks = @(
-  @{ Name = "$TaskPrefix-NewsMonitor";        Args = "discover.sh --news-only";     Log = "news.log";               Trigger = (New-ScheduledTaskTrigger -Once (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 12) -RepetitionDuration ([TimeSpan]::MaxValue)) }
-  @{ Name = "$TaskPrefix-EvergreenRefresh";   Args = "refresh.sh";                  Log = "refresh.log";            Trigger = (New-ScheduledTaskTrigger -Daily -At "3:00AM") }
-  @{ Name = "$TaskPrefix-CommunityDiscovery"; Args = "run_stage1.sh state/monthly_discovery_case_db.json"; Log = "community_discovery.log"; Trigger = (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "4:00AM") } # monthly cadence enforced inside the pipeline's own staleness checks; weekly trigger just checks in
-  @{ Name = "$TaskPrefix-CategoryDiscovery";  Args = "discover.sh --category-only"; Log = "category.log";           Trigger = (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "5:00AM") }
-  @{ Name = "$TaskPrefix-SeedingHealth";      Args = "calibrate_seeding.sh";        Log = "seeding_health.log";     Trigger = (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "6:00AM") }
+  @{ Name = "$TaskPrefix-NewsMonitor";        Args = "scripts/discover.sh --news-only";     Log = "news.log";               Trigger = (New-ScheduledTaskTrigger -Once (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 12) -RepetitionDuration ([TimeSpan]::MaxValue)) }
+  @{ Name = "$TaskPrefix-EvergreenRefresh";   Args = "scripts/refresh.sh";                  Log = "refresh.log";            Trigger = (New-ScheduledTaskTrigger -Daily -At "3:00AM") }
+  @{ Name = "$TaskPrefix-CommunityDiscovery"; Args = "scripts/run_stage1.sh state/monthly_discovery_case_db.json"; Log = "community_discovery.log"; Trigger = (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "4:00AM") } # monthly cadence enforced inside the pipeline's own staleness checks; weekly trigger just checks in
+  @{ Name = "$TaskPrefix-CategoryDiscovery";  Args = "scripts/discover.sh --category-only"; Log = "category.log";           Trigger = (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "5:00AM") }
+  @{ Name = "$TaskPrefix-SeedingHealth";      Args = "scripts/calibrate_seeding.sh";        Log = "seeding_health.log";     Trigger = (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "6:00AM") }
 )
 
 if ($Unregister) {
@@ -82,6 +82,6 @@ foreach ($t in $Tasks) {
 
 Write-Host ""
 Write-Host "Note: Tier 6 (full corpus recalibration / deck rebuild) is deliberately NOT scheduled - run it manually per lecture engagement:"
-Write-Host "  bash run_pipeline.sh   (FROM_STAGE=2, EXISTING_CASE_DB=state/ax_case_db.json in pipeline.config.sh)"
+Write-Host "  bash scripts/run_pipeline.sh   (FROM_STAGE=2, EXISTING_CASE_DB=state/ax_case_db.json in pipeline.config.sh)"
 Write-Host ""
 Write-Host "To remove everything registered here: .\register_windows_tasks.ps1 -Unregister"

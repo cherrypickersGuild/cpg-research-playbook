@@ -10,6 +10,6 @@ Pipeline order and where each spec lives:
 
 Shared rules carried through every stage: named company · concrete before/after workflow · measurable KPI traceable to a source · transformation date kept separate from publication date · vendor-only claims labeled unverified · contradictory-evidence check · unknown fields written as `"unknown"`, never invented.
 
-To run the whole thing non-interactively: `bash run_pipeline.sh` (edit `pipeline.config.sh` first). Outputs land in `runs/<timestamp>/outputs/`, logs in `runs/<timestamp>/logs/`, newest run symlinked at `runs/latest/`.
+To run the whole thing non-interactively: `bash scripts/run_pipeline.sh` (edit `pipeline.config.sh` first). Outputs land in `runs/<timestamp>/outputs/`, logs in `runs/<timestamp>/logs/`, newest run symlinked at `runs/latest/`.
 
 When asked to run a single stage interactively, use the matching subagent in `.claude/agents/` (e.g. `ax-validator`) and pass the input file path explicitly.

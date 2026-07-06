@@ -5,7 +5,7 @@
 # Called by run_pipeline.sh for stage 1; can also be run standalone.
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
 command -v claude >/dev/null 2>&1 || { echo "ERROR: 'claude' not on PATH."; exit 1; }
 command -v jq     >/dev/null 2>&1 || { echo "ERROR: 'jq' not found."; exit 1; }
@@ -52,7 +52,7 @@ jq -s '(.[1].ledger_patch // []) as $p
 echo "[stage1] cases: $(jq '.cases|length' "$OUT_DB" 2>/dev/null || echo 0) -> $OUT_DB"
 
 echo "[merge] folding into master state/ax_case_db.json"
-bash "$ROOT/merge_case_db.sh" "$OUT_DB" "$STATE/ax_case_db.json"
+bash "$ROOT/scripts/merge_case_db.sh" "$OUT_DB" "$STATE/ax_case_db.json"
 
 echo "[1G] entity extractor (agent/mcp/prompt/skill things, independent of 1C's case extraction)"
 claude -p "Follow your system instructions. Hits: $STATE/hits.json. Visited-URL ledger: $STATE/visited_url_ledger.json (use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
@@ -66,4 +66,4 @@ jq -s '(.[1].ledger_patch // []) as $p
 
 echo "[stage1] entities: $(jq '.entities|length' "$STATE/entity_batch.json" 2>/dev/null || echo 0)"
 echo "[merge] folding into master state/entity_registry.json"
-bash "$ROOT/merge_entity_registry.sh" "$STATE/entity_batch.json" "$STATE/entity_registry.json"
+bash "$ROOT/scripts/merge_entity_registry.sh" "$STATE/entity_batch.json" "$STATE/entity_registry.json"

@@ -4,7 +4,7 @@
 # it does nothing until a strategy crosses REFRESH_DAYS.
 #   Usage: bash refresh.sh
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
 command -v claude >/dev/null 2>&1 || { echo "ERROR: 'claude' not on PATH."; exit 1; }
 command -v jq     >/dev/null 2>&1 || { echo "ERROR: 'jq' not found."; exit 1; }
@@ -24,7 +24,7 @@ echo "[1D] stale strategies to refresh: $N"
 if [ "${N:-0}" -gt 0 ]; then
   # closed loop: re-run the discovery pass (1A refresh -> 1B -> 1C) and merge new cases
   OUTDB="$STATE/refresh_case_db_$(date -u +%Y%m%dT%H%M%SZ).json"
-  bash "$ROOT/run_stage1.sh" "$OUTDB" "$STATE/run_config.json"
+  bash "$ROOT/scripts/run_stage1.sh" "$OUTDB" "$STATE/run_config.json"
   echo "[1D] closed cycle done; new cases in $OUTDB (merge into your corpus / re-run Stages 2-4)"
 else
   echo "[1D] nothing stale — corpus is fresh. No crawling performed."

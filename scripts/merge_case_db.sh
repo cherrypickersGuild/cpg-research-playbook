@@ -17,7 +17,7 @@
 #   (master_db.json defaults to state/ax_case_db.json; created if absent)
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NEW="${1:?Usage: bash merge_case_db.sh <new_case_db.json> [master_db.json]}"
 MASTER="${2:-$ROOT/state/ax_case_db.json}"
 

@@ -5,3 +5,11 @@
 .DS_Store
 *.swp
 *~
+
+# Transient per-run artifacts — regenerated every run; the persistent truth
+# lives in state/ax_case_db.json, state/entity_registry.json, state/category_registry.json.
+state/*.err
+state/news_hits.json
+state/news_case_db_*.json
+state/news_entity_batch.json
+schedule/logs/

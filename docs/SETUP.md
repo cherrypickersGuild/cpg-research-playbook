@@ -5,8 +5,9 @@ This bundle runs four agents in a fixed order, gates out weak cases, logs every 
 ## 1. What's in the bundle
 ```
 ax_pipeline/
-├─ run_pipeline.sh         # the orchestrator — runs all stages in order
-├─ calibrate.sh            # prints the numbers for setting the config knobs
+├─ scripts/
+│   ├─ run_pipeline.sh     # the orchestrator — runs all stages in order
+│   └─ calibrate.sh        # prints the numbers for setting the config knobs
 ├─ pipeline.config.sh      # the ONLY file you normally edit (dates, thresholds, audience)
 ├─ CLAUDE.md               # project memory (for interactive sessions)
 ├─ agents/                 # the four agent specs, used as system prompts
@@ -41,7 +42,7 @@ Start with `FROM_STAGE=2` and a small hand-made case file to watch the pipeline 
 ## 4. Run it
 ```bash
 cd ax_pipeline
-bash run_pipeline.sh
+bash scripts/run_pipeline.sh
 ```
 That's the whole pipeline. The script will print each stage, its cost, and where the output went.
 
@@ -80,7 +81,7 @@ Auth: by default the script uses your interactive login. For CI, set `USE_BARE="
 ## 9. Calibrating the config knobs
 Don't guess the thresholds and counts. Run stages 1–2 once, then:
 ```bash
-bash calibrate.sh            # reads the newest run (or pass runs/<id>)
+bash scripts/calibrate.sh    # reads the newest run (or pass runs/<id>)
 ```
 It prints validation outcomes, the gate pass-rate, a confidence histogram of the gate-passed cases, headroom vs your current `MAIN_DECK_MIN_CONFIDENCE` / `APPENDIX_MIN_CONFIDENCE`, suggested thresholds for ~1.75× headroom, pattern + failure coverage, and industry coverage (with an over-concentration warning). Set counts from your time budget (≈ one case slide per 3–4 min of the talk), set thresholds so ~1.5–2× your deck caps clear them, then re-tune cheaply: change `pipeline.config.sh`, set `RESUME_RUN=<run folder>` and `FROM_STAGE=3`, and re-run selection only.
 

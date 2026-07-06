@@ -245,14 +245,14 @@ via cron/Task Scheduler; each stage internally no-ops until its own due date pas
 
 | Tier | What runs | Actual cadence | Cron (check daily, acts when due) | Notes |
 |---|---|---|---|---|
-| 1 — News | 1F News Monitor | every 6-24h | `0 */12 * * * bash discover.sh --news-only` | Cheap, narrow (news-tier sources only, 7-day window). Feeds both `ax_case_db.json` (via 1C) and `entity_registry.json` (via 1G). |
-| 2 — Evergreen refresh | 1D → 1A/1B/1C for stale strategies | REFRESH_DAYS=90, checked often | `0 3 * * * bash refresh.sh` (already the recommended pattern) | Unchanged from today. |
-| 3 — Source/community discovery (MODE B) | 1A-community MODE B | quarterly | `0 4 1 */3 * bash run_stage1.sh --community-discovery` | Finds wholly new communities/awesome-lists; candidates need review before `status: active`. |
-| 4 — Category discovery | 1E | monthly, or triggered early if 1F repeatedly surfaces the same uncovered term ≥3× | `0 5 1 * * bash discover.sh --category-only` | Human review gate before any candidate becomes a seed topic. |
+| 1 — News | 1F News Monitor | every 6-24h | `0 */12 * * * bash scripts/discover.sh --news-only` | Cheap, narrow (news-tier sources only, 7-day window). Feeds both `ax_case_db.json` (via 1C) and `entity_registry.json` (via 1G). |
+| 2 — Evergreen refresh | 1D → 1A/1B/1C for stale strategies | REFRESH_DAYS=90, checked often | `0 3 * * * bash scripts/refresh.sh` (already the recommended pattern) | Unchanged from today. |
+| 3 — Source/community discovery (MODE B) | 1A-community MODE B | quarterly | `0 4 1 */3 * bash scripts/run_stage1.sh --community-discovery` | Finds wholly new communities/awesome-lists; candidates need review before `status: active`. |
+| 4 — Category discovery | 1E | monthly, or triggered early if 1F repeatedly surfaces the same uncovered term ≥3× | `0 5 1 * * bash scripts/discover.sh --category-only` | Human review gate before any candidate becomes a seed topic. |
 | 5 — Full corpus recalibration | `calibrate.sh` against `state/ax_case_db.json` | before each lecture engagement, or monthly | manual | Existing tool; now has a growing corpus to calibrate against instead of one run's snapshot. |
 | 6 — Deck rebuild (Stages 2-4) | `run_pipeline.sh` with `FROM_STAGE=2`, `EXISTING_CASE_DB=state/ax_case_db.json` | on demand, per engagement | manual | Point it at the master DB, not a single run's case file. |
 
-On Windows, the equivalent is Task Scheduler triggers calling `bash refresh.sh` / `bash discover.sh`
+On Windows, the equivalent is Task Scheduler triggers calling `bash scripts/refresh.sh` / `bash scripts/discover.sh`
 through Git Bash or WSL at the same cadences — cron syntax above is the portable spec either maps to.
 
 ## 6. Governance / review gates (unchanged principle, extended to two new places)

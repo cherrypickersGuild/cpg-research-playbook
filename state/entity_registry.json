@@ -1,6 +1,494 @@
 {
-  "_about": "The persistent, cumulative registry of structured entities (agent frameworks, MCP servers, prompt techniques/libraries, skills) extracted from hit URLs by Stage 1G (agents/stage1/1G_entity_extractor.md). Sibling to state/ax_case_db.json, which covers the 'AX cases' topic exclusively — this file covers the other four seed topics. Populated by merge_entity_registry.sh, called from run_stage1.sh and discover.sh's news path. Entities are deduped by entity_key (topic|lowercase(name)); repeat matches raise corroboration_count and upgrade description_source (verified beats snippet-only) rather than creating a duplicate.",
   "schema_version": 1,
-  "last_merged_at": null,
-  "entities": []
+  "last_merged_at": "2026-07-06",
+  "entities": [
+    {
+      "entity_id": "ent-2026-0001",
+      "topic": "agent",
+      "entity_type": "product",
+      "name": "Yolo-Auto",
+      "url": "https://yolo-auto.com",
+      "description": "Verified from the site: an OpenAI-compatible API service offering unlimited Qwen3.6-35B-A3B inference for a flat $6/month, with a 128K context window and no per-token metering, aimed at coding agents, RAG pipelines, and CI/CD bots.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Yolo-Auto",
+      "freshness_signal": "© 2026 footer; promotional pricing '40% off active now' (reduced from $10 to $6/month)",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1001",
+        "platform": "custom"
+      },
+      "entity_key": "agent|yolo-auto",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1001",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0002",
+      "topic": "mcp",
+      "entity_type": "framework",
+      "name": "mcp-test-harness",
+      "url": "https://github.com/vaquarkhan/mcp-test-harness",
+      "description": "Verified from the repo: a pytest-style testing framework for MCP servers with MCP-specific assertions, functional/regression/performance test modes, multi-format reporting, parallel execution, and CI/CD (GitHub Actions) integration.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Vaquar Khan",
+      "freshness_signal": "Release 2.0.0 on PyPI/GHCR, 690+ internal tests, 100% line coverage",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1002",
+        "platform": "custom"
+      },
+      "entity_key": "mcp|mcp-test-harness",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1002",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0003",
+      "topic": "skill",
+      "entity_type": "skill",
+      "name": "Routing24 Route Optimizer",
+      "url": "https://github.com/routing24/skill",
+      "description": "Verified from the repo: a Claude/Cowork Agent Skill that converts natural-language stop and vehicle lists into an optimized, shareable multi-stop route plan; route optimization runs client-side in the browser with no API key or sign-in required.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Routing24",
+      "freshness_signal": "last commit 2026-07-04 (v0.1.7)",
+      "related_topics": [
+        "agent"
+      ],
+      "found_via": {
+        "hit_id": "hit-2026-1003",
+        "platform": "custom"
+      },
+      "entity_key": "skill|routing24 route optimizer",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1003",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0004",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ContextNest",
+      "url": "https://promptowl.ai/resources/persistent-memory-ai-agents",
+      "description": "Verified from the article: a version-controlled, governed context management system operating as a native MCP server, using local-first/self-hosted markdown vaults versioned with Git and SHA-256 hash chains, with manual steward approval before knowledge enters agent context and deterministic 'ctx forget' removal.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "unknown",
+      "related_topics": [
+        "agent"
+      ],
+      "found_via": {
+        "hit_id": "hit-2026-1004",
+        "platform": "custom"
+      },
+      "entity_key": "mcp|contextnest",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1004",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0005",
+      "topic": "agent",
+      "entity_type": "framework",
+      "name": "Mem0",
+      "url": "https://promptowl.ai/resources/persistent-memory-ai-agents",
+      "description": "Verified from the article: a semantic graph memory framework (mem0.ai) that extracts and maintains user-specific preferences and habits across chat streams via autonomous semantic auto-merges with no manual review.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Mem0 (mem0.ai)",
+      "freshness_signal": "unknown",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1004",
+        "platform": "custom"
+      },
+      "entity_key": "agent|mem0",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1004",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0006",
+      "topic": "agent",
+      "entity_type": "platform",
+      "name": "Zep",
+      "url": "https://promptowl.ai/resources/persistent-memory-ai-agents",
+      "description": "Verified from the article: a conversational memory platform (getzep.com) that runs auto-summarization and message-indexing pipelines over session logs and chat histories to maintain session continuity.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Zep (getzep.com)",
+      "freshness_signal": "unknown",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1004",
+        "platform": "custom"
+      },
+      "entity_key": "agent|zep",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1004",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0007",
+      "topic": "agent",
+      "entity_type": "platform",
+      "name": "Rainslice",
+      "url": "https://rainslice.ai",
+      "description": "Verified from the site: an AI platform automating end-to-end operations for home services businesses (cleaning, HVAC, plumbing, etc.), handling call/text answering, lead qualification, scheduling, dispatch routing, and quote generation 24/7.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Rainslice",
+      "freshness_signal": "© 2026 footer, active go-to-market phase with demo booking CTAs",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1005",
+        "platform": "custom"
+      },
+      "entity_key": "agent|rainslice",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1005",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0008",
+      "topic": "mcp",
+      "entity_type": "client_sdk",
+      "name": "mcp-use",
+      "url": "https://manufact.com",
+      "description": "Verified from the site: an open-source SDK (TypeScript and Python) for scaffolding, testing, and building MCP applications and servers, with one-command scaffolding and a Visual Inspector for testing without a live LLM.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Manufact (YC-backed)",
+      "freshness_signal": "7M+ SDK downloads, 10k+ GitHub stars; no explicit version given",
+      "related_topics": [
+        "agent"
+      ],
+      "found_via": {
+        "hit_id": "hit-2026-1006",
+        "platform": "custom"
+      },
+      "entity_key": "mcp|mcp-use",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1006",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0009",
+      "topic": "mcp",
+      "entity_type": "other",
+      "name": "Manufact Cloud",
+      "url": "https://manufact.com",
+      "description": "Verified from the site: a hosting platform for deploying mcp-use applications with automatic GitHub-push deployment (no YAML/Docker config), multi-platform support (ChatGPT, Claude, Gemini, coding agents), and app-store/connector publishing.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Manufact (YC-backed)",
+      "freshness_signal": "deployment under 60 seconds from code push to live; no explicit version given",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1006",
+        "platform": "custom"
+      },
+      "entity_key": "mcp|manufact cloud",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1006",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0010",
+      "topic": "agent",
+      "entity_type": "product",
+      "name": "PromptQL Tag",
+      "url": "https://promptql.io/promptql-tag-slack-agent",
+      "description": "Verified from the site: a company-wide AI agent for Slack/Microsoft Teams that answers questions, analyzes data, and generates content while respecting each user's individual permissions, maintains shared team knowledge as a wiki, and connects to databases/APIs.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Hasura, Inc.",
+      "freshness_signal": "new research collaboration with UC Berkeley mentioned; © 2026 footer",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1007",
+        "platform": "custom"
+      },
+      "entity_key": "agent|promptql tag",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1007",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0011",
+      "topic": "mcp",
+      "entity_type": "client_sdk",
+      "name": "MCP SDK betas (2026-07-28 spec RC)",
+      "url": "https://blog.modelcontextprotocol.io/posts/sdk-betas-2026-07-28",
+      "description": "Verified from the post: beta releases of the four Tier 1 MCP SDKs (Python v2, TypeScript v2, Go v1.7.0-pre.1, C# v2.0.0-preview.1) implementing the 2026-07-28 spec release candidate, which makes the protocol stateless (removing the initialize handshake and protocol-level session).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Model Context Protocol organization",
+      "freshness_signal": "published 2026-06-29; spec finalizes 2026-07-28",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1009",
+        "platform": "custom"
+      },
+      "entity_key": "mcp|mcp sdk betas (2026-07-28 spec rc)",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1009",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0012",
+      "topic": "agent",
+      "entity_type": "product",
+      "name": "Parsewise",
+      "url": "https://www.parsewise.ai/api",
+      "description": "Verified from the site: a RESTful API platform for multi-document processing and structured data extraction, offering cross-document entity linking and contradiction detection across 10,000+ pages per run, targeted at insurance, asset management, and lending firms.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown (built with Claude; no parent company named on page)",
+      "freshness_signal": "page published 2026-07-04",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1010",
+        "platform": "custom"
+      },
+      "entity_key": "agent|parsewise",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1010",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0013",
+      "topic": "agent",
+      "entity_type": "product",
+      "name": "Supafax",
+      "url": "https://www.supafax.com",
+      "description": "Verified from the site: an AI email assistant for Gmail/Outlook that drafts replies in the user's voice, auto-schedules meetings, auto-labels emails, and supports custom automation via natural-language rules, treating email as a task-management file system.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Veriad, Inc.",
+      "freshness_signal": "© 2026 footer; $35/mo Professional plan with 14-day free trial",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1011",
+        "platform": "custom"
+      },
+      "entity_key": "agent|supafax",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1011",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0014",
+      "topic": "agent",
+      "entity_type": "other",
+      "name": "Trajeckt",
+      "url": "https://github.com/beebeeVB/trajeckt",
+      "description": "Verified from the repo: a runtime enforcement gateway that blocks multi-step data-exfiltration tool-call chains even when each call is individually authorized, using sealed cryptographic commitments and taint-propagation tracking, fail-closed by default, implementing the MCP Streamable HTTP transport.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "beebeeVB",
+      "freshness_signal": "v0.1.0 released 2026-06-11, 118 commits on main",
+      "related_topics": [
+        "mcp"
+      ],
+      "found_via": {
+        "hit_id": "hit-2026-1012",
+        "platform": "custom"
+      },
+      "entity_key": "agent|trajeckt",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1012",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0015",
+      "topic": "mcp",
+      "entity_type": "framework",
+      "name": "Evaluation Context Protocol (ECP)",
+      "url": "https://www.evaluationcontextprotocol.io",
+      "description": "Verified from the site: a vendor-neutral, JSON-RPC 2.0 protocol standardizing how evaluators inspect agent tool usage and audit context (not just final answers) across frameworks (LangChain, LlamaIndex, CrewAI, PydanticAI) and CI systems, positioned as an 'evaluation contract layer' analogous to MCP.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown (open source, creator not named on page)",
+      "freshness_signal": "current version 0.3.3",
+      "related_topics": [
+        "agent"
+      ],
+      "found_via": {
+        "hit_id": "hit-2026-1013",
+        "platform": "custom"
+      },
+      "entity_key": "mcp|evaluation context protocol (ecp)",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1013",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0016",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Hail.so",
+      "url": "https://hail.so",
+      "description": "Verified from the site: an MCP server, CLI, and REST API unifying voice calls, SMS/MMS, and email for AI agents through a single integration point, with real-time call transcripts, TCPA compliance, and STIR/SHAKEN authentication.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Hail HQ",
+      "freshness_signal": "site shows 'AVAILABLE NOW'; self-hostable under AGPL or managed cloud, 2026",
+      "related_topics": [],
+      "found_via": {
+        "hit_id": "hit-2026-1014",
+        "platform": "custom"
+      },
+      "entity_key": "mcp|hail.so",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1014",
+            "platform": "custom"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0017",
+      "topic": "agent",
+      "entity_type": "framework",
+      "name": "Agent Swarm",
+      "url": "https://www.agent-swarm.dev",
+      "description": "Verified from the site: an open-source operating system for coordinating AI agent work, where a lead agent breaks goals into tasks routed to specialized workers (Claude Code, Codex, etc.) in isolated Docker containers, with shared memory persisting across sessions; positioned as an open-source alternative to CrewAI, Claude Tag, and Devin.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "desplega.sh",
+      "freshness_signal": "50,000 tasks executed in the last 30 days, 10+ daily installs; no explicit version number",
+      "related_topics": [
+        "mcp"
+      ],
+      "found_via": {
+        "hit_id": "hit-2026-1015",
+        "platform": "custom"
+      },
+      "entity_key": "agent|agent swarm",
+      "corroboration_count": 1,
+      "discovery": {
+        "first_seen_at": "2026-07-06",
+        "last_corroborated_at": "2026-07-06",
+        "found_via": [
+          {
+            "hit_id": "hit-2026-1015",
+            "platform": "custom"
+          }
+        ]
+      }
+    }
+  ]
 }

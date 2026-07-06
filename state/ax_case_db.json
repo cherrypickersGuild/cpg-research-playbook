@@ -1,6 +1,5 @@
 {
-  "_about": "The persistent, cumulative case corpus — the actual 'database' newly discovered cases merge into. Populated by merge_case_db.sh, called from run_stage1.sh (initial + 1D refresh runs) and discover.sh (1F news runs). Cases are deduped by case_key (company|ax_pattern|transformation_date[0:7]); repeat matches raise corroboration_count and merge sources[] rather than creating a duplicate. Point Stage 2 (Validator) at this file for a full-corpus pass instead of a single run's outputs/01_case_db.json. See SEEDING_STRATEGY.md.",
   "schema_version": 1,
-  "last_merged_at": null,
+  "last_merged_at": "2026-07-06",
   "cases": []
 }

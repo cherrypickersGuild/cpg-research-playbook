@@ -10,7 +10,7 @@
 # Needs only stages 1-2 to have run (02_validated.json, ideally 01_case_db.json).
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
 
 command -v jq >/dev/null 2>&1 || { echo "ERROR: jq not found. Install jq first."; exit 1; }

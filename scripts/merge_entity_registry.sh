@@ -17,7 +17,7 @@
 #   (master_registry.json defaults to state/entity_registry.json; created if absent)
 
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NEW="${1:?Usage: bash merge_entity_registry.sh <new_entity_batch.json> [master_registry.json]}"
 MASTER="${2:-$ROOT/state/entity_registry.json}"
 

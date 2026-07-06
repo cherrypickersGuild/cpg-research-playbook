@@ -1,4 +1,109 @@
 {
   "_about": "Lifecycle for seed topics themselves (candidate -> active -> paused -> rejected) — separate from cherry_category (content-type tags in source_registry_template.json) and from per-topic source lists (community_strategy_db.json). Written by Stage 1E (agents/stage1/1E_category_discovery.md). On promotion to active, the category_id is appended to SEED_TOPICS in pipeline.config.sh and 1A/1A-community pick it up on their next run. See SEEDING_STRATEGY.md.",
-  "categories": []
+  "categories": [
+    {
+      "category_id": "agent-governance-audit",
+      "label": "Agent governance, access-control & audit-trail tooling",
+      "status": "candidate",
+      "first_observed_at": "2026-07-06",
+      "promoted_at": null,
+      "evidence": [
+        {
+          "type": "recurring_term",
+          "source": "state/search_hits_agent.json",
+          "count": 3,
+          "sample_hit_ids": [
+            "agent-010#reddit.com/r/aiagents",
+            "agent-012#forgeworkflows.com",
+            "agent-013#naveeratech.com"
+          ],
+          "note": "Enterprise pilots repeatedly stalling on missing audit trails, access controls, and governance/orchestration design, not on agent capability itself"
+        },
+        {
+          "type": "recurring_term",
+          "source": "state/search_hits_mcp.json",
+          "count": 3,
+          "sample_hit_ids": [
+            "mcp-003#mcpmanager.ai",
+            "mcp-009#blog.christianposta.com",
+            "mcp-009#descope.com"
+          ],
+          "note": "MCP-specific enterprise adoption blockers: identity/provisioning, anonymous client registration risk, permissions/SSO"
+        }
+      ],
+      "reviewer_notes": "Distinct from 'agent'/'mcp' capability discussion — this is the governance/compliance layer blocking enterprise deployment of both. 6 total independent occurrences across 2 shards, different domains.",
+      "rejected_reason": null
+    },
+    {
+      "category_id": "agent-observability-eval",
+      "label": "Agent/LLM observability and evaluation tooling (vendor category)",
+      "status": "candidate",
+      "first_observed_at": "2026-07-06",
+      "promoted_at": null,
+      "evidence": [
+        {
+          "type": "recurring_term",
+          "source": "state/search_hits_agent.json",
+          "count": 3,
+          "sample_hit_ids": [
+            "agent-006#langchain.com",
+            "agent-006#arize.com",
+            "agent-006#last9.io"
+          ],
+          "note": "Named vendor tooling (LangSmith, Arize, last9) for production agent monitoring with agent-specific metrics"
+        },
+        {
+          "type": "recurring_term",
+          "source": "state/search_hits_prompt.json",
+          "count": 2,
+          "sample_hit_ids": [
+            "prompt-001#braintrust.dev",
+            "prompt-001#getmaxim.ai"
+          ],
+          "note": "Prompt/LLM evaluation frameworks: golden datasets, LLM-as-judge scoring, rubric-based regression testing"
+        }
+      ],
+      "reviewer_notes": "5 independent occurrences across 2 shards (agent + prompt), all distinct vendors/domains. Recurring named-tool category (LangSmith, Arize, Braintrust, Maxim, last9) rather than generic agent/prompt discussion.",
+      "rejected_reason": null
+    },
+    {
+      "category_id": "ai-workforce-enablement",
+      "label": "Enterprise AI literacy / workforce enablement & training programs",
+      "status": "candidate",
+      "first_observed_at": "2026-07-06",
+      "promoted_at": null,
+      "evidence": [
+        {
+          "type": "recurring_term",
+          "source": "state/search_hits_agent.json",
+          "count": 1,
+          "sample_hit_ids": [
+            "agent-014#anthropic.com"
+          ],
+          "note": "AI Fluency Index measuring observable behaviors of AI-fluency development across conversations"
+        },
+        {
+          "type": "recurring_term",
+          "source": "state/search_hits_skills.json",
+          "count": 2,
+          "sample_hit_ids": [
+            "skills-004#anthropic.skilljar.com",
+            "skills-008#deeplearning.ai"
+          ],
+          "note": "Structured enterprise training programs and courses on organizational AI/skills adoption, distinct from a 'skill' as a technical artifact"
+        },
+        {
+          "type": "recurring_term",
+          "source": "state/search_hits_ax.json",
+          "count": 1,
+          "sample_hit_ids": [
+            "ax-013#harvardbusiness.org"
+          ],
+          "note": "Building AI fluency broadly and preparing leaders/teams through organizational change"
+        }
+      ],
+      "reviewer_notes": "4 independent occurrences across 3 shards (agent, skills, AX cases) and 4 distinct domains. Distinct from 'skills' (technical Claude Skills artifacts) — this is workforce/organizational change-management content.",
+      "rejected_reason": null
+    }
+  ]
 }

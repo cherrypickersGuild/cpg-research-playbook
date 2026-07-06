@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
 
 # --- preflight: fail early with a clear message ------------------------------
@@ -95,7 +95,7 @@ CASE_DB="$OUT/01_case_db.json"
 if [ "$FROM_STAGE" -le 1 ]; then
   if [ "${STAGE1_MODE:-monolith}" = "discovery" ]; then
     echo "--- stage 1: discovery sub-pipeline (1A->1B->1C) ---"
-    bash "$ROOT/run_stage1.sh" "$CASE_DB" "$CONFIG_JSON"
+    bash "$ROOT/scripts/run_stage1.sh" "$CASE_DB" "$CONFIG_JSON"
   else
     run_stage 01 case_finder 01_case_finder.md "Read,WebSearch,WebFetch" \
       "Follow your system instructions. Read the run config at $CONFIG_JSON and obey its date_filter. Find verified AX cases and output ONLY the corpus JSON (run_metadata, coverage_summary, cases[], pattern_index) to stdout. No prose, no code fences." \

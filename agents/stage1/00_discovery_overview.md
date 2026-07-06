@@ -51,7 +51,7 @@ become each case's `source[].url`, which the Validator then re-checks for access
 flows through so the Validator knows to verify those via browser, not fetch.
 
 ## Extensions: 1E Category Discovery, 1F News Monitor, 1G Entity Extractor
-Three more agents extend this sub-pipeline — see `../../SEEDING_STRATEGY.md` for the full strategy,
+Three more agents extend this sub-pipeline — see `../../docs/SEEDING_STRATEGY.md` for the full strategy,
 schedule, and workflow:
 - **1E Category Discovery** (`1E_category_discovery.md`) — slow cadence (monthly/quarterly); proposes
   new seed topics beyond the initial five into `state/category_registry.json`, gated on human review
@@ -66,6 +66,6 @@ schedule, and workflow:
   `merge_case_db.sh` uses for cases.
 
 ## Run entry points
-- `bash run_stage1.sh` — one discovery pass (1A if strategies missing/stale → 1B → 1C → 1G), writes this run's `01_case_db.json` and folds both the case DB and the entity registry into their master state/ files.
-- `bash refresh.sh` — the closed cycle (1D): refreshes only stale keywords. Schedule it (cron / Task Scheduler) every few days; it does nothing until something crosses `REFRESH_DAYS`.
-- `bash discover.sh` — 1F News Monitor (feeding 1C + 1G) and/or 1E Category Discovery; see `SEEDING_STRATEGY.md`.
+- `bash scripts/run_stage1.sh` — one discovery pass (1A if strategies missing/stale → 1B → 1C → 1G), writes this run's `01_case_db.json` and folds both the case DB and the entity registry into their master state/ files.
+- `bash scripts/refresh.sh` — the closed cycle (1D): refreshes only stale keywords. Schedule it (cron / Task Scheduler) every few days; it does nothing until something crosses `REFRESH_DAYS`.
+- `bash scripts/discover.sh` — 1F News Monitor (feeding 1C + 1G) and/or 1E Category Discovery; see `../../docs/SEEDING_STRATEGY.md`.

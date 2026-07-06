@@ -1,4 +1,4 @@
-# crontab entries for the seeding schedule described in SEEDING_STRATEGY.md §5.
+# crontab entries for the seeding schedule described in docs/SEEDING_STRATEGY.md §5.
 # For Linux/macOS/WSL. Install with:  crontab schedule/crontab.txt
 # (edit ROOT below to this project's absolute path first)
 #
@@ -12,26 +12,26 @@ SHELL=/bin/bash
 
 # Tier 1 — News Monitor (1F): every 12h. Cheap, narrow (news-tier sources only,
 # short freshness window); feeds the master case DB merge directly.
-0 */12 * * * cd $ROOT && bash discover.sh --news-only >> schedule/logs/news.log 2>&1
+0 */12 * * * cd $ROOT && bash scripts/discover.sh --news-only >> schedule/logs/news.log 2>&1
 
 # Tier 2 — Evergreen refresh (1D, existing): checked daily, only acts on
 # strategies whose age crosses REFRESH_DAYS (default 90).
-0 3 * * * cd $ROOT && bash refresh.sh >> schedule/logs/refresh.log 2>&1
+0 3 * * * cd $ROOT && bash scripts/refresh.sh >> schedule/logs/refresh.log 2>&1
 
 # Tier 3 — Source/community discovery (MODE B, via 1A-community): monthly.
 # Finds wholly new communities/awesome-lists; candidates need human review
 # before status:"active". Runs through run_stage1.sh's normal 1A pass, which
 # already augments (never clobbers) the community strategy DB.
-0 4 1 * * cd $ROOT && bash run_stage1.sh state/monthly_discovery_case_db.json >> schedule/logs/community_discovery.log 2>&1
+0 4 1 * * cd $ROOT && bash scripts/run_stage1.sh state/monthly_discovery_case_db.json >> schedule/logs/community_discovery.log 2>&1
 
 # Tier 4 — Category discovery (1E): monthly. Proposes new seed topics from
 # accumulated signal; never self-promotes — a human reviews category_registry.json.
-0 5 1 * * cd $ROOT && bash discover.sh --category-only >> schedule/logs/category.log 2>&1
+0 5 1 * * cd $ROOT && bash scripts/discover.sh --category-only >> schedule/logs/category.log 2>&1
 
 # Tier 5 — Seeding health snapshot: weekly, so drift (staleness, unresolved
 # conflicts, pending category candidates) surfaces before it piles up.
-0 6 * * 1 cd $ROOT && bash calibrate_seeding.sh >> schedule/logs/seeding_health.log 2>&1
+0 6 * * 1 cd $ROOT && bash scripts/calibrate_seeding.sh >> schedule/logs/seeding_health.log 2>&1
 
 # Tier 6 — Full corpus recalibration / deck rebuild (Stages 2-4): NOT
 # scheduled here on purpose — run manually per lecture engagement:
-#   bash run_pipeline.sh   (with FROM_STAGE=2, EXISTING_CASE_DB=state/ax_case_db.json)
+#   bash scripts/run_pipeline.sh   (with FROM_STAGE=2, EXISTING_CASE_DB=state/ax_case_db.json)
