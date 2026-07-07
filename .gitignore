@@ -13,4 +13,5 @@ state/news_hits.json
 state/news_case_db_*.json
 state/news_entity_batch.json
 state/harvest_*
+state/logs/
 schedule/logs/
