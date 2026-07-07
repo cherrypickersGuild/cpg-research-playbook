@@ -29,6 +29,48 @@ Recommended order, since `prompt` currently sits at 0: `agent`, `mcp`, `prompt`,
   `.err` file only has stderr and won't show a malformed *stdout* response). All four `raw_*`/batch
   files are overwritten every loop, so they only ever reflect the most recent (often the failing) one.
 
+## Timing logs
+
+Every invocation writes structured JSONL events to `state/logs/harvest_<run_id>.jsonl`, where
+`run_id` is `<UTC timestamp>-<PID>` (e.g. `20260708T012345Z-12345`). **Local, transient, and
+gitignored** — `state/logs/` is never committed; treat these as scratch diagnostics, not a durable
+record.
+
+**Event types**, one JSON object per line, always carrying `ts`/`run_id`/`event`:
+`script_start`, `topic_start`, `loop_start`, `claude_call_start`, `claude_call_end`, `merge_start`,
+`merge_end`, `topic_end`, `script_end`, `error`. `topic_end` and `script_end` are emitted by a
+single exit trap, so exactly one of each is written no matter how the run ends (normal exit,
+`set -e` failure, or a caught SIGINT/SIGTERM — SIGKILL can't be trapped by anything and leaves no
+final event). `error` fires from that same trap but only when the exit code is non-zero — a clean
+run (target reached, sources exhausted, `MAX_LOOPS` hit) never emits one.
+
+**What you can reconstruct from a log:** total run duration (`script_end.duration_sec`), per-topic
+duration (`topic_start`→`topic_end` timestamps), per-loop duration (deltas between consecutive
+`loop_start` timestamps), Claude subprocess duration per attempt (`claude_call_end.duration_sec`,
+labeled `candidate_batch` or `1g_extraction`), merge duration (`merge_start`→`merge_end`), verified-
+count deltas per loop (`merge_end.verified_before`/`verified_after`), and — on a non-zero exit — the
+specific failure category via `error.detail` (e.g. `candidate_batch_failed_after_retries`,
+`merge_entity_registry_failed`) instead of needing to dig through the Claude Code session transcript.
+
+Example inspection commands:
+
+```bash
+# find the most recent log
+LATEST="$(ls -t state/logs/harvest_*.jsonl | head -1)"
+
+# pretty-print every event
+jq -c . "$LATEST"
+
+# total run duration and how it ended
+jq -r 'select(.event=="script_end") | "duration=\(.duration_sec)s exit_code=\(.exit_code)"' "$LATEST"
+
+# per-claude-call durations, in order
+jq -r 'select(.event=="claude_call_end") | "\(.command_label)\t\(.duration_sec)s\t\(.detail)"' "$LATEST"
+
+# only the error event, if any
+jq -r 'select(.event=="error")' "$LATEST"
+```
+
 ## Re-running
 
 Safe and idempotent: already-processed URLs are excluded via the ledger and the existing registry
