@@ -15,4 +15,13 @@ state/news_entity_batch.json
 state/harvest_*
 state/logs/
 state/backups/
+# ax_case_harvest transient scratch files — listed explicitly (not a wildcard)
+# so state/ax_case_harvest_registry.json (the persistent output) is never
+# accidentally matched.
+state/ax_case_harvest_hits.json
+state/ax_case_harvest_batch.json
+state/ax_case_harvest_attempted.json
+state/ax_case_harvest.err
+state/ax_case_harvest_raw_candidates.json
+state/ax_case_harvest_raw_extract.json
 schedule/logs/
