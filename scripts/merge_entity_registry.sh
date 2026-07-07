@@ -80,8 +80,9 @@ jq -s --arg today "$TODAY" '
         }
       })
     else
-      .[$e.entity_key] = ($e + {
+      .[$e.entity_key] = (($e | del(.found_via)) + {
         corroboration_count: ($e.corroboration_count // 1),
+        conflicting_evidence_log: [],
         discovery: {
           first_seen_at: $today,
           last_corroborated_at: $today,
