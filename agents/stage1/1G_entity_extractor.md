@@ -26,9 +26,10 @@ independently over the same hits and never need to agree with each other.
    opposed to a general news article, opinion piece, or a page that only mentions such a thing in
    passing? Assign `topic` yourself from what the page actually is (`agent` / `mcp` / `prompt` /
    `skill`), not from any query metadata.
-2. **If yes** → extract an entity record (schema below). Pull the description from the page itself, not
-   the search snippet; if the page can't be fetched, keep the hit's own title/snippet and mark
-   `description_source: "snippet-only"`.
+2. **If yes** → extract an entity record (schema below). Pull the description from the entity's OWN
+   primary page (`target_url`, see step 6), not from the search snippet and not from the citing page
+   (`source_url`); if `target_url` cannot be fetched or confidently resolved, fall back to the
+   citing page's content and mark `description_source: "snippet-only"`.
 3. **If no** → do not fabricate an entity. Still mark the ledger row `entity_extracted: true,
    entity_ids: []` so it's recorded as processed and never re-examined for entity extraction (1C's own
    `extracted`/`case_ids` fields on the same row are untouched by this step).
@@ -36,6 +37,24 @@ independently over the same hits and never need to agree with each other.
    `"other"` if none fit rather than forcing a bad match.
 5. Compute `entity_key` = `topic + "|" + normalized(name)` (lowercase, collapsed whitespace) — this is
    the identity `merge_entity_registry.sh` dedups on, mirroring how `merge_case_db.sh` uses `case_key`.
+6. **Two URL fields, two independent fetches.** Every entity carries `source_url` (the URL that
+   surfaced this entity — the citing/seed page, e.g., an awesome-list row, a search-hit page, a
+   news article) and `target_url` (the entity's OWN official/primary page — its repo, docs page,
+   model card, package page, paper, or official product page). These are independent fetches:
+   - Fetch `source_url` to read the citing page when the hit content is what you need to decide
+     whether this is an entity at all.
+   - Separately fetch `target_url` to confirm it's really the entity's primary page and to pull the
+     description from there. `description_source: "verified"` means the description came from
+     `target_url` specifically — never from `source_url`, never from the snippet alone. If
+     `target_url` cannot be fetched or confidently resolved, write `"unknown"` for `target_url` and
+     set `description_source: "snippet-only"` (do not promote a citing-page description to
+     `verified`).
+7. **Echo `source_url` in `ledger_patch[].url`** so the merge step can match the ledger row that was
+   seeded from the candidate batch (the ledger's own key is the visited/fetched URL, which for the
+   harvest path is the candidate's `source_url`). For the 1B/1F Hit shape used by `discover.sh`,
+   where the hit has `news_url`/`source_url` fields of its own, `source_url` on the entity is the
+   hit's `news_url` (the specific article that was crawled) — same rule, "the URL that was actually
+   fetched to find this entity."
 
 ## `entity_type` enum by topic
 | topic | entity_type values |
@@ -54,7 +73,8 @@ independently over the same hits and never need to agree with each other.
       "topic": "mcp",
       "entity_type": "server",
       "name": "example-mcp-server",
-      "url": "https://github.com/example/example-mcp-server",
+      "source_url": "https://raw.githubusercontent.com/github/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/example/example-mcp-server",
       "description": "Verified from the repo README: an MCP server exposing X to Y via Z.",
       "description_source": "verified",
       "maintainer_or_vendor": "Example Org",
@@ -64,7 +84,7 @@ independently over the same hits and never need to agree with each other.
     }
   ],
   "ledger_patch": [
-    { "url": "https://github.com/example/example-mcp-server", "entity_extracted": true, "entity_ids": ["ent-2026-0001"] }
+    { "url": "https://raw.githubusercontent.com/github/awesome-mcp-servers/main/README.md", "entity_extracted": true, "entity_ids": ["ent-2026-0001"] }
   ]
 }
 ```
@@ -72,7 +92,9 @@ independently over the same hits and never need to agree with each other.
 ## Rules
 - Do not extract cases here — that's still 1C's job; if a hit is really an AX transformation story
   rather than a description of a specific tool, leave it to 1C and don't force an entity out of it.
-- Never invent a description, maintainer, or freshness signal; unknown -> `"unknown"`.
+- Never invent a description, maintainer, freshness signal, or `target_url`; unknown -> `"unknown"`.
+  In particular, never default `target_url` to `source_url` to fill the field — a citing page (an
+  awesome-list row, a search-hit page, a news article) is NOT the entity's own primary page.
 - One entity per (topic x name) — if a hit describes something already extracted this run, merge into
   the same in-batch entity rather than emitting a duplicate (cross-run dedup is `merge_entity_registry.sh`'s
   job, but avoid obvious in-run duplicates yourself).

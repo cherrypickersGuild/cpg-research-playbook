@@ -4,9 +4,20 @@
 # the topic has >= target verified entities, or sources are exhausted.
 #
 # "Verified" means description_source:"verified" — the description was
-# fetched from the entity's OWN primary page (repo, docs page, model card,
-# package page, paper, or official product page). Awesome-list README URLs
-# are seed material only and are never emitted as an entity's own url.
+# fetched from the entity's OWN primary page (target_url: repo, docs page,
+# model card, package page, paper, or official product page), never from
+# the citing page (source_url: an awesome-list row, a search-hit page, a
+# news article) and never from a search snippet alone. Awesome-list README
+# URLs are seed material only — they appear as a candidate's source_url,
+# never as its target_url.
+#
+# Candidate Hit shape emitted by the candidate-batch step (and consumed by
+# 1G): {hits:[{source_url, target_url, title, snippet, domain}]}.
+#   - source_url: original seed URL — the awesome-list row, search-hit page,
+#     or citing article that surfaced this candidate. Always present.
+#   - target_url: best-effort resolved primary URL for the entity, OR the
+#     literal string "unknown" if the candidate-batch step could not
+#     confidently determine one. 1G may still resolve it later via WebFetch.
 # See docs/entity_harvest_plan.md for the full design.
 #
 #   Usage: bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=100]
@@ -199,7 +210,7 @@ while :; do
   for attempt in $(seq 1 "$CANDIDATE_ATTEMPTS"); do
     CLAUDE_CALL_START_EPOCH="$(date +%s)"
     log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="candidate_batch" detail="attempt=${attempt}/${CANDIDATE_ATTEMPTS}"
-    if claude -p "You are sourcing CANDIDATE urls for Stage 1G (entity extraction) — you do not extract or verify entities yourself here. Topic: $TOPIC. Seed sources, in priority order: (a) $AWESOME_LIST plus the source awesome-list raw README(s) it cites near its top (fetch those for entries beyond the report's own ~40-row cap), (b) $HITS_SHARD. For EVERY candidate you propose, resolve it to the PROJECT'S OWN primary URL — its own repo, docs page, model card, package page, paper, or official product page. Never emit an awesome-list README URL itself as a candidate's url. Drop any entry whose own primary URL cannot be determined rather than guessing. EXCLUDE any URL that is: already entity_extracted:true in the ledger at $LEDGER, already listed in attempted_urls[] in $ATTEMPTED, or already a url of an existing entity in $REGISTRY. Return at most $BATCH_SIZE candidates. Output ONLY JSON of the shape {\"hits\":[{\"url\":\"...\",\"title\":\"...\",\"snippet\":\"...\",\"domain\":\"...\"}]}. No prose, no fences." \
+    if claude -p "You are sourcing CANDIDATE urls for Stage 1G (entity extraction) — you do not extract or verify entities yourself here. Topic: $TOPIC. Seed sources, in priority order: (a) $AWESOME_LIST plus the source awesome-list raw README(s) it cites near its top (fetch those for entries beyond the report's own ~40-row cap), (b) $HITS_SHARD. For EVERY candidate you propose, return BOTH URLs: source_url = the original seed URL where you found this entry (the awesome-list README anchor/URL, the search-hit page, or the citing article — never omit this), AND target_url = a best-effort resolved primary URL for the entity itself (its own repo, docs page, model card, package page, paper, or official product page). If you cannot confidently determine target_url, emit the literal string \"unknown\" rather than guessing — Stage 1G will try to resolve it separately via WebFetch. Never emit an awesome-list README URL as target_url, and never copy source_url into target_url to fill the field. EXCLUDE any candidate whose source_url is: already entity_extracted:true in the ledger at $LEDGER, already listed in attempted_urls[] in $ATTEMPTED. ALSO EXCLUDE any candidate whose target_url (when not \"unknown\") is already a target_url of an existing entity in $REGISTRY (prevents re-cataloging the same entity via a different citing page). Return at most $BATCH_SIZE candidates. Output ONLY JSON of the shape {\"hits\":[{\"source_url\":\"...\",\"target_url\":\"...\",\"title\":\"...\",\"snippet\":\"...\",\"domain\":\"...\"}]}. No prose, no fences." \
          --allowedTools "Read,WebSearch,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_CANDIDATES" | jq -r '.result' | clean > "$BATCH_HITS" \
        && jq empty "$BATCH_HITS" 2>/dev/null; then
@@ -226,7 +237,13 @@ while :; do
 
   # record every URL sent this loop as attempted, before we know 1G's verdict —
   # this is what stops a later loop from re-selecting a dropped/rejected candidate.
-  if ! jq -s '{attempted_urls: ((.[0].attempted_urls // []) + [.[1].hits[]?.url]) | unique}' \
+  # Key on source_url: the candidate's original seed/citing URL. This prevents
+  # re-fetching the SAME CITING PAGE in a later loop. The different guarantee
+  # (don't re-catalog the same ENTITY via a different citing page) is handled
+  # separately by the candidate-batch prompt's registry-target_url exclusion
+  # and by merge_entity_registry.sh's entity_key dedup — both layer on top of
+  # this, they don't replace it.
+  if ! jq -s '{attempted_urls: ((.[0].attempted_urls // []) + [.[1].hits[]?.source_url]) | unique}' \
        "$ATTEMPTED" "$BATCH_HITS" > "$ATTEMPTED.tmp"; then
     rm -f "$ATTEMPTED.tmp"
     EXIT_REASON="attempted_set_merge_failed"
@@ -240,10 +257,21 @@ while :; do
   # straight from the candidate-batch step, not through 1B's own ledger-append, so without this
   # the entity_extracted/entity_ids patch below would have no existing row to match against and
   # would silently no-op (existing rows always win via unique_by's first-occurrence semantics).
+  #
+  # Ledger dedup key choice: source_url (NOT target_url). The visited_url_ledger.json schema
+  # remains unchanged — its `url` field is still `url`, semantically "the URL that was crawled/
+  # visited for this row" (same field 1B's news_url populates from the case-side path). For the
+  # entity-harvest path we populate it from hit.source_url because that's the URL we actually sent
+  # into the candidate batch — keying the ledger on source_url prevents RE-FETCHING THE SAME
+  # CITING PAGE (the awesome-list row, the search-hit page) across runs. Keying on target_url
+  # instead would prevent re-cataloging the same ENTITY via a different citing page — a real but
+  # weaker guarantee, since entity_key dedup at merge_entity_registry.sh already catches same-
+  # entity re-cataloging, and a target_url-keyed ledger would say nothing about whether the
+  # citing page itself has been re-fetched. Source_url is the right key for "visited URL" semantics.
   if ! jq -s --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
       (.[1].hits // []) as $hits
       | { ledger: ( (.[0].ledger // []) + ($hits | map({
-            url: .url, url_type: "news_url", platform: (.platform // "custom"),
+            url: .source_url, url_type: "news_url", platform: (.platform // "custom"),
             first_crawled_at: $now, last_crawled_at: $now, crawl_count: 1,
             http_status_last: null, content_hash: null,
             extracted: false, case_ids: [], entity_extracted: false, entity_ids: []
@@ -266,7 +294,7 @@ while :; do
   for attempt in $(seq 1 "$ONEG_ATTEMPTS"); do
     CLAUDE_CALL_START_EPOCH="$(date +%s)"
     log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="1g_extraction" detail="attempt=${attempt}/${ONEG_ATTEMPTS}"
-    if claude -p "Follow your system instructions. Hits: $BATCH_HITS. Visited-URL ledger: $LEDGER (use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). Fetch each candidate's own page before extracting; only set description_source:\"verified\" when the description came from that fetch, never from the snippet alone — if the page can't be fetched, use description_source:\"snippet-only\" per your existing rules rather than marking it verified. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
+    if claude -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
          --append-system-prompt "$(cat "$S1/1G_entity_extractor.md")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_1G" | jq -r '.result' | clean > "$BATCH_ENTITIES" \
        && jq empty "$BATCH_ENTITIES" 2>/dev/null; then

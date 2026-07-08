@@ -5,9 +5,10 @@
 `state/entity_registry.json` currently holds 17 entities (9 `agent`, 7 `mcp`, 1 `skill`, 0 `prompt`) —
 from a single 1G run over `state/news_hits.json`. The target is **≥100 entities per topic
 (`agent`/`mcp`/`prompt`/`skill`), all with `description_source: "verified"`**, where *verified* means
-the description was pulled from the **entity's own primary page** — its repo, docs page, model card,
-package page, paper page, or official product page — never from an awesome-list README or a search
-snippet.
+the description was pulled from the **entity's own primary page** (`target_url` — its repo, docs page,
+model card, package page, paper page, or official product page), never from the citing page
+(`source_url` — an awesome-list README, a search-hit page, a news article) and never from a search
+snippet alone.
 
 ## Why volume, not machinery, is the gap
 
@@ -22,8 +23,8 @@ have never been run through 1G at all:
   collected by 1B/1A but only ever fed to 1C (case extraction), never to 1G.
 - `reports/awesome-lists/awesome_<topic>.md` — curated landscape reports (~40 rows each) that cite
   source awesome-list READMEs with **thousands** of further named entries. These reports and the
-  awesome-list README URLs themselves are **seed material only** — never emit an awesome-list URL as
-  an entity's own `url`; the entity's own primary page must be resolved first.
+  awesome-list README URLs themselves are **seed material only** — they appear as a candidate's
+  `source_url`, never as its `target_url`; the entity's own primary page must be resolved separately.
 
 ## Proposed harness: `scripts/harvest_entities.sh` (design; not built yet)
 
@@ -37,28 +38,39 @@ reuse the ledger `jq -s` merge pattern), reusing the 1G invocation already in `r
 1. **Build candidate batch** — one `claude -p` call (`allowedTools: Read,WebFetch,WebSearch`) that:
    - Reads `reports/awesome-lists/awesome_<topic>.md` plus the source awesome-list raw READMEs it
      cites, and `state/search_hits_<mapped>.json`.
-   - **Resolves each seed entry to the project's own primary URL** (repo / docs / model card /
-     package page / paper / official product page). Entries whose own source URL can't be determined
-     are dropped rather than guessed.
-   - **Excludes** any URL that is already `entity_extracted:true` in the ledger, already present in
-     the run's attempted-set (`state/harvest_<topic>_attempted.json`, step 5), or already a `url` in
-     `state/entity_registry.json`.
-   - Emits Hit-shaped JSON (`{hits:[{url,title,snippet,domain}]}`, capped at `BATCH_SIZE=25`) to
-     transient `state/harvest_<topic>_hits.json`.
+   - For every candidate, returns BOTH `source_url` (the original seed URL — the awesome-list row,
+     search-hit page, or citing article where the entry was found) AND `target_url` (a best-effort
+     resolved primary URL — repo / docs / model card / package page / paper / official product page).
+     If `target_url` can't be confidently determined, the candidate-batch step emits the literal
+     string `"unknown"` rather than guessing; 1G may still resolve it later via WebFetch.
+   - **Excludes** any candidate whose `source_url` is already `entity_extracted:true` in the ledger
+     or already present in the run's attempted-set (`state/harvest_<topic>_attempted.json`, step 5);
+     also excludes any candidate whose `target_url` (when not `"unknown"`) is already a `target_url`
+     in `state/entity_registry.json` (prevents re-cataloging the same entity via a different citing
+     page).
+   - Emits Hit-shaped JSON (`{hits:[{source_url,target_url,title,snippet,domain}]}`, capped at
+     `BATCH_SIZE=25`) to transient `state/harvest_<topic>_hits.json`.
 2. **Extract + verify** — run 1G over that hits file (`allowedTools: Read,WebFetch`) so every kept
-   entity is actually fetched from its own page, giving `description_source:"verified"`; write
-   transient `state/harvest_<topic>_entity_batch.json`; fold its `ledger_patch` into
-   `visited_url_ledger.json` using the same `jq -s` technique `run_stage1.sh` already uses.
+   entity's `target_url` is actually fetched, giving `description_source:"verified"` (verified means
+   the description came from `target_url` specifically — never from `source_url`, never from the
+   snippet alone); write transient `state/harvest_<topic>_entity_batch.json`; fold its `ledger_patch`
+   into `visited_url_ledger.json` using the same `jq -s` technique `run_stage1.sh` already uses.
 3. **Merge** — `bash scripts/merge_entity_registry.sh state/harvest_<topic>_entity_batch.json state/entity_registry.json`.
 4. **Tally** — count strictly `topic == <topic>` **and** `description_source == "verified"`:
    ```
    jq --arg t "$TOPIC" '[.entities[] | select(.topic==$t and .description_source=="verified")] | length' state/entity_registry.json
    ```
    Print `[harvest][<topic>] loop N: +K new verified → V/<target>`.
-5. **Record attempts (no retry loops)** — union every URL sent in this loop's batch (accepted *or*
-   rejected by 1G) into `state/harvest_<topic>_attempted.json`. Combined with the ledger's
-   `entity_extracted:true` (which 1G sets even for hits it decides aren't entities), this guarantees a
-   URL rejected or unverifiable in one loop is never re-selected in a later loop.
+5. **Record attempts (no retry loops)** — union every `source_url` sent in this loop's batch
+   (accepted *or* rejected by 1G) into `state/harvest_<topic>_attempted.json`. Combined with the
+   ledger's `entity_extracted:true` (which 1G sets even for hits it decides aren't entities), this
+   guarantees a `source_url` rejected or unverifiable in one loop is never re-selected in a later
+   loop. The ledger (`state/visited_url_ledger.json`) also keys on `source_url` for the harvest
+   path — see `scripts/harvest_entities.sh`'s inline note for why source_url was chosen over
+   target_url as the ledger dedup key (short version: the ledger is "visited URL" semantics, so
+   it tracks the fetched citing page; the "don't re-catalog same entity" guarantee is handled
+   separately by registry `target_url` exclusion at candidate-batch time and by `entity_key` dedup
+   at merge time).
 
 ### Stop / failure semantics
 
@@ -85,8 +97,8 @@ reuse the ledger `jq -s` merge pattern), reusing the 1G invocation already in `r
    `discover.sh`'s `command -v claude`/`command -v jq` checks.
 2. Small live loop, e.g. `bash scripts/harvest_entities.sh mcp 12` — confirm transient
    `state/harvest_mcp_*` files appear, the tally increments loop over loop, every new `topic:"mcp"`
-   row has `description_source:"verified"` and a non-awesome-list own URL, and the original 17
-   entities are untouched.
+   row has `description_source:"verified"` with a `target_url` distinct from `source_url` (and not
+   an awesome-list README), and the original 17 entities are untouched.
 3. Idempotency — re-run the same command; it should add ~0 new verified entities and exit via the
    "0 new" stop path, proving the ledger + attempted-set + registry dedup actually prevents rework.
 4. Failure paths — temporarily break `jq` on PATH or point at a corrupted registry file; confirm the

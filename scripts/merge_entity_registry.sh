@@ -9,9 +9,13 @@
 # On a match: increment corroboration_count, keep the richer description
 # (verified beats snippet-only; never downgrade an already-verified
 # description back to snippet-only), union related_topics, stamp
-# discovery.last_corroborated_at. A conflicting entity_type is NEVER
-# silently overwritten — it's logged to conflicting_evidence_log[] for a
-# human to resolve, same as merge_case_db.sh does for transformation_date.
+# discovery.last_corroborated_at. A conflicting entity_type OR a conflicting
+# target_url is NEVER silently overwritten — both are logged to
+# conflicting_evidence_log[] for a human to resolve, same as merge_case_db.sh
+# does for transformation_date. A changed official site (target_url mismatch)
+# is meaningful signal, not noise. source_url is always pass-through: a
+# different citing page for the same entity is expected (corroboration), not a
+# conflict.
 #
 #   Usage: bash merge_entity_registry.sh <new_entity_batch.json> [master_registry.json]
 #   (master_registry.json defaults to state/entity_registry.json; created if absent)
@@ -60,16 +64,34 @@ jq -s --arg today "$TODAY" '
             )
           }
       ) as $best_desc |
+      # target_url resolution: if existing is "unknown"/missing and incoming carries a real
+      # (non-"unknown") target_url, backfill from incoming — same one-way backfill rule as
+      # maintainer_or_vendor. Skipped when $target_conflict (handled below) since a real-vs-real
+      # mismatch is logged, not silently picked. Without this backfill the record could end up
+      # in the impossible state of description_source:"verified" paired with target_url:"unknown"
+      # — the 1G contract is that verified requires target_url to have been fetched.
+      ( if ($ex.target_url // "unknown") == "unknown" and ($e.target_url // "unknown") != "unknown"
+        then { target_url: $e.target_url }
+        else {} end
+      ) as $target_backfill |
       ( ($ex.entity_type // null) != null and ($e.entity_type // null) != null
         and ($ex.entity_type // null) != ($e.entity_type // null)
       ) as $type_conflict |
+      ( ($ex.target_url // null) != null and ($ex.target_url // null) != "unknown"
+        and ($e.target_url // null) != null and ($e.target_url // null) != "unknown"
+        and ($ex.target_url // null) != ($e.target_url // null)
+      ) as $target_conflict |
       (($ex.conflicting_evidence_log // []) +
         (if $type_conflict then
           [{"noted_at": $today, "field": "entity_type",
             "existing": $ex.entity_type, "incoming": $e.entity_type}]
+         else [] end) +
+        (if $target_conflict then
+          [{"noted_at": $today, "field": "target_url",
+            "existing": $ex.target_url, "incoming": $e.target_url}]
          else [] end)
       ) as $conflict_log |
-      .[$e.entity_key] = ($ex + $best_desc + {
+      .[$e.entity_key] = ($ex + $best_desc + $target_backfill + {
         corroboration_count: $corrob,
         related_topics: $topics,
         conflicting_evidence_log: $conflict_log,

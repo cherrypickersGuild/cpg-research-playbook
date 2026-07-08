@@ -18,16 +18,21 @@ Recommended order, since `prompt` currently sits at 0: `agent`, `mcp`, `prompt`,
 ## What it touches
 
 - **Persistent (the only file this changes that matters across runs):** `state/entity_registry.json`
-  — and only via `merge_entity_registry.sh`, never written directly. `state/visited_url_ledger.json`
-  also persists (accumulates `entity_extracted`/`entity_ids`, same as every other stage-1 script).
-- **Transient, gitignored (`state/harvest_*`):** `harvest_<topic>_hits.json` (this loop's candidates),
-  `harvest_<topic>_entity_batch.json` (this loop's 1G output), `harvest_<topic>_attempted.json` (every
-  URL sent this invocation, so a later loop doesn't re-select a candidate 1G already rejected),
-  `harvest_<topic>.err` (stderr from the two `claude -p` calls), `harvest_<topic>_raw_candidates.json`
-  / `harvest_<topic>_raw_1g.json` (each call's raw stdout, captured unconditionally before it's piped
-  through `jq`/`clean` — this is what to check when a loop fails with a JSON-parse error, since the
-  `.err` file only has stderr and won't show a malformed *stdout* response). All four `raw_*`/batch
-  files are overwritten every loop, so they only ever reflect the most recent (often the failing) one.
+  — and only via `merge_entity_registry.sh`, never written directly. Each entity record carries two
+  URL fields: `source_url` (the URL that surfaced the entity — the awesome-list row, search-hit page,
+  or citing article) and `target_url` (the entity's own primary page — repo, docs, model card,
+  package page, paper, or official product page; `"unknown"` if it couldn't be confidently resolved).
+  `state/visited_url_ledger.json` also persists (accumulates `entity_extracted`/`entity_ids`, same as
+  every other stage-1 script); its row key for the harvest path is `source_url`.
+- **Transient, gitignored (`state/harvest_*`):** `harvest_<topic>_hits.json` (this loop's candidates,
+  Hit shape `{hits:[{source_url,target_url,title,snippet,domain}]}`), `harvest_<topic>_entity_batch.json`
+  (this loop's 1G output), `harvest_<topic>_attempted.json` (every `source_url` sent this invocation,
+  so a later loop doesn't re-select a candidate 1G already rejected), `harvest_<topic>.err` (stderr
+  from the two `claude -p` calls), `harvest_<topic>_raw_candidates.json` / `harvest_<topic>_raw_1g.json`
+  (each call's raw stdout, captured unconditionally before it's piped through `jq`/`clean` — this is
+  what to check when a loop fails with a JSON-parse error, since the `.err` file only has stderr and
+  won't show a malformed *stdout* response). All four `raw_*`/batch files are overwritten every loop,
+  so they only ever reflect the most recent (often the failing) one.
 
 ## Timing logs
 
@@ -73,10 +78,12 @@ jq -r 'select(.event=="error")' "$LATEST"
 
 ## Re-running
 
-Safe and idempotent: already-processed URLs are excluded via the ledger and the existing registry
-contents, so re-running the same command mostly adds ~0 new entities once a topic is exhausted or at
-target. The `attempted_urls` set itself resets each invocation — it only prevents re-picking a
-rejected candidate *within* one run, not across separate runs.
+Safe and idempotent: already-processed `source_url`s are excluded via the ledger (keyed on
+`source_url` for the harvest path) and the existing registry contents (keyed on `target_url` at
+candidate-batch exclusion time, on `entity_key` at merge time), so re-running the same command mostly
+adds ~0 new entities once a topic is exhausted or at target. The `attempted_urls` set itself resets
+each invocation — it only prevents re-picking a rejected candidate *within* one run, not across
+separate runs.
 
 ## Exit codes
 
