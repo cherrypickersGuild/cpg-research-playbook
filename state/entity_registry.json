@@ -1,6 +1,57 @@
 {
-  "schema_version": 1,
-  "last_merged_at": "2026-07-07",
+  "schema_version": 2,
+  "last_merged_at": "2026-07-09T08:43:47Z",
+  "metadata": {
+    "topics": [
+      "agent",
+      "mcp",
+      "prompt",
+      "skill"
+    ],
+    "entity_types": [
+      "benchmark",
+      "client_sdk",
+      "dataset",
+      "framework",
+      "guide",
+      "library",
+      "marketplace",
+      "other",
+      "platform",
+      "product",
+      "registry",
+      "server",
+      "skill",
+      "spec",
+      "technique",
+      "tool"
+    ],
+    "total_entities": 439,
+    "entity_count_by_topic": {
+      "agent": 125,
+      "mcp": 120,
+      "prompt": 82,
+      "skill": 112
+    },
+    "entity_count_by_entity_type": {
+      "benchmark": 1,
+      "client_sdk": 24,
+      "dataset": 2,
+      "framework": 48,
+      "guide": 18,
+      "library": 17,
+      "marketplace": 53,
+      "other": 39,
+      "platform": 38,
+      "product": 43,
+      "registry": 6,
+      "server": 57,
+      "skill": 36,
+      "spec": 7,
+      "technique": 5,
+      "tool": 45
+    }
+  },
   "entities": [
     {
       "entity_id": "ent-2026-0001",
@@ -26,7 +77,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://yolo-auto.com",
-      "target_url": "unknown"
+      "target_url": "https://yolo-auto.com"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -52,7 +103,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/vaquarkhan/mcp-test-harness",
-      "target_url": "unknown"
+      "target_url": "https://github.com/vaquarkhan/mcp-test-harness"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -80,7 +131,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/routing24/skill",
-      "target_url": "unknown"
+      "target_url": "https://github.com/routing24/skill"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -190,7 +241,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://rainslice.ai",
-      "target_url": "unknown"
+      "target_url": "https://rainslice.ai"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -270,7 +321,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://promptql.io/promptql-tag-slack-agent",
-      "target_url": "unknown"
+      "target_url": "https://promptql.io/promptql-tag-slack-agent"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -296,7 +347,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://blog.modelcontextprotocol.io/posts/sdk-betas-2026-07-28",
-      "target_url": "unknown"
+      "target_url": "https://blog.modelcontextprotocol.io/posts/sdk-betas-2026-07-28"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -322,7 +373,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.parsewise.ai/api",
-      "target_url": "unknown"
+      "target_url": "https://www.parsewise.ai/api"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -348,7 +399,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.supafax.com",
-      "target_url": "unknown"
+      "target_url": "https://www.supafax.com"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -376,7 +427,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/beebeeVB/trajeckt",
-      "target_url": "unknown"
+      "target_url": "https://github.com/beebeeVB/trajeckt"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -404,7 +455,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.evaluationcontextprotocol.io",
-      "target_url": "unknown"
+      "target_url": "https://www.evaluationcontextprotocol.io"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -430,7 +481,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://hail.so",
-      "target_url": "unknown"
+      "target_url": "https://hail.so"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -458,7 +509,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.agent-swarm.dev",
-      "target_url": "unknown"
+      "target_url": "https://www.agent-swarm.dev"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -483,8 +534,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/modelcontextprotocol/servers",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/modelcontextprotocol/servers"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -509,8 +560,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/jlowin/fastmcp",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/jlowin/fastmcp"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -535,8 +586,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/punkpeye/fastmcp",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/punkpeye/fastmcp"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -563,8 +614,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/1mcp-app/agent",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/1mcp-app/agent"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -591,8 +642,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/PipedreamHQ/pipedream",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/PipedreamHQ/pipedream"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -617,8 +668,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/awslabs/mcp",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/awslabs/mcp"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -643,8 +694,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/cloudflare/mcp-server-cloudflare",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/cloudflare/mcp-server-cloudflare"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -669,8 +720,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/hashicorp/terraform-mcp-server",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/hashicorp/terraform-mcp-server"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -695,8 +746,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/Azure/azure-mcp",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/Azure/azure-mcp"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -721,8 +772,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/googleapis/mcp-toolbox",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/googleapis/mcp-toolbox"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -747,8 +798,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/redis/mcp-redis",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/redis/mcp-redis"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -773,8 +824,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/neo4j-contrib/mcp-neo4j",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/neo4j-contrib/mcp-neo4j"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -799,8 +850,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/getsentry/sentry-mcp",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/getsentry/sentry-mcp"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -825,8 +876,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/grafana/mcp-grafana",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/grafana/mcp-grafana"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -851,8 +902,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/microsoft/playwright-mcp",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/microsoft/playwright-mcp"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -877,8 +928,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/executeautomation/mcp-playwright",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/executeautomation/mcp-playwright"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -903,8 +954,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/browserbase/mcp-server-browserbase",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/browserbase/mcp-server-browserbase"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -929,8 +980,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/webdriverio/mcp",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/webdriverio/mcp"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -955,8 +1006,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/exa-labs/exa-mcp-server",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/exa-labs/exa-mcp-server"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -981,8 +1032,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/brave/brave-search-mcp-server",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/brave/brave-search-mcp-server"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -1007,8 +1058,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/sooperset/mcp-atlassian",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/sooperset/mcp-atlassian"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -1035,8 +1086,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/upstash/context7",
-      "target_url": "unknown"
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "target_url": "https://github.com/upstash/context7"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -1062,7 +1113,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/mindsdb/minds",
-      "target_url": "unknown"
+      "target_url": "https://github.com/mindsdb/minds"
     },
     {
       "entity_id": "ent-2026-0024",
@@ -1088,7 +1139,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/meridianmindx/meridian-mcp-deploy",
-      "target_url": "unknown"
+      "target_url": "https://github.com/meridianmindx/meridian-mcp-deploy"
     },
     {
       "entity_id": "ent-2026-0025",
@@ -1114,7 +1165,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/NOVA-3951/Replit-MCP",
-      "target_url": "unknown"
+      "target_url": "https://github.com/NOVA-3951/Replit-MCP"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -1139,8 +1190,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/promptfoo/promptfoo",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/promptfoo/promptfoo"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -1165,8 +1216,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/promptslab/Promptify",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/promptslab/Promptify"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -1191,8 +1242,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/Agenta-AI/agenta",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/Agenta-AI/agenta"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -1217,8 +1268,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.promptlayer.com/",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://www.promptlayer.com/"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -1245,8 +1296,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.helicone.ai/",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://www.helicone.ai/"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -1271,8 +1322,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/ianarawjo/ChainForge",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/ianarawjo/ChainForge"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -1299,8 +1350,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/stanfordnlp/dspy",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/stanfordnlp/dspy"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -1325,8 +1376,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/zou-group/textgrad",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/zou-group/textgrad"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -1351,8 +1402,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/NVIDIA/garak",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/NVIDIA/garak"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -1378,7 +1429,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/microsoft/PyRIT",
-      "target_url": "unknown"
+      "target_url": "https://github.com/microsoft/PyRIT"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -1405,8 +1456,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/confident-ai/deepteam",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/confident-ai/deepteam"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -1431,8 +1482,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/protectai/llm-guard",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/protectai/llm-guard"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -1457,8 +1508,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/NVIDIA/NeMo-Guardrails",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/NVIDIA/NeMo-Guardrails"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -1483,8 +1534,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.guardrailsai.com",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://www.guardrailsai.com"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -1511,8 +1562,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/confident-ai/deepeval",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/confident-ai/deepeval"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -1537,8 +1588,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/explodinggradients/ragas",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/explodinggradients/ragas"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -1563,8 +1614,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/langfuse/langfuse",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/langfuse/langfuse"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -1589,8 +1640,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/NirDiamant/Prompt_Engineering",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/NirDiamant/Prompt_Engineering"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -1615,8 +1666,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/davidkimai/Context-Engineering",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/davidkimai/Context-Engineering"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -1643,8 +1694,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/tallesborges/agentic-system-prompts",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/tallesborges/agentic-system-prompts"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -1669,8 +1720,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/anthropics/prompt-eng-interactive-tutorial",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/anthropics/prompt-eng-interactive-tutorial"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -1695,8 +1746,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://learnprompting.org/",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://learnprompting.org/"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -1721,8 +1772,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/overview",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/overview"
     },
     {
       "entity_id": "ent-2026-0024",
@@ -1748,7 +1799,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/microsoft/promptbase",
-      "target_url": "unknown"
+      "target_url": "https://github.com/microsoft/promptbase"
     },
     {
       "entity_id": "ent-2026-0025",
@@ -1773,8 +1824,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.promptotype.io",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://www.promptotype.io"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -1800,7 +1851,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://mcpmanager.ai/",
-      "target_url": "unknown"
+      "target_url": "https://mcpmanager.ai/"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -1826,7 +1877,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://natoma.ai",
-      "target_url": "unknown"
+      "target_url": "https://natoma.ai"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -1852,7 +1903,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.mintmcp.com",
-      "target_url": "unknown"
+      "target_url": "https://www.mintmcp.com"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -1884,7 +1935,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev",
-      "target_url": "unknown"
+      "target_url": "https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -1912,7 +1963,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://codeium.com/windsurf",
-      "target_url": "unknown"
+      "target_url": "https://codeium.com/windsurf"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -1966,7 +2017,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.librechat.ai/",
-      "target_url": "unknown"
+      "target_url": "https://www.librechat.ai/"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -2018,7 +2069,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://5ire.app/",
-      "target_url": "unknown"
+      "target_url": "https://5ire.app/"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -2044,7 +2095,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.ee.chat/",
-      "target_url": "unknown"
+      "target_url": "https://www.ee.chat/"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -2098,7 +2149,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.agent-one.dev",
-      "target_url": "unknown"
+      "target_url": "https://www.agent-one.dev"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -2126,7 +2177,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://dexto.ai",
-      "target_url": "unknown"
+      "target_url": "https://dexto.ai"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -2154,7 +2205,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://memex.tech/",
-      "target_url": "unknown"
+      "target_url": "https://memex.tech/"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -2182,7 +2233,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://runbear.io",
-      "target_url": "unknown"
+      "target_url": "https://runbear.io"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -2210,7 +2261,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://taskade.com",
-      "target_url": "unknown"
+      "target_url": "https://taskade.com"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -2236,7 +2287,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://chainlit.io/",
-      "target_url": "unknown"
+      "target_url": "https://chainlit.io/"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -2262,7 +2313,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/johnrobinsn/askit",
-      "target_url": "unknown"
+      "target_url": "https://github.com/johnrobinsn/askit"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -2316,7 +2367,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://docs.enola.dev",
-      "target_url": "unknown"
+      "target_url": "https://docs.enola.dev"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -2344,7 +2395,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/block/goose",
-      "target_url": "unknown"
+      "target_url": "https://github.com/block/goose"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -2372,7 +2423,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/kirodotdev/Kiro",
-      "target_url": "unknown"
+      "target_url": "https://github.com/kirodotdev/Kiro"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -2400,7 +2451,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/zed-industries/zed",
-      "target_url": "unknown"
+      "target_url": "https://github.com/zed-industries/zed"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -2428,7 +2479,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/continuedev/continue",
-      "target_url": "unknown"
+      "target_url": "https://github.com/continuedev/continue"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -2456,7 +2507,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Mintplex-Labs/anything-llm",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Mintplex-Labs/anything-llm"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -2484,7 +2535,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/MervinPraison/PraisonAI",
-      "target_url": "unknown"
+      "target_url": "https://github.com/MervinPraison/PraisonAI"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -2512,7 +2563,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Klavis-AI/klavis",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Klavis-AI/klavis"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -2540,7 +2591,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ChatGPTNextWeb/NextChat",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ChatGPTNextWeb/NextChat"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -2568,7 +2619,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/lastmile-ai/mcp-agent",
-      "target_url": "unknown"
+      "target_url": "https://github.com/lastmile-ai/mcp-agent"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -2594,7 +2645,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/apify/tester-mcp-client",
-      "target_url": "unknown"
+      "target_url": "https://github.com/apify/tester-mcp-client"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -2620,7 +2671,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/arc53/DocsGPT",
-      "target_url": "unknown"
+      "target_url": "https://github.com/arc53/DocsGPT"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -2648,7 +2699,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/langbot-app/LangBot",
-      "target_url": "unknown"
+      "target_url": "https://github.com/langbot-app/LangBot"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -2676,7 +2727,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/VikashLoomba/copilot-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/VikashLoomba/copilot-mcp"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -2702,7 +2753,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/daodao97/chatmcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/daodao97/chatmcp"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -2728,7 +2779,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://mcphost.link",
-      "target_url": "unknown"
+      "target_url": "https://mcphost.link"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -2754,7 +2805,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/runebookai/tome",
-      "target_url": "unknown"
+      "target_url": "https://github.com/runebookai/tome"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -2782,7 +2833,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Abiorh001/mcp_omni_connect",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Abiorh001/mcp_omni_connect"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -2808,7 +2859,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/srbhptl39/MCP-SuperAssistant",
-      "target_url": "unknown"
+      "target_url": "https://github.com/srbhptl39/MCP-SuperAssistant"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -2834,7 +2885,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/supercorp-ai/superinterface",
-      "target_url": "unknown"
+      "target_url": "https://github.com/supercorp-ai/superinterface"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -2863,7 +2914,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/AstrBotDevs/AstrBot",
-      "target_url": "unknown"
+      "target_url": "https://github.com/AstrBotDevs/AstrBot"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -2889,7 +2940,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/cognitivecomputations/dolphin-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/cognitivecomputations/dolphin-mcp"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -2917,7 +2968,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/NitroRCr/AIaW",
-      "target_url": "unknown"
+      "target_url": "https://github.com/NitroRCr/AIaW"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -2945,7 +2996,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://modelcontextprotocol.io",
-      "target_url": "unknown"
+      "target_url": "https://modelcontextprotocol.io"
     },
     {
       "entity_id": "ent-2026-0024",
@@ -2973,7 +3024,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://docs.replit.com/platforms/mcp-server",
-      "target_url": "unknown"
+      "target_url": "https://docs.replit.com/platforms/mcp-server"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -3001,7 +3052,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://cursor.com",
-      "target_url": "unknown"
+      "target_url": "https://cursor.com"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -3029,7 +3080,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://witsyai.com",
-      "target_url": "unknown"
+      "target_url": "https://witsyai.com"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -3083,7 +3134,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/julien040/anyquery",
-      "target_url": "unknown"
+      "target_url": "https://github.com/julien040/anyquery"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -3109,7 +3160,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/OctoEverywhere/mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/OctoEverywhere/mcp"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -3137,7 +3188,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/depwire/depwire",
-      "target_url": "unknown"
+      "target_url": "https://github.com/depwire/depwire"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -3163,7 +3214,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/yuna0x0/anilist-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/yuna0x0/anilist-mcp"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -3189,7 +3240,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/austenstone/myinstants-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/austenstone/myinstants-mcp"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -3215,7 +3266,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/cfpramod/open-museum-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/cfpramod/open-museum-mcp"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -3241,7 +3292,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/pkotecha-eng/aria-mcp-server",
-      "target_url": "unknown"
+      "target_url": "https://github.com/pkotecha-eng/aria-mcp-server"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -3267,7 +3318,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.keboola.com",
-      "target_url": "unknown"
+      "target_url": "https://www.keboola.com"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -3295,7 +3346,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://portkey.ai",
-      "target_url": "unknown"
+      "target_url": "https://portkey.ai"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -3323,7 +3374,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.descope.com",
-      "target_url": "unknown"
+      "target_url": "https://www.descope.com"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -3351,7 +3402,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://airia.com",
-      "target_url": "unknown"
+      "target_url": "https://airia.com"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -3379,7 +3430,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.k2view.com",
-      "target_url": "unknown"
+      "target_url": "https://www.k2view.com"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -3405,7 +3456,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://mcpservers.org",
-      "target_url": "unknown"
+      "target_url": "https://mcpservers.org"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -3433,7 +3484,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://cdata.com",
-      "target_url": "unknown"
+      "target_url": "https://cdata.com"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -3459,7 +3510,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://kaslin.rocks/podcast-assistant-mcp/",
-      "target_url": "unknown"
+      "target_url": "https://kaslin.rocks/podcast-assistant-mcp/"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -3485,7 +3536,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/wso2/fhir-mcp-server",
-      "target_url": "unknown"
+      "target_url": "https://github.com/wso2/fhir-mcp-server"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -3511,7 +3562,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/gupta-kush/spotify-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/gupta-kush/spotify-mcp"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -3537,7 +3588,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Cifero74/mcp-apple-music",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Cifero74/mcp-apple-music"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -3563,7 +3614,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/FradSer/mcp-server-apple-reminders",
-      "target_url": "unknown"
+      "target_url": "https://github.com/FradSer/mcp-server-apple-reminders"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -3589,7 +3640,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/YangLiangwei/PersonalizationMCP",
-      "target_url": "unknown"
+      "target_url": "https://github.com/YangLiangwei/PersonalizationMCP"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -3617,7 +3668,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ofershap/real-browser-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ofershap/real-browser-mcp"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -3645,7 +3696,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/rdanieli/tentra-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/rdanieli/tentra-mcp"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -3671,7 +3722,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/BV-Venky/excalidraw-architect-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/BV-Venky/excalidraw-architect-mcp"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -3697,7 +3748,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/alexbakers/mcp-ipfs",
-      "target_url": "unknown"
+      "target_url": "https://github.com/alexbakers/mcp-ipfs"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -3725,7 +3776,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/gzoonet/cortex",
-      "target_url": "unknown"
+      "target_url": "https://github.com/gzoonet/cortex"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -3753,7 +3804,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/2s-io/sdk",
-      "target_url": "unknown"
+      "target_url": "https://github.com/2s-io/sdk"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -3779,7 +3830,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/NyxToolsDev/dicom-hl7-mcp-server",
-      "target_url": "unknown"
+      "target_url": "https://github.com/NyxToolsDev/dicom-hl7-mcp-server"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -3805,7 +3856,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/SidneyBissoli/medical-terminologies-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/SidneyBissoli/medical-terminologies-mcp"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -3831,7 +3882,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/musharna/plant-genomics-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/musharna/plant-genomics-mcp"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -3857,7 +3908,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/neptun2000/heor-agent-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/neptun2000/heor-agent-mcp"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -3883,7 +3934,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/rosasynthesiz/flstudio-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/rosasynthesiz/flstudio-mcp"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -3909,7 +3960,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/TwelveTake-Studios/reaper-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/TwelveTake-Studios/reaper-mcp"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -3935,7 +3986,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/BluesPrince/thiri-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/BluesPrince/thiri-mcp"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -3963,7 +4014,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.anthropic.com/news/model-context-protocol",
-      "target_url": "unknown"
+      "target_url": "https://www.anthropic.com/news/model-context-protocol"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -3992,7 +4043,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.anthropic.com/engineering/code-execution-with-mcp",
-      "target_url": "unknown"
+      "target_url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -4020,7 +4071,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation",
-      "target_url": "unknown"
+      "target_url": "https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -4046,7 +4097,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/longevity-genie/opengenes-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/longevity-genie/opengenes-mcp"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -4072,7 +4123,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/longevity-genie/synergy-age-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/longevity-genie/synergy-age-mcp"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -4098,7 +4149,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/longevity-genie/gget-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/longevity-genie/gget-mcp"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -4150,7 +4201,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/HelpCode-ai/anythingmcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/HelpCode-ai/anythingmcp"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -4176,7 +4227,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/duaraghav8/MCPJungle",
-      "target_url": "unknown"
+      "target_url": "https://github.com/duaraghav8/MCPJungle"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -4202,7 +4253,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/MikkoParkkola/mcp-gateway",
-      "target_url": "unknown"
+      "target_url": "https://github.com/MikkoParkkola/mcp-gateway"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -4228,7 +4279,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/smart-mcp-proxy/mcpproxy-go",
-      "target_url": "unknown"
+      "target_url": "https://github.com/smart-mcp-proxy/mcpproxy-go"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -4254,7 +4305,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/VeriTeknik/pluggedin-mcp-proxy",
-      "target_url": "unknown"
+      "target_url": "https://github.com/VeriTeknik/pluggedin-mcp-proxy"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -4282,7 +4333,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/juspay/neurolink",
-      "target_url": "unknown"
+      "target_url": "https://github.com/juspay/neurolink"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -4308,7 +4359,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/metatool-ai/metatool-app",
-      "target_url": "unknown"
+      "target_url": "https://github.com/metatool-ai/metatool-app"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -4334,7 +4385,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/sitbon/magg",
-      "target_url": "unknown"
+      "target_url": "https://github.com/sitbon/magg"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -4360,7 +4411,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ertad-family/liquid",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ertad-family/liquid"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -4386,7 +4437,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/khalidsaidi/ragmap",
-      "target_url": "unknown"
+      "target_url": "https://github.com/khalidsaidi/ragmap"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -4412,7 +4463,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/thinkchainai/mcpbundles",
-      "target_url": "unknown"
+      "target_url": "https://github.com/thinkchainai/mcpbundles"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -4438,7 +4489,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/tadas-github/a2asearch-mcp",
-      "target_url": "unknown"
+      "target_url": "https://github.com/tadas-github/a2asearch-mcp"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -4464,7 +4515,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/glenngillen/mcpmcp-server",
-      "target_url": "unknown"
+      "target_url": "https://github.com/glenngillen/mcpmcp-server"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -4490,7 +4541,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/awdr74100/figwright",
-      "target_url": "unknown"
+      "target_url": "https://github.com/awdr74100/figwright"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -4516,7 +4567,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/MyMedi-AI/mymedi-ai-mcp-server",
-      "target_url": "unknown"
+      "target_url": "https://github.com/MyMedi-AI/mymedi-ai-mcp-server"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -4542,7 +4593,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Pantani/ableton-mind",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Pantani/ableton-mind"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -4567,8 +4618,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/paul-gauthier/aider",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/paul-gauthier/aider"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -4593,8 +4644,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/microsoft/autogen",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/microsoft/autogen"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -4620,7 +4671,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://agpt.co/",
-      "target_url": "unknown"
+      "target_url": "https://agpt.co/"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -4645,8 +4696,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/yoheinakajima/babyagi",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/yoheinakajima/babyagi"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -4671,8 +4722,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/camel-ai/camel",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/camel-ai/camel"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -4697,8 +4748,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/OpenBMB/ChatDev",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/OpenBMB/ChatDev"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -4723,8 +4774,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/joaomdmoura/crewai",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/joaomdmoura/crewai"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -4749,8 +4800,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/stitionai/devika",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/stitionai/devika"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -4775,8 +4826,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/AntonOsika/gpt-engineer",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/AntonOsika/gpt-engineer"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -4801,8 +4852,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/Pythagora-io/gpt-pilot",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/Pythagora-io/gpt-pilot"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -4827,8 +4878,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/microsoft/JARVIS",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/microsoft/JARVIS"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -4855,8 +4906,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/langroid/langroid",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/langroid/langroid"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -4881,8 +4932,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/cpacker/MemGPT",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/cpacker/MemGPT"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -4907,8 +4958,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/geekan/MetaGPT",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/geekan/MetaGPT"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -4933,8 +4984,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/OpenDevin/OpenDevin",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/OpenDevin/OpenDevin"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -4959,8 +5010,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://openinterpreter.com/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://openinterpreter.com/"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -4985,8 +5036,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/princeton-nlp/SWE-agent",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/princeton-nlp/SWE-agent"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -5013,8 +5064,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://sweep.dev/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://sweep.dev/"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -5039,8 +5090,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://voyager.minedojo.org/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://voyager.minedojo.org/"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -5065,8 +5116,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/OpenBMB/XAgent",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://github.com/OpenBMB/XAgent"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -5091,8 +5142,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.adept.ai/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://www.adept.ai/"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -5117,8 +5168,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.bardeen.ai/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://www.bardeen.ai/"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -5143,8 +5194,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.codegen.com/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://www.codegen.com/"
     },
     {
       "entity_id": "ent-2026-0024",
@@ -5169,8 +5220,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://cognition.com/introducing-devin",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://cognition.com/introducing-devin"
     },
     {
       "entity_id": "ent-2026-0025",
@@ -5197,8 +5248,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://dosu.dev/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://dosu.dev/"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -5223,8 +5274,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.factory.ai/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://www.factory.ai/"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -5250,7 +5301,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://ultravox.ai/",
-      "target_url": "unknown"
+      "target_url": "https://ultravox.ai/"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -5276,7 +5327,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/features/copilot",
-      "target_url": "unknown"
+      "target_url": "https://github.com/features/copilot"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -5301,8 +5352,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://about.gitlab.com/gitlab-duo/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://about.gitlab.com/gitlab-duo/"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -5327,8 +5378,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.gumloop.com/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://www.gumloop.com/"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -5353,8 +5404,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://julius.ai/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://julius.ai/"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -5379,8 +5430,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.kadoa.com/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://www.kadoa.com/"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -5405,8 +5456,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.lindy.ai/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://www.lindy.ai/"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -5432,7 +5483,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://theagi.company",
-      "target_url": "unknown"
+      "target_url": "https://theagi.company"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -5457,8 +5508,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://relevanceai.com/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://relevanceai.com/"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -5483,8 +5534,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://v0.app/",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://v0.app/"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -5509,8 +5560,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://zapier.com/central",
-      "target_url": "unknown"
+      "source_url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "target_url": "https://zapier.com/central"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -5536,7 +5587,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://agentgpt.reworkd.ai/",
-      "target_url": "unknown"
+      "target_url": "https://agentgpt.reworkd.ai/"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -5562,7 +5613,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/OpenBMB/AgentVerse",
-      "target_url": "unknown"
+      "target_url": "https://github.com/OpenBMB/AgentVerse"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -5588,7 +5639,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/emrgnt-cmplxty/automata",
-      "target_url": "unknown"
+      "target_url": "https://github.com/emrgnt-cmplxty/automata"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -5614,7 +5665,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/eumemic/ai-legion",
-      "target_url": "unknown"
+      "target_url": "https://github.com/eumemic/ai-legion"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -5640,7 +5691,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/irgolic/AutoPR",
-      "target_url": "unknown"
+      "target_url": "https://github.com/irgolic/AutoPR"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -5718,7 +5769,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ur-whitelab/chemcrow-public",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ur-whitelab/chemcrow-public"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -5744,7 +5795,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Technion-Kishony-lab/data-to-paper",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Technion-Kishony-lab/data-to-paper"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -5770,7 +5821,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://eidolonai.com/",
-      "target_url": "unknown"
+      "target_url": "https://eidolonai.com/"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -5822,7 +5873,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://flowiseai.com/",
-      "target_url": "unknown"
+      "target_url": "https://flowiseai.com/"
     },
     {
       "entity_id": "ent-2026-0025",
@@ -5850,7 +5901,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/assafelovic/gpt-researcher",
-      "target_url": "unknown"
+      "target_url": "https://github.com/assafelovic/gpt-researcher"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -5875,8 +5926,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/langgpt/LangGPT",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/langgpt/LangGPT"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -5901,8 +5952,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/eth-sri/lmql",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/eth-sri/lmql"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -5927,8 +5978,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/thunlp/OpenPrompt",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/thunlp/OpenPrompt"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -5953,8 +6004,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/bigscience-workshop/promptsource",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/bigscience-workshop/promptsource"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -5979,8 +6030,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/microsoft/prompt-engine",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/microsoft/prompt-engine"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -6005,8 +6056,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/agencyenterprise/PromptInject",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/agencyenterprise/PromptInject"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -6031,8 +6082,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/krrishdholakia/betterprompt",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/krrishdholakia/betterprompt"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -6057,8 +6108,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/google-deepmind/opro",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/google-deepmind/opro"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -6083,8 +6134,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/protectai/rebuff",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/protectai/rebuff"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -6109,8 +6160,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/sherdencooper/GPTFuzz",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/sherdencooper/GPTFuzz"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -6135,8 +6186,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/openai/openai-cookbook",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/openai/openai-cookbook"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -6161,8 +6212,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/OpenBioLink/ThoughtSource",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://github.com/OpenBioLink/ThoughtSource"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -6187,8 +6238,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://developers.openai.com/api/docs/guides/prompt-engineering",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://developers.openai.com/api/docs/guides/prompt-engineering"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -6213,8 +6264,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -6239,8 +6290,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers/",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_prompt.md",
+      "target_url": "https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers/"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -6266,7 +6317,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.braintrust.dev/",
-      "target_url": "unknown"
+      "target_url": "https://www.braintrust.dev/"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -6294,7 +6345,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://latitude.so",
-      "target_url": "unknown"
+      "target_url": "https://latitude.so"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -6320,7 +6371,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.getmaxim.ai",
-      "target_url": "unknown"
+      "target_url": "https://www.getmaxim.ai"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -6346,7 +6397,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arize.com",
-      "target_url": "unknown"
+      "target_url": "https://arize.com"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -6372,7 +6423,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://deepchecks.com",
-      "target_url": "unknown"
+      "target_url": "https://deepchecks.com"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -6400,7 +6451,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://promptbase.com/",
-      "target_url": "unknown"
+      "target_url": "https://promptbase.com/"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -6426,7 +6477,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://mirascope.com",
-      "target_url": "unknown"
+      "target_url": "https://mirascope.com"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -6452,7 +6503,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/prompt-engineering",
-      "target_url": "unknown"
+      "target_url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/prompt-engineering"
     },
     {
       "entity_id": "ent-2026-0024",
@@ -6480,7 +6531,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.promptingguide.ai/",
-      "target_url": "unknown"
+      "target_url": "https://www.promptingguide.ai/"
     },
     {
       "entity_id": "ent-2026-0025",
@@ -6506,7 +6557,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/abs/2603.10477",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/abs/2603.10477"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -6532,7 +6583,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://promptpanda.io",
-      "target_url": "unknown"
+      "target_url": "https://promptpanda.io"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -6584,7 +6635,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://promptmetheus.com",
-      "target_url": "unknown"
+      "target_url": "https://promptmetheus.com"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -6612,7 +6663,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/GeiserX/LynxPrompt",
-      "target_url": "unknown"
+      "target_url": "https://github.com/GeiserX/LynxPrompt"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -6640,7 +6691,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://flompt.dev",
-      "target_url": "unknown"
+      "target_url": "https://flompt.dev"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -6694,7 +6745,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/abs/2507.19457",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/abs/2507.19457"
     },
     {
       "entity_id": "ent-2026-0026",
@@ -6750,7 +6801,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Arize-ai/phoenix",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Arize-ai/phoenix"
     },
     {
       "entity_id": "ent-2026-0028",
@@ -6778,7 +6829,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/truera/trulens",
-      "target_url": "unknown"
+      "target_url": "https://github.com/truera/trulens"
     },
     {
       "entity_id": "ent-2026-0029",
@@ -6806,7 +6857,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/UKGovernmentBEIS/inspect_ai",
-      "target_url": "unknown"
+      "target_url": "https://github.com/UKGovernmentBEIS/inspect_ai"
     },
     {
       "entity_id": "ent-2026-0030",
@@ -6832,7 +6883,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/comet-ml/opik",
-      "target_url": "unknown"
+      "target_url": "https://github.com/comet-ml/opik"
     },
     {
       "entity_id": "ent-2026-0031",
@@ -6860,7 +6911,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/hidai25/eval-view",
-      "target_url": "unknown"
+      "target_url": "https://github.com/hidai25/eval-view"
     },
     {
       "entity_id": "ent-2026-0032",
@@ -6886,7 +6937,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/1broseidon/promptext",
-      "target_url": "unknown"
+      "target_url": "https://github.com/1broseidon/promptext"
     },
     {
       "entity_id": "ent-2026-0033",
@@ -6914,7 +6965,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/daxaur/openpaw",
-      "target_url": "unknown"
+      "target_url": "https://github.com/daxaur/openpaw"
     },
     {
       "entity_id": "ent-2026-0034",
@@ -6942,7 +6993,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/HoangTheQuyen/think-better",
-      "target_url": "unknown"
+      "target_url": "https://github.com/HoangTheQuyen/think-better"
     },
     {
       "entity_id": "ent-2026-0035",
@@ -6970,8 +7021,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/zebbern/claude-code-guide",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_skill.md",
+      "target_url": "https://github.com/zebbern/claude-code-guide"
     },
     {
       "entity_id": "ent-2026-0036",
@@ -6996,8 +7047,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/luongnv89/claude-howto",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_skill.md",
+      "target_url": "https://github.com/luongnv89/claude-howto"
     },
     {
       "entity_id": "ent-2026-0037",
@@ -7022,8 +7073,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/anthropics/skills",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_skill.md",
+      "target_url": "https://github.com/anthropics/skills"
     },
     {
       "entity_id": "ent-2026-0038",
@@ -7051,7 +7102,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/claude-code-action",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/claude-code-action"
     },
     {
       "entity_id": "ent-2026-0039",
@@ -7077,7 +7128,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/claude-code-security-review",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/claude-code-security-review"
     },
     {
       "entity_id": "ent-2026-0040",
@@ -7104,8 +7155,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/anthropics/claude-plugins-official",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_skill.md",
+      "target_url": "https://github.com/anthropics/claude-plugins-official"
     },
     {
       "entity_id": "ent-2026-0041",
@@ -7130,8 +7181,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/Li-Evan/Bloom",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_skill.md",
+      "target_url": "https://github.com/Li-Evan/Bloom"
     },
     {
       "entity_id": "ent-2026-0042",
@@ -7156,8 +7207,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/tjboudreaux/cc-thinking-skills",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_skill.md",
+      "target_url": "https://github.com/tjboudreaux/cc-thinking-skills"
     },
     {
       "entity_id": "ent-2026-0043",
@@ -7182,8 +7233,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://github.com/WenyuChiou/ai-research-skills",
-      "target_url": "unknown"
+      "source_url": "reports/awesome-lists/awesome_skill.md",
+      "target_url": "https://github.com/WenyuChiou/ai-research-skills"
     },
     {
       "entity_id": "ent-2026-0044",
@@ -7211,7 +7262,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.mdskills.ai/",
-      "target_url": "unknown"
+      "target_url": "https://www.mdskills.ai/"
     },
     {
       "entity_id": "ent-2026-0045",
@@ -7240,7 +7291,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ComposioHQ/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ComposioHQ/skills"
     },
     {
       "entity_id": "ent-2026-0046",
@@ -7268,7 +7319,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/getsentry/sentry-for-ai",
-      "target_url": "unknown"
+      "target_url": "https://github.com/getsentry/sentry-for-ai"
     },
     {
       "entity_id": "ent-2026-0047",
@@ -7294,7 +7345,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/openai/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/openai/skills"
     },
     {
       "entity_id": "ent-2026-0048",
@@ -7320,7 +7371,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/veniceai/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/veniceai/skills"
     },
     {
       "entity_id": "ent-2026-0049",
@@ -7348,7 +7399,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://agentskills.io/home",
-      "target_url": "unknown"
+      "target_url": "https://agentskills.io/home"
     },
     {
       "entity_id": "ent-2026-0050",
@@ -7374,7 +7425,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://claudeskills.info/",
-      "target_url": "unknown"
+      "target_url": "https://claudeskills.info/"
     },
     {
       "entity_id": "ent-2026-0051",
@@ -7402,7 +7453,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/infracost/agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/infracost/agent-skills"
     },
     {
       "entity_id": "ent-2026-0052",
@@ -7431,7 +7482,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://awesomeskill.ai/",
-      "target_url": "unknown"
+      "target_url": "https://awesomeskill.ai/"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -7459,7 +7510,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://code.claude.com/docs/en/skills",
-      "target_url": "unknown"
+      "target_url": "https://code.claude.com/docs/en/skills"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -7488,7 +7539,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://skills.make.com/",
-      "target_url": "unknown"
+      "target_url": "https://skills.make.com/"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -7516,7 +7567,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/html/2512.17102v1",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/html/2512.17102v1"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -7544,7 +7595,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/html/2504.06188v2",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/html/2504.06188v2"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -7572,7 +7623,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://learn.microsoft.com/en-us/agent-framework/agents/skills",
-      "target_url": "unknown"
+      "target_url": "https://learn.microsoft.com/en-us/agent-framework/agents/skills"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -7600,7 +7651,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ComposioHQ/composio",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ComposioHQ/composio"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -7628,7 +7679,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/hashicorp/agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/hashicorp/agent-skills"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -7657,7 +7708,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/cloudflare/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/cloudflare/skills"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -7685,7 +7736,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/abs/2603.02176",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/abs/2603.02176"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -7713,7 +7764,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/abs/2604.24594",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/abs/2604.24594"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -7741,7 +7792,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/html/2603.04448v1",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/html/2603.04448v1"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -7769,7 +7820,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://arxiv.org/html/2606.05525",
-      "target_url": "unknown"
+      "target_url": "https://arxiv.org/html/2606.05525"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -7797,7 +7848,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.deeplearning.ai/courses/agent-skills-with-anthropic",
-      "target_url": "unknown"
+      "target_url": "https://www.deeplearning.ai/courses/agent-skills-with-anthropic"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -7826,7 +7877,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/microsoft/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/microsoft/skills"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -7854,7 +7905,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/VoltAgent/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/VoltAgent/skills"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -7882,7 +7933,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://prompts.chat/",
-      "target_url": "unknown"
+      "target_url": "https://prompts.chat/"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -7908,7 +7959,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://aclanthology.org/2025.naacl-srw.51/",
-      "target_url": "unknown"
+      "target_url": "https://aclanthology.org/2025.naacl-srw.51/"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -7934,7 +7985,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.everyprompt.com",
-      "target_url": "unknown"
+      "target_url": "https://www.everyprompt.com"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -7986,7 +8037,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/prompt-engineering/click-prompt",
-      "target_url": "unknown"
+      "target_url": "https://github.com/prompt-engineering/click-prompt"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -8012,7 +8063,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/microsoft/guidance",
-      "target_url": "unknown"
+      "target_url": "https://github.com/microsoft/guidance"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -8066,7 +8117,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://ai.google.dev/",
-      "target_url": "unknown"
+      "target_url": "https://ai.google.dev/"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -8118,7 +8169,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/microsoft/promptbench",
-      "target_url": "unknown"
+      "target_url": "https://github.com/microsoft/promptbench"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -8170,7 +8221,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/hegelai/prompttools",
-      "target_url": "unknown"
+      "target_url": "https://github.com/hegelai/prompttools"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -8196,7 +8247,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/YiVal/YiVal",
-      "target_url": "unknown"
+      "target_url": "https://github.com/YiVal/YiVal"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -8248,7 +8299,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Shark-NLP/OpenICL",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Shark-NLP/OpenICL"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -8274,7 +8325,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://promptknit.com",
-      "target_url": "unknown"
+      "target_url": "https://promptknit.com"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -8302,7 +8353,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/langchain-ai/langchain",
-      "target_url": "unknown"
+      "target_url": "https://github.com/langchain-ai/langchain"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -8328,7 +8379,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://lexica.art",
-      "target_url": "unknown"
+      "target_url": "https://lexica.art"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -8356,7 +8407,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.wordware.ai",
-      "target_url": "unknown"
+      "target_url": "https://www.wordware.ai"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -8382,7 +8433,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/HumanSignal/Adala",
-      "target_url": "unknown"
+      "target_url": "https://github.com/HumanSignal/Adala"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -8408,7 +8459,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/LehengTHU/Agent4Rec",
-      "target_url": "unknown"
+      "target_url": "https://github.com/LehengTHU/Agent4Rec"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -8434,7 +8485,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/DataBassGit/AgentForge",
-      "target_url": "unknown"
+      "target_url": "https://github.com/DataBassGit/AgentForge"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -8460,7 +8511,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/jbexta/AgentPilot",
-      "target_url": "unknown"
+      "target_url": "https://github.com/jbexta/AgentPilot"
     },
     {
       "entity_id": "ent-2026-0005",
@@ -8486,7 +8537,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/aiwaves-cn/agents",
-      "target_url": "unknown"
+      "target_url": "https://github.com/aiwaves-cn/agents"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -8512,7 +8563,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/stepanogil/autonomous-hr-chatbot",
-      "target_url": "unknown"
+      "target_url": "https://github.com/stepanogil/autonomous-hr-chatbot"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -8538,7 +8589,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/pgalko/BambooAI",
-      "target_url": "unknown"
+      "target_url": "https://github.com/pgalko/BambooAI"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -8564,7 +8615,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/AutoPackAI/beebot",
-      "target_url": "unknown"
+      "target_url": "https://github.com/AutoPackAI/beebot"
     },
     {
       "entity_id": "ent-2026-0009",
@@ -8590,7 +8641,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/seahyinghang8/blinky",
-      "target_url": "unknown"
+      "target_url": "https://github.com/seahyinghang8/blinky"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -8616,7 +8667,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/xeol-io/bumpgen",
-      "target_url": "unknown"
+      "target_url": "https://github.com/xeol-io/bumpgen"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -8642,7 +8693,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ennucore/clippy",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ennucore/clippy"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -8668,7 +8719,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ajhous44/cody",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ajhous44/cody"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -8694,7 +8745,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/melih-unsal/DemoGPT",
-      "target_url": "unknown"
+      "target_url": "https://github.com/melih-unsal/DemoGPT"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -8720,7 +8771,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/jina-ai/dev-gpt",
-      "target_url": "unknown"
+      "target_url": "https://github.com/jina-ai/dev-gpt"
     },
     {
       "entity_id": "ent-2026-0015",
@@ -8746,7 +8797,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/dot-agent/dotagent",
-      "target_url": "unknown"
+      "target_url": "https://github.com/dot-agent/dotagent"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -8772,7 +8823,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://fastagency.ai/latest/",
-      "target_url": "unknown"
+      "target_url": "https://fastagency.ai/latest/"
     },
     {
       "entity_id": "ent-2026-0017",
@@ -8798,7 +8849,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/amirrezasalimi/friday",
-      "target_url": "unknown"
+      "target_url": "https://github.com/amirrezasalimi/friday"
     },
     {
       "entity_id": "ent-2026-0018",
@@ -8824,7 +8875,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/genia-dev/GeniA",
-      "target_url": "unknown"
+      "target_url": "https://github.com/genia-dev/GeniA"
     },
     {
       "entity_id": "ent-2026-0019",
@@ -8850,7 +8901,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/Kav-K/GPTDiscord",
-      "target_url": "unknown"
+      "target_url": "https://github.com/Kav-K/GPTDiscord"
     },
     {
       "entity_id": "ent-2026-0020",
@@ -8876,7 +8927,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/0xpayne/gpt-migrate",
-      "target_url": "unknown"
+      "target_url": "https://github.com/0xpayne/gpt-migrate"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -8902,7 +8953,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/nicepkg/gpt-runner",
-      "target_url": "unknown"
+      "target_url": "https://github.com/nicepkg/gpt-runner"
     },
     {
       "entity_id": "ent-2026-0022",
@@ -8928,7 +8979,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://maige.app",
-      "target_url": "unknown"
+      "target_url": "https://maige.app"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -8954,7 +9005,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.magickml.com/",
-      "target_url": "unknown"
+      "target_url": "https://www.magickml.com/"
     },
     {
       "entity_id": "ent-2026-0024",
@@ -8980,7 +9031,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/memfreeme/memfree",
-      "target_url": "unknown"
+      "target_url": "https://github.com/memfreeme/memfree"
     },
     {
       "entity_id": "ent-2026-0025",
@@ -9006,7 +9057,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/topoteretes/PromethAI-Backend",
-      "target_url": "unknown"
+      "target_url": "https://github.com/topoteretes/PromethAI-Backend"
     },
     {
       "entity_id": "ent-2026-1001",
@@ -9058,7 +9109,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://aws.amazon.com/bedrock/agents/",
-      "target_url": "unknown"
+      "target_url": "https://aws.amazon.com/bedrock/agents/"
     },
     {
       "entity_id": "ent-2026-1003",
@@ -9084,7 +9135,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://manus.im",
-      "target_url": "unknown"
+      "target_url": "https://manus.im"
     },
     {
       "entity_id": "ent-2026-1004",
@@ -9110,7 +9161,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.moveworks.com",
-      "target_url": "unknown"
+      "target_url": "https://www.moveworks.com"
     },
     {
       "entity_id": "ent-2026-1005",
@@ -9138,7 +9189,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.mindstudio.ai",
-      "target_url": "unknown"
+      "target_url": "https://www.mindstudio.ai"
     },
     {
       "entity_id": "ent-2026-1006",
@@ -9164,7 +9215,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://coworker.ai",
-      "target_url": "unknown"
+      "target_url": "https://coworker.ai"
     },
     {
       "entity_id": "ent-2026-1007",
@@ -9216,7 +9267,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://fin.ai",
-      "target_url": "unknown"
+      "target_url": "https://fin.ai"
     },
     {
       "entity_id": "ent-2026-1009",
@@ -9242,7 +9293,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.nice.com",
-      "target_url": "unknown"
+      "target_url": "https://www.nice.com"
     },
     {
       "entity_id": "ent-2026-1010",
@@ -9268,7 +9319,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.creatio.com",
-      "target_url": "unknown"
+      "target_url": "https://www.creatio.com"
     },
     {
       "entity_id": "ent-2026-1011",
@@ -9320,7 +9371,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.kore.ai",
-      "target_url": "unknown"
+      "target_url": "https://www.kore.ai"
     },
     {
       "entity_id": "ent-2026-1013",
@@ -9348,7 +9399,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://blaxel.ai",
-      "target_url": "unknown"
+      "target_url": "https://blaxel.ai"
     },
     {
       "entity_id": "ent-2026-1014",
@@ -9376,7 +9427,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://nevermined.ai",
-      "target_url": "unknown"
+      "target_url": "https://nevermined.ai"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -9408,7 +9459,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -9434,7 +9485,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.anthropic.com/engineering/multi-agent-research-system",
-      "target_url": "unknown"
+      "target_url": "https://www.anthropic.com/engineering/multi-agent-research-system"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -9460,7 +9511,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://docs.gumloop.com/core-concepts/skills",
-      "target_url": "unknown"
+      "target_url": "https://docs.gumloop.com/core-concepts/skills"
     },
     {
       "entity_id": "ent-2026-0004",
@@ -9568,7 +9619,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/ComposioHQ/awesome-claude-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/ComposioHQ/awesome-claude-skills"
     },
     {
       "entity_id": "ent-2026-0008",
@@ -9652,7 +9703,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://strapi.io/blog/what-are-agent-skills-and-how-to-use-them",
-      "target_url": "unknown"
+      "target_url": "https://strapi.io/blog/what-are-agent-skills-and-how-to-use-them"
     },
     {
       "entity_id": "ent-2026-0011",
@@ -9680,7 +9731,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.enterpret.com/blog/claude-skill-for-customer-feedback-analysis-a-guide",
-      "target_url": "unknown"
+      "target_url": "https://www.enterpret.com/blog/claude-skill-for-customer-feedback-analysis-a-guide"
     },
     {
       "entity_id": "ent-2026-0012",
@@ -9706,7 +9757,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://zackproser.com/blog/claude-skills-internal-training",
-      "target_url": "unknown"
+      "target_url": "https://zackproser.com/blog/claude-skills-internal-training"
     },
     {
       "entity_id": "ent-2026-0013",
@@ -9732,7 +9783,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://juejin.cn/post/7588034035286458383",
-      "target_url": "unknown"
+      "target_url": "https://juejin.cn/post/7588034035286458383"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -9758,7 +9809,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.vitally.io/post/claude-skills-for-csms-scaled-cs",
-      "target_url": "unknown"
+      "target_url": "https://www.vitally.io/post/claude-skills-for-csms-scaled-cs"
     },
     {
       "entity_id": "ent-2026-2001",
@@ -9842,7 +9893,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices",
-      "target_url": "unknown"
+      "target_url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"
     },
     {
       "entity_id": "ent-2026-2004",
@@ -9870,7 +9921,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/enterprise",
-      "target_url": "unknown"
+      "target_url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/enterprise"
     },
     {
       "entity_id": "ent-2026-2005",
@@ -9898,7 +9949,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/openai/plugins",
-      "target_url": "unknown"
+      "target_url": "https://github.com/openai/plugins"
     },
     {
       "entity_id": "ent-2026-2006",
@@ -9926,7 +9977,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/vercel-labs/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/vercel-labs/skills"
     },
     {
       "entity_id": "ent-2026-2007",
@@ -9954,7 +10005,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/huggingface/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/huggingface/skills"
     },
     {
       "entity_id": "ent-2026-2008",
@@ -9980,7 +10031,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/trailofbits/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/trailofbits/skills"
     },
     {
       "entity_id": "ent-2026-2009",
@@ -10008,7 +10059,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/expo/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/expo/skills"
     },
     {
       "entity_id": "ent-2026-2010",
@@ -10034,7 +10085,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/remotion-dev/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/remotion-dev/skills"
     },
     {
       "entity_id": "ent-2026-2011",
@@ -10062,7 +10113,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/apollographql/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/apollographql/skills"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -10090,7 +10141,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/getsentry/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/getsentry/skills"
     },
     {
       "entity_id": "ent-2026-0002",
@@ -10116,7 +10167,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/yusufkaraaslan/Skill_Seekers",
-      "target_url": "unknown"
+      "target_url": "https://github.com/yusufkaraaslan/Skill_Seekers"
     },
     {
       "entity_id": "ent-2026-0003",
@@ -10148,7 +10199,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://optif.ai/media/articles/anthropic-claude-skills/",
-      "target_url": "unknown"
+      "target_url": "https://optif.ai/media/articles/anthropic-claude-skills/"
     },
     {
       "entity_id": "ent-2026-0001",
@@ -10400,7 +10451,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/coreyhaines31/marketingskills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/coreyhaines31/marketingskills"
     },
     {
       "entity_id": "ent-2026-0010",
@@ -10512,7 +10563,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/angular/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/angular/skills"
     },
     {
       "entity_id": "ent-2026-0014",
@@ -10568,7 +10619,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/firebase/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/firebase/skills"
     },
     {
       "entity_id": "ent-2026-0016",
@@ -10708,7 +10759,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/nvidia/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/nvidia/skills"
     },
     {
       "entity_id": "ent-2026-0021",
@@ -10765,7 +10816,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/browserbase/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/browserbase/skills"
     },
     {
       "entity_id": "ent-2026-0023",
@@ -10901,7 +10952,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.ability.ai/blog/ai-agent-maintenance-ownership",
-      "target_url": "unknown"
+      "target_url": "https://www.ability.ai/blog/ai-agent-maintenance-ownership"
     },
     {
       "entity_id": "ent-2026-0006",
@@ -10929,7 +10980,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.emergentmind.com/topics/skill-library",
-      "target_url": "unknown"
+      "target_url": "https://www.emergentmind.com/topics/skill-library"
     },
     {
       "entity_id": "ent-2026-0007",
@@ -10957,7 +11008,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://nestorup.com/blog/how-to-start-creating-a-skills-library-in-your-organization/",
-      "target_url": "unknown"
+      "target_url": "https://nestorup.com/blog/how-to-start-creating-a-skills-library-in-your-organization/"
     },
     {
       "entity_id": "ent-2026-3001",
@@ -10983,7 +11034,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/LambdaTest/agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/LambdaTest/agent-skills"
     },
     {
       "entity_id": "ent-2026-3002",
@@ -11009,7 +11060,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/fal-ai-community/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/fal-ai-community/skills"
     },
     {
       "entity_id": "ent-2026-3003",
@@ -11035,7 +11086,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/mongodb/agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/mongodb/agent-skills"
     },
     {
       "entity_id": "ent-2026-3004",
@@ -11061,7 +11112,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/makenotion/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/makenotion/skills"
     },
     {
       "entity_id": "ent-2026-3005",
@@ -11087,7 +11138,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/greensock/gsap-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/greensock/gsap-skills"
     },
     {
       "entity_id": "ent-2026-3006",
@@ -11113,7 +11164,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/duckdb/duckdb-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/duckdb/duckdb-skills"
     },
     {
       "entity_id": "ent-2026-3007",
@@ -11139,7 +11190,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/MiniMax-AI/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/MiniMax-AI/skills"
     },
     {
       "entity_id": "ent-2026-3008",
@@ -11167,7 +11218,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://www.redhat.com/en/agentic-skills",
-      "target_url": "unknown"
+      "target_url": "https://www.redhat.com/en/agentic-skills"
     },
     {
       "entity_id": "ent-2026-3009",
@@ -11193,7 +11244,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/google/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/google/skills"
     },
     {
       "entity_id": "ent-2026-3010",
@@ -11221,7 +11272,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/flutter/skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/flutter/skills"
     },
     {
       "entity_id": "ent-2026-3011",
@@ -11247,7 +11298,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/vercel-labs/agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/vercel-labs/agent-skills"
     },
     {
       "entity_id": "ent-2026-3012",
@@ -11273,7 +11324,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/datadog-labs/agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/datadog-labs/agent-skills"
     },
     {
       "entity_id": "ent-2026-3013",
@@ -11299,7 +11350,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/auth0/agent-skills",
-      "target_url": "unknown"
+      "target_url": "https://github.com/auth0/agent-skills"
     },
     {
       "entity_id": "ent-2026-3014",
@@ -11327,7 +11378,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/stripe/ai",
-      "target_url": "unknown"
+      "target_url": "https://github.com/stripe/ai"
     },
     {
       "entity_id": "ent-2026-3015",
@@ -11353,7 +11404,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/docx",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/docx"
     },
     {
       "entity_id": "ent-2026-3016",
@@ -11379,7 +11430,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/pptx",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/pptx"
     },
     {
       "entity_id": "ent-2026-3017",
@@ -11405,7 +11456,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/xlsx",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/xlsx"
     },
     {
       "entity_id": "ent-2026-3018",
@@ -11431,7 +11482,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/pdf",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/pdf"
     },
     {
       "entity_id": "ent-2026-3019",
@@ -11457,7 +11508,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/doc-coauthoring",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/doc-coauthoring"
     },
     {
       "entity_id": "ent-2026-3020",
@@ -11483,7 +11534,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/algorithmic-art",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/algorithmic-art"
     },
     {
       "entity_id": "ent-2026-3021",
@@ -11509,7 +11560,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/canvas-design",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/canvas-design"
     },
     {
       "entity_id": "ent-2026-3022",
@@ -11535,7 +11586,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/frontend-design",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/frontend-design"
     },
     {
       "entity_id": "ent-2026-3023",
@@ -11561,7 +11612,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/slack-gif-creator",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/slack-gif-creator"
     },
     {
       "entity_id": "ent-2026-3024",
@@ -11587,7 +11638,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/theme-factory",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/theme-factory"
     },
     {
       "entity_id": "ent-2026-3025",
@@ -11613,7 +11664,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/web-artifacts-builder",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/web-artifacts-builder"
     },
     {
       "entity_id": "ent-2026-3026",
@@ -11641,7 +11692,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/mcp-builder",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/mcp-builder"
     },
     {
       "entity_id": "ent-2026-3027",
@@ -11667,7 +11718,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/webapp-testing",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/webapp-testing"
     },
     {
       "entity_id": "ent-2026-3028",
@@ -11693,7 +11744,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/brand-guidelines",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/brand-guidelines"
     },
     {
       "entity_id": "ent-2026-3029",
@@ -11719,7 +11770,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/skills/internal-comms",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/skills/internal-comms"
     },
     {
       "entity_id": "ent-2026-3030",
@@ -11745,7 +11796,7 @@
       },
       "conflicting_evidence_log": [],
       "source_url": "https://github.com/anthropics/skills/tree/main/template",
-      "target_url": "unknown"
+      "target_url": "https://github.com/anthropics/skills/tree/main/template"
     }
   ]
 }

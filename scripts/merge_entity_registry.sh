@@ -17,6 +17,12 @@
 # different citing page for the same entity is expected (corroboration), not a
 # conflict.
 #
+# The registry's top-level metadata block (topics, entity_types,
+# total_entities, entity_count_by_topic, entity_count_by_entity_type) is
+# fully recomputed from the final entities list on every merge, so it can
+# never drift from the actual records. schema_version is 2 (source_url/
+# target_url schema); last_merged_at is a full UTC timestamp.
+#
 #   Usage: bash merge_entity_registry.sh <new_entity_batch.json> [master_registry.json]
 #   (master_registry.json defaults to state/entity_registry.json; created if absent)
 
@@ -32,9 +38,10 @@ mkdir -p "$(dirname "$MASTER")"
 [ -f "$MASTER" ] || echo '{"schema_version":1,"last_merged_at":null,"entities":[]}' > "$MASTER"
 
 TODAY="$(date -u +%Y-%m-%d)"
+NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 TMP="$(mktemp)"
 
-jq -s --arg today "$TODAY" '
+jq -s --arg today "$TODAY" --arg now "$NOW" '
   def norm_name: (. // "unknown") | ascii_downcase | gsub("[[:space:]]+";" ") | sub("^ +";"") | sub(" +$";"");
   def entity_key: .entity_key // ( (.topic // "unknown") + "|" + (.name | norm_name) );
   def desc_rank(d): if d == "verified" then 2 elif d == "snippet-only" then 1 else 0 end;
@@ -114,10 +121,19 @@ jq -s --arg today "$TODAY" '
     end
   )) as $merged_by_key |
 
+  ( $merged_by_key | to_entries | map(.value | del(.url)) ) as $final_entities |
+
   {
-    schema_version: 1,
-    last_merged_at: $today,
-    entities: ($merged_by_key | to_entries | map(.value))
+    schema_version: 2,
+    last_merged_at: $now,
+    metadata: {
+      topics: ($final_entities | map(.topic) | unique | sort),
+      entity_types: ($final_entities | map(.entity_type) | unique | sort),
+      total_entities: ($final_entities | length),
+      entity_count_by_topic: ($final_entities | group_by(.topic) | map({key: .[0].topic, value: length}) | from_entries),
+      entity_count_by_entity_type: ($final_entities | group_by(.entity_type) | map({key: .[0].entity_type, value: length}) | from_entries)
+    },
+    entities: $final_entities
   }
 ' "$MASTER" "$NEW" > "$TMP" && mv "$TMP" "$MASTER"
 
