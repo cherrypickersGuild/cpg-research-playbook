@@ -13,3 +13,22 @@ Shared rules carried through every stage: named company · concrete before/after
 To run the whole thing non-interactively: `bash scripts/run_pipeline.sh` (edit `pipeline.config.sh` first). Outputs land in `runs/<timestamp>/outputs/`, logs in `runs/<timestamp>/logs/`, newest run symlinked at `runs/latest/`.
 
 When asked to run a single stage interactively, use the matching subagent in `.claude/agents/` (e.g. `ax-validator`) and pass the input file path explicitly.
+
+## Autonomous coding safety & repair policy
+
+Gated autonomous coding is configured via `.claude/settings.local.json` and
+`.claude/hooks/guard_command.py`. When working autonomously:
+
+- Implement the **smallest** task-related change; keep unrelated code untouched.
+- Validate with `bash scripts/validate_task.sh` — the single allowlisted, offline
+  validation entry point (isolated temp state, mocked agents, no production writes).
+- If validation fails, diagnose and fix defects **directly related** to the task, then
+  rerun. Do not pause merely because a directly-related pre-existing defect is exposed.
+- Never claim success unless the **latest** `validate_task.sh` run exits 0.
+- Commit (only when asked) via `bash scripts/safe_commit.sh -m "…" <explicit files>`;
+  never `-A` / `.` / globs. Direct `git add` / `git commit` still prompt.
+- Push checks run via `bash scripts/safe_push_main.sh --check`. The actual push
+  (`--execute`) and every `git push` always require explicit human approval.
+- **Stop and ask** before: pushing, deploying, any external side effect, production
+  `state/` writes, anything needing credentials, destructive/irreversible loss of
+  unrelated work, or genuinely unrelated scope expansion.
