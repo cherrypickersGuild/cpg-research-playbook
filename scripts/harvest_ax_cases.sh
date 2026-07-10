@@ -229,7 +229,11 @@ NO_PROGRESS_THRESHOLD="${NO_PROGRESS_THRESHOLD:-3}"
 FLAGS=(--output-format json); [ -n "${MODEL:-}" ] && FLAGS+=(--model "$MODEL"); [ "${USE_BARE:-false}" = "true" ] && FLAGS+=(--bare)
 # shellcheck disable=SC2206
 [ -n "${EXTRA_FLAGS:-}" ] && FLAGS+=($EXTRA_FLAGS)
-clean(){ sed '/^```/d' | jq .; }
+# clean() — robust JSON recovery from a (possibly prose- or fence-wrapped)
+# nested `claude -p` result; strips fences, recovers a single top-level JSON
+# object/array via a string/escape-aware scan, validates with jq, and fails
+# loudly on none/ambiguous/invalid. See scripts/lib/clean_json.sh.
+source "$ROOT/scripts/lib/clean_json.sh"
 
 tally() {
   jq '[.cases[] | select(.verification_status=="verified")] | length' "$REGISTRY"
