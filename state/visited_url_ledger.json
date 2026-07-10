@@ -3161,6 +3161,59 @@
       ]
     },
     {
+      "url": "https://github.com/e2b-dev/awesome-ai-agents",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T12:17:24Z",
+      "last_crawled_at": "2026-07-10T12:17:24Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-0001",
+        "ent-2026-0002",
+        "ent-2026-0003",
+        "ent-2026-0004",
+        "ent-2026-0005",
+        "ent-2026-0006",
+        "ent-2026-0007",
+        "ent-2026-0008",
+        "ent-2026-0009",
+        "ent-2026-0010",
+        "ent-2026-0011",
+        "ent-2026-0012",
+        "ent-2026-0013",
+        "ent-2026-0014",
+        "ent-2026-0015",
+        "ent-2026-0016",
+        "ent-2026-0017",
+        "ent-2026-0018",
+        "ent-2026-0019",
+        "ent-2026-0020",
+        "ent-2026-0021",
+        "ent-2026-0022",
+        "ent-2026-0023",
+        "ent-2026-0024",
+        "ent-2026-0025",
+        "ent-2026-0026",
+        "ent-2026-0027",
+        "ent-2026-0028",
+        "ent-2026-0029",
+        "ent-2026-0030",
+        "ent-2026-0031",
+        "ent-2026-0032",
+        "ent-2026-0033",
+        "ent-2026-0034",
+        "ent-2026-0035",
+        "ent-2026-0036",
+        "ent-2026-0037",
+        "ent-2026-0038"
+      ]
+    },
+    {
       "url": "https://github.com/educlopez/ui-craft",
       "url_type": "news_url",
       "platform": "custom",
@@ -5620,6 +5673,22 @@
       "entity_ids": []
     },
     {
+      "url": "https://medialyst.ai/agents",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T12:17:24Z",
+      "last_crawled_at": "2026-07-10T12:17:24Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-0040"
+      ]
+    },
+    {
       "url": "https://medium.com/@DaveThackeray/claude-skills-workshop-how-to-get-the-right-results-every-time-73f250500ec7",
       "url_type": "news_url",
       "platform": "custom",
@@ -5777,6 +5846,22 @@
       "entity_extracted": true,
       "entity_ids": [
         "ent-2026-1014"
+      ]
+    },
+    {
+      "url": "https://onereach.ai/blog/what-is-the-roi-from-investments-in-enterprise-ai-agents/",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T12:17:24Z",
+      "last_crawled_at": "2026-07-10T12:17:24Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-0039"
       ]
     },
     {
