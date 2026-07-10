@@ -36,7 +36,9 @@ This path is deliberately walled off from the rest of Stage 1:
 
 - **Persistent (the only file this changes that matters across runs):**
   `state/ax_case_harvest_registry.json` — and only via `merge_ax_case_harvest_registry.sh`, never
-  written directly.
+  written directly. Every case carries `transformation_date` and `publication_date` as two separate
+  fields (each independently `"unknown"` if the page doesn't state it) — the same shared rule the
+  rich pipeline follows, without its date-window filtering.
 - **Transient, gitignored (`state/ax_case_harvest_*`):** `ax_case_harvest_hits.json` (this loop's
   candidates), `ax_case_harvest_batch.json` (this loop's extractor output),
   `ax_case_harvest_attempted.json` (every URL sent this invocation, so a later loop doesn't

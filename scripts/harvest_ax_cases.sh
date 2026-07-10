@@ -229,7 +229,7 @@ while :; do
   for attempt in $(seq 1 "$EXTRACT_ATTEMPTS"); do
     CLAUDE_CALL_START_EPOCH="$(date +%s)"
     log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="case_extraction" detail="attempt=${attempt}/${EXTRACT_ATTEMPTS}"
-    if claude -p "Follow your system instructions. Hits: $BATCH_HITS. Fetch each candidate's own page before extracting; only set verification_status:\"verified\" when the description came from that fetch, never from the snippet alone — if the page can't be fetched, use verification_status:\"snippet-only\" per your existing rules rather than marking it verified. Output ONLY the case batch JSON (cases). No prose, no fences." \
+    if claude -p "Follow your system instructions. Hits: $BATCH_HITS. Fetch each candidate's own page before extracting; only set verification_status:\"verified\" when the description came from that fetch, never from the snippet alone — if the page can't be fetched, use verification_status:\"snippet-only\" per your existing rules rather than marking it verified. Record transformation_date and publication_date as two separate fields, each \"unknown\" independently if the page does not state it — never infer one from the other. Output ONLY the case batch JSON (cases). No prose, no fences." \
          --append-system-prompt "$(cat "$EXTRACTOR_SPEC")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_EXTRACT" | jq -r '.result' | clean > "$BATCH_CASES" \
        && jq empty "$BATCH_CASES" 2>/dev/null; then

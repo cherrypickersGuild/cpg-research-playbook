@@ -18,6 +18,11 @@
 #   - target_url: best-effort resolved primary URL for the entity, OR the
 #     literal string "unknown" if the candidate-batch step could not
 #     confidently determine one. 1G may still resolve it later via WebFetch.
+#
+# github_stars: populated by 1G only when target_url is a confirmed GitHub
+# repo root (fetched live from the GitHub API — a number, current as of that
+# fetch, expected to change run over run). null for every non-GitHub entity
+# and never inferred from a page that merely mentions a star count.
 # See docs/entity_harvest_plan.md for the full design.
 #
 #   Usage: bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=100]
@@ -294,7 +299,7 @@ while :; do
   for attempt in $(seq 1 "$ONEG_ATTEMPTS"); do
     CLAUDE_CALL_START_EPOCH="$(date +%s)"
     log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="1g_extraction" detail="attempt=${attempt}/${ONEG_ATTEMPTS}"
-    if claude -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
+    if claude -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". If target_url resolves to a GitHub repo root, fetch https://api.github.com/repos/<owner>/<repo> and set github_stars to stargazers_count; otherwise (including target_url:\"unknown\") set github_stars:null — never estimate it from a non-GitHub page. In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
          --append-system-prompt "$(cat "$S1/1G_entity_extractor.md")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_1G" | jq -r '.result' | clean > "$BATCH_ENTITIES" \
        && jq empty "$BATCH_ENTITIES" 2>/dev/null; then

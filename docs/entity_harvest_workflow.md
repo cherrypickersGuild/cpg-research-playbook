@@ -23,7 +23,10 @@ Recommended order, since `prompt` currently sits at 0: `agent`, `mcp`, `prompt`,
   or citing article) and `target_url` (the entity's own primary page — repo, docs, model card,
   package page, paper, or official product page; `"unknown"` if it couldn't be confidently resolved).
   `state/visited_url_ledger.json` also persists (accumulates `entity_extracted`/`entity_ids`, same as
-  every other stage-1 script); its row key for the harvest path is `source_url`.
+  every other stage-1 script); its row key for the harvest path is `source_url`. Each entity also
+  carries `github_stars` — populated only when `target_url` is a confirmed GitHub repo root (a live
+  count from the GitHub API), `null` for everything else; a later run's fresh measurement always
+  overwrites the stored one, since this is popularity data, not identity data like `target_url`.
 - **Transient, gitignored (`state/harvest_*`):** `harvest_<topic>_hits.json` (this loop's candidates,
   Hit shape `{hits:[{source_url,target_url,title,snippet,domain}]}`), `harvest_<topic>_entity_batch.json`
   (this loop's 1G output), `harvest_<topic>_attempted.json` (every `source_url` sent this invocation,

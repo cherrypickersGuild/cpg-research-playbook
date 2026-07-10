@@ -36,8 +36,13 @@ harvested case can be promoted into the rich pipeline later by a human if it's s
    `verification_status: "snippet-only"` instead of `"verified"`.
 3. **If no** → do not fabricate a case. Simply omit that URL from your output `cases[]` — there is
    no ledger to patch, so there's nothing else to record for a rejected candidate.
-4. Never invent a company, KPI, quote, or workflow detail. Unknown fields are the string
+4. Never invent a company, KPI, quote, workflow detail, or date. Unknown fields are the string
    `"unknown"`, never guessed.
+5. Record `transformation_date` (when the AI workflow actually went live / the period the result
+   covers) and `publication_date` (when the source page itself was published) as two **separate**
+   fields — same shared rule the rich pipeline follows (`agents/01_case_finder.md`), just without
+   its date-window filtering or `date_inferred` machinery. Never collapse them into one date or
+   infer one from the other; each is `"unknown"` independently if the page does not state it.
 
 ## Output schema (per case)
 ```json
@@ -56,6 +61,8 @@ harvested case can be promoted into the rich pipeline later by a human if it's s
       "source_url": "https://...",
       "source_title": "How Acme Corp cut claims turnaround with AI",
       "source_domain": "example.com",
+      "transformation_date": "2026-02",
+      "publication_date": "2026-03-15",
       "confidence": 0.7,
       "verification_status": "verified",
       "found_via": { "hit_id": "hit-2026-0210", "platform": "web" }
@@ -71,6 +78,10 @@ harvested case can be promoted into the rich pipeline later by a human if it's s
   `case_id` as unique elsewhere).
 - `verification_status`: `"verified"` (description pulled from the page itself) or `"snippet-only"`
   (page couldn't be fetched, description is the search snippet). Never invent a third value.
+- `transformation_date` / `publication_date`: kept separate, each independently `"unknown"` if not
+  stated on the page — see rule 5 above. No date-window filtering or `date_inferred` flag here
+  (that's the rich pipeline's job); this stage just records whatever the page states, or
+  `"unknown"`.
 - `confidence`: 0.0–1.0, your own rough estimate of how solid the case is — named org + specific
   workflow + a real number = high; vague/promotional language = low. This is not the rich
   pipeline's calibrated confidence rubric, just an approximate signal.
@@ -78,6 +89,8 @@ harvested case can be promoted into the rich pipeline later by a human if it's s
   script folds this into `discovery.found_via[]`.
 
 ## Rules
+- `transformation_date` and `publication_date` are never the same field even when they happen to
+  hold the same value (e.g. a same-day announcement-and-launch) — always emit both keys.
 - One case per (company × ai_system_or_tool × workflow_after) — if a hit describes a case you've
   already extracted this batch, merge into the same in-batch case rather than emitting a duplicate
   (cross-run dedup is `merge_ax_case_harvest_registry.sh`'s job, but avoid obvious in-batch

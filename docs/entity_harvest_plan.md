@@ -89,7 +89,13 @@ reuse the ledger `jq -s` merge pattern), reusing the 1G invocation already in `r
 - All `state/harvest_<topic>_*.json` files (hits, entity batch, attempted-set) are transient,
   regenerated per run, and should be added to `.gitignore` alongside the existing
   `state/news_hits.json` / `state/news_entity_batch.json` entries when the script is built.
-- No changes are needed to `agents/stage1/1G_entity_extractor.md` or `scripts/merge_entity_registry.sh`.
+- Every entity also carries `github_stars` — a live number, populated by 1G only when `target_url`
+  resolves to a GitHub repo root (fetched from the GitHub API, never scraped or inferred from a
+  page that merely mentions a star count), `null` otherwise. `merge_entity_registry.sh` treats it
+  as freshness data, not identity data: the latest non-null measurement always wins, no
+  conflict-log entry needed (unlike a `target_url` mismatch).
+- `state/entity_registry.json`'s top-level `metadata` block (topics, entity_types, counts) is
+  fully recomputed by `merge_entity_registry.sh` on every merge.
 
 ## Verification (once the script is implemented)
 

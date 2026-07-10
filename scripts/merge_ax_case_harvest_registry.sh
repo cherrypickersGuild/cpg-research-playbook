@@ -19,11 +19,14 @@
 # bundle (verification_status + evidence_quote + source_url/title/domain)
 # when the incoming case is more verified than the existing one — verified
 # beats snippet-only, never the reverse — backfill industry/workflow_before/
-# measurable_kpi only when the existing value was "unknown", and keep the
-# higher confidence. A conflicting kpi_value is NEVER silently overwritten —
-# it's logged to conflicting_evidence_log[] for a human to resolve, the same
-# pattern merge_case_db.sh uses for transformation_date and
-# merge_entity_registry.sh uses for entity_type.
+# measurable_kpi/transformation_date/publication_date only when the existing
+# value was "unknown", and keep the higher confidence. A conflicting
+# kpi_value is NEVER silently overwritten — it's logged to
+# conflicting_evidence_log[] for a human to resolve, the same pattern
+# merge_case_db.sh uses for transformation_date and merge_entity_registry.sh
+# uses for entity_type. transformation_date and publication_date are always
+# distinct keys, even backfilled independently of each other — never infer
+# one from the other.
 #
 # Isolated from the rest of the project: never touches state/entity_registry.json,
 # state/ax_case_db.json, or state/visited_url_ledger.json.
@@ -88,6 +91,14 @@ jq -s --arg today "$TODAY" '
           measurable_kpi: (
             if ($ex.measurable_kpi // "unknown") != "unknown" then $ex.measurable_kpi
             else ($c.measurable_kpi // "unknown") end
+          ),
+          transformation_date: (
+            if ($ex.transformation_date // "unknown") != "unknown" then $ex.transformation_date
+            else ($c.transformation_date // "unknown") end
+          ),
+          publication_date: (
+            if ($ex.publication_date // "unknown") != "unknown" then $ex.publication_date
+            else ($c.publication_date // "unknown") end
           )
         }
       ) as $backfill |
@@ -113,6 +124,8 @@ jq -s --arg today "$TODAY" '
       })
     else
       .[$c.case_key] = (($c | del(.found_via)) + {
+        transformation_date: ($c.transformation_date // "unknown"),
+        publication_date: ($c.publication_date // "unknown"),
         corroboration_count: ($c.corroboration_count // 1),
         conflicting_evidence_log: [],
         discovery: {
@@ -124,10 +137,19 @@ jq -s --arg today "$TODAY" '
     end
   )) as $merged_by_key |
 
+  # Normalize transformation_date/publication_date onto every case in the registry, not just ones
+  # touched by the incoming batch this run — otherwise a case that predates this schema addition
+  # and is never re-corroborated would be missing the keys entirely instead of carrying an
+  # explicit "unknown", breaking "always present" schema consistency for older rows.
+  ( $merged_by_key | to_entries | map(.value
+      | if has("transformation_date") then . else . + {transformation_date: "unknown"} end
+      | if has("publication_date") then . else . + {publication_date: "unknown"} end
+    ) ) as $final_cases |
+
   {
     schema_version: 1,
     last_merged_at: $today,
-    cases: ($merged_by_key | to_entries | map(.value))
+    cases: $final_cases
   }
 ' "$MASTER" "$NEW" > "$TMP" && mv "$TMP" "$MASTER"
 

@@ -55,6 +55,22 @@ independently over the same hits and never need to agree with each other.
    where the hit has `news_url`/`source_url` fields of its own, `source_url` on the entity is the
    hit's `news_url` (the specific article that was crawled) — same rule, "the URL that was actually
    fetched to find this entity."
+8. **`github_stars` — only from a confirmed GitHub repo, never inferred.** After resolving
+   `target_url` (step 6), check whether it points at a GitHub repository root
+   (`https://github.com/<owner>/<repo>`, not a gist, an org page, an issue, a file path, or any
+   other GitHub URL shape). If, and only if, it does:
+   - Fetch `https://api.github.com/repos/<owner>/<repo>` and read `stargazers_count` — prefer the
+     API over scraping the rendered repo page, since the API gives an exact integer instead of an
+     abbreviated/rounded display string (`"12.4k"`).
+   - Set `github_stars` to that integer, the count **as of this fetch** — it is a live number, not
+     a one-time fact; a later corroborating run is expected to report a different (typically
+     higher) value, and that is a fresh, correct measurement, not a conflict.
+   - If the API call fails or the count can't be confidently read, set `github_stars: null`.
+   If `target_url` is not a GitHub repo root — including `"unknown"`, a non-GitHub domain, or any
+   other GitHub URL shape — set `github_stars: null` and do not attempt to estimate a count from
+   anywhere else (a mention like "10k+ GitHub stars" on the entity's own product page or in a
+   citing article is not a measurement; leave it out of `github_stars` and, if you want to keep it
+   at all, it belongs in `freshness_signal` as prose, same as today).
 
 ## `entity_type` enum by topic
 | topic | entity_type values |
@@ -79,6 +95,7 @@ independently over the same hits and never need to agree with each other.
       "description_source": "verified",
       "maintainer_or_vendor": "Example Org",
       "freshness_signal": "last commit 2026-06-30",
+      "github_stars": 4213,
       "related_topics": ["agent"],
       "found_via": { "hit_id": "hit-2026-0210", "platform": "web" }
     }
@@ -95,6 +112,9 @@ independently over the same hits and never need to agree with each other.
 - Never invent a description, maintainer, freshness signal, or `target_url`; unknown -> `"unknown"`.
   In particular, never default `target_url` to `source_url` to fill the field — a citing page (an
   awesome-list row, a search-hit page, a news article) is NOT the entity's own primary page.
+- `github_stars` is `null`, never `"unknown"` — it is a number-or-nothing field, not a string field
+  with the rest of the schema's `"unknown"` sentinel. Never invent or estimate it; never populate it
+  from anything other than a direct fetch of the GitHub API for a confirmed repo-root `target_url`.
 - One entity per (topic x name) — if a hit describes something already extracted this run, merge into
   the same in-batch entity rather than emitting a duplicate (cross-run dedup is `merge_entity_registry.sh`'s
   job, but avoid obvious in-run duplicates yourself).

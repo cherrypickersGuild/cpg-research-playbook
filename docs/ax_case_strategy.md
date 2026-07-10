@@ -65,6 +65,8 @@ Per case, in `state/ax_case_harvest_registry.json`:
   "source_url": "https://...",
   "source_title": "How Acme Corp cut claims turnaround with AI",
   "source_domain": "example.com",
+  "transformation_date": "2026-02",
+  "publication_date": "2026-03-15",
   "confidence": 0.7,
   "verification_status": "verified",
   "discovery": {
@@ -92,11 +94,15 @@ case_key = normalized(company) + "|" + normalized(ai_system_or_tool) + "|" + nor
 where `normalized(x)` = lowercase, collapsed whitespace, trimmed — the same normalization
 `merge_entity_registry.sh` and `merge_case_db.sh` already use for their own keys. This differs from
 the rich pipeline's `case_key` (`company|ax_pattern|transformation_date[0:7]`) because the harvest
-schema has neither `ax_pattern` nor `transformation_date` — `workflow_after` is the closest
-analogue to "what changed," and `ai_system_or_tool` distinguishes two different AI adoptions at the
-same company doing similar-sounding work. Not yet validated against real extracted data; revisit if
-it produces obviously wrong merges (e.g. two distinct case studies at the same company collapsing
-into one, or corroborating mentions of the same case failing to merge).
+schema still has no `ax_pattern` — `workflow_after` is the closest analogue to "what changed," and
+`ai_system_or_tool` distinguishes two different AI adoptions at the same company doing
+similar-sounding work. The lean schema does now carry `transformation_date` (added alongside
+`publication_date` so the harvest path follows the same date-separation rule as every other stage),
+but `case_key` deliberately does not incorporate it — changing the dedup key formula is a bigger,
+separate decision from just adding the field, and is out of scope here. Not yet validated against
+real extracted data; revisit if it produces obviously wrong merges (e.g. two distinct case studies
+at the same company collapsing into one, or corroborating mentions of the same case failing to
+merge).
 
 ## 5. Future bridge to the rich schema
 
@@ -109,8 +115,10 @@ harvested case turns out to be strong enough to promote:
    `measurable_kpi`/`kpi_value` → a single `kpi[]` entry (baseline/after/delta filled in only if
    actually verifiable, not inferred), `source_url`/`source_title`/`source_domain` → one `source[]`
    entry with a manually-assigned `tier`.
-3. Missing rich-schema fields (`ax_pattern`, `deployment_status`, `evidence_strength`, dates, etc.)
-   must be filled in for real, or left `"unknown"` — never copied/guessed from the lean record.
+3. Missing rich-schema fields (`ax_pattern`, `deployment_status`, `evidence_strength`,
+   `date_inferred`, etc.) must be filled in for real, or left `"unknown"` — never copied/guessed
+   from the lean record. `transformation_date`/`publication_date` carry over directly since both
+   schemas already track them the same way (kept separate, `"unknown"` if unstated).
 4. The promoted case then enters `state/ax_case_db.json` through the normal `merge_case_db.sh` path,
    with its own fresh `case_key` under that schema's key formula.
 

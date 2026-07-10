@@ -23,6 +23,15 @@
 # never drift from the actual records. schema_version is 2 (source_url/
 # target_url schema); last_merged_at is a full UTC timestamp.
 #
+# github_stars is a live number, not identity data like target_url — it's
+# expected to change (usually grow) between runs, so a newer measurement is
+# never a "conflict": the incoming value simply wins whenever it is non-null,
+# else the existing value (possibly itself null) is kept. This script also
+# enforces the "no stars from non-GitHub pages" rule structurally, not just
+# by trusting 1G's instruction-following: any incoming entity whose
+# target_url is not a github.com/<owner>/<repo> root has github_stars forced
+# to null before merging, regardless of what the batch supplied.
+#
 #   Usage: bash merge_entity_registry.sh <new_entity_batch.json> [master_registry.json]
 #   (master_registry.json defaults to state/entity_registry.json; created if absent)
 
@@ -45,11 +54,13 @@ jq -s --arg today "$TODAY" --arg now "$NOW" '
   def norm_name: (. // "unknown") | ascii_downcase | gsub("[[:space:]]+";" ") | sub("^ +";"") | sub(" +$";"");
   def entity_key: .entity_key // ( (.topic // "unknown") + "|" + (.name | norm_name) );
   def desc_rank(d): if d == "verified" then 2 elif d == "snippet-only" then 1 else 0 end;
+  def is_github_repo_root: (.target_url // "") | test("^https?://(www\\.)?github\\.com/[^/]+/[^/]+/?$"; "i");
+  def normalize_stars: if is_github_repo_root then (.github_stars // null) else null end;
 
   .[0] as $master | .[1] as $incoming |
 
   (($master.entities // []) | map(. + {entity_key: entity_key}) | INDEX(.entity_key)) as $by_key |
-  (($incoming.entities // []) | map(. + {entity_key: entity_key})) as $new |
+  (($incoming.entities // []) | map(. + {entity_key: entity_key} + {github_stars: normalize_stars})) as $new |
 
   (reduce $new[] as $e ($by_key;
     if has($e.entity_key) then
@@ -88,6 +99,12 @@ jq -s --arg today "$TODAY" --arg now "$NOW" '
         and ($e.target_url // null) != null and ($e.target_url // null) != "unknown"
         and ($ex.target_url // null) != ($e.target_url // null)
       ) as $target_conflict |
+      # github_stars: latest non-null measurement always wins — not identity data, so unlike
+      # target_url this is never a "conflict" to log, just a freshness update (or a no-op if this
+      # batch did not re-measure it, in which case the existing value — possibly itself null — is
+      # kept rather than being blanked out).
+      ( if ($e.github_stars // null) != null then $e.github_stars else ($ex.github_stars // null) end
+      ) as $stars_update |
       (($ex.conflicting_evidence_log // []) +
         (if $type_conflict then
           [{"noted_at": $today, "field": "entity_type",
@@ -99,6 +116,7 @@ jq -s --arg today "$TODAY" --arg now "$NOW" '
          else [] end)
       ) as $conflict_log |
       .[$e.entity_key] = ($ex + $best_desc + $target_backfill + {
+        github_stars: $stars_update,
         corroboration_count: $corrob,
         related_topics: $topics,
         conflicting_evidence_log: $conflict_log,
@@ -110,6 +128,7 @@ jq -s --arg today "$TODAY" --arg now "$NOW" '
       })
     else
       .[$e.entity_key] = (($e | del(.found_via)) + {
+        github_stars: ($e.github_stars // null),
         corroboration_count: ($e.corroboration_count // 1),
         conflicting_evidence_log: [],
         discovery: {
@@ -121,7 +140,12 @@ jq -s --arg today "$TODAY" --arg now "$NOW" '
     end
   )) as $merged_by_key |
 
-  ( $merged_by_key | to_entries | map(.value | del(.url)) ) as $final_entities |
+  # del(.url) is defensive cleanup for any stray legacy field; the github_stars normalization
+  # covers every entity in the registry, not just ones touched by the incoming batch this run —
+  # otherwise an entity untouched by $new (a pure pass-through from $by_key) could be missing the
+  # key entirely rather than carrying an explicit null, breaking "always present" schema
+  # consistency for older rows that predate this field.
+  ( $merged_by_key | to_entries | map(.value | del(.url) | if has("github_stars") then . else . + {github_stars: null} end) ) as $final_entities |
 
   {
     schema_version: 2,
