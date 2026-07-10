@@ -55,7 +55,7 @@ run_1f() {
     newdb="$STATE/news_case_db_${ts}.json"
     jq 'del(.ledger_patch)' "$STATE/news_case_db_with_patch.json" > "$newdb"
     jq -s '(.[1].ledger_patch // []) as $p
-           | {ledger: [ .[0].ledger[] | (. as $e | ($p[] | select(.url==$e.url)) // {} ) as $u | $e + $u ]}' \
+           | {ledger: [ .[0].ledger[] | . as $e | (($p[] | select(.url==$e.url)) // {}) as $u | $e + $u ]}' \
        "$STATE/visited_url_ledger.json" "$STATE/news_case_db_with_patch.json" > "$STATE/ledger.tmp" \
        && mv "$STATE/ledger.tmp" "$STATE/visited_url_ledger.json"
 
@@ -68,7 +68,7 @@ run_1f() {
       --append-system-prompt "$(cat "$S1/1G_entity_extractor.md")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
       2> "$STATE/1G_news.err" | jq -r '.result' | clean > "$STATE/news_entity_batch.json"
     jq -s '(.[1].ledger_patch // []) as $p
-           | {ledger: [ .[0].ledger[] | (. as $e | ($p[] | select(.url==$e.url)) // {} ) as $u | $e + $u ]}' \
+           | {ledger: [ .[0].ledger[] | . as $e | (($p[] | select(.url==$e.url)) // {}) as $u | $e + $u ]}' \
        "$STATE/visited_url_ledger.json" "$STATE/news_entity_batch.json" > "$STATE/ledger.tmp" \
        && mv "$STATE/ledger.tmp" "$STATE/visited_url_ledger.json"
     echo "[1F] new entities extracted: $(jq '.entities | length' "$STATE/news_entity_batch.json" 2>/dev/null || echo 0)"

@@ -45,7 +45,7 @@ claude -p "Follow your system instructions. New hits: $STATE/hits.json. Registry
 # split: case DB out to caller, and apply ledger_patch (extracted/case_ids)
 jq 'del(.ledger_patch)' "$STATE/case_db_with_patch.json" > "$OUT_DB"
 jq -s '(.[1].ledger_patch // []) as $p
-       | {ledger: [ .[0].ledger[] | (. as $e | ($p[] | select(.url==$e.url)) // {} ) as $u | $e + $u ]}' \
+       | {ledger: [ .[0].ledger[] | . as $e | (($p[] | select(.url==$e.url)) // {}) as $u | $e + $u ]}' \
    "$STATE/visited_url_ledger.json" "$STATE/case_db_with_patch.json" > "$STATE/ledger.tmp" \
    && mv "$STATE/ledger.tmp" "$STATE/visited_url_ledger.json"
 
@@ -60,7 +60,7 @@ claude -p "Follow your system instructions. Hits: $STATE/hits.json. Visited-URL 
   2> "$STATE/1G.err" | jq -r '.result' | clean > "$STATE/entity_batch.json"
 # merge this stage's own ledger_patch (entity_extracted/entity_ids) into the ledger
 jq -s '(.[1].ledger_patch // []) as $p
-       | {ledger: [ .[0].ledger[] | (. as $e | ($p[] | select(.url==$e.url)) // {} ) as $u | $e + $u ]}' \
+       | {ledger: [ .[0].ledger[] | . as $e | (($p[] | select(.url==$e.url)) // {}) as $u | $e + $u ]}' \
    "$STATE/visited_url_ledger.json" "$STATE/entity_batch.json" > "$STATE/ledger.tmp" \
    && mv "$STATE/ledger.tmp" "$STATE/visited_url_ledger.json"
 
