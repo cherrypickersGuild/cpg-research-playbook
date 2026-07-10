@@ -30,7 +30,12 @@ mkdir -p "$(dirname "$MASTER")"
 TODAY="$(date -u +%Y-%m-%d)"
 TMP="$(mktemp)"
 
-jq -s --arg today "$TODAY" '
+# Run the transform under `if` so a jq failure propagates instead of being
+# swallowed: the old `jq ... > "$TMP" && mv` idiom left jq as the LHS of `&&`,
+# which `set -e` does not treat as fatal — a failed merge skipped the `mv` but
+# the script ran on and exited 0, falsely reporting success while the master
+# was silently left unchanged. Now: jq fails -> master untouched, exit 1.
+if jq -s --arg today "$TODAY" '
   def norm_company: (. // "unknown") | ascii_downcase | gsub("[[:space:]]+";" ") | sub("^ +";"") | sub(" +$";"");
   def case_key: .case_key // (
     (.company | norm_company) + "|" +
@@ -85,7 +90,13 @@ jq -s --arg today "$TODAY" '
     last_merged_at: $today,
     cases: ($merged_by_key | to_entries | map(.value))
   }
-' "$MASTER" "$NEW" > "$TMP" && mv "$TMP" "$MASTER"
+' "$MASTER" "$NEW" > "$TMP"; then
+  mv "$TMP" "$MASTER"
+else
+  rm -f "$TMP"
+  echo "ERROR: merge_case_db jq step failed; $MASTER left unchanged (not overwritten)." >&2
+  exit 1
+fi
 
 N_NEW=$(jq '.cases | length' "$NEW")
 N_MASTER=$(jq '.cases | length' "$MASTER")
