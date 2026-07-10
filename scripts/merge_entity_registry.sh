@@ -50,7 +50,13 @@ TODAY="$(date -u +%Y-%m-%d)"
 NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 TMP="$(mktemp)"
 
-jq -s --arg today "$TODAY" --arg now "$NOW" '
+# The whole transform runs under `if` so a jq failure propagates instead of
+# being swallowed: the old `jq ... > "$TMP" && mv` idiom left jq as the LHS of
+# `&&`, which `set -e` does not treat as fatal — so a failed merge (e.g. a
+# metadata `from_entries` on an entity missing entity_type) skipped the `mv`
+# but the script still ran on and exited 0, falsely reporting success while the
+# master was silently left unchanged. Now: jq fails -> master untouched, exit 1.
+if jq -s --arg today "$TODAY" --arg now "$NOW" '
   def norm_name: (. // "unknown") | ascii_downcase | gsub("[[:space:]]+";" ") | sub("^ +";"") | sub(" +$";"");
   def entity_key: .entity_key // ( (.topic // "unknown") + "|" + (.name | norm_name) );
   def desc_rank(d): if d == "verified" then 2 elif d == "snippet-only" then 1 else 0 end;
@@ -159,7 +165,13 @@ jq -s --arg today "$TODAY" --arg now "$NOW" '
     },
     entities: $final_entities
   }
-' "$MASTER" "$NEW" > "$TMP" && mv "$TMP" "$MASTER"
+' "$MASTER" "$NEW" > "$TMP"; then
+  mv "$TMP" "$MASTER"
+else
+  rm -f "$TMP"
+  echo "ERROR: merge_entity_registry jq step failed; $MASTER left unchanged (not overwritten)." >&2
+  exit 1
+fi
 
 N_NEW=$(jq '.entities | length' "$NEW")
 N_MASTER=$(jq '.entities | length' "$MASTER")
