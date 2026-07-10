@@ -1,9 +1,10 @@
-# Entity Harvest Plan — growing entity_registry.json to ≥100 verified entities per topic
+# Entity Harvest Plan — growing entity_registry.json to ≥250 verified entities per topic
 
 ## Goal and current state
 
-`state/entity_registry.json` currently holds 17 entities (9 `agent`, 7 `mcp`, 1 `skill`, 0 `prompt`) —
-from a single 1G run over `state/news_hits.json`. The target is **≥100 entities per topic
+`state/entity_registry.json` began at 17 entities from a single 1G run over `state/news_hits.json` and
+has since grown through the harvest harness (run `bash scripts/harvest_entities.sh <topic> --check` for
+live per-topic counts). The target is **≥250 entities per topic
 (`agent`/`mcp`/`prompt`/`skill`), all with `description_source: "verified"`**, where *verified* means
 the description was pulled from the **entity's own primary page** (`target_url` — its repo, docs page,
 model card, package page, paper page, or official product page), never from the citing page
@@ -26,9 +27,11 @@ have never been run through 1G at all:
   awesome-list README URLs themselves are **seed material only** — they appear as a candidate's
   `source_url`, never as its `target_url`; the entity's own primary page must be resolved separately.
 
-## Proposed harness: `scripts/harvest_entities.sh` (design; not built yet)
+## Harness: `scripts/harvest_entities.sh` (built)
 
-`bash scripts/harvest_entities.sh <topic> [target=100]`, `<topic> ∈ {agent,mcp,prompt,skill}`.
+`bash scripts/harvest_entities.sh <topic> [target=250] [--check]`, `<topic> ∈ {agent,mcp,prompt,skill}`.
+The how-to (final-target semantics, `--check`, tuning, the `scripts/harvest_all.sh` orchestrator, and
+smoke-test guidance) lives in [`entity_harvest_workflow.md`](entity_harvest_workflow.md).
 Structure mirrors `scripts/discover.sh` (source `pipeline.config.sh`, build `FLAGS`, reuse `clean()`,
 reuse the ledger `jq -s` merge pattern), reusing the 1G invocation already in `run_stage1.sh:57-69` and
 `merge_entity_registry.sh` unchanged — no changes needed to either.
@@ -97,24 +100,29 @@ reuse the ledger `jq -s` merge pattern), reusing the 1G invocation already in `r
 - `state/entity_registry.json`'s top-level `metadata` block (topics, entity_types, counts) is
   fully recomputed by `merge_entity_registry.sh` on every merge.
 
-## Verification (once the script is implemented)
+## Verification
 
 1. `bash -n scripts/harvest_entities.sh` — syntax check; confirm dependency guards match
    `discover.sh`'s `command -v claude`/`command -v jq` checks.
-2. Small live loop, e.g. `bash scripts/harvest_entities.sh mcp 12` — confirm transient
-   `state/harvest_mcp_*` files appear, the tally increments loop over loop, every new `topic:"mcp"`
-   row has `description_source:"verified"` with a `target_url` distinct from `source_url` (and not
-   an awesome-list README), and the original 17 entities are untouched.
-3. Idempotency — re-run the same command; it should add ~0 new verified entities and exit via the
+2. Offline suites (no live `claude`): `bash tests/test_harvest_targets.sh` (target/remaining/skip logic)
+   and `bash tests/test_harvest_bounded.sh` (MAX_LOOPS / NO_PROGRESS termination via a mock `CLAUDE_BIN`,
+   plus an assertion that real `state/` is byte-unchanged).
+3. Controlled live smoke — use a `target` a few **above** the current verified count for a topic (see
+   `--check`), e.g. `bash scripts/harvest_entities.sh agent 117` when agent is at 115. Confirm transient
+   `state/harvest_agent_*` files appear, the tally increments loop over loop, every new `topic:"agent"`
+   row has `description_source:"verified"` with a `target_url` distinct from `source_url` (and not an
+   awesome-list README), and pre-existing entities are untouched. A `target` **below** the current count
+   is a no-op — never use one as a smoke target against the real registry.
+4. Idempotency — re-run the same command; it should add ~0 new verified entities and exit via the
    "0 new" stop path, proving the ledger + attempted-set + registry dedup actually prevents rework.
-4. Failure paths — temporarily break `jq` on PATH or point at a corrupted registry file; confirm the
+5. Failure paths — temporarily break `jq` on PATH or point at a corrupted registry file; confirm the
    script exits non-zero instead of silently continuing.
-5. `git status --porcelain state/` shows no `harvest_*` files staged once `.gitignore` is updated.
-6. Only after the above passes on a small target, run each topic at `target=100` in turn (`agent`,
-   `mcp`, `prompt`, `skill`) — this is the long, WebFetch-heavy phase.
+6. `git status --porcelain state/` shows no `harvest_*` files staged (they are gitignored).
+7. Grow each topic to 250, in order, via the orchestrator: `bash scripts/harvest_all.sh --entities-only`
+   (or one topic at a time, `bash scripts/harvest_entities.sh <topic> 250`) — the long, WebFetch-heavy
+   phase. `harvest_all.sh` skips any topic already at target and exits non-zero if any stays below it.
 
 ## Recommended run order
 
-`agent` → `mcp` → `prompt` → `skill`. `prompt` currently sits at 0 and has an awesome-list report
-(`awesome_prompt.md`) plus a `search_hits_prompt.json` shard already on disk, so it should clear the
-bar as reliably as the other three once the harness exists.
+`agent` → `mcp` → `prompt` → `skill` (then AX cases via `scripts/harvest_ax_cases.sh`) — the order
+`scripts/harvest_all.sh` uses. `prompt` is the thinnest topic and therefore the longest to reach 250.

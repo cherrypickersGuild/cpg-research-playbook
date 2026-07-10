@@ -7,15 +7,33 @@ AX transformation case leads instead of agent/mcp/prompt/skill entities.
 ## Usage
 
 ```
-bash scripts/harvest_ax_cases.sh [target=100]
+bash scripts/harvest_ax_cases.sh [target=250] [--check]
 ```
 
+`target` is the **final total** of `verification_status:"verified"` cases the **canonical registry**
+`state/ax_case_harvest_registry.json` should reach — **not** a number to add. Existing verified cases
+count toward it, so the loop only closes the gap (`target - current`). Default is **250**. There is no
+topic argument — unlike the entity harvest's four topics, this is a single lane.
+
 Runs candidate-sourcing → extraction → `merge_ax_case_harvest_registry.sh` in a loop until the
-registry has `target` cases with `verification_status:"verified"` in
-`state/ax_case_harvest_registry.json`, a loop adds zero new verified cases (sources exhausted), or
-`MAX_LOOPS` (default 12) is hit. Each loop prints a tally line; the run always ends by printing why
-it stopped. There is no topic argument — unlike the entity harvest's four topics, this is a single
-lane.
+registry has `target` verified cases, `NO_PROGRESS_THRESHOLD` consecutive loops add zero new verified
+cases (sources exhausted), or `MAX_LOOPS` is hit. Each loop prints a diagnostics line
+(`current`/`target`/`remaining`/`candidates`/`+new`/`dropped`/`no_progress`); the run always ends by
+printing why it stopped. **A clean (exit 0) stop does not imply the target was met** — re-run with
+`--check` to confirm.
+
+`--check` prints one status line and exits 0 **without any `claude` call or side effects**:
+```
+[harvest][ax_cases] check: current=0 target=250 remaining=250 status=incomplete
+```
+It is also how `scripts/harvest_all.sh` decides whether to skip or run this lane. Needs only `jq`.
+
+Grow AX cases as part of the full sequence (`agent → mcp → prompt → skill → AX`), or on its own:
+```
+bash scripts/harvest_all.sh            # all stages; AX runs last
+bash scripts/harvest_all.sh --ax-only  # AX only
+```
+`AX_TARGET` (default 250) overrides the AX target for the orchestrator.
 
 ## Isolation — read this before running
 
@@ -95,8 +113,9 @@ adds ~0 new cases once sources are exhausted or the target is met.
 
 ## Exit codes
 
-- **0** — target reached, sources exhausted (a loop added 0 new verified cases), or `MAX_LOOPS`
-  reached. All three print the final tally before exiting.
+- **0** — target reached, sources exhausted (`NO_PROGRESS_THRESHOLD` consecutive loops added 0 new
+  verified cases), or `MAX_LOOPS` reached. All three print the final tally before exiting. Exit 0 is
+  **not** proof the target was met — check the final line or re-run `--check`.
 - **non-zero** — a real failure: `claude`/`jq` missing, a bad target argument, a `claude -p` call
   producing invalid/empty JSON after retries, `merge_ax_case_harvest_registry.sh` failing, or the
   registry found or left corrupted. Check `state/ax_case_harvest.err` first, then the matching
@@ -108,7 +127,29 @@ adds ~0 new cases once sources are exhausted or the target is met.
 
 ## Tuning
 
-Override before invoking: `BATCH_SIZE` (candidates requested per loop, default 25), `MAX_LOOPS`
-(default 12), `CANDIDATE_ATTEMPTS` / `EXTRACT_ATTEMPTS` (retries per loop for each of the two
-`claude -p` calls, default 3 each). All env vars, e.g.
-`BATCH_SIZE=40 bash scripts/harvest_ax_cases.sh 150`.
+All env vars, overridable before invoking. Kept **distinct from `target`** (the final registry count):
+
+| Var | Default | Meaning |
+|---|---|---|
+| final `target` (CLI arg) | `250` | final total of verified cases the registry should reach |
+| `BATCH_SIZE` | `40` | candidate URLs requested per loop (bounded; never the whole remaining gap in one call) |
+| `MAX_LOOPS` | `40` | hard upper bound on loops |
+| `NO_PROGRESS_THRESHOLD` | `3` | consecutive no-progress loops (0 candidates **or** 0 new verified after merge) tolerated before stopping |
+| `CANDIDATE_ATTEMPTS` / `EXTRACT_ATTEMPTS` | `3` each | in-process retries for each of the two `claude` calls |
+
+Example: `BATCH_SIZE=60 MAX_LOOPS=60 bash scripts/harvest_ax_cases.sh 250`.
+
+### Isolation / test overrides (default to production behavior)
+
+- `STATE_DIR` — relocate all state/registry/log/batch paths in one shot (default `<repo>/state`).
+- `CLAUDE_BIN` — the `claude` executable to invoke (default `claude`).
+
+## Smoke tests
+
+- **Real-registry live smoke:** `bash scripts/harvest_ax_cases.sh 3` is a valid tiny live smoke **only
+  while the AX verified count is below 3** (currently 0). Once the registry has ≥ 3 verified cases,
+  `target 3` is already satisfied and harvests nothing — bump the target above the current count instead.
+- **Isolated fixture (no real registry):** `STATE_DIR=/tmp/fix bash scripts/harvest_ax_cases.sh 3`
+  against a scratch `ax_case_harvest_registry.json`.
+- **Offline test suites (no live `claude`):** `bash tests/test_harvest_targets.sh` and
+  `bash tests/test_harvest_bounded.sh`.

@@ -5,15 +5,39 @@ Design/rationale: [`entity_harvest_plan.md`](entity_harvest_plan.md). This is ju
 ## Usage
 
 ```
-bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=100]
+bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=250] [--check]
 ```
 
-Runs candidate-sourcing → Stage 1G (fetch + verify) → `merge_entity_registry.sh` in a loop until the
-topic has `target` entities with `description_source:"verified"` in `state/entity_registry.json`, a
-loop adds zero new verified entities (sources exhausted), or `MAX_LOOPS` (default 12) is hit. Each
-loop prints a tally line; the run always ends by printing why it stopped.
+`target` is the **final total** of `description_source:"verified"` entities the topic should reach in
+`state/entity_registry.json` (the canonical registry) — **not** a number to add. Existing verified
+entities count toward it, so the loop only closes the gap (`target - current`). Default is **250**.
 
-Recommended order, since `prompt` currently sits at 0: `agent`, `mcp`, `prompt`, `skill`.
+Runs candidate-sourcing → Stage 1G (fetch + verify) → `merge_entity_registry.sh` in a loop until the
+topic has `target` verified entities, `NO_PROGRESS_THRESHOLD` consecutive loops add zero new verified
+entities (sources exhausted), or `MAX_LOOPS` is hit. Each loop prints a diagnostics line
+(`current`/`target`/`remaining`/`candidates`/`+new`/`dropped`/`no_progress`); the run always ends by
+printing why it stopped. **A clean (exit 0) stop does not imply the target was met** — re-run with
+`--check`, or use `scripts/harvest_all.sh`, to confirm.
+
+`--check` prints one status line and exits 0 **without any `claude` call or side effects**:
+```
+[harvest][agent] check: current=115 target=250 remaining=135 status=incomplete
+```
+Use it to see remaining counts, or as the skip signal in orchestration. Needs only `jq`.
+
+### Grow all four topics + AX cases (orchestrator)
+
+```
+bash scripts/harvest_all.sh                 # agent → mcp → prompt → skill → AX, sequentially
+bash scripts/harvest_all.sh --entities-only # the four entity topics only
+bash scripts/harvest_all.sh --ax-only       # AX cases only
+```
+
+`harvest_all.sh` runs each stage in order, first `--check`s it (skipping any topic already at target),
+runs the harvest, then **re-checks**: a bounded child that stops below target is reported INCOMPLETE, and
+the orchestrator exits non-zero if any requested stage is still below target (no false success).
+Targets: `ENTITY_TARGET` (default 250, per topic) and `AX_TARGET` (default 250). Recommended manual order
+matches the orchestrator's: `agent`, `mcp`, `prompt`, `skill`, then AX.
 
 ## What it touches
 
@@ -90,8 +114,9 @@ separate runs.
 
 ## Exit codes
 
-- **0** — target reached, sources exhausted (a loop added 0 new verified entities), or `MAX_LOOPS`
-  reached. All three print the final tally before exiting.
+- **0** — target reached, sources exhausted (`NO_PROGRESS_THRESHOLD` consecutive loops added 0 new
+  verified entities), or `MAX_LOOPS` reached. All three print the final tally before exiting. Exit 0
+  is **not** proof the target was met — check the final line or re-run `--check`.
 - **non-zero** — a real failure: `claude`/`jq` missing, bad arguments, a `claude -p` call producing
   invalid/empty JSON, `merge_entity_registry.sh` failing, or the ledger/registry found or left
   corrupted. Check `state/harvest_<topic>.err` first, then the matching `raw_candidates`/`raw_1g`
@@ -107,7 +132,34 @@ separate runs.
 
 ## Tuning
 
-Override before invoking: `BATCH_SIZE` (candidates requested per loop, default 25), `MAX_LOOPS`
-(default 12), `CANDIDATE_ATTEMPTS` / `ONEG_ATTEMPTS` (retries per loop for each of the two
-`claude -p` calls, default 3 each). All env vars, e.g.
-`BATCH_SIZE=40 bash scripts/harvest_entities.sh mcp 150`.
+All env vars, overridable before invoking. Kept **distinct from `target`** (the final registry count):
+
+| Var | Default | Meaning |
+|---|---|---|
+| final `target` (CLI arg) | `250` | final total of verified entities the topic should reach |
+| `BATCH_SIZE` | `40` | candidate URLs requested per loop (bounded; never the whole remaining gap in one call) |
+| `MAX_LOOPS` | `40` | hard upper bound on loops |
+| `NO_PROGRESS_THRESHOLD` | `3` | consecutive no-progress loops (0 candidates **or** 0 new verified after merge) tolerated before stopping |
+| `CANDIDATE_ATTEMPTS` / `ONEG_ATTEMPTS` | `3` each | in-process retries for each of the two `claude` calls (stray-prose formatting slips) |
+
+Example: `BATCH_SIZE=60 MAX_LOOPS=60 bash scripts/harvest_entities.sh prompt 250`.
+
+### Isolation / test overrides (default to production behavior)
+
+- `STATE_DIR` — relocate **all** state/registry/log/batch paths to an alternate dir in one shot
+  (default `<repo>/state`). Used by the offline tests to run against fixtures without touching real state.
+- `CLAUDE_BIN` — the `claude` executable to invoke (default `claude`). Used by the offline boundedness
+  test to drive the real loop with a deterministic mock.
+
+## Smoke tests
+
+- **Isolated fixture (no real registry):** point `STATE_DIR` at a scratch dir holding a small
+  `entity_registry.json`, e.g. `STATE_DIR=/tmp/fix bash scripts/harvest_entities.sh agent 5`. A tiny
+  `target` like 5 only makes sense here — on the real registry every topic is already well above 5, so
+  it would harvest nothing.
+- **Controlled live smoke (real registry):** use a `target` a few **above** the current verified count
+  so a couple of records are actually harvested — e.g. if `--check` shows agent at 115,
+  `bash scripts/harvest_entities.sh agent 117`. Never use a `target` below the current count (it is a
+  no-op).
+- **Offline test suites (no live `claude`):** `bash tests/test_harvest_targets.sh` and
+  `bash tests/test_harvest_bounded.sh`.

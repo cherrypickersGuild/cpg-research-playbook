@@ -25,10 +25,33 @@
 # and never inferred from a page that merely mentions a star count.
 # See docs/entity_harvest_plan.md for the full design.
 #
-#   Usage: bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=100]
+#   Usage: bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=250] [--check]
 #
-# Exit 0: target reached, a loop added 0 new verified entities (sources
-#         exhausted), or MAX_LOOPS reached — all printed with the final tally.
+# `target` is the FINAL total number of verified entities the registry should
+# reach for this topic — NOT a number to add. Existing verified entities count
+# toward it, so the loop only needs to close the gap (target - current). The
+# canonical count is: entities in state/entity_registry.json whose topic
+# exactly matches AND description_source == "verified". Dedup is by entity_key
+# at merge time, so duplicates/rejects/search-hits are never counted.
+#
+# `--check` prints one status line (current/target/remaining/status) and exits
+# 0 WITHOUT any claude call or side effects — used by scripts/harvest_all.sh to
+# skip already-complete topics, and by the target tests. Needs only jq.
+#
+# Reaching a large target (e.g. 250) is done in bounded per-loop batches
+# (BATCH_SIZE candidates each), merging after every batch; an interrupted run
+# resumes from the merged registry count on re-invoke.
+#   BATCH_SIZE (default 40)  candidate URLs requested per loop
+#   MAX_LOOPS (default 40)   hard upper bound on loops
+#   NO_PROGRESS_THRESHOLD (default 3)  consecutive no-progress loops before stop
+# Test/isolation overrides (default to production behavior):
+#   STATE_DIR   relocate all state/registry/log/batch paths (default: <repo>/state)
+#   CLAUDE_BIN  the claude executable to invoke (default: claude)
+#
+# Exit 0: target reached; OR sources exhausted (NO_PROGRESS_THRESHOLD
+#         consecutive no-progress loops); OR MAX_LOOPS reached — each printed
+#         with the final tally. A clean exit does NOT imply the target was met;
+#         read the printed status (or re-run with --check) to confirm.
 # Exit 1: missing dependency, bad arguments, a claude/jq step failing, or a
 #         persistent file (ledger/registry) found or left invalid JSON.
 #
@@ -40,6 +63,56 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
+
+# ---------------------------------------------------------------------------
+# Argument parsing FIRST — before ANY side effect — so `--check` is a pure,
+# read-only status query: it must not mkdir, must not create STATE_DIR / a
+# registry / ledger / attempted-set / batch / log file, and must not install
+# the exit trap. Positional args are <topic> [target]; `--check` may appear in
+# any position and is stripped here.
+# ---------------------------------------------------------------------------
+CHECK_MODE=false
+POSITIONAL=()
+for arg in "$@"; do
+  case "$arg" in
+    --check) CHECK_MODE=true ;;
+    *)       POSITIONAL+=("$arg") ;;
+  esac
+done
+TOPIC="${POSITIONAL[0]:?Usage: bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=250] [--check]}"
+TARGET="${POSITIONAL[1]:-250}"
+case "$TOPIC" in
+  agent|mcp|prompt|skill) ;;
+  *) echo "ERROR: topic must be one of agent, mcp, prompt, skill (got '$TOPIC')." >&2; exit 1 ;;
+esac
+case "$TARGET" in
+  ''|*[!0-9]*) echo "ERROR: target must be a positive integer (got '$TARGET')." >&2; exit 1 ;;
+esac
+
+# STATE_DIR override relocates every derived path in one shot (registry, ledger,
+# logs, batch/attempted files). Production default is <repo>/state. Resolved
+# here as a plain variable — NOT created — so --check can read the registry path
+# with zero filesystem side effects.
+STATE="${STATE_DIR:-$ROOT/state}"
+REGISTRY="$STATE/entity_registry.json"
+
+# --check: pure read-only status. No trap, no mkdir, no file creation. A missing
+# registry counts as 0 (it is NOT created). Needs only jq. Emits one
+# machine-readable line for scripts/harvest_all.sh and the target tests, exit 0.
+if [ "$CHECK_MODE" = true ]; then
+  command -v jq >/dev/null 2>&1 || { echo "ERROR: 'jq' not found." >&2; exit 1; }
+  if [ -f "$REGISTRY" ]; then
+    jq empty "$REGISTRY" 2>/dev/null || { echo "ERROR: $REGISTRY is not valid JSON." >&2; exit 1; }
+    current="$(jq --arg t "$TOPIC" '[.entities[] | select(.topic==$t and .description_source=="verified")] | length' "$REGISTRY")"
+  else
+    current=0
+  fi
+  remaining=$(( TARGET - current ))
+  if [ "$remaining" -lt 0 ]; then remaining=0; fi
+  if [ "$current" -ge "$TARGET" ]; then status="complete"; else status="incomplete"; fi
+  echo "[harvest][$TOPIC] check: current=$current target=$TARGET remaining=$remaining status=$status"
+  exit 0
+fi
 
 # ---------------------------------------------------------------------------
 # Structured JSONL timing log — set up first, before any exit-capable check,
@@ -54,7 +127,8 @@ source "$ROOT/pipeline.config.sh"
 # (the very first dependency check below), no event can be written at all —
 # there's nothing to serialize with. That single gap is inherent, not a bug.
 # ---------------------------------------------------------------------------
-STATE="$ROOT/state"
+# STATE was resolved above (honoring STATE_DIR) as a plain variable; now that we
+# are past the read-only --check path, create its log subdir (first side effect).
 mkdir -p "$STATE/logs"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 LOG_FILE="$STATE/logs/harvest_${RUN_ID}.jsonl"
@@ -130,18 +204,13 @@ on_exit() {
 trap on_exit EXIT
 # ---------------------------------------------------------------------------
 
-command -v claude >/dev/null 2>&1 || { EXIT_REASON="missing_dependency_claude"; echo "ERROR: 'claude' not on PATH." >&2; exit 1; }
-command -v jq     >/dev/null 2>&1 || { EXIT_REASON="missing_dependency_jq"; echo "ERROR: 'jq' not found." >&2; exit 1; }
-
-TOPIC="${1:?Usage: bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=100]}"
-TARGET="${2:-100}"
-case "$TOPIC" in
-  agent|mcp|prompt|skill) ;;
-  *) EXIT_REASON="bad_topic_arg"; echo "ERROR: topic must be one of agent, mcp, prompt, skill (got '$TOPIC')." >&2; exit 1 ;;
-esac
-case "$TARGET" in
-  ''|*[!0-9]*) EXIT_REASON="bad_target_arg"; echo "ERROR: target must be a positive integer (got '$TARGET')." >&2; exit 1 ;;
-esac
+# TOPIC/TARGET were parsed and validated at the top, before any side effect.
+# Full-run dependency checks run here (with the trap active, so failures are
+# logged): claude — via the overridable CLAUDE_BIN — is only needed for a real
+# harvest, never for --check. CLAUDE_BIN defaults to "claude".
+CLAUDE_BIN="${CLAUDE_BIN:-claude}"
+command -v "$CLAUDE_BIN" >/dev/null 2>&1 || { EXIT_REASON="missing_dependency_claude"; echo "ERROR: CLAUDE_BIN '$CLAUDE_BIN' not on PATH." >&2; exit 1; }
+command -v jq            >/dev/null 2>&1 || { EXIT_REASON="missing_dependency_jq"; echo "ERROR: 'jq' not found." >&2; exit 1; }
 CURRENT_TOPIC="$TOPIC"
 
 S1="$ROOT/agents/stage1"
@@ -170,8 +239,19 @@ echo '{"attempted_urls":[]}' > "$ATTEMPTED"
 jq empty "$REGISTRY" 2>/dev/null || { EXIT_REASON="registry_invalid_json"; echo "ERROR: $REGISTRY is not valid JSON — refusing to continue." >&2; exit 1; }
 jq empty "$LEDGER"   2>/dev/null || { EXIT_REASON="ledger_invalid_json"; echo "ERROR: $LEDGER is not valid JSON — refusing to continue." >&2; exit 1; }
 
-BATCH_SIZE="${BATCH_SIZE:-25}"
-MAX_LOOPS="${MAX_LOOPS:-12}"
+# Loop tuning — all env-overridable, kept DISTINCT from TARGET (the final count):
+#   BATCH_SIZE            candidate URLs requested per loop (bounded; never the
+#                         whole remaining gap in one oversized call)
+#   MAX_LOOPS             hard upper bound on loops
+#   NO_PROGRESS_THRESHOLD consecutive no-progress loops (0 candidates OR 0 new
+#                         verified after merge) tolerated before declaring the
+#                         sources exhausted and stopping safely
+# Defaults are sized for a 250 target with attrition from duplicates, rejected
+# candidates, and failed verification; a single unlucky batch no longer halts
+# the run (the counter must reach the threshold), but the run always terminates.
+BATCH_SIZE="${BATCH_SIZE:-40}"
+MAX_LOOPS="${MAX_LOOPS:-40}"
+NO_PROGRESS_THRESHOLD="${NO_PROGRESS_THRESHOLD:-3}"
 
 FLAGS=(--output-format json); [ -n "${MODEL:-}" ] && FLAGS+=(--model "$MODEL"); [ "${USE_BARE:-false}" = "true" ] && FLAGS+=(--bare)
 # shellcheck disable=SC2206
@@ -188,10 +268,12 @@ log_event topic_start topic="$TOPIC" target="$TARGET" verified_before="$(tally)"
 echo "[harvest][$TOPIC] starting. target=$TARGET verified entities. current: $(tally)/$TARGET"
 
 loop=0
+no_progress=0   # consecutive loops that added no new verified records
 while :; do
   loop=$((loop+1))
   CURRENT_LOOP="$loop"
   current="$(tally)"
+  remaining=$(( TARGET - current )); if [ "$remaining" -lt 0 ]; then remaining=0; fi
   log_event loop_start topic="$TOPIC" loop="$loop" target="$TARGET" verified_before="$current"
 
   if [ "$current" -ge "$TARGET" ]; then
@@ -201,9 +283,10 @@ while :; do
   fi
   if [ "$loop" -gt "$MAX_LOOPS" ]; then
     EXIT_REASON="max_loops_reached"
-    echo "[harvest][$TOPIC] MAX_LOOPS ($MAX_LOOPS) reached at $current/$TARGET verified. stopping."
+    echo "[harvest][$TOPIC] MAX_LOOPS ($MAX_LOOPS) reached at $current/$TARGET verified (remaining $remaining). stopping — target NOT met."
     exit 0
   fi
+  echo "[harvest][$TOPIC] loop $loop/$MAX_LOOPS: current=$current target=$TARGET remaining=$remaining no_progress=$no_progress/$NO_PROGRESS_THRESHOLD"
 
   echo "[harvest][$TOPIC] loop $loop: building candidate batch (batch size <= $BATCH_SIZE)"
   # The model occasionally prefixes its JSON with a stray sentence despite the "no prose"
@@ -215,7 +298,7 @@ while :; do
   for attempt in $(seq 1 "$CANDIDATE_ATTEMPTS"); do
     CLAUDE_CALL_START_EPOCH="$(date +%s)"
     log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="candidate_batch" detail="attempt=${attempt}/${CANDIDATE_ATTEMPTS}"
-    if claude -p "You are sourcing CANDIDATE urls for Stage 1G (entity extraction) — you do not extract or verify entities yourself here. Topic: $TOPIC. Seed sources, in priority order: (a) $AWESOME_LIST plus the source awesome-list raw README(s) it cites near its top (fetch those for entries beyond the report's own ~40-row cap), (b) $HITS_SHARD. For EVERY candidate you propose, return BOTH URLs: source_url = the original seed URL where you found this entry (the awesome-list README anchor/URL, the search-hit page, or the citing article — never omit this), AND target_url = a best-effort resolved primary URL for the entity itself (its own repo, docs page, model card, package page, paper, or official product page). If you cannot confidently determine target_url, emit the literal string \"unknown\" rather than guessing — Stage 1G will try to resolve it separately via WebFetch. Never emit an awesome-list README URL as target_url, and never copy source_url into target_url to fill the field. EXCLUDE any candidate whose source_url is: already entity_extracted:true in the ledger at $LEDGER, already listed in attempted_urls[] in $ATTEMPTED. ALSO EXCLUDE any candidate whose target_url (when not \"unknown\") is already a target_url of an existing entity in $REGISTRY (prevents re-cataloging the same entity via a different citing page). Return at most $BATCH_SIZE candidates. Output ONLY JSON of the shape {\"hits\":[{\"source_url\":\"...\",\"target_url\":\"...\",\"title\":\"...\",\"snippet\":\"...\",\"domain\":\"...\"}]}. No prose, no fences." \
+    if "$CLAUDE_BIN" -p "You are sourcing CANDIDATE urls for Stage 1G (entity extraction) — you do not extract or verify entities yourself here. Topic: $TOPIC. Seed sources, in priority order: (a) $AWESOME_LIST plus the source awesome-list raw README(s) it cites near its top (fetch those for entries beyond the report's own ~40-row cap), (b) $HITS_SHARD. For EVERY candidate you propose, return BOTH URLs: source_url = the original seed URL where you found this entry (the awesome-list README anchor/URL, the search-hit page, or the citing article — never omit this), AND target_url = a best-effort resolved primary URL for the entity itself (its own repo, docs page, model card, package page, paper, or official product page). If you cannot confidently determine target_url, emit the literal string \"unknown\" rather than guessing — Stage 1G will try to resolve it separately via WebFetch. Never emit an awesome-list README URL as target_url, and never copy source_url into target_url to fill the field. EXCLUDE any candidate whose source_url is: already entity_extracted:true in the ledger at $LEDGER, already listed in attempted_urls[] in $ATTEMPTED. ALSO EXCLUDE any candidate whose target_url (when not \"unknown\") is already a target_url of an existing entity in $REGISTRY (prevents re-cataloging the same entity via a different citing page). Return at most $BATCH_SIZE candidates. Output ONLY JSON of the shape {\"hits\":[{\"source_url\":\"...\",\"target_url\":\"...\",\"title\":\"...\",\"snippet\":\"...\",\"domain\":\"...\"}]}. No prose, no fences." \
          --allowedTools "Read,WebSearch,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_CANDIDATES" | jq -r '.result' | clean > "$BATCH_HITS" \
        && jq empty "$BATCH_HITS" 2>/dev/null; then
@@ -234,9 +317,18 @@ while :; do
 
   n_candidates=$(jq '.hits | length' "$BATCH_HITS")
   if [ "${n_candidates:-0}" -eq 0 ]; then
-    EXIT_REASON="sources_exhausted_no_candidates"
-    echo "[harvest][$TOPIC] loop $loop: 0 candidates found — sources exhausted at $current/$TARGET verified."
-    exit 0
+    # 0 candidates is a no-progress event, not an immediate stop: a single empty
+    # batch may be transient, and the next loop re-sources with the same
+    # exclusions. Fold it into the SAME consecutive counter as a 0-added merge so
+    # one bounded threshold governs all exhaustion, then move on.
+    no_progress=$((no_progress+1))
+    echo "[harvest][$TOPIC] loop $loop: 0 candidates (no_progress=$no_progress/$NO_PROGRESS_THRESHOLD)"
+    if [ "$no_progress" -ge "$NO_PROGRESS_THRESHOLD" ]; then
+      EXIT_REASON="sources_exhausted_no_candidates"
+      echo "[harvest][$TOPIC] $no_progress consecutive no-progress loops — sources exhausted at $current/$TARGET verified (remaining $remaining). stopping — target NOT met."
+      exit 0
+    fi
+    continue
   fi
   echo "[harvest][$TOPIC] loop $loop: $n_candidates candidate(s)"
 
@@ -299,7 +391,7 @@ while :; do
   for attempt in $(seq 1 "$ONEG_ATTEMPTS"); do
     CLAUDE_CALL_START_EPOCH="$(date +%s)"
     log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="1g_extraction" detail="attempt=${attempt}/${ONEG_ATTEMPTS}"
-    if claude -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". If target_url resolves to a GitHub repo root, fetch https://api.github.com/repos/<owner>/<repo> and set github_stars to stargazers_count; otherwise (including target_url:\"unknown\") set github_stars:null — never estimate it from a non-GitHub page. In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
+    if "$CLAUDE_BIN" -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". If target_url resolves to a GitHub repo root, fetch https://api.github.com/repos/<owner>/<repo> and set github_stars to stargazers_count; otherwise (including target_url:\"unknown\") set github_stars:null — never estimate it from a non-GitHub page. In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
          --append-system-prompt "$(cat "$S1/1G_entity_extractor.md")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_1G" | jq -r '.result' | clean > "$BATCH_ENTITIES" \
        && jq empty "$BATCH_ENTITIES" 2>/dev/null; then
@@ -355,11 +447,27 @@ while :; do
   added=$((after - before))
   log_event merge_end topic="$TOPIC" loop="$loop" verified_before="$before" verified_after="$after" exit_code="0" duration_sec="$(( $(date +%s) - MERGE_START_EPOCH ))" detail="added=${added}"
 
-  echo "[harvest][$TOPIC] loop $loop: +$added new verified -> $after/$TARGET verified"
+  remaining=$(( TARGET - after )); if [ "$remaining" -lt 0 ]; then remaining=0; fi
+  dropped=$(( n_candidates - added )); if [ "$dropped" -lt 0 ]; then dropped=0; fi
+  # rejection/duplicate impact: of n_candidates URLs sent, only `added` became new
+  # verified records; the rest were duplicates (entity_key already present),
+  # rejected by 1G, or fetched but unverifiable.
+  echo "[harvest][$TOPIC] loop $loop/$MAX_LOOPS: current=$after target=$TARGET remaining=$remaining | candidates=$n_candidates, +$added new verified ($dropped dropped: dup/rejected/unverified)"
 
   if [ "$added" -le 0 ]; then
-    EXIT_REASON="sources_exhausted_no_new_verified"
-    echo "[harvest][$TOPIC] loop $loop added 0 new verified entities — sources exhausted at $after/$TARGET verified."
-    exit 0
+    # No new verified this loop. Do NOT stop on the first occurrence — one batch
+    # of all-duplicate/all-rejected candidates can be followed by a productive
+    # one (the attempted-set grew, so the next loop sources different URLs). Only
+    # after NO_PROGRESS_THRESHOLD CONSECUTIVE no-progress loops do we conclude the
+    # sources are exhausted and stop safely.
+    no_progress=$((no_progress+1))
+    echo "[harvest][$TOPIC] loop $loop added 0 new verified (no_progress=$no_progress/$NO_PROGRESS_THRESHOLD)"
+    if [ "$no_progress" -ge "$NO_PROGRESS_THRESHOLD" ]; then
+      EXIT_REASON="sources_exhausted_no_new_verified"
+      echo "[harvest][$TOPIC] $no_progress consecutive no-progress loops — sources exhausted at $after/$TARGET verified (remaining $remaining). stopping — target NOT met."
+      exit 0
+    fi
+  else
+    no_progress=0   # progress resets the consecutive counter
   fi
 done

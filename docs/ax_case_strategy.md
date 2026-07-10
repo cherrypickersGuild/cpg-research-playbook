@@ -27,10 +27,15 @@ this mirrors (entities instead of cases).
   corroboration-match branch, not on first sight. Fix that drift the same way before trusting a real
   `run_stage1.sh` run to produce a clean `ax_case_db.json`.
 
-## 2. New harvest-style AX case path (design only — not implemented)
+## 2. New harvest-style AX case path (built)
 
-- **Output:** `state/ax_case_harvest_registry.json` — a new, separate, persistent (tracked, not
-  gitignored) file. Never write case data into `entity_registry.json`.
+- **Output / canonical registry:** `state/ax_case_harvest_registry.json` — the single canonical
+  AX-case harvest registry: a separate, persistent (tracked, not gitignored) file. Never write case
+  data into `entity_registry.json`. The completion metric is the count of cases in this file with
+  `verification_status:"verified"`; the target is **≥250** total (final registry total, existing cases
+  count toward it — not a number to add). Driven by `scripts/harvest_ax_cases.sh [target=250]` (see
+  [`ax_case_harvest_workflow.md`](ax_case_harvest_workflow.md)) or the `scripts/harvest_all.sh`
+  orchestrator's final stage.
 - **Purpose:** a standalone, lightweight AX case catalog — same role relative to the rich pipeline
   that `entity_registry.json` already plays relative to the rest of Stage 1: a fast, independently
   useful corpus that is explicitly *not* wired into the Stage 2–4 deck pipeline.
