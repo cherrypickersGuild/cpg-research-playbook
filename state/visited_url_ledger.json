@@ -31,6 +31,20 @@
       "entity_ids": []
     },
     {
+      "url": "https://abnormal.ai/blog/abnormal-accelerates-developer-velocity-with-mcp",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": []
+    },
+    {
       "url": "https://about.gitlab.com/gitlab-duo/",
       "url_type": "news_url",
       "platform": "custom",
@@ -4619,6 +4633,118 @@
       ]
     },
     {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2001",
+        "ent-2026-2002",
+        "ent-2026-2003",
+        "ent-2026-2004",
+        "ent-2026-2005",
+        "ent-2026-2006",
+        "ent-2026-2007",
+        "ent-2026-2008"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#architecture--design",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2025",
+        "ent-2026-2026"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2016",
+        "ent-2026-2017",
+        "ent-2026-2018",
+        "ent-2026-2019",
+        "ent-2026-2020",
+        "ent-2026-2021",
+        "ent-2026-2022",
+        "ent-2026-2023",
+        "ent-2026-2024"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2009",
+        "ent-2026-2010",
+        "ent-2026-2011",
+        "ent-2026-2012",
+        "ent-2026-2013",
+        "ent-2026-2014",
+        "ent-2026-2015"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2027",
+        "ent-2026-2028",
+        "ent-2026-2029",
+        "ent-2026-2030",
+        "ent-2026-2031",
+        "ent-2026-2032",
+        "ent-2026-2033",
+        "ent-2026-2034",
+        "ent-2026-2035",
+        "ent-2026-2036",
+        "ent-2026-2037"
+      ]
+    },
+    {
       "url": "https://github.com/rdanieli/tentra-mcp",
       "url_type": "news_url",
       "platform": "custom",
@@ -5624,6 +5750,22 @@
       "entity_extracted": true,
       "entity_ids": [
         "ent-2026-0001"
+      ]
+    },
+    {
+      "url": "https://mcpmanager.ai/blog/best-mcp-gateway-for-engineering/",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2039"
       ]
     },
     {
@@ -7694,6 +7836,22 @@
       "entity_extracted": true,
       "entity_ids": [
         "ent-2026-0001"
+      ]
+    },
+    {
+      "url": "https://www.truefoundry.com/blog/cursor-ai-mcp-server-configuration",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-10T13:03:22Z",
+      "last_crawled_at": "2026-07-10T13:03:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2038"
       ]
     },
     {

@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "last_merged_at": "2026-07-10T12:26:33Z",
+  "last_merged_at": "2026-07-10T13:28:24Z",
   "metadata": {
     "topics": [
       "agent",
@@ -26,10 +26,10 @@
       "technique",
       "tool"
     ],
-    "total_entities": 479,
+    "total_entities": 517,
     "entity_count_by_topic": {
-      "agent": 163,
-      "mcp": 121,
+      "agent": 165,
+      "mcp": 157,
       "prompt": 83,
       "skill": 112
     },
@@ -37,19 +37,19 @@
       "benchmark": 1,
       "client_sdk": 24,
       "dataset": 2,
-      "framework": 64,
+      "framework": 65,
       "guide": 18,
       "library": 17,
       "marketplace": 53,
-      "other": 46,
-      "platform": 44,
+      "other": 51,
+      "platform": 45,
       "product": 52,
       "registry": 6,
-      "server": 58,
+      "server": 88,
       "skill": 36,
       "spec": 7,
       "technique": 5,
-      "tool": 46
+      "tool": 47
     }
   },
   "entities": [
@@ -1903,20 +1903,33 @@
       "description_source": "verified",
       "maintainer_or_vendor": "Usercentrics",
       "freshness_signal": "unknown",
-      "related_topics": [],
+      "related_topics": [
+        "agent"
+      ],
       "entity_key": "mcp|mcp manager",
-      "corroboration_count": 1,
+      "corroboration_count": 2,
       "discovery": {
         "first_seen_at": "2026-07-07",
-        "last_corroborated_at": "2026-07-07",
+        "last_corroborated_at": "2026-07-10",
         "found_via": [
           {
             "hit_id": "unknown",
             "platform": "custom"
+          },
+          {
+            "hit_id": "unknown",
+            "platform": "web"
           }
         ]
       },
-      "conflicting_evidence_log": [],
+      "conflicting_evidence_log": [
+        {
+          "noted_at": "2026-07-10",
+          "field": "target_url",
+          "existing": "https://mcpmanager.ai/",
+          "incoming": "https://mcpmanager.ai"
+        }
+      ],
       "source_url": "https://mcpmanager.ai/",
       "target_url": "https://mcpmanager.ai/",
       "github_stars": null
@@ -13308,6 +13321,1106 @@
         "agent"
       ],
       "entity_key": "mcp|medialyst",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2001",
+      "topic": "mcp",
+      "entity_type": "framework",
+      "name": "mcp-server-templates",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "https://github.com/Data-Everything/mcp-server-templates",
+      "description": "Verified from the repo: a platform and lightweight CLI for deploying Model Context Protocol servers from reusable templates in Docker, with template-based configuration and load balancing across transports; the legacy repo is now in maintenance mode and has been relocated to Data-Everything/MCP-Platform.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Data-Everything",
+      "freshness_signal": "Latest release v1.1.5 on 2025-08-16; maintenance mode, relocated to Data-Everything/MCP-Platform",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mcp-server-templates",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2002",
+      "topic": "mcp",
+      "entity_type": "other",
+      "name": "ncp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "https://github.com/portel-dev/ncp",
+      "description": "Verified from the repo: NCP (Natural Context Provider) consolidates multiple MCP servers/tools behind one unified interface with smart tool routing, sharply reducing token usage so AI assistants can discover and call tools more efficiently.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "portel-dev",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|ncp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2003",
+      "topic": "mcp",
+      "entity_type": "other",
+      "name": "MCPX",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "https://github.com/TheLunarCompany/lunar",
+      "description": "Verified from the repo: MCPX is a zero-code aggregator for multiple MCP servers that exposes them behind a single unified API; part of TheLunarCompany's Lunar gateway for managing, aggregating, and observing MCP traffic.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "TheLunarCompany",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mcpx",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2004",
+      "topic": "agent",
+      "entity_type": "tool",
+      "name": "mcgravity",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "https://github.com/tigranbs/mcgravity",
+      "description": "Verified from the repo: a fast terminal UI (TUI) that orchestrates AI coding tools such as Claude Code, Codex, and Gemini through iterative plan-execute-review cycles, breaking work into atomic, verifiable tasks. Note: although listed under MCP aggregators, the current repo is an AI-coding orchestration TUI, not an MCP proxy.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "tigranbs",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "agent|mcgravity",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2005",
+      "topic": "mcp",
+      "entity_type": "other",
+      "name": "open-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "unknown",
+      "description": "From candidate listing (target page could not be verified — the github.com/wegotdocs/open-mcp path now redirects to an unrelated project): open-mcp turns any web API into an MCP server instantly.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "wegotdocs",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|open-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2006",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "WayStation",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "https://github.com/waystation-ai/mcp",
+      "description": "Verified from the repo: WayStation is a no-code, secure integration hub exposed as an MCP server that connects any MCP host to everyday apps such as Notion and Slack.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "waystation-ai",
+      "freshness_signal": "Latest release v0.3.1 on 2025-06-04",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|waystation",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2007",
+      "topic": "mcp",
+      "entity_type": "other",
+      "name": "mcp-access-point",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "https://github.com/sxhxliang/mcp-access-point",
+      "description": "Verified from the repo: a lightweight gateway/proxy that turns an existing web service into an MCP server in one click without any code changes.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "sxhxliang",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mcp-access-point",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2008",
+      "topic": "mcp",
+      "entity_type": "other",
+      "name": "PMCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#aggregators",
+      "target_url": "https://github.com/ViperJuice/mcp-gateway",
+      "description": "Verified from the repo: PMCP is an MCP gateway that reduces context bloat by exposing about 26 meta-tools instead of loading every downstream server's schema, enabling progressive disclosure and on-demand tool discovery.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "ViperJuice",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|pmcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2009",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "BioMCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "target_url": "https://github.com/genomoncology/biomcp",
+      "description": "Verified from the repo: BioMCP is a unified CLI and MCP server that lets agents query roughly 30 trusted biomedical sources (e.g., PubMed, ClinVar, ClinicalTrials.gov) through a single command grammar.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "genomoncology",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|biomcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2010",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "medical-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "target_url": "https://github.com/JamesANZ/medical-mcp",
+      "description": "Verified from the repo: an MCP server that provides medical information by querying authoritative APIs including FDA, WHO, PubMed, Google Scholar, and RxNorm.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "JamesANZ",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|medical-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2011",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "fhir-mcp-server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "target_url": "https://github.com/the-momentum/fhir-mcp-server",
+      "description": "Verified from the repo: an MCP server enabling LLM-based agents to interact with a FHIR-compliant backend for managing healthcare/patient data.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "the-momentum",
+      "freshness_signal": "Release v0.1.0 on 2025-10-23",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|fhir-mcp-server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2012",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "apple-health-mcp-server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "target_url": "https://github.com/the-momentum/apple-health-mcp-server",
+      "description": "Verified from the repo: an MCP server for querying Apple Health data in natural language, using DuckDB under the hood.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "the-momentum",
+      "freshness_signal": "Release v0.1.0 on 2025-10-22",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|apple-health-mcp-server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2013",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "biothings-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "target_url": "https://github.com/longevity-genie/biothings-mcp",
+      "description": "Verified from the repo: an MCP server exposing BioThings data (gene annotations, genetic variants, chemical compounds) to AI assistants.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "longevity-genie",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|biothings-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2014",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "omop_mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "target_url": "https://github.com/OHNLP/omop_mcp",
+      "description": "Verified from the repo: an MCP server that maps clinical terminology to OMOP (Observational Medical Outcomes Partnership) concepts using large language models.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "OHNLP",
+      "freshness_signal": "Release v1.0.0 on 2025-08-25",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|omop_mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2015",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ucsc-genome-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#biology--medicine",
+      "target_url": "https://github.com/hlydecker/ucsc-genome-mcp",
+      "description": "Verified from the repo: an MCP server for querying the UCSC Genome Browser API, giving AI applications access to genomic data and sequences.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "hlydecker",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|ucsc-genome-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2016",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "BlenderMCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/ahujasid/blender-mcp",
+      "description": "Verified from the repo: BlenderMCP is an open-source MCP server that lets any LLM (e.g., Claude) directly control Blender for 3D modeling tasks.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "ahujasid (Siddharth)",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|blendermcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2017",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "metmuseum-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/mikechao/metmuseum-mcp",
+      "description": "Verified from the repo: an MCP server providing natural-language access to the Metropolitan Museum of Art collection.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "mikechao",
+      "freshness_signal": "Release v1.0.0 on 2026-02-18",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|metmuseum-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2018",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "rijksmuseum-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/r-huijts/rijksmuseum-mcp",
+      "description": "Verified from the repo: an MCP server for searching and exploring the Rijksmuseum collection through natural-language interactions.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "r-huijts",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|rijksmuseum-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2019",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "discogs-mcp-server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/cswkim/discogs-mcp-server",
+      "description": "Verified from the repo: an MCP server for the Discogs API, enabling music-catalog search and operations.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "cswkim",
+      "freshness_signal": "Release v0.5.7 on 2026-05-26",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|discogs-mcp-server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2020",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "davinci-resolve-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/samuelgursky/davinci-resolve-mcp",
+      "description": "Verified from the repo: an MCP server that integrates DaVinci Resolve Studio, letting AI assistants control the video editor via its official scripting API.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "samuelgursky (Samuel Gursky)",
+      "freshness_signal": "Release v2.60.0 on 2026-07-06",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|davinci-resolve-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2021",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "aseprite-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/diivi/aseprite-mcp",
+      "description": "Verified from the repo: a Python MCP server that gives AI assistants full control over Aseprite to create pixel art and animated sprites.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "diivi",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|aseprite-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2022",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Video Editor MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/burningion/video-editing-mcp",
+      "description": "Verified from the repo: an MCP interface to the Video Jungle platform, letting users upload, edit, search, and generate videos through Claude.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "burningion",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|video editor mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2023",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "isaac-sim-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/omni-mcp/isaac-sim-mcp",
+      "description": "Verified from the repo: an MCP extension and server enabling natural-language control of NVIDIA Isaac Sim through conversational AI.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "omni-mcp",
+      "freshness_signal": "Release v0.3.0 on 2025-04-25",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|isaac-sim-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2024",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "build123d-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#art--culture",
+      "target_url": "https://github.com/pzfreo/build123d-mcp",
+      "description": "Verified from the repo: an MCP server that lets agents create, render, measure, and export 3D CAD models using the build123d library.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "pzfreo",
+      "freshness_signal": "Release v0.3.77 on 2026-07-09",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|build123d-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2025",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "mermaid-mcp-server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#architecture--design",
+      "target_url": "https://github.com/GittyBurstein/mermaid-mcp-server",
+      "description": "Verified from the repo: an MCP server that converts codebases (local folders or GitHub) into Mermaid diagrams and renders them as PNG images via Kroki.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "GittyBurstein",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mermaid-mcp-server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2026",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "brandkit-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#architecture--design",
+      "target_url": "https://github.com/ejwhite7/brandkit-mcp",
+      "description": "Verified from the repo: an open-source MCP server that gives AI tools native access to a company's design system / brand kit.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "ejwhite7",
+      "freshness_signal": "Release v0.1.0 on 2026-04-30",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|brandkit-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2027",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Browser MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/browsermcp/mcp",
+      "description": "Verified from the repo: Browser MCP is an MCP server plus Chrome extension that automates your local browser from AI apps like VS Code, Claude, Cursor, and Windsurf.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "BrowserMCP",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|browser mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2028",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "browser-use-mcp-server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/co-browser/browser-use-mcp-server",
+      "description": "Verified from the repo: an MCP server that lets AI agents control web browsers via the browser-use library, supporting dual transport protocols and real-time VNC streaming.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "co-browser (kontext-security)",
+      "freshness_signal": "Release v1.0.3 on 2025-04-15",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|browser-use-mcp-server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2029",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "gomcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/lightpanda-io/gomcp",
+      "description": "Verified from the repo: an MCP server written in Go that exposes tools to drive the Lightpanda headless browser via the CDP protocol; now archived as Lightpanda ships a native MCP server.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "lightpanda-io",
+      "freshness_signal": "Archived 2026-03-13 (read-only); last release v1.0.4 on 2025-06-23; superseded by Lightpanda's native MCP server",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|gomcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2030",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "web-eval-agent",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/Operative-Sh/web-eval-agent",
+      "description": "Verified from the repo: an MCP server that autonomously evaluates and debugs web applications; the project has been discontinued/archived with a successor at withrefresh.com.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Operative-Sh (refreshdotdev)",
+      "freshness_signal": "Archived/discontinued 2026-06-27; successor announced at withrefresh.com",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|web-eval-agent",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2031",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ashra-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "unknown",
+      "description": "From candidate listing (target page returned HTTP 404 and could not be verified): ashra-mcp extracts structured data from websites via MCP.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "getrupt",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|ashra-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2032",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "olostep-mcp-server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/olostep/olostep-mcp-server",
+      "description": "Verified from the repo: an MCP server that integrates Olostep's web scraping, crawling, and search capabilities for AI agents.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "olostep",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|olostep-mcp-server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2033",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "web-search",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/pskill9/web-search",
+      "description": "Verified from the repo: an MCP server that performs Google web searches and returns results without requiring an API key.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "pskill9",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|web-search",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2034",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "mcp-server-youtube-transcript",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/kimtaeyoon83/mcp-server-youtube-transcript",
+      "description": "Verified from the repo: an MCP server that fetches transcripts from YouTube videos, supporting multiple URL formats, language selection, timestamps, and ad filtering.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "kimtaeyoon83",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mcp-server-youtube-transcript",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2035",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "browser-control-mcp",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/eyalzh/browser-control-mcp",
+      "description": "Verified from the repo: an MCP server paired with a Firefox browser extension that enables AI agents to control the user's browser.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "eyalzh",
+      "freshness_signal": "Release v1.5.1 on 2025-07-29",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|browser-control-mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2036",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "mcp-server-apple-shortcuts",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/recursechat/mcp-server-apple-shortcuts",
+      "description": "Verified from the repo: an MCP server that lets AI assistants such as Claude list and execute Apple Shortcuts automations on macOS.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "recursechat",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mcp-server-apple-shortcuts",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2037",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "MCP-Server-Playwright",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#browser-automation",
+      "target_url": "https://github.com/Automata-Labs-team/MCP-Server-Playwright",
+      "description": "Verified from the repo: an MCP server providing browser-automation via Playwright, enabling LLMs to interact with web pages, capture screenshots, and execute JavaScript.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Automata-Labs-team (VikashLoomba)",
+      "freshness_signal": "Release v1.2.1 on 2025-01-24",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mcp-server-playwright",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-10",
+        "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2038",
+      "topic": "agent",
+      "entity_type": "platform",
+      "name": "TrueFoundry",
+      "source_url": "https://www.truefoundry.com/blog/cursor-ai-mcp-server-configuration",
+      "target_url": "https://www.truefoundry.com",
+      "description": "Verified from the vendor site: TrueFoundry is an enterprise AI platform to deploy, govern, scale, and trace agentic AI workloads across environments; it includes an MCP Gateway that provides a structured, discoverable registry of tools and APIs for agents with schema validation and access control.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "TrueFoundry",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "mcp"
+      ],
+      "entity_key": "agent|truefoundry",
       "corroboration_count": 1,
       "conflicting_evidence_log": [],
       "discovery": {
