@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "last_merged_at": "2026-07-10T13:28:24Z",
+  "last_merged_at": "2026-07-12T08:30:30Z",
   "metadata": {
     "topics": [
       "agent",
@@ -26,10 +26,10 @@
       "technique",
       "tool"
     ],
-    "total_entities": 517,
+    "total_entities": 537,
     "entity_count_by_topic": {
       "agent": 165,
-      "mcp": 157,
+      "mcp": 177,
       "prompt": 83,
       "skill": 112
     },
@@ -37,7 +37,7 @@
       "benchmark": 1,
       "client_sdk": 24,
       "dataset": 2,
-      "framework": 65,
+      "framework": 66,
       "guide": 18,
       "library": 17,
       "marketplace": 53,
@@ -45,7 +45,7 @@
       "platform": 45,
       "product": 52,
       "registry": 6,
-      "server": 88,
+      "server": 107,
       "skill": 36,
       "spec": 7,
       "technique": 5,
@@ -14426,6 +14426,570 @@
       "discovery": {
         "first_seen_at": "2026-07-10",
         "last_corroborated_at": "2026-07-10",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2039",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "EDS MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#cloud-platforms",
+      "target_url": "https://github.com/Focus-GTS/eds-mcp-server",
+      "description": "MCP server for Adobe Edge Delivery Services exposing 20 tools for AI agents to preview, publish, read content, query metrics, and manage EDS sites.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Focus-GTS",
+      "freshness_signal": "last commit 2026-06-30",
+      "github_stars": 1,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|eds mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2040",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "AWS SSO MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#cloud-platforms",
+      "target_url": "https://github.com/aashari/mcp-server-aws-sso",
+      "description": "Node.js/TypeScript MCP server for AWS Single Sign-On (SSO): tools to initiate SSO device-auth login, list accounts/roles, and securely run AWS CLI commands with temporary credentials.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "aashari",
+      "freshness_signal": "last commit 2026-03-06",
+      "github_stars": 14,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|aws sso mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2041",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Agent Deploy Dashboard MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#cloud-platforms",
+      "target_url": "https://github.com/aparajithn/agent-deploy-dashboard-mcp",
+      "description": "Unified deployment-management MCP server for Vercel, Render, Railway, and Fly.io.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "aparajithn",
+      "freshness_signal": "last commit 2026-03-07",
+      "github_stars": 3,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|agent deploy dashboard mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2042",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "MCP Servers (Archived)",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#command-line",
+      "target_url": "https://github.com/modelcontextprotocol/servers-archived",
+      "description": "Official Model Context Protocol repository of reference MCP server implementations that are no longer maintained (archived).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "modelcontextprotocol",
+      "freshness_signal": "last commit 2025-05-28; archived reference repository",
+      "github_stars": 287,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|mcp servers (archived)",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2043",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Spotify Bulk Actions MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#communication",
+      "target_url": "https://github.com/khglynn/spotify-bulk-actions-mcp",
+      "description": "MCP server for bulk Spotify operations: batch playlist creation with confidence scoring, library exports, CSV imports, and human-in-the-loop review of uncertain matches.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "khglynn",
+      "freshness_signal": "last commit 2026-07-11",
+      "github_stars": 2,
+      "related_topics": [],
+      "entity_key": "mcp|spotify bulk actions mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2044",
+      "topic": "mcp",
+      "entity_type": "framework",
+      "name": "APIFold",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#developer-tools",
+      "target_url": "https://github.com/Work90210/APIFold",
+      "description": "Tool that turns any REST API into an MCP server with no code required.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Work90210",
+      "freshness_signal": "last commit 2026-06-29",
+      "github_stars": 9,
+      "related_topics": [],
+      "entity_key": "mcp|apifold",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2045",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ProFullStack MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#developer-tools",
+      "target_url": "https://github.com/profullstack/mcp-server",
+      "description": "A generic, modular server for implementing the Model Context Protocol (MCP).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "profullstack",
+      "freshness_signal": "last commit 2026-06-12",
+      "github_stars": 44,
+      "related_topics": [],
+      "entity_key": "mcp|profullstack mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2046",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ChatSpatial",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#data-science-tools",
+      "target_url": "https://github.com/cafferychen777/ChatSpatial",
+      "description": "MCP server for spatial-transcriptomics analysis through natural-language interfaces.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "cafferychen777",
+      "freshness_signal": "last commit 2026-06-15",
+      "github_stars": 40,
+      "related_topics": [],
+      "entity_key": "mcp|chatspatial",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2047",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Forage",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#knowledge--memory",
+      "target_url": "https://github.com/isaac-levine/forage",
+      "description": "Self-improving tool-discovery MCP server: agents find, install, and learn to use new MCP tools automatically.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "isaac-levine",
+      "freshness_signal": "last commit 2026-02-21",
+      "github_stars": 13,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|forage",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2048",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Memory Vault MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#knowledge--memory",
+      "target_url": "https://github.com/scotia1973-bot/api-hub",
+      "description": "Memory Vault MCP server providing persistent agent memory: 46 tools including agent_memory and memory_search plus 45 utilities and 300+ REST integrations.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "scotia1973-bot",
+      "freshness_signal": "last commit 2026-06-25",
+      "github_stars": 1,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|memory vault mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2049",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "GTM Suite MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#marketing",
+      "target_url": "https://github.com/mambalabsdev/mcp-gtm-suite",
+      "description": "MCP server exposing the full Mamba Labs GTM Suite — all six go-to-market actors as tools in one server via Apify, with Clay-ready output.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Mamba Labs",
+      "freshness_signal": "last commit 2026-07-07",
+      "github_stars": 1,
+      "related_topics": [],
+      "entity_key": "mcp|gtm suite mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2050",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "AgentFetch",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#search--data-extraction",
+      "target_url": "https://github.com/bch1212/agentfetch-mcp",
+      "description": "MCP server for fetching web URLs with token estimation, caching, and intelligent routing, built for AI agents.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "bch1212",
+      "freshness_signal": "last commit 2026-06-06",
+      "github_stars": 2,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|agentfetch",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2051",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Agent Scrape",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#search--data-extraction",
+      "target_url": "https://github.com/hshintelligence/agent-scrape",
+      "description": "Pay-per-call web-scraping MCP server for AI agents (x402/USDC on Base, deployed on Cloudflare Workers) with tools for scrape, extract, screenshot, metadata, workflow, and session.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "hshintelligence",
+      "freshness_signal": "last commit 2026-06-22",
+      "github_stars": 2,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|agent scrape",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2052",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Agent Scraper MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#search--data-extraction",
+      "target_url": "https://github.com/aparajithn/agent-scraper-mcp",
+      "description": "Web-scraping MCP server for AI agents with screenshots, content extraction, and structured scraping.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "aparajithn",
+      "freshness_signal": "last commit 2026-03-07",
+      "github_stars": 5,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|agent scraper mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2053",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Chrome MCP Secure",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#security",
+      "target_url": "https://github.com/Pantheon-Security/chrome-mcp-secure",
+      "description": "Security-hardened Chrome MCP server for querying and debugging sites via Google Chrome with additional security-hardening layers.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Pantheon-Security",
+      "freshness_signal": "last commit 2026-01-23",
+      "github_stars": 7,
+      "related_topics": [],
+      "entity_key": "mcp|chrome mcp secure",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2054",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Ani MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#social-media",
+      "target_url": "https://github.com/gavxm/ani-mcp",
+      "description": "MCP server for AniList with taste-aware recommendations, watch analytics, social tools, and full list management.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "gavxm",
+      "freshness_signal": "last commit 2026-06-29",
+      "github_stars": 3,
+      "related_topics": [],
+      "entity_key": "mcp|ani mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2055",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Roundtable",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#support--service-management",
+      "target_url": "https://github.com/askbudi/roundtable",
+      "description": "Zero-configuration MCP server that unifies multiple AI coding assistants (Codex, Claude Code, Cursor, Gemini) through auto-discovery and a standardized interface.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "askbudi",
+      "freshness_signal": "last commit 2025-10-06",
+      "github_stars": 119,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|roundtable",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2056",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Fal MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#text-to-speech",
+      "target_url": "https://github.com/luminarylane/fal-mcp-server",
+      "description": "MCP server for Fal.ai to generate images, videos, music, and audio with Claude.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "luminarylane",
+      "freshness_signal": "last commit 2026-05-04",
+      "github_stars": 52,
+      "related_topics": [],
+      "entity_key": "mcp|fal mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2057",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Peek Travel MCP",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#travel--transportation",
+      "target_url": "https://github.com/peek-travel/mcp-intro",
+      "description": "Peek.com's remote MCP server connecting AI assistants to 300,000+ verified travel experiences with real-time availability and pricing.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Peek (peek-travel)",
+      "freshness_signal": "last commit 2025-09-23",
+      "github_stars": 2,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|peek travel mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2058",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "APIbase",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#travel--transportation",
+      "target_url": "https://github.com/whiteknightonhorse/APIbase",
+      "description": "Universal MCP gateway for AI agents exposing 1108 tools across 307 providers from one endpoint, pay-per-call with x402 USDC on Base and MPP USDC on Tempo.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "whiteknightonhorse",
+      "freshness_signal": "last commit 2026-07-02",
+      "github_stars": 9,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|apibase",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-12",
         "found_via": [
           {
             "hit_id": "unknown",
