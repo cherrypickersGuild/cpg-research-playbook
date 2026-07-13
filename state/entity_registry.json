@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "last_merged_at": "2026-07-13T04:28:59Z",
+  "last_merged_at": "2026-07-13T05:30:37Z",
   "metadata": {
     "topics": [
       "agent",
@@ -26,10 +26,10 @@
       "technique",
       "tool"
     ],
-    "total_entities": 574,
+    "total_entities": 614,
     "entity_count_by_topic": {
       "agent": 165,
-      "mcp": 214,
+      "mcp": 254,
       "prompt": 83,
       "skill": 112
     },
@@ -37,15 +37,15 @@
       "benchmark": 1,
       "client_sdk": 24,
       "dataset": 2,
-      "framework": 66,
+      "framework": 67,
       "guide": 18,
       "library": 17,
       "marketplace": 53,
       "other": 51,
       "platform": 45,
       "product": 52,
-      "registry": 6,
-      "server": 144,
+      "registry": 7,
+      "server": 182,
       "skill": 36,
       "spec": 7,
       "technique": 5,
@@ -16004,6 +16004,1094 @@
         "agent"
       ],
       "entity_key": "mcp|browser devtools mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2059",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Aiven MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/Aiven-Open/mcp-aiven",
+      "description": "Model Context Protocol server for Aiven.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Aiven",
+      "freshness_signal": "last commit 2026-07-12",
+      "github_stars": 26,
+      "related_topics": [],
+      "entity_key": "mcp|aiven mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2060",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Chroma MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/chroma-core/chroma-mcp",
+      "description": "A Model Context Protocol (MCP) server implementation that provides database capabilities for Chroma.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Chroma",
+      "freshness_signal": "last commit 2025-09-17",
+      "github_stars": 572,
+      "related_topics": [],
+      "entity_key": "mcp|chroma mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2061",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Couchbase MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/Couchbase-Ecosystem/mcp-server-couchbase",
+      "description": "MCP Server to interact with data in Couchbase Clusters.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Couchbase",
+      "freshness_signal": "last commit 2026-07-03 (repo now couchbase/mcp-server-couchbase)",
+      "github_stars": 34,
+      "related_topics": [],
+      "entity_key": "mcp|couchbase mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2062",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "InfluxDB 3 MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/influxdata/influxdb3_mcp_server",
+      "description": "MCP Server for InfluxDB 3.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "InfluxData",
+      "freshness_signal": "last commit 2026-07-08",
+      "github_stars": 35,
+      "related_topics": [],
+      "entity_key": "mcp|influxdb 3 mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2063",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Supabase MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/supabase-community/supabase-mcp",
+      "description": "Connect Supabase to your AI assistants.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Supabase (community)",
+      "freshness_signal": "last commit 2026-07-10 (repo now supabase/mcp)",
+      "github_stars": 2801,
+      "related_topics": [],
+      "entity_key": "mcp|supabase mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2064",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "YDB MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/ydb-platform/ydb-mcp",
+      "description": "Official MCP server for interacting with YDB distributed SQL databases.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "YDB Platform",
+      "freshness_signal": "last commit 2026-06-20",
+      "github_stars": 28,
+      "related_topics": [],
+      "entity_key": "mcp|ydb mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2065",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "SkySQL MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/skysqlinc/skysql-mcp",
+      "description": "SkySQL MCP server and client repository.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "SkySQL",
+      "freshness_signal": "last commit 2026-04-23",
+      "github_stars": 6,
+      "related_topics": [],
+      "entity_key": "mcp|skysql mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2066",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Hydrolix MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/hydrolix/mcp-hydrolix",
+      "description": "An MCP server for Hydrolix.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Hydrolix",
+      "freshness_signal": "last commit 2026-07-09",
+      "github_stars": 11,
+      "related_topics": [],
+      "entity_key": "mcp|hydrolix mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2067",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "SchemaCrawler MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/schemacrawler/SchemaCrawler-MCP-Server-Usage",
+      "description": "SchemaCrawler MCP server to connect to any relational database, get valid SQL and ask schema questions.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "SchemaCrawler",
+      "freshness_signal": "last commit 2026-06-27 (repo now schemacrawler/SchemaCrawler-AI-MCP-Server-Usage)",
+      "github_stars": 28,
+      "related_topics": [],
+      "entity_key": "mcp|schemacrawler mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2068",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "VictoriaLogs MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#databases",
+      "target_url": "https://github.com/VictoriaMetrics-Community/mcp-victorialogs",
+      "description": "The implementation of Model Context Protocol (MCP) server for VictoriaLogs.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "VictoriaMetrics (community)",
+      "freshness_signal": "last commit 2026-07-01 (repo now VictoriaMetrics/mcp-victorialogs)",
+      "github_stars": 91,
+      "related_topics": [],
+      "entity_key": "mcp|victorialogs mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2069",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "dbt MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#data-platforms",
+      "target_url": "https://github.com/dbt-labs/dbt-mcp",
+      "description": "A MCP (Model Context Protocol) server for interacting with dbt.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "dbt Labs",
+      "freshness_signal": "last commit 2026-07-10",
+      "github_stars": 591,
+      "related_topics": [],
+      "entity_key": "mcp|dbt mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2070",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Flowcore Platform MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#data-platforms",
+      "target_url": "https://github.com/flowcore-io/mcp-flowcore-platform",
+      "description": "MCP server for managing and interacting with Flowcore Platform.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Flowcore",
+      "freshness_signal": "last commit 2025-05-12",
+      "github_stars": 9,
+      "related_topics": [],
+      "entity_key": "mcp|flowcore platform mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2071",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Dynatrace MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#monitoring",
+      "target_url": "https://github.com/dynatrace-oss/dynatrace-mcp",
+      "description": "MCP server for Dynatrace Observability.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Dynatrace",
+      "freshness_signal": "last commit 2026-07-07",
+      "github_stars": 131,
+      "related_topics": [],
+      "entity_key": "mcp|dynatrace mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2072",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Logfire MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#monitoring",
+      "target_url": "https://github.com/pydantic/logfire-mcp",
+      "description": "Official Pydantic Logfire MCP server providing access to OpenTelemetry traces and metrics.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Pydantic",
+      "freshness_signal": "last commit 2026-03-24",
+      "github_stars": 162,
+      "related_topics": [],
+      "entity_key": "mcp|logfire mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2073",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "VictoriaMetrics MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#monitoring",
+      "target_url": "https://github.com/VictoriaMetrics-Community/mcp-victoriametrics",
+      "description": "The implementation of Model Context Protocol (MCP) server for VictoriaMetrics.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "VictoriaMetrics (community)",
+      "freshness_signal": "last commit 2026-07-12 (repo now VictoriaMetrics/mcp-victoriametrics)",
+      "github_stars": 190,
+      "related_topics": [],
+      "entity_key": "mcp|victoriametrics mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2074",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Edge Delta MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#monitoring",
+      "target_url": "https://github.com/edgedelta/edgedelta-mcp-server",
+      "description": "Official Edge Delta MCP server to interact with anomalies, query logs/patterns/events and pinpoint root causes.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Edge Delta",
+      "freshness_signal": "last commit 2026-07-08",
+      "github_stars": 9,
+      "related_topics": [],
+      "entity_key": "mcp|edge delta mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2075",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Metoro MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#monitoring",
+      "target_url": "https://github.com/metoro-io/metoro-mcp-server",
+      "description": "Official MCP server to query and interact with Kubernetes environments monitored by Metoro.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Metoro",
+      "freshness_signal": "last commit 2026-06-02",
+      "github_stars": 51,
+      "related_topics": [],
+      "entity_key": "mcp|metoro mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2076",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Netdata MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#monitoring",
+      "target_url": "https://github.com/netdata/netdata",
+      "description": "Netdata's MCP server for discovery, exploration, reporting and root-cause analysis across metrics, logs, systems and containers.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Netdata",
+      "freshness_signal": "last commit 2026-07-13",
+      "github_stars": 79626,
+      "related_topics": [],
+      "entity_key": "mcp|netdata mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2077",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "YepCode MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#code-execution",
+      "target_url": "https://github.com/yepcode/mcp-server-js",
+      "description": "MCP server that exposes YepCode processes as callable tools for AI platforms. Securely connect AI assistants to your YepCode workflows, APIs, and automations.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "YepCode",
+      "freshness_signal": "last commit 2026-03-17",
+      "github_stars": 44,
+      "related_topics": [],
+      "entity_key": "mcp|yepcode mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2078",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Box MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#file-systems",
+      "target_url": "https://github.com/box/mcp-server-box-remote",
+      "description": "Securely connect AI agents to your enterprise content in Box.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Box",
+      "freshness_signal": "last commit 2025-09-20",
+      "github_stars": 5,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|box mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2079",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "MarkItDown",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#file-systems",
+      "target_url": "https://github.com/microsoft/markitdown",
+      "description": "Python tool for converting files and office documents to Markdown; ships an MCP server (markitdown-mcp) for LLM consumption.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Microsoft",
+      "freshness_signal": "last commit 2026-06-24",
+      "github_stars": 165197,
+      "related_topics": [],
+      "entity_key": "mcp|markitdown",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2080",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Longbridge MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
+      "target_url": "https://github.com/longbridge/longbridge-mcp",
+      "description": "Official Longbridge MCP server for the Longbridge brokerage/trading platform.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Longbridge",
+      "freshness_signal": "last commit 2026-07-13",
+      "github_stars": 11,
+      "related_topics": [],
+      "entity_key": "mcp|longbridge mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2081",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Chargebee MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
+      "target_url": "https://github.com/chargebee/agentkit/tree/main/modelcontextprotocol",
+      "description": "Official MCP server connecting AI agents to the Chargebee subscription-billing platform.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Chargebee",
+      "freshness_signal": "last commit 2025-11-18 (chargebee/agentkit monorepo)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "mcp|chargebee mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2082",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Base MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
+      "target_url": "https://github.com/base/base-mcp",
+      "description": "A Model Context Protocol (MCP) server that provides onchain tools for LLMs, allowing them to interact with the Base network and Coinbase API.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Base (Coinbase)",
+      "freshness_signal": "last commit 2026-05-13 (repo renamed base/base-mcp-legacy)",
+      "github_stars": 353,
+      "related_topics": [],
+      "entity_key": "mcp|base mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2083",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Alchemy MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
+      "target_url": "https://github.com/alchemyplatform/alchemy-mcp-server",
+      "description": "Alchemy's official MCP Server. Allow AI agents to interact with Alchemy's blockchain APIs.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Alchemy",
+      "freshness_signal": "last commit 2026-06-29",
+      "github_stars": 88,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|alchemy mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2084",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Alby MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
+      "target_url": "https://github.com/getAlby/mcp",
+      "description": "Connect a bitcoin lightning wallet to your LLM using Nostr Wallet Connect and Model Context Protocol.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Alby",
+      "freshness_signal": "last commit 2026-05-16",
+      "github_stars": 67,
+      "related_topics": [],
+      "entity_key": "mcp|alby mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2085",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "DexPaprika MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
+      "target_url": "https://github.com/coinpaprika/dexpaprika-mcp",
+      "description": "DexPaprika MCP server for real-time crypto token data, DEX trading activity, and DeFi analytics across multiple blockchains.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Coinpaprika",
+      "freshness_signal": "last commit 2026-07-02",
+      "github_stars": 40,
+      "related_topics": [],
+      "entity_key": "mcp|dexpaprika mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2086",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Lara Translate MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#translation-services",
+      "target_url": "https://github.com/translated/lara-mcp",
+      "description": "Official MCP server for Translated's Lara Translate API with language detection and context-aware translation.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Translated",
+      "freshness_signal": "last commit 2026-06-11",
+      "github_stars": 93,
+      "related_topics": [],
+      "entity_key": "mcp|lara translate mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2087",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "IPLocate MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#location-services",
+      "target_url": "https://github.com/iplocate/mcp-server-iplocate",
+      "description": "MCP server for looking up IP address geolocation (IP to country, IP to city), network information, proxy and VPN detection, abuse contacts, and more — using the IPLocate.io API.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "IPLocate",
+      "freshness_signal": "last commit 2025-06-29",
+      "github_stars": 18,
+      "related_topics": [],
+      "entity_key": "mcp|iplocate mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2088",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Teamwork.com MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#workplace-and-productivity",
+      "target_url": "https://github.com/teamwork/mcp",
+      "description": "Teamwork.com MCP server.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Teamwork.com",
+      "freshness_signal": "last commit 2026-07-10",
+      "github_stars": 23,
+      "related_topics": [],
+      "entity_key": "mcp|teamwork.com mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2089",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Alai MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#workplace-and-productivity",
+      "target_url": "https://github.com/getalai/alai-mcp-server",
+      "description": "Official Alai MCP server to generate, edit and export high-quality presentations.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Alai",
+      "freshness_signal": "last commit 2026-04-23",
+      "github_stars": 5,
+      "related_topics": [],
+      "entity_key": "mcp|alai mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2090",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Make MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#other-tools-and-integrations",
+      "target_url": "https://github.com/integromat/make-mcp-server",
+      "description": "Official MCP server turning Make (Integromat) automation scenarios into callable tools for AI assistants.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "Make (Integromat)",
+      "freshness_signal": "last commit 2026-06-10",
+      "github_stars": 164,
+      "related_topics": [],
+      "entity_key": "mcp|make mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2091",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Screenpipe",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#other-tools-and-integrations",
+      "target_url": "https://github.com/mediar-ai/screenpipe",
+      "description": "AI that knows what you've seen, said, or heard: records screen and audio 24/7 locally and privately, with timestamped indexing and semantic search, exposed to LLMs/agents (including via MCP).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Mediar AI",
+      "freshness_signal": "last commit 2026-07-13 (repo now screenpipe/screenpipe)",
+      "github_stars": 19802,
+      "related_topics": [],
+      "entity_key": "mcp|screenpipe",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2092",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ThingsBoard MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#other-tools-and-integrations",
+      "target_url": "https://github.com/thingsboard/thingsboard-mcp",
+      "description": "Official ThingsBoard MCP server providing a natural-language interface for LLMs to interact with the ThingsBoard IoT platform.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "ThingsBoard",
+      "freshness_signal": "last commit 2026-03-16",
+      "github_stars": 99,
+      "related_topics": [],
+      "entity_key": "mcp|thingsboard mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2093",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "GROWI MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#other-tools-and-integrations",
+      "target_url": "https://github.com/growilabs/growi-mcp-server",
+      "description": "A Model Context Protocol (MCP) server that connects AI models to GROWI wiki content. Enables LLMs to search and retrieve information from your organization's knowledge base for accurate, context-aware responses.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "GROWI (growilabs)",
+      "freshness_signal": "last commit 2026-07-10",
+      "github_stars": 17,
+      "related_topics": [],
+      "entity_key": "mcp|growi mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2094",
+      "topic": "mcp",
+      "entity_type": "framework",
+      "name": "Metorial",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#other-tools-and-integrations",
+      "target_url": "https://github.com/metorial/metorial",
+      "description": "Connect any AI model to 1200+ integrations (MCP, CLI, API) through a single interface, with OAuth, scaling and monitoring included.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Metorial",
+      "freshness_signal": "last commit 2026-07-10",
+      "github_stars": 3313,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|metorial",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2095",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "AntV MCP Server Chart",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#customer-data-platforms",
+      "target_url": "https://github.com/antvis/mcp-server-chart",
+      "description": "A visualization MCP and skills package containing 25+ visual charts using AntV, for chart generation and data analysis.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "AntV (Ant Group)",
+      "freshness_signal": "last commit 2026-05-06",
+      "github_stars": 4233,
+      "related_topics": [
+        "skill"
+      ],
+      "entity_key": "mcp|antv mcp server chart",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2096",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "iaptic MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#customer-data-platforms",
+      "target_url": "https://github.com/iaptic/mcp-server-iaptic",
+      "description": "Model Context Protocol server for interacting with iaptic (customer purchases, transaction data and app revenue statistics).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "iaptic",
+      "freshness_signal": "last commit 2026-04-24",
+      "github_stars": 9,
+      "related_topics": [],
+      "entity_key": "mcp|iaptic mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2097",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Color Me Shop MCP Server",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#e-commerce",
+      "target_url": "https://github.com/pepabo/colormeshop-mcp",
+      "description": "Official remote MCP server for Color Me Shop.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "GMO Pepabo",
+      "freshness_signal": "last commit 2026-06-20",
+      "github_stars": 1,
+      "related_topics": [],
+      "entity_key": "mcp|color me shop mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-2098",
+      "topic": "mcp",
+      "entity_type": "registry",
+      "name": "awesome-mcp-clients",
+      "source_url": "https://github.com/punkpeye/awesome-mcp-servers#clients",
+      "target_url": "https://github.com/punkpeye/awesome-mcp-clients",
+      "description": "A collection of MCP clients — a curated companion list cataloging MCP client applications.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "punkpeye",
+      "freshness_signal": "last commit 2026-06-07",
+      "github_stars": 6514,
+      "related_topics": [],
+      "entity_key": "mcp|awesome-mcp-clients",
       "corroboration_count": 1,
       "conflicting_evidence_log": [],
       "discovery": {

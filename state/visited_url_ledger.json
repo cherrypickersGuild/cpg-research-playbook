@@ -4829,6 +4829,22 @@
       ]
     },
     {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#clients",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T05:20:23Z",
+      "last_crawled_at": "2026-07-13T05:20:23Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2098"
+      ]
+    },
+    {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#cloud-platforms",
       "url_type": "news_url",
       "platform": "custom",
@@ -4857,8 +4873,10 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2077"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#coding-agents",
@@ -4917,8 +4935,11 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2095",
+        "ent-2026-2096"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#data-platforms",
@@ -4931,8 +4952,11 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2069",
+        "ent-2026-2070"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#data-science-tools",
@@ -4961,8 +4985,19 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2059",
+        "ent-2026-2060",
+        "ent-2026-2061",
+        "ent-2026-2062",
+        "ent-2026-2063",
+        "ent-2026-2064",
+        "ent-2026-2065",
+        "ent-2026-2066",
+        "ent-2026-2067",
+        "ent-2026-2068"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#developer-tools",
@@ -4979,6 +5014,22 @@
       "entity_ids": [
         "ent-2026-2044",
         "ent-2026-2045"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#e-commerce",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T05:20:23Z",
+      "last_crawled_at": "2026-07-13T05:20:23Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2097"
       ]
     },
     {
@@ -5034,8 +5085,11 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2078",
+        "ent-2026-2079"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
@@ -5048,8 +5102,15 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2080",
+        "ent-2026-2081",
+        "ent-2026-2082",
+        "ent-2026-2083",
+        "ent-2026-2084",
+        "ent-2026-2085"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#knowledge--memory",
@@ -5066,6 +5127,22 @@
       "entity_ids": [
         "ent-2026-2047",
         "ent-2026-2048"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#location-services",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T05:20:23Z",
+      "last_crawled_at": "2026-07-13T05:20:23Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2087"
       ]
     },
     {
@@ -5095,8 +5172,15 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2071",
+        "ent-2026-2072",
+        "ent-2026-2073",
+        "ent-2026-2074",
+        "ent-2026-2075",
+        "ent-2026-2076"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#multimedia-process",
@@ -5111,6 +5195,26 @@
       "case_ids": [],
       "entity_extracted": false,
       "entity_ids": []
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#other-tools-and-integrations",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T05:20:23Z",
+      "last_crawled_at": "2026-07-13T05:20:23Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2090",
+        "ent-2026-2091",
+        "ent-2026-2092",
+        "ent-2026-2093",
+        "ent-2026-2094"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#search--data-extraction",
@@ -5209,6 +5313,22 @@
       ]
     },
     {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#translation-services",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T05:20:23Z",
+      "last_crawled_at": "2026-07-13T05:20:23Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2086"
+      ]
+    },
+    {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#travel--transportation",
       "url_type": "news_url",
       "platform": "custom",
@@ -5238,6 +5358,23 @@
       "case_ids": [],
       "entity_extracted": true,
       "entity_ids": []
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#workplace-and-productivity",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T05:20:23Z",
+      "last_crawled_at": "2026-07-13T05:20:23Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-2088",
+        "ent-2026-2089"
+      ]
     },
     {
       "url": "https://github.com/rdanieli/tentra-mcp",
@@ -6322,6 +6459,20 @@
       "entity_ids": [
         "ent-2026-0017"
       ]
+    },
+    {
+      "url": "https://mcpservers.org/servers/krittaprot/mcp-deployment-aws",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T05:46:07Z",
+      "last_crawled_at": "2026-07-13T05:46:07Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
     },
     {
       "url": "https://media.defense.gov/2026/Jun/02/2003943289/-1/-1/0/CSI_MCP_SECURITY.PDF",
