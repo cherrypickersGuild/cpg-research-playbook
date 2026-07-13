@@ -6,6 +6,10 @@
 *.swp
 *~
 
+# Python bytecode caches (regenerated when scripts/tests run)
+__pycache__/
+*.pyc
+
 # Transient per-run artifacts — regenerated every run; the persistent truth
 # lives in state/ax_case_db.json, state/entity_registry.json, state/category_registry.json.
 state/*.err
@@ -15,6 +19,8 @@ state/news_entity_batch.json
 state/harvest_*
 state/logs/
 state/backups/
+# deterministic GitHub metadata cache — regenerated/refreshed per run, never committed
+state/github_meta_cache.json
 # ax_case_harvest transient scratch files — listed explicitly (not a wildcard)
 # so state/ax_case_harvest_registry.json (the persistent output) is never
 # accidentally matched.

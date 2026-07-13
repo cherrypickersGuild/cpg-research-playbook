@@ -230,6 +230,11 @@ ERR_LOG="$STATE/harvest_${TOPIC}.err"
 # only captures claude's stderr, not the malformed stdout that broke jq.
 RAW_CANDIDATES="$STATE/harvest_${TOPIC}_raw_candidates.json"
 RAW_1G="$STATE/harvest_${TOPIC}_raw_1g.json"
+# Deterministic GitHub metadata: a persistent cross-run cache, plus a per-loop
+# sanitized file handed to 1G so it never calls api.github.com itself. GH_CACHE
+# is the reusable cache (gitignored); GH_META matches state/harvest_* (gitignored).
+GH_CACHE="$STATE/github_meta_cache.json"
+GH_META="$STATE/harvest_${TOPIC}_github_meta.json"
 
 [ -f "$REGISTRY" ] || echo '{"schema_version":1,"last_merged_at":null,"entities":[]}' > "$REGISTRY"
 [ -f "$LEDGER" ]   || echo '{"ledger":[]}' > "$LEDGER"
@@ -406,6 +411,25 @@ while :; do
   jq empty "$LEDGER.tmp" 2>/dev/null || { rm -f "$LEDGER.tmp"; EXIT_REASON="ledger_seed_invalid_json"; echo "ERROR: ledger seed produced invalid JSON — aborting." >&2; exit 1; }
   mv "$LEDGER.tmp" "$LEDGER"
 
+  # ---- deterministic GitHub metadata prefetch (OUTSIDE the model) -------------
+  # Fetch stars / canonical URL for candidate GitHub repos here — authenticated
+  # when GITHUB_TOKEN/GH_TOKEN is set, strictly-bounded-unauthenticated otherwise —
+  # and cache them in $GH_CACHE, so 1G reads the sanitized $GH_META instead of
+  # calling api.github.com per repo via WebFetch (which exhausts the 60/hr unauth
+  # limit). NON-FATAL by design: a metadata hiccup must never abort the harvest, so
+  # on any failure 1G still receives a valid (possibly empty) $GH_META and
+  # github_stars simply falls back to null. The helper reads the token only from the
+  # environment and never prints/persists it.
+  GH_META_EPOCH="$(date +%s)"
+  log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="github_meta_prefetch"
+  if python "$ROOT/scripts/github_meta.py" prefetch --hits "$BATCH_HITS" --cache "$GH_CACHE" --out "$GH_META" >>"$ERR_LOG" 2>&1; then
+    log_event claude_call_end topic="$TOPIC" loop="$loop" command_label="github_meta_prefetch" exit_code="0" duration_sec="$(( $(date +%s) - GH_META_EPOCH ))" detail="ok"
+  else
+    log_event claude_call_end topic="$TOPIC" loop="$loop" command_label="github_meta_prefetch" exit_code="1" duration_sec="$(( $(date +%s) - GH_META_EPOCH ))" detail="prefetch_failed_nonfatal"
+    echo "[harvest][$TOPIC] loop $loop: GitHub metadata prefetch failed — continuing with empty metadata (github_stars->null)" >&2
+  fi
+  jq empty "$GH_META" 2>/dev/null || echo '{"repos":{}}' > "$GH_META"   # 1G must always get readable JSON
+
   echo "[harvest][$TOPIC] loop $loop: running 1G (fetch + verify each candidate)"
   # Same transient stray-prose failure mode as the candidate-batch step above (confirmed by
   # live runs — it hits either claude -p call, not just the first one) — retry here too rather
@@ -415,7 +439,7 @@ while :; do
   for attempt in $(seq 1 "$ONEG_ATTEMPTS"); do
     CLAUDE_CALL_START_EPOCH="$(date +%s)"
     log_event claude_call_start topic="$TOPIC" loop="$loop" command_label="1g_extraction" detail="attempt=${attempt}/${ONEG_ATTEMPTS}"
-    if "$CLAUDE_BIN" -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". If target_url resolves to a GitHub repo root, fetch https://api.github.com/repos/<owner>/<repo> and set github_stars to stargazers_count; otherwise (including target_url:\"unknown\") set github_stars:null — never estimate it from a non-GitHub page. In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
+    if "$CLAUDE_BIN" -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". GitHub star counts are provided LOCALLY in $GH_META (a JSON file with a .repos object keyed by lowercase \"owner/repo\") — DO NOT call api.github.com and DO NOT WebFetch api.github.com. If target_url is a GitHub repo root, look up its lowercase owner/repo in $GH_META's .repos: if that entry's status is \"ok\", set github_stars to its integer .stars and prefer its .canonical_url as target_url; otherwise (missing entry, non-ok status, non-repo target_url, or target_url:\"unknown\") set github_stars:null — never estimate it from a page. In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
          --append-system-prompt "$(cat "$S1/1G_entity_extractor.md")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_1G" | jq -r '.result' | clean > "$BATCH_ENTITIES" \
        && jq empty "$BATCH_ENTITIES" 2>/dev/null \

@@ -38,6 +38,7 @@ ISOLATED=(
   test_ax_case_harvest_dates.sh test_clean_json.sh test_entity_github_stars.sh
   test_entity_url_schema.sh test_harvest_bounded.sh test_harvest_targets.sh
   test_harvest_1g_shape_guard.sh
+  test_github_meta.sh test_harvest_github_cache.sh
   test_ledger_patch_merge.sh test_merge_entity_type_error.sh
   test_merge_error_propagation.sh test_pipeline_ledger_error.sh
   test_guard_command.sh test_safe_commit.sh test_safe_push_main.sh
@@ -80,7 +81,8 @@ for f in "${FILES[@]:-}"; do
     scripts/merge_ax_case_harvest_registry.sh|scripts/merge_case_db.sh) add_test tests/test_merge_error_propagation.sh ;;
     scripts/run_stage1.sh|scripts/discover.sh)    add_test tests/test_ledger_patch_merge.sh; add_test tests/test_pipeline_ledger_error.sh ;;
     scripts/backfill_entity_target_url.py)        add_test tests/test_entity_url_schema.sh ;;
-    scripts/harvest_entities.sh)                  add_test tests/test_harvest_bounded.sh; add_test tests/test_harvest_targets.sh; add_test tests/test_harvest_1g_shape_guard.sh; add_test tests/test_entity_github_stars.sh; add_test tests/test_clean_json.sh ;;
+    scripts/github_meta.py)                       add_test tests/test_github_meta.sh; add_test tests/test_harvest_github_cache.sh ;;
+    scripts/harvest_entities.sh)                  add_test tests/test_harvest_bounded.sh; add_test tests/test_harvest_targets.sh; add_test tests/test_harvest_1g_shape_guard.sh; add_test tests/test_harvest_github_cache.sh; add_test tests/test_github_meta.sh; add_test tests/test_entity_github_stars.sh; add_test tests/test_clean_json.sh ;;
     scripts/harvest_ax_cases.sh)                  add_test tests/test_ax_case_harvest_dates.sh; add_test tests/test_harvest_bounded.sh; add_test tests/test_clean_json.sh ;;
     .claude/hooks/guard_command.py)               add_test tests/test_guard_command.sh; add_test tests/test_permission_rules.sh ;;
     scripts/safe_commit.sh)                       add_test tests/test_safe_commit.sh; add_test tests/test_permission_rules.sh ;;
