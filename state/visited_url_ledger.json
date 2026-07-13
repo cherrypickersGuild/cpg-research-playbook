@@ -4703,6 +4703,22 @@
       "entity_ids": []
     },
     {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#RAG",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T06:39:06Z",
+      "last_crawled_at": "2026-07-13T06:39:06Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3070"
+      ]
+    },
+    {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#aerospace",
       "url_type": "news_url",
       "platform": "custom",
@@ -4889,8 +4905,19 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3031",
+        "ent-2026-3032",
+        "ent-2026-3033",
+        "ent-2026-3034",
+        "ent-2026-3035",
+        "ent-2026-3036",
+        "ent-2026-3037",
+        "ent-2026-3038",
+        "ent-2026-3039",
+        "ent-2026-3040"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#command-line",
@@ -5057,8 +5084,30 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3041",
+        "ent-2026-3042",
+        "ent-2026-3043"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#embedded-system",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T06:39:06Z",
+      "last_crawled_at": "2026-07-13T06:39:06Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3065",
+        "ent-2026-3066",
+        "ent-2026-3067"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#entertainment--media",
@@ -5113,6 +5162,44 @@
       ]
     },
     {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#gaming",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T06:39:06Z",
+      "last_crawled_at": "2026-07-13T06:39:06Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3054",
+        "ent-2026-3055",
+        "ent-2026-3056",
+        "ent-2026-3057",
+        "ent-2026-3058",
+        "ent-2026-3059"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#home-automation",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T06:39:06Z",
+      "last_crawled_at": "2026-07-13T06:39:06Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3060",
+        "ent-2026-3061"
+      ]
+    },
+    {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#knowledge--memory",
       "url_type": "news_url",
       "platform": "custom",
@@ -5127,6 +5214,23 @@
       "entity_ids": [
         "ent-2026-2047",
         "ent-2026-2048"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#legal",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T06:39:06Z",
+      "last_crawled_at": "2026-07-13T06:39:06Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3068",
+        "ent-2026-3069"
       ]
     },
     {
@@ -5193,8 +5297,14 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3044",
+        "ent-2026-3045",
+        "ent-2026-3046",
+        "ent-2026-3047",
+        "ent-2026-3048"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#other-tools-and-integrations",
@@ -5214,6 +5324,24 @@
         "ent-2026-2092",
         "ent-2026-2093",
         "ent-2026-2094"
+      ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#research",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T06:39:06Z",
+      "last_crawled_at": "2026-07-13T06:39:06Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3062",
+        "ent-2026-3063",
+        "ent-2026-3064"
       ]
     },
     {
@@ -5277,8 +5405,14 @@
       "content_hash": null,
       "extracted": false,
       "case_ids": [],
-      "entity_extracted": false,
-      "entity_ids": []
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-3049",
+        "ent-2026-3050",
+        "ent-2026-3051",
+        "ent-2026-3052",
+        "ent-2026-3053"
+      ]
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#support--service-management",
