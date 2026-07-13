@@ -493,6 +493,20 @@
       ]
     },
     {
+      "url": "https://blog.christianposta.com/enterprise-challenges-with-mcp-adoption/",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
       "url": "https://blog.modelcontextprotocol.io/",
       "url_type": "news_url",
       "platform": "custom",
@@ -1020,6 +1034,20 @@
       "platform": "custom",
       "first_crawled_at": "2026-07-07T08:44:37Z",
       "last_crawled_at": "2026-07-07T08:44:37Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": []
+    },
+    {
+      "url": "https://eccenca.com/blog/article/model-context-protocol-mcp-definitely-a-milestone-for-ai-integration-but-what-are-the-limitations",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:22:22Z",
+      "last_crawled_at": "2026-07-13T04:22:22Z",
       "crawl_count": 1,
       "http_status_last": null,
       "content_hash": null,
@@ -4661,6 +4689,20 @@
       ]
     },
     {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#aerospace",
       "url_type": "news_url",
       "platform": "custom",
@@ -4940,11 +4982,67 @@
       ]
     },
     {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#e-commerce--retail",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#education",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#entertainment--media",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#file-systems",
       "url_type": "news_url",
       "platform": "custom",
       "first_crawled_at": "2026-07-12T08:36:07Z",
       "last_crawled_at": "2026-07-12T08:36:07Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#finance--fintech",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
       "crawl_count": 1,
       "http_status_last": null,
       "content_hash": null,
@@ -4992,6 +5090,20 @@
       "platform": "custom",
       "first_crawled_at": "2026-07-12T08:36:07Z",
       "last_crawled_at": "2026-07-12T08:36:07Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#multimedia-process",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
       "crawl_count": 1,
       "http_status_last": null,
       "content_hash": null,
@@ -5049,6 +5161,20 @@
       "entity_ids": [
         "ent-2026-2054"
       ]
+    },
+    {
+      "url": "https://github.com/punkpeye/awesome-mcp-servers#sports",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
     },
     {
       "url": "https://github.com/punkpeye/awesome-mcp-servers#support--service-management",
@@ -5966,6 +6092,20 @@
       ]
     },
     {
+      "url": "https://lex.substack.com/p/ai-how-stripe-block-and-paypal-are",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
+    },
+    {
       "url": "https://lexica.art",
       "url_type": "news_url",
       "platform": "custom",
@@ -6244,6 +6384,20 @@
       "entity_ids": [
         "ent-2026-0001"
       ]
+    },
+    {
+      "url": "https://medium.com/devops-ai-decoded/10-mcp-servers-revolutionizing-devops-in-2026-deploy-like-a-pro-no-expertise-needed-752f345918ed",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
     },
     {
       "url": "https://memex.tech/",
@@ -6694,6 +6848,59 @@
       "case_ids": [],
       "entity_extracted": false,
       "entity_ids": []
+    },
+    {
+      "url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:22:22Z",
+      "last_crawled_at": "2026-07-13T04:22:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": [
+        "ent-2026-0001",
+        "ent-2026-0002",
+        "ent-2026-0003",
+        "ent-2026-0004",
+        "ent-2026-0005",
+        "ent-2026-0006",
+        "ent-2026-0007",
+        "ent-2026-0008",
+        "ent-2026-0009",
+        "ent-2026-0010",
+        "ent-2026-0011",
+        "ent-2026-0012",
+        "ent-2026-0013",
+        "ent-2026-0014",
+        "ent-2026-0015",
+        "ent-2026-0016",
+        "ent-2026-0017",
+        "ent-2026-0018",
+        "ent-2026-0019",
+        "ent-2026-0020",
+        "ent-2026-0021",
+        "ent-2026-0022",
+        "ent-2026-0023",
+        "ent-2026-0024",
+        "ent-2026-0025",
+        "ent-2026-0026",
+        "ent-2026-0027",
+        "ent-2026-0028",
+        "ent-2026-0029",
+        "ent-2026-0030",
+        "ent-2026-0031",
+        "ent-2026-0032",
+        "ent-2026-0033",
+        "ent-2026-0034",
+        "ent-2026-0035",
+        "ent-2026-0036",
+        "ent-2026-0037",
+        "ent-2026-0038"
+      ]
     },
     {
       "url": "https://reactagent.io/",
@@ -7279,6 +7486,20 @@
       "entity_ids": []
     },
     {
+      "url": "https://www.atolio.com/blog/enterprise-mcp-limitations-risk-scale",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:22:22Z",
+      "last_crawled_at": "2026-07-13T04:22:22Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": true,
+      "entity_ids": []
+    },
+    {
       "url": "https://www.bardeen.ai/",
       "url_type": "news_url",
       "platform": "custom",
@@ -7557,6 +7778,20 @@
       "entity_ids": [
         "ent-2026-0001"
       ]
+    },
+    {
+      "url": "https://www.flybridge.com/ideas/the-bow/the-4-big-myths-holding-back-mcp-adoption-and-how-to-fix-them",
+      "url_type": "news_url",
+      "platform": "custom",
+      "first_crawled_at": "2026-07-13T04:39:51Z",
+      "last_crawled_at": "2026-07-13T04:39:51Z",
+      "crawl_count": 1,
+      "http_status_last": null,
+      "content_hash": null,
+      "extracted": false,
+      "case_ids": [],
+      "entity_extracted": false,
+      "entity_ids": []
     },
     {
       "url": "https://www.getmaxim.ai",

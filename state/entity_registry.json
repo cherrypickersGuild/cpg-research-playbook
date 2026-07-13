@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "last_merged_at": "2026-07-12T08:30:30Z",
+  "last_merged_at": "2026-07-13T04:28:59Z",
   "metadata": {
     "topics": [
       "agent",
@@ -26,10 +26,10 @@
       "technique",
       "tool"
     ],
-    "total_entities": 537,
+    "total_entities": 574,
     "entity_count_by_topic": {
       "agent": 165,
-      "mcp": 177,
+      "mcp": 214,
       "prompt": 83,
       "skill": 112
     },
@@ -45,7 +45,7 @@
       "platform": 45,
       "product": 52,
       "registry": 6,
-      "server": 107,
+      "server": 144,
       "skill": 36,
       "spec": 7,
       "technique": 5,
@@ -14927,12 +14927,16 @@
       "github_stars": 52,
       "related_topics": [],
       "entity_key": "mcp|fal mcp server",
-      "corroboration_count": 1,
+      "corroboration_count": 2,
       "conflicting_evidence_log": [],
       "discovery": {
         "first_seen_at": "2026-07-12",
-        "last_corroborated_at": "2026-07-12",
+        "last_corroborated_at": "2026-07-13",
         "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          },
           {
             "hit_id": "unknown",
             "platform": "web"
@@ -14990,6 +14994,1021 @@
       "discovery": {
         "first_seen_at": "2026-07-12",
         "last_corroborated_at": "2026-07-12",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0001",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "DeepSeek MCP Server",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/arikusi/deepseek-mcp-server",
+      "description": "Verified from the repo: an MCP server for DeepSeek V4 (v4-flash, v4-pro, 1M context) exposing chat, reasoning, function calling, thinking mode, and cost tracking to MCP clients.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "arikusi",
+      "freshness_signal": "last commit 2026-07-13",
+      "github_stars": 17,
+      "related_topics": [],
+      "entity_key": "mcp|deepseek mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0002",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Grok MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/merterbak/Grok-MCP",
+      "description": "Verified from the repo: an MCP server for xAI's Grok API providing Web/X search, vision, image and video generation, and file support.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "merterbak",
+      "freshness_signal": "last commit 2026-07-08",
+      "github_stars": 44,
+      "related_topics": [],
+      "entity_key": "mcp|grok mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0003",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Gemini Bridge",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/jaspertvdm/mcp-server-gemini-bridge",
+      "description": "Verified from the repo: an MCP server bridging to the Google Gemini API, part of the HumoticaOS/SymbAIon ecosystem.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "jaspertvdm",
+      "freshness_signal": "last commit 2026-06-10",
+      "github_stars": 4,
+      "related_topics": [],
+      "entity_key": "mcp|gemini bridge",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0004",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Ollama Bridge",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/jaspertvdm/mcp-server-ollama-bridge",
+      "description": "Verified from the repo: an MCP server bridging to a local Ollama LLM, part of the HumoticaOS/SymbAIon ecosystem.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "jaspertvdm",
+      "freshness_signal": "last commit 2026-06-10",
+      "github_stars": 4,
+      "related_topics": [],
+      "entity_key": "mcp|ollama bridge",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0005",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "OpenAI Bridge",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/jaspertvdm/mcp-server-openai-bridge",
+      "description": "Verified from the repo: an MCP server bridging to the OpenAI API, part of the HumoticaOS/SymbAIon ecosystem.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "jaspertvdm",
+      "freshness_signal": "last commit 2026-06-10",
+      "github_stars": 2,
+      "related_topics": [],
+      "entity_key": "mcp|openai bridge",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0006",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Open Library MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/8enSmith/mcp-open-library",
+      "description": "Verified from the repo: a Model Context Protocol server for the Internet Archive's Open Library API that lets AI assistants search for book and author information.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "8enSmith",
+      "freshness_signal": "last commit 2026-04-22",
+      "github_stars": 83,
+      "related_topics": [],
+      "entity_key": "mcp|open library mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0007",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Smithsonian MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/molanojustin/smithsonian-mcp",
+      "description": "Verified from the repo: a Model Context Protocol server giving AI assistants access to the Smithsonian Institution's Open Access collections.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "molanojustin",
+      "freshness_signal": "last commit 2026-06-20",
+      "github_stars": 11,
+      "related_topics": [],
+      "entity_key": "mcp|smithsonian mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0008",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Quran MCP Server",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/djalal/quran-mcp-server",
+      "description": "Verified from the repo: an MCP server integrating the Quran.com API for verse search, translation, and tafsir.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "djalal",
+      "freshness_signal": "last commit 2025-06-12",
+      "github_stars": 71,
+      "related_topics": [],
+      "entity_key": "mcp|quran mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0009",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Wizzy TMDB MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/drakonkat/wizzy-mcp-tmdb",
+      "description": "Verified from the repo: a JavaScript MCP server providing tools to search and retrieve movie, TV, and person data from The Movie Database (TMDB).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "drakonkat",
+      "freshness_signal": "last commit 2025-09-30",
+      "github_stars": 4,
+      "related_topics": [],
+      "entity_key": "mcp|wizzy tmdb mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0010",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Alexandria MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/AIDataNordic/alexandria-mcp",
+      "description": "Verified from the repo: a FastMCP-based MCP server offering semantic search over 4.6 million text chunks from 20,000 classical philosophy and humanities works.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "AIDataNordic",
+      "freshness_signal": "last commit 2026-06-10",
+      "github_stars": 1,
+      "related_topics": [],
+      "entity_key": "mcp|alexandria mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0011",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Bilibili MCP JS",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/34892002/bilibili-mcp-js",
+      "description": "Verified from the repo: an MCP server for searching Bilibili video content, with LangChain integration.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "34892002",
+      "freshness_signal": "last commit 2026-03-30",
+      "github_stars": 178,
+      "related_topics": [],
+      "entity_key": "mcp|bilibili mcp js",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0012",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Manim MCP Server",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/abhiemj/manim-mcp-server",
+      "description": "Verified from the repo README: an MCP server that executes Manim Python scripts and returns the rendered animations, enabling LLMs to generate mathematical visualizations.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "abhiemj",
+      "freshness_signal": "last commit 2025-05-19",
+      "github_stars": 614,
+      "related_topics": [],
+      "entity_key": "mcp|manim mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0013",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "JupyterCAD MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/asmith26/jupytercad-mcp",
+      "description": "Verified from the repo: an MCP server for JupyterCAD that allows controlling it using LLMs / natural language.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "asmith26",
+      "freshness_signal": "last commit 2025-10-07",
+      "github_stars": 20,
+      "related_topics": [],
+      "entity_key": "mcp|jupytercad mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0014",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Maya MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/PatrickPalmer/MayaMCP",
+      "description": "Verified from the repo: a Model Context Protocol server implementation for Autodesk Maya.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "PatrickPalmer",
+      "freshness_signal": "last commit 2025-05-12",
+      "github_stars": 87,
+      "related_topics": [],
+      "entity_key": "mcp|maya mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0015",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Photopea MCP Server",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/attalla1/photopea-mcp-server",
+      "description": "Verified from the repo: an MCP server for AI-driven image editing with Photopea.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "attalla1",
+      "freshness_signal": "last commit 2026-04-05",
+      "github_stars": 23,
+      "related_topics": [],
+      "entity_key": "mcp|photopea mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0016",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ComfyUI Pilot",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/ConstantineB6/comfy-pilot",
+      "description": "Verified from the repo: an MCP server plus embedded terminal that lets Claude Code see and edit ComfyUI node-based image-generation workflows.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "ConstantineB6",
+      "freshness_signal": "last commit 2026-02-16",
+      "github_stars": 223,
+      "related_topics": [],
+      "entity_key": "mcp|comfyui pilot",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0018",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "SVGMaker MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/GenWaveLLC/svgmaker-mcp",
+      "description": "Verified from the repo: a Model Context Protocol server for SVGMaker providing AI-powered SVG generation and editing.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "GenWave LLC",
+      "freshness_signal": "last commit 2026-07-10",
+      "github_stars": 82,
+      "related_topics": [],
+      "entity_key": "mcp|svgmaker mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0019",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Text to Model",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/mikan-atomoki/text-to-model",
+      "description": "Verified from the repo README: an MCP server add-in that connects Claude to Autodesk Fusion 360 to create 3D CAD models from natural-language instructions.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "mikan-atomoki",
+      "freshness_signal": "last commit 2026-03-16",
+      "github_stars": 5,
+      "related_topics": [],
+      "entity_key": "mcp|text to model",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0020",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Mermaid Grammar Inspector",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "unknown",
+      "description": "From the awesome-mcp-servers listing (repo path 404s): an MCP server for Mermaid diagram syntax validation and grammar checking.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "betterhyq",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "mcp|mermaid grammar inspector",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0021",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "AI Diagram Maker MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/erajasekar/ai-diagram-maker-mcp",
+      "description": "Verified from the repo README: an MCP server that lets AI agents like Claude and Cursor generate software-engineering diagrams from text, code, images, or Mermaid definitions.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "erajasekar",
+      "freshness_signal": "last commit 2026-05-04",
+      "github_stars": 6,
+      "related_topics": [],
+      "entity_key": "mcp|ai diagram maker mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0022",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "DiagramZu MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/yenchieh/diagramzu-mcp",
+      "description": "Verified from the repo: an MCP server for diagramzu.ai that reads and writes Mermaid diagrams in a shared Space from Claude, Cursor, ChatGPT, or any MCP client.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "yenchieh",
+      "freshness_signal": "last commit 2026-06-18",
+      "github_stars": 1,
+      "related_topics": [],
+      "entity_key": "mcp|diagramzu mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0023",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "ENCODE Toolkit",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/ammawla/encode-toolkit",
+      "description": "Verified from the repo: an MCP server and Claude plugin providing an ENCODE Project genomic-data toolkit to search, download, track, and analyze functional-genomics experiments.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "ammawla",
+      "freshness_signal": "last commit 2026-06-21",
+      "github_stars": 37,
+      "related_topics": [],
+      "entity_key": "mcp|encode toolkit",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0024",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "OnekGPD MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/dnaerys/onekgpd-mcp",
+      "description": "Verified from the repo: an MCP server providing real-time access to the 1000 Genomes Project dataset.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "dnaerys",
+      "freshness_signal": "last commit 2026-07-12",
+      "github_stars": 1,
+      "related_topics": [],
+      "entity_key": "mcp|onekgpd mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0025",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Fulcra Context MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/fulcradynamics/fulcra-context-mcp",
+      "description": "Verified from the repo README: an MCP server exposing tools and resources to call the Fulcra API, giving AI clients access to personal health and biometric Context data.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Fulcra Dynamics",
+      "freshness_signal": "last commit 2026-07-10",
+      "github_stars": 5,
+      "related_topics": [],
+      "entity_key": "mcp|fulcra context mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0026",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "DICOMweb MCP Server",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/PantelisGeorgiadis/dicomweb-mcp-server",
+      "description": "Verified from the repo: a DICOMweb-compliant Model Context Protocol server for accessing DICOM archives.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "PantelisGeorgiadis",
+      "freshness_signal": "last commit 2026-05-16",
+      "github_stars": 3,
+      "related_topics": [],
+      "entity_key": "mcp|dicomweb mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0027",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "OPDSTAR NHI MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/tatsuju/opdstar-nhi-mcp",
+      "description": "Verified from the repo: an MCP server exposing Taiwan National Health Insurance (NHI) data to AI agents, powered by OPDSTAR.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "tatsuju",
+      "freshness_signal": "last commit 2026-07-01",
+      "github_stars": 1,
+      "related_topics": [],
+      "entity_key": "mcp|opdstar nhi mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0028",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "PubMed Search",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/pubspro/pubmed-search",
+      "description": "Verified from the repo: an MCP server for PubMed search and biomedical literature summarization.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "pubspro",
+      "freshness_signal": "last commit 2026-05-30",
+      "github_stars": 2,
+      "related_topics": [],
+      "entity_key": "mcp|pubmed search",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0029",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Wellness CGM MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/davidmosiah/wellness-cgm-mcp",
+      "description": "Verified from the repo: a local-first MCP server for continuous glucose monitor data via the Dexcom Developer API and FreeStyle Libre (LibreLink Up).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "davidmosiah",
+      "freshness_signal": "last commit 2026-07-03",
+      "github_stars": 1,
+      "related_topics": [],
+      "entity_key": "mcp|wellness cgm mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0030",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Genomic Agent Discovery",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "unknown",
+      "description": "From the awesome-mcp-servers listing (repo path 404s): a multi-agent genomic analysis MCP server spanning 16 databases.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "HelixGenomics",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|genomic agent discovery",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0031",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Safari MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/achiya-automation/safari-mcp",
+      "description": "Verified from the repo: a native Safari browser-automation MCP server for AI agents offering 80 AppleScript-based tools as a low-overhead, login-preserving alternative to Chrome DevTools MCP on Apple Silicon.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "achiya-automation",
+      "freshness_signal": "last commit 2026-07-12",
+      "github_stars": 150,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|safari mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0032",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Firefox DevTools MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/mozilla/firefox-devtools-mcp",
+      "description": "Verified from the repo (freema/firefox-devtools-mcp redirects here): a Model Context Protocol server for Firefox DevTools that lets AI assistants inspect and control Firefox via the Remote Debugging Protocol.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Mozilla",
+      "freshness_signal": "last commit 2026-07-10",
+      "github_stars": 295,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|firefox devtools mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0033",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Selenium MCP Server",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/PhungXuanAnh/selenium-mcp-server",
+      "description": "Verified from the repo README: a Model Context Protocol server providing web-automation capabilities through Selenium WebDriver so AI assistants can control browsers and interact with web pages.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "PhungXuanAnh",
+      "freshness_signal": "last commit 2026-06-09",
+      "github_stars": 10,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|selenium mcp server",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0034",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Comet MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/hanzili/comet-mcp",
+      "description": "Verified from the repo: an MCP server connecting to the Perplexity Comet browser for agentic web browsing.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "hanzili",
+      "freshness_signal": "last commit 2026-01-13",
+      "github_stars": 164,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|comet mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0035",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Ashra MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "unknown",
+      "description": "From the awesome-mcp-servers listing (repo path 404s): an MCP server that extracts structured data from websites as JSON.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "getrupt",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "mcp|ashra mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0036",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Yutu",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/eat-pray-ai/yutu",
+      "description": "Verified from the repo: an AI-powered YouTube automation toolkit exposed as a fully functional MCP server and CLI.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "eat-pray-ai",
+      "freshness_signal": "last commit 2026-07-08",
+      "github_stars": 585,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|yutu",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0037",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Auto Browser",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "https://github.com/LvcidPsyche/auto-browser",
+      "description": "Verified from the repo: an open-source, MCP-native browser agent that gives an AI agent a real browser with human-in-the-loop takeover (via noVNC).",
+      "description_source": "verified",
+      "maintainer_or_vendor": "LvcidPsyche",
+      "freshness_signal": "last commit 2026-07-09",
+      "github_stars": 710,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|auto browser",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-0038",
+      "topic": "mcp",
+      "entity_type": "server",
+      "name": "Browser DevTools MCP",
+      "source_url": "https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md",
+      "target_url": "unknown",
+      "description": "From the awesome-mcp-servers listing (repo path 404s): an MCP server for AI-driven testing and debugging of web applications.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "serkan-ozal",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "mcp|browser devtools mcp",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-13",
+        "last_corroborated_at": "2026-07-13",
         "found_via": [
           {
             "hit_id": "unknown",
