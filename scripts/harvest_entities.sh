@@ -262,6 +262,26 @@ FLAGS=(--output-format json); [ -n "${MODEL:-}" ] && FLAGS+=(--model "$MODEL"); 
 # loudly on none/ambiguous/invalid. See scripts/lib/clean_json.sh.
 source "$ROOT/scripts/lib/clean_json.sh"
 
+# valid_1g_batch <file> — shape-guard for a cleaned 1G batch. clean() guarantees
+# the file is VALID JSON but NOT the expected SHAPE: a prose-derived result can
+# collapse to a bare `[]` (e.g. an "entity_ids:[]" fragment lifted out of a
+# rate-limit deferral message), which passes `jq empty` yet crashes the
+# downstream ledger merge — `.[1].ledger_patch` on an array raises "Cannot index
+# array with string", and a non-object ledger_patch element makes `select(.url…)`
+# raise too. Require the mergeable object shape HERE so a malformed extraction
+# fails THIS attempt and takes the existing retry path, never reaching the ledger
+# or registry merge. Accepts empty .entities / .ledger_patch arrays — a
+# legitimate "nothing new this loop" result. Returns 0 iff valid.
+valid_1g_batch() {
+  jq -e '
+    (type == "object")
+    and has("entities")     and (.entities     | type == "array")
+    and (.entities     | all(type == "object"))
+    and has("ledger_patch") and (.ledger_patch | type == "array")
+    and (.ledger_patch | all(type == "object" and has("url") and (.url | type == "string")))
+  ' "$1" >/dev/null 2>&1
+}
+
 tally() {
   jq --arg t "$TOPIC" '[.entities[] | select(.topic==$t and .description_source=="verified")] | length' "$REGISTRY"
 }
@@ -398,7 +418,8 @@ while :; do
     if "$CLAUDE_BIN" -p "Follow your system instructions. Hits (shape: {hits:[{source_url,target_url,title,snippet,domain}]}): $BATCH_HITS. Visited-URL ledger: $LEDGER (keyed by source_url — use its entity_extracted/entity_ids fields, separate from 1C's extracted/case_ids on the same rows). For each candidate: emit source_url verbatim from the hit; for target_url, verify-or-resolve it yourself via WebFetch (the candidate-batch step may have set it to \"unknown\"), and pull the description from target_url specifically — description_source:\"verified\" means the description came from target_url, never from source_url and never from the snippet alone. If target_url cannot be confidently resolved or fetched, write target_url:\"unknown\" and description_source:\"snippet-only\". If target_url resolves to a GitHub repo root, fetch https://api.github.com/repos/<owner>/<repo> and set github_stars to stargazers_count; otherwise (including target_url:\"unknown\") set github_stars:null — never estimate it from a non-GitHub page. In your ledger_patch[], echo source_url in the url field so it matches the seeded row. Output ONLY the entity batch JSON (entities, ledger_patch). No prose, no fences." \
          --append-system-prompt "$(cat "$S1/1G_entity_extractor.md")" --allowedTools "Read,WebFetch" "${FLAGS[@]}" \
          2> "$ERR_LOG" | tee "$RAW_1G" | jq -r '.result' | clean > "$BATCH_ENTITIES" \
-       && jq empty "$BATCH_ENTITIES" 2>/dev/null; then
+       && jq empty "$BATCH_ENTITIES" 2>/dev/null \
+       && valid_1g_batch "$BATCH_ENTITIES"; then
       log_event claude_call_end topic="$TOPIC" loop="$loop" command_label="1g_extraction" exit_code="0" duration_sec="$(( $(date +%s) - CLAUDE_CALL_START_EPOCH ))" detail="attempt=${attempt}/${ONEG_ATTEMPTS};ok"
       oneg_ok=true
       break
