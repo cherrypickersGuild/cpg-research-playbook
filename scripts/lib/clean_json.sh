@@ -36,10 +36,18 @@ clean() {
   # of string context); backslash escapes inside strings are honored.
   while IFS= read -r -d '' cand; do
     [ -n "$cand" ] || continue
-    if printf '%s' "$cand" | jq empty 2>/dev/null; then
-      n=$((n + 1))
-      out="$cand"
-    fi
+    printf '%s' "$cand" | jq empty 2>/dev/null || continue
+    # Ignore trivial EMPTY containers ([] / {}). These are almost always stray
+    # fragments the scanner lifts out of the model's prose preamble — e.g. the
+    # literal "attempted_urls[]" that both harvest prompts mention — never the
+    # intended payload (every caller expects a NON-empty object: {"hits":...},
+    # {entities,ledger_patch}, {cases}). Counting them would collide with the
+    # real object and trip the exactly-one ambiguity guard below, failing a
+    # perfectly good batch. A genuine two-real-payloads case still has two
+    # NON-empty values and is still rejected as ambiguous.
+    printf '%s' "$cand" | jq -e '(type=="array" or type=="object") and (length==0)' >/dev/null 2>&1 && continue
+    n=$((n + 1))
+    out="$cand"
   done < <(printf '%s' "$input" | awk '
     BEGIN { depth=0; instr=0; esc=0; cap=0; buf="" }
     {

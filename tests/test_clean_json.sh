@@ -73,6 +73,18 @@ assert_nonzero "two valid objects -> ambiguous reject" "$EC"
 run_clean 'first {"a":1} then also {"b":2} here'
 assert_nonzero "two valid objects in prose -> ambiguous reject" "$EC"
 
+echo "[clean] a stray EMPTY [] / {} in prose does not trip the ambiguity guard"
+# Regression: the model's prose preamble mentioned "attempted_urls[]", so the
+# scanner lifted a bare [] alongside the real {"hits":...} object and clean()
+# wrongly rejected the whole batch as ambiguous. An empty container is never a
+# real payload — the real object must still be recovered.
+run_clean 'All resolved — checked against attempted_urls[] and registry source_urls. {"hits":[{"url":"u"}]}'
+assert_eq "empty-[] + object exit 0" "0" "$EC"
+assert_eq "empty-[] + object .hits[0].url" "u" "$(printf '%s' "$OUT" | jq -r '.hits[0].url')"
+run_clean 'note: config was {} initially. {"cases":[{"company":"Acme"}]}'
+assert_eq "empty-{} + object exit 0" "0" "$EC"
+assert_eq "empty-{} + object .cases[0].company" "Acme" "$(printf '%s' "$OUT" | jq -r '.cases[0].company')"
+
 echo "[clean] the real pipe: jq -r .result | clean recovers a prose-wrapped envelope"
 env_json='{"type":"result","subtype":"success","is_error":false,"result":"Sure — here you go: {\"hits\":[{\"source_url\":\"u\"}]} done"}'
 OUT="$(printf '%s' "$env_json" | jq -r '.result' | clean 2>/dev/null)"; EC=$?
