@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "last_merged_at": "2026-07-13T06:49:06Z",
+  "last_merged_at": "2026-07-14T03:09:46Z",
   "metadata": {
     "topics": [
       "agent",
@@ -26,30 +26,30 @@
       "technique",
       "tool"
     ],
-    "total_entities": 654,
+    "total_entities": 687,
     "entity_count_by_topic": {
       "agent": 165,
       "mcp": 294,
-      "prompt": 83,
+      "prompt": 116,
       "skill": 112
     },
     "entity_count_by_entity_type": {
       "benchmark": 1,
       "client_sdk": 24,
-      "dataset": 2,
+      "dataset": 5,
       "framework": 69,
-      "guide": 18,
+      "guide": 31,
       "library": 17,
       "marketplace": 53,
-      "other": 51,
+      "other": 53,
       "platform": 45,
       "product": 52,
       "registry": 7,
       "server": 220,
       "skill": 36,
       "spec": 7,
-      "technique": 5,
-      "tool": 47
+      "technique": 17,
+      "tool": 50
     }
   },
   "entities": [
@@ -1386,18 +1386,29 @@
         "agent"
       ],
       "entity_key": "prompt|dspy",
-      "corroboration_count": 1,
+      "corroboration_count": 2,
       "discovery": {
         "first_seen_at": "2026-07-07",
-        "last_corroborated_at": "2026-07-07",
+        "last_corroborated_at": "2026-07-14",
         "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          },
           {
             "hit_id": "unknown",
             "platform": "web"
           }
         ]
       },
-      "conflicting_evidence_log": [],
+      "conflicting_evidence_log": [
+        {
+          "noted_at": "2026-07-14",
+          "field": "target_url",
+          "existing": "https://github.com/stanfordnlp/dspy",
+          "incoming": "https://arxiv.org/abs/2310.03714"
+        }
+      ],
       "source_url": "reports/awesome-lists/awesome_prompt.md",
       "target_url": "https://github.com/stanfordnlp/dspy",
       "github_stars": null
@@ -1411,20 +1422,33 @@
       "description_source": "verified",
       "maintainer_or_vendor": "Zou Group (Stanford)",
       "freshness_signal": "3.6k stars, published in Nature 2025-03-19, latest release v0.1.6 (2024-12-15)",
-      "related_topics": [],
+      "related_topics": [
+        "agent"
+      ],
       "entity_key": "prompt|textgrad",
-      "corroboration_count": 1,
+      "corroboration_count": 2,
       "discovery": {
         "first_seen_at": "2026-07-07",
-        "last_corroborated_at": "2026-07-07",
+        "last_corroborated_at": "2026-07-14",
         "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          },
           {
             "hit_id": "unknown",
             "platform": "web"
           }
         ]
       },
-      "conflicting_evidence_log": [],
+      "conflicting_evidence_log": [
+        {
+          "noted_at": "2026-07-14",
+          "field": "target_url",
+          "existing": "https://github.com/zou-group/textgrad",
+          "incoming": "https://arxiv.org/abs/2406.07496"
+        }
+      ],
       "source_url": "reports/awesome-lists/awesome_prompt.md",
       "target_url": "https://github.com/zou-group/textgrad",
       "github_stars": null
@@ -6336,18 +6360,29 @@
       "freshness_signal": "762 stars, 93 forks; 12 commits",
       "related_topics": [],
       "entity_key": "prompt|opro",
-      "corroboration_count": 1,
+      "corroboration_count": 2,
       "discovery": {
         "first_seen_at": "2026-07-07",
-        "last_corroborated_at": "2026-07-07",
+        "last_corroborated_at": "2026-07-14",
         "found_via": [
           {
             "hit_id": "unknown",
             "platform": "custom"
+          },
+          {
+            "hit_id": "unknown",
+            "platform": "web"
           }
         ]
       },
-      "conflicting_evidence_log": [],
+      "conflicting_evidence_log": [
+        {
+          "noted_at": "2026-07-14",
+          "field": "target_url",
+          "existing": "https://github.com/google-deepmind/opro",
+          "incoming": "https://arxiv.org/abs/2309.03409"
+        }
+      ],
       "source_url": "reports/awesome-lists/awesome_prompt.md",
       "target_url": "https://github.com/google-deepmind/opro",
       "github_stars": null
@@ -6855,11 +6890,15 @@
       "freshness_signal": "unknown",
       "related_topics": [],
       "entity_key": "prompt|promptimize ai",
-      "corroboration_count": 1,
+      "corroboration_count": 2,
       "discovery": {
         "first_seen_at": "2026-07-07",
-        "last_corroborated_at": "2026-07-07",
+        "last_corroborated_at": "2026-07-14",
         "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          },
           {
             "hit_id": "unknown",
             "platform": "web"
@@ -6996,11 +7035,61 @@
         "agent"
       ],
       "entity_key": "prompt|gepa",
-      "corroboration_count": 1,
+      "corroboration_count": 2,
       "discovery": {
         "first_seen_at": "2026-07-07",
-        "last_corroborated_at": "2026-07-07",
+        "last_corroborated_at": "2026-07-14",
         "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          },
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      },
+      "conflicting_evidence_log": [
+        {
+          "noted_at": "2026-07-14",
+          "field": "entity_type",
+          "existing": "technique",
+          "incoming": "library"
+        },
+        {
+          "noted_at": "2026-07-14",
+          "field": "target_url",
+          "existing": "https://arxiv.org/abs/2507.19457",
+          "incoming": "https://github.com/gepa-ai/gepa"
+        }
+      ],
+      "source_url": "https://arxiv.org/abs/2507.19457",
+      "target_url": "https://arxiv.org/abs/2507.19457",
+      "github_stars": 5633
+    },
+    {
+      "entity_id": "ent-2026-0026",
+      "topic": "prompt",
+      "entity_type": "tool",
+      "name": "LangSmith",
+      "description": "Verified from the LangSmith product page: LangChain's agent & LLM observability platform for tracing, debugging, evaluating, and managing prompts across LLM applications in development and production.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "LangChain",
+      "freshness_signal": "unknown",
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "prompt|langsmith",
+      "corroboration_count": 2,
+      "discovery": {
+        "first_seen_at": "2026-07-07",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "hit-smith.langchain.com",
+            "platform": "web"
+          },
           {
             "hit_id": "unknown",
             "platform": "web"
@@ -7008,37 +7097,8 @@
         ]
       },
       "conflicting_evidence_log": [],
-      "source_url": "https://arxiv.org/abs/2507.19457",
-      "target_url": "https://arxiv.org/abs/2507.19457",
-      "github_stars": null
-    },
-    {
-      "entity_id": "ent-2026-0026",
-      "topic": "prompt",
-      "entity_type": "tool",
-      "name": "LangSmith",
-      "description": "LangChain's platform for tracing, evaluating, and managing prompts in LLM applications.",
-      "description_source": "snippet-only",
-      "maintainer_or_vendor": "LangChain",
-      "freshness_signal": "unknown",
-      "related_topics": [
-        "agent"
-      ],
-      "entity_key": "prompt|langsmith",
-      "corroboration_count": 1,
-      "discovery": {
-        "first_seen_at": "2026-07-07",
-        "last_corroborated_at": "2026-07-07",
-        "found_via": [
-          {
-            "hit_id": "hit-smith.langchain.com",
-            "platform": "web"
-          }
-        ]
-      },
-      "conflicting_evidence_log": [],
       "source_url": "https://smith.langchain.com/",
-      "target_url": "unknown",
+      "target_url": "https://www.langchain.com/langsmith",
       "github_stars": null
     },
     {
@@ -18068,6 +18128,908 @@
         "last_corroborated_at": "2026-07-13",
         "found_via": [
           {}
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3074",
+      "topic": "prompt",
+      "entity_type": "tool",
+      "name": "Lakera",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://lakera.ai/",
+      "description": "Verified from lakera.ai: an AI-native security platform that protects generative-AI apps and agents from prompt injection, data leakage, and jailbreaks via real-time runtime detection.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Lakera Inc (Check Point Software)",
+      "freshness_signal": "site current as of 2026 (©2026 Check Point)",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "prompt|lakera",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3075",
+      "topic": "prompt",
+      "entity_type": "tool",
+      "name": "Purple Llama",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://github.com/meta-llama/PurpleLlama",
+      "description": "Verified from the repo: Meta's umbrella project of open tools and evals (e.g. CyberSecEval, input/output safeguards) for building responsibly with generative-AI models, including prompt-injection tests.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Meta",
+      "freshness_signal": "last commit 2026-07-01",
+      "github_stars": 4278,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "prompt|purple llama",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3076",
+      "topic": "prompt",
+      "entity_type": "tool",
+      "name": "AgentSeal",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://github.com/getagentseal/agentseal",
+      "description": "Verified from the repo: a security toolkit that scans AI-agent and system-prompt configurations against 225+ adversarial attack probes and detects poisoned MCP server tools.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "getagentseal",
+      "freshness_signal": "latest release v0.8.0 (2026-03-25); last commit 2026-06-11",
+      "github_stars": 326,
+      "related_topics": [
+        "agent",
+        "mcp"
+      ],
+      "entity_key": "prompt|agentseal",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3077",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "The Prompt Report",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2406.06608",
+      "description": "Verified from the arXiv abstract: a systematic survey of prompt engineering establishing a vocabulary and comprehensive taxonomy of prompting techniques with best practices for developers and end-users.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2024-06-06",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|the prompt report",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3078",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "A Systematic Survey of Prompt Engineering in LLMs",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2402.07927",
+      "description": "Verified from the arXiv abstract: a structured survey of prompt-engineering advancements categorized by application area, covering methodologies, models, datasets, and limitations.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2024-02-05",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|a systematic survey of prompt engineering in llms",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3079",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "Survey of Prompt Engineering Methods in NLP Tasks",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2407.12994",
+      "description": "Verified from the arXiv abstract: a survey analyzing 39 prompt-engineering methods across 29 NLP tasks, organized by task type with dataset performance.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2024-07-17",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|survey of prompt engineering methods in nlp tasks",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3080",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "A Survey of Automatic Prompt Engineering",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2502.11560",
+      "description": "Verified from the arXiv abstract: the first comprehensive survey of automated prompt engineering through a unified optimization-theoretic lens across text, vision, and multimodal domains.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2025-02-17",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|a survey of automatic prompt engineering",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3081",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "Chain-of-Thought Prompting",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2201.11903",
+      "description": "Verified from the arXiv abstract: introduces chain-of-thought prompting, generating a series of intermediate reasoning steps via few-shot exemplars to improve LLM reasoning.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2022-01-28 (rev 2023-01-10)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|chain-of-thought prompting",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3082",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "Tree of Thoughts",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2305.10601",
+      "description": "Verified from the arXiv abstract: introduces Tree of Thoughts (ToT), enabling exploration and backtracking over intermediate reasoning 'thoughts' for deliberate problem solving.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2023-05-17 (rev 2023-12-03)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|tree of thoughts",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3083",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "Graph of Thoughts",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2308.09687",
+      "description": "Verified from the arXiv abstract: introduces Graph of Thoughts (GoT), modeling LLM-generated information as an arbitrary graph to combine reasoning steps more flexibly than CoT/ToT.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2023-08-18 (rev 2024-02-06)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|graph of thoughts",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3084",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "ReAct",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2210.03629",
+      "description": "Verified from the arXiv abstract: introduces ReAct, interleaving reasoning traces and task-specific actions so reasoning guides tool use while actions gather external information.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2022-10-06",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "prompt|react",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3085",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "Self-Consistency",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2203.11171",
+      "description": "Verified from the arXiv abstract: a decoding strategy that samples diverse reasoning paths and selects the most consistent answer to improve chain-of-thought reliability.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2022-03-21 (rev 2023-03-07)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|self-consistency",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3086",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "Zero-shot-CoT (Large Language Models are Zero-Shot Reasoners)",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2205.11916",
+      "description": "Verified from the arXiv abstract: shows that appending 'Let's think step by step' elicits zero-shot chain-of-thought reasoning, sharply improving LLM performance on reasoning tasks.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2022-05-24",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|zero-shot-cot (large language models are zero-shot reasoners)",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3087",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "Automatic Prompt Engineer (APE)",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2211.01910",
+      "description": "Verified from the arXiv abstract: Automatic Prompt Engineer treats the instruction as a program, using an LLM to propose and automatically select optimal instruction candidates.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2022-11-03",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|automatic prompt engineer (ape)",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3088",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "AutoPrompt",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2010.15980",
+      "description": "Verified from the arXiv abstract: an automated gradient-guided search that generates discrete prompts to elicit task performance from masked language models without additional training.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2020-10-29 (rev 2020-11-07)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|autoprompt",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3089",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "A Prompt Pattern Catalog to Enhance Prompt Engineering",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2302.11382",
+      "description": "Verified from the arXiv abstract: a catalog of reusable prompt-engineering patterns (analogous to software design patterns) for solving common problems when conversing with LLMs.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2023-02-21",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|a prompt pattern catalog to enhance prompt engineering",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3090",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "EvoPrompt",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2309.08532",
+      "description": "Verified from the arXiv abstract: a framework that couples LLMs with evolutionary algorithms to iteratively evolve and optimize a population of prompts.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2023-09-15 (rev 2025-05-01)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|evoprompt",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3091",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "MIPRO",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2406.11695",
+      "description": "Verified from the arXiv abstract: an algorithm that optimizes multi-stage LM programs by jointly tuning free-form instructions and few-shot demonstrations without module-level labels or gradients.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2024-06-17",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|mipro",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3095",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "The Instruction Hierarchy",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2404.13208",
+      "description": "Verified from the arXiv abstract: proposes an instruction hierarchy and training method that teaches LLMs to prioritize privileged instructions and ignore lower-priority ones to resist prompt injection.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2024-04-19",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|the instruction hierarchy",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3096",
+      "topic": "prompt",
+      "entity_type": "other",
+      "name": "Formalizing and Benchmarking Prompt Injection Attacks and Defenses",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://arxiv.org/abs/2310.12815",
+      "description": "Verified from the arXiv abstract: a framework formalizing prompt-injection attacks plus a systematic benchmark of 5 attacks and 10 defenses across 10 LLMs and 7 tasks.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "arXiv submitted 2023-10-19 (rev 2025-11-12)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|formalizing and benchmarking prompt injection attacks and defenses",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3097",
+      "topic": "prompt",
+      "entity_type": "dataset",
+      "name": "P3 (Public Pool of Prompts)",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://huggingface.co/datasets/bigscience/P3",
+      "description": "Verified from the HuggingFace dataset card: Public Pool of Prompts, ~2,000 prompt templates covering 270+ English NLP datasets/tasks for prompted training.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "BigScience Workshop",
+      "freshness_signal": "released 2021-10 (arXiv 2110.08207)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|p3 (public pool of prompts)",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3098",
+      "topic": "prompt",
+      "entity_type": "dataset",
+      "name": "System Prompts Dataset",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "unknown",
+      "description": "Collection of 944 system-prompt templates for LLM applications.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "unknown",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|system prompts dataset",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3099",
+      "topic": "prompt",
+      "entity_type": "dataset",
+      "name": "Midjourney Prompts Dataset",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://huggingface.co/datasets/succinctly/midjourney-prompts",
+      "description": "Verified from the HuggingFace dataset card: text prompts issued by Midjourney users, extracted from Discord and curated to the natural-language prompts only.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Succinctly AI",
+      "freshness_signal": "last updated 2022-08-20",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|midjourney prompts dataset",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3100",
+      "topic": "prompt",
+      "entity_type": "other",
+      "name": "SafetyPrompts.com",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://safetyprompts.com/",
+      "description": "Verified from safetyprompts.com: a catalogue of open datasets for LLM safety categorizing 149 datasets across broad/narrow safety, value alignment, bias, and specialized groups.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Paul Röttger et al.",
+      "freshness_signal": "no longer actively updated as of May 2025; 149 datasets as of 2025-04-04",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|safetyprompts.com",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3101",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "Prompt Engineering Specialization (Vanderbilt)",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://www.coursera.org/specializations/prompt-engineering",
+      "description": "Verified from Coursera: Vanderbilt University's three-course specialization teaching prompt-engineering techniques for generative-AI tools like ChatGPT.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Vanderbilt University",
+      "freshness_signal": "active as of 2026 (138k+ enrolled)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|prompt engineering specialization (vanderbilt)",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3102",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "Google Prompting Essentials",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://grow.google/prompting-essentials/",
+      "description": "Verified from grow.google: Google's practical prompting/AI course (now part of the Google AI Professional Certificate) teaching hands-on prompt design across real workplace tasks.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Google",
+      "freshness_signal": "active as of 2026 (promo terms expire 2027-01-01)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|google prompting essentials",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3103",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "OpenAI GPT-4.1 Prompting Guide",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "unknown",
+      "description": "OpenAI cookbook guide on structured, agent-like prompt design for GPT-4.1.",
+      "description_source": "snippet-only",
+      "maintainer_or_vendor": "OpenAI",
+      "freshness_signal": "unknown",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|openai gpt-4.1 prompting guide",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3104",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "Anthropic Claude 4 Prompt Engineering Best Practices",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices",
+      "description": "Verified from Anthropic docs: official prompt-engineering best-practices guide for Claude's latest models, covering clarity, examples, XML structuring, extended thinking, and agentic systems.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Anthropic",
+      "freshness_signal": "covers Claude's latest models incl. Opus 4.8 (2026)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|anthropic claude 4 prompt engineering best practices",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3105",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "Anthropic: Effective Context Engineering for AI Agents",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents",
+      "description": "Verified from anthropic.com: an engineering essay framing context engineering as an evolution of prompt engineering — curating and maintaining the optimal set of tokens across agent interactions.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Anthropic",
+      "freshness_signal": "published 2025-09-29",
+      "github_stars": null,
+      "related_topics": [
+        "agent"
+      ],
+      "entity_key": "prompt|anthropic: effective context engineering for ai agents",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3106",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "Vibe Engineering",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://www.manning.com/books/vibe-engineering",
+      "description": "Verified from Manning: a book by Tomasz Lelek and Artur Skowroński on best practices, mistakes, and tradeoffs across the AI-assisted software-development pipeline.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Manning Publications",
+      "freshness_signal": "MEAP, 8/10 chapters as of 2026-06; full release Fall 2026 (est.)",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|vibe engineering",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3107",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "DigitalOcean Prompt Engineering Best Practices",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://www.digitalocean.com/resources/articles/prompt-engineering-best-practices",
+      "description": "Verified from DigitalOcean: a guide covering eight prompting techniques (zero-shot to reflection) and ten best practices for crafting effective LLM prompts.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "DigitalOcean",
+      "freshness_signal": "last updated 2025-12-19",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|digitalocean prompt engineering best practices",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3108",
+      "topic": "prompt",
+      "entity_type": "technique",
+      "name": "Many-Shot Jailbreaking",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://www.anthropic.com/research/many-shot-jailbreaking",
+      "description": "Verified from anthropic.com: research describing many-shot jailbreaking, where many fake dialogue examples in a long-context prompt override a model's safety training.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Anthropic",
+      "freshness_signal": "published 2024-04-02",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|many-shot jailbreaking",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
+        ]
+      }
+    },
+    {
+      "entity_id": "ent-2026-3109",
+      "topic": "prompt",
+      "entity_type": "guide",
+      "name": "DALL·E 2 Prompt Book",
+      "source_url": "https://github.com/promptslab/Awesome-Prompt-Engineering",
+      "target_url": "https://dallery.gallery/the-dalle-2-prompt-book",
+      "description": "Verified from dallery.gallery: Guy Parsons' free 82-page e-book on DALL·E 2 prompting, covering aesthetics, photography/art styles, prompt engineering, and image-editing techniques.",
+      "description_source": "verified",
+      "maintainer_or_vendor": "Guy Parsons",
+      "freshness_signal": "published 2022-07-13",
+      "github_stars": null,
+      "related_topics": [],
+      "entity_key": "prompt|dall·e 2 prompt book",
+      "corroboration_count": 1,
+      "conflicting_evidence_log": [],
+      "discovery": {
+        "first_seen_at": "2026-07-14",
+        "last_corroborated_at": "2026-07-14",
+        "found_via": [
+          {
+            "hit_id": "unknown",
+            "platform": "web"
+          }
         ]
       }
     }
