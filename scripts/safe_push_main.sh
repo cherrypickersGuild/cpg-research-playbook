@@ -23,7 +23,22 @@ if ! git merge-base --is-ancestor origin/main main; then
 fi
 
 echo "== whitespace/conflict check origin/main..main =="
-git diff --check origin/main..main
+# Preserved raw harvest artifacts (state/artifacts/*/_raw_*) are captured
+# VERBATIM from upstream sources (e.g. an awesome-list README) and may contain
+# source-significant trailing whitespace. They are therefore EXEMPT from the
+# trailing-whitespace portion of this check ONLY — via a tightly scoped
+# pathspec, never a repo-wide file-type exception. Every ordinary file (source,
+# scripts, registries, docs, and NON-raw artifacts) is still fully checked by
+# the git diff --check below, and the exempted raw artifacts are still scanned
+# for leftover merge-conflict markers immediately after, so real corruption can
+# never slip through.
+RAW_ARTIFACT_PATHSPEC=':(exclude,glob)state/artifacts/*/_raw_*'
+git diff --check origin/main..main -- . "$RAW_ARTIFACT_PATHSPEC"
+if git diff origin/main..main -- ':(glob)state/artifacts/*/_raw_*' \
+     | grep -nE '^\+(<{7}|>{7})' >/dev/null; then
+  echo "safe_push_main.sh: leftover merge-conflict marker in a preserved raw artifact — stop." >&2
+  exit 5
+fi
 
 echo "== commits to push (origin/main..main) =="
 git log --oneline origin/main..main
