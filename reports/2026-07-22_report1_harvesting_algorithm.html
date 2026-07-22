@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Report #1 — Knowledge Crawling &amp; Harvesting Algorithm (as-built)</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:52px 0 8px;font-weight:650}
+  .h2sub{font-size:20px;color:var(--ink);letter-spacing:-.015em;margin:0 0 18px;font-weight:650}
+  h3{font-size:15.5px;margin:24px 0 6px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.9em;background:var(--chip);color:var(--chip-ink);padding:1px 5px;border-radius:4px}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 6px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:32px;line-height:1.13;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:16px;color:var(--muted);max-width:68ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:7px}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+  .card.warn{border-left:3px solid var(--warn)}
+  .card.bad{border-left:3px solid var(--bad)}
+  .card.good{border-left:3px solid var(--good)}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:12px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:inherit}
+
+  .chip{display:inline-block;font-family:var(--mono);font-size:11.5px;background:var(--chip);color:var(--chip-ink);border-radius:20px;padding:2px 10px;margin:0 5px 5px 0}
+  .bar{height:8px;border-radius:4px;background:var(--chip);overflow:hidden;min-width:110px}
+  .bar>i{display:block;height:100%;background:var(--accent);border-radius:4px}
+  .stage{display:grid;grid-template-columns:34px 1fr;gap:14px;margin:0 0 4px}
+  .stage .no{font-family:var(--mono);font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:8px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:600}
+  .stage .bd{padding-bottom:14px;border-bottom:1px solid var(--hair)}
+  .stage:last-child .bd{border-bottom:none}
+  .stage h3{margin:2px 0 4px}
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="head-in">
+  <div class="eyebrow">REPORT #1 · 2026-07-22 · axCaseResearch4</div>
+  <h1>Knowledge crawling &amp; harvesting — the algorithm as actually built</h1>
+  <p class="lede">A ground-truth description of the entity-harvest pipeline in this repository: what each stage does, which files it reads and writes, how termination and dedup are decided, and what the run logs say it cost. This is the <em>before</em> picture — the baseline that Report&nbsp;#2 measures the parallel rework against.</p>
+  <div class="meta">
+    <span><b>Scope</b> scripts/harvest_*.sh · scripts/merge_*.sh · scripts/github_meta.py · state/</span>
+    <span><b>Evidence</b> 22 timing logs, 1&nbsp;161 registry entities, 1&nbsp;132 ledger rows</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n">1&nbsp;161</div><div class="l">entities catalogued<br>(975 verified)</div></div>
+    <div class="kpi"><div class="n">24.2&nbsp;h</div><div class="l">logged wall-clock,<br>all runs, strictly serial</div></div>
+    <div class="kpi"><div class="n">~18&nbsp;min</div><div class="l">median cost of<br>one harvest loop</div></div>
+    <div class="kpi"><div class="n">1</div><div class="l">shared registry file —<br>one writer at a time</div></div>
+  </div>
+</div></header>
+
+<h2>1 · Shape</h2>
+<div class="h2sub">Two harvesters, one shared state directory</div>
+<p>Everything runs out of <code>state/</code>. Two independent harvest lanes feed it, and a thin orchestrator sequences them:</p>
+<pre><code>scripts/harvest_all.sh          orchestrator — agent → mcp → prompt → skill → ax_cases
+   ├─ scripts/harvest_entities.sh &lt;topic&gt; [target]     4 entity topics
+   │     └─ scripts/merge_entity_registry.sh  →  state/entity_registry.json
+   └─ scripts/harvest_ax_cases.sh [target]
+         └─ scripts/merge_ax_case_harvest_registry.sh → state/ax_case_harvest_registry.json</code></pre>
+<p>The orchestrator owns ordering, skipping and an honest pass/fail summary. It deliberately runs <strong>no</strong> stage in the background — the header comment states it outright: <em>&ldquo;Sequential and bounded: each stage runs to completion before the next starts (no <code>&amp;</code>, no parallelism)&rdquo;</em>. That is the constraint this report exists to characterise.</p>
+
+<h2>2 · The loop</h2>
+<div class="h2sub">One topic, one iteration, six steps</div>
+<p><code>harvest_entities.sh &lt;topic&gt; &lt;target&gt;</code> closes the gap between the current verified count and the target by repeating a bounded loop. <code>target</code> is a <em>final total</em>, not an amount to add, so an interrupted run resumes naturally from the merged registry count.</p>
+
+<div class="stage"><div class="no">1</div><div class="bd">
+  <h3>Candidate sourcing</h3>
+  <p>A <code>claude -p</code> call with <code>Read, WebSearch, WebFetch</code> reads two seeds — the topic&rsquo;s awesome-list report at <code>reports/awesome-lists/awesome_&lt;topic&gt;.md</code> (plus the raw upstream READMEs it cites, to get past that report&rsquo;s ~40-row cap) and the search-hit shard <code>state/search_hits_&lt;topic&gt;.json</code>. It returns at most <code>BATCH_SIZE</code> (40) candidates as <code>{hits:[{source_url,target_url,title,snippet,domain}]}</code>.</p>
+  <p>Three exclusion sets are pushed into the prompt: URLs already <code>entity_extracted:true</code> in the ledger, URLs in this run&rsquo;s attempted-set, and any <code>target_url</code> already held by an entity in the registry. The last one is what stops the same entity being re-catalogued through a different citing page.</p>
+</div></div>
+
+<div class="stage"><div class="no">2</div><div class="bd">
+  <h3>Attempted-set + ledger seed</h3>
+  <p>Every <code>source_url</code> sent this loop is unioned into <code>state/harvest_&lt;topic&gt;_attempted.json</code> <em>before</em> the verdict is known — so a rejected candidate is never re-selected later in the same run. A ledger row is then seeded for each new URL in <code>state/visited_url_ledger.json</code>, because the patch in step 5 can only update rows that already exist (<code>unique_by</code> keeps first occurrence).</p>
+  <p>The ledger dedup key is <code>source_url</code>, not <code>target_url</code>: the ledger&rsquo;s job is &ldquo;don&rsquo;t re-fetch this citing page&rdquo;. Same-entity dedup is a different guarantee, handled by <code>entity_key</code> at merge time.</p>
+</div></div>
+
+<div class="stage"><div class="no">3</div><div class="bd">
+  <h3>Deterministic GitHub metadata prefetch</h3>
+  <p><code>scripts/github_meta.py prefetch</code> resolves star counts and canonical URLs for candidate GitHub repos <em>outside</em> the model, against a persistent cross-run cache (<code>state/github_meta_cache.json</code>, 7-day freshness) and writes a sanitized per-loop file the extractor reads instead of calling <code>api.github.com</code> itself. Authenticated when a token is in the environment; strictly bounded (<code>max_unauth=50</code>) when not. Non-fatal by design — on any failure the extractor still receives valid JSON and <code>github_stars</code> falls back to <code>null</code>.</p>
+</div></div>
+
+<div class="stage"><div class="no">4</div><div class="bd">
+  <h3>Stage 1G extraction</h3>
+  <p>A second <code>claude -p</code> call, system-prompted from <code>agents/stage1/1G_entity_extractor.md</code>, with only <code>Read, WebFetch</code>. For each candidate it verifies or resolves <code>target_url</code> and pulls the description <strong>from that page specifically</strong>. <code>description_source:"verified"</code> means exactly that; a description from the citing page or the search snippet alone is <code>snippet-only</code>, and <code>target_url</code> that cannot be resolved is written as the literal string <code>"unknown"</code>. Stars are looked up only in the local metadata file, never estimated from a page.</p>
+</div></div>
+
+<div class="stage"><div class="no">5</div><div class="bd">
+  <h3>Ledger patch + registry merge</h3>
+  <p>The batch&rsquo;s <code>ledger_patch[]</code> folds <code>entity_extracted</code>/<code>entity_ids</code> back onto the seeded rows, then <code>merge_entity_registry.sh</code> folds the entities into the master registry. Dedup key is <code>entity_key</code> = <code>topic | lowercase(name)</code>. On a hit: bump <code>corroboration_count</code>, keep the richer description (verified never downgrades to snippet-only), union <code>related_topics</code>, one-way-backfill <code>target_url</code> and <code>maintainer_or_vendor</code> out of <code>"unknown"</code>, and take the newest non-null star count. A conflicting <code>entity_type</code> or a real-vs-real <code>target_url</code> mismatch is <strong>never</strong> silently overwritten — it lands in <code>conflicting_evidence_log[]</code> for a human. 26 entities currently carry one.</p>
+</div></div>
+
+<div class="stage"><div class="no">6</div><div class="bd">
+  <h3>Progress accounting and termination</h3>
+  <p>The loop re-tallies verified entities for this topic and stops on the first of: target reached · <code>MAX_LOOPS</code> (40) · <code>NO_PROGRESS_THRESHOLD</code> (3) consecutive loops that added nothing. A single barren batch never halts a run, because the attempted-set grew and the next loop sources different URLs.</p>
+</div></div>
+
+<h2>3 · Integrity rules the code actually enforces</h2>
+<div class="h2sub">Structural, not just prompt-level</div>
+<div class="scroll"><table>
+<thead><tr><th>Rule</th><th>Where it is enforced</th><th>Kind</th></tr></thead>
+<tbody>
+<tr><td>Descriptions come from the entity&rsquo;s own page, never the citing page</td><td>1G system prompt + <code>description_source</code> field; merge refuses to downgrade verified→snippet-only</td><td>prompt + structural</td></tr>
+<tr><td>Stars only from a confirmed GitHub repo root</td><td><code>merge_entity_registry.sh</code> forces <code>github_stars:null</code> when <code>target_url</code> fails the repo-root regex, whatever the batch supplied</td><td>structural</td></tr>
+<tr><td>Awesome-list URLs are seeds, never <code>target_url</code></td><td>candidate prompt, explicit prohibition</td><td>prompt</td></tr>
+<tr><td>Unknowns written as <code>"unknown"</code>, never invented</td><td>both prompts; 137 of 1&nbsp;161 entities carry <code>target_url:"unknown"</code>, so it is being honoured</td><td>prompt + observed</td></tr>
+<tr><td>A malformed model batch can never reach the ledger or registry</td><td><code>clean()</code> JSON recovery + <code>valid_1g_batch()</code> shape guard; failure re-enters the retry path</td><td>structural</td></tr>
+<tr><td>A failed merge leaves the master untouched</td><td>jq wrapped in <code>if</code> so failure propagates instead of being swallowed by <code>&amp;&amp;</code> under <code>set -e</code></td><td>structural</td></tr>
+<tr><td>Registry metadata can never drift</td><td>whole <code>metadata</code> block recomputed from the final entity list on every merge</td><td>structural</td></tr>
+<tr><td>A child exiting 0 does not mean &ldquo;target reached&rdquo;</td><td><code>harvest_all.sh</code> ignores exit codes and re-runs <code>--check</code> after every stage</td><td>structural</td></tr>
+</tbody></table></div>
+
+<h2>4 · What it has produced</h2>
+<div class="h2sub">Current corpus, by topic</div>
+<div class="scroll"><table>
+<thead><tr><th>Topic</th><th class="num">Total</th><th class="num">Verified</th><th class="num">Snippet-only</th><th>Verified share</th><th class="num">Loops logged</th><th class="num">Model-seconds</th></tr></thead>
+<tbody>
+<tr><td>agent</td><td class="num">293</td><td class="num">244</td><td class="num">49</td><td><div class="bar"><i style="width:83%"></i></div></td><td class="num">21</td><td class="num">19 760</td></tr>
+<tr><td>mcp</td><td class="num">305</td><td class="num">280</td><td class="num">25</td><td><div class="bar"><i style="width:92%"></i></div></td><td class="num">10</td><td class="num">11 726</td></tr>
+<tr><td>prompt</td><td class="num">204</td><td class="num">180</td><td class="num">24</td><td><div class="bar"><i style="width:88%"></i></div></td><td class="num">19</td><td class="num">16 623</td></tr>
+<tr><td>skill</td><td class="num">359</td><td class="num">271</td><td class="num">88</td><td><div class="bar"><i style="width:75%"></i></div></td><td class="num">12</td><td class="num">13 303</td></tr>
+<tr><td>ax_cases</td><td class="num">231</td><td class="num">—</td><td class="num">—</td><td><div class="bar"><i style="width:0%"></i></div></td><td class="num">28</td><td class="num">29 408</td></tr>
+</tbody></table></div>
+<p>Also on file: 245 entities carry a live star count, 1&nbsp;024 have a resolved <code>target_url</code>, and the visited-URL ledger holds 1&nbsp;132 rows of which 1&nbsp;075 are marked <code>entity_extracted</code>.</p>
+
+<h2>5 · Cost profile</h2>
+<div class="h2sub">Where the 24 hours went</div>
+<p>Reconstructed from the 22 structured JSONL timing logs in <code>state/logs/</code>:</p>
+<div class="scroll"><table>
+<thead><tr><th>Step</th><th class="num">Calls</th><th class="num">Median</th><th class="num">p90</th><th class="num">Max</th></tr></thead>
+<tbody>
+<tr><td>candidate_batch (<code>claude -p</code>)</td><td class="num">101</td><td class="num">576 s</td><td class="num">873 s</td><td class="num">1 124 s</td></tr>
+<tr><td>1g_extraction (<code>claude -p</code>)</td><td class="num">46</td><td class="num">522 s</td><td class="num">1 042 s</td><td class="num">1 363 s</td></tr>
+<tr><td>case_extraction (AX lane)</td><td class="num">22</td><td class="num">495 s</td><td class="num">763 s</td><td class="num">1 059 s</td></tr>
+<tr><td>github_meta_prefetch</td><td class="num">15</td><td class="num">2 s</td><td class="num">7 s</td><td class="num">11 s</td></tr>
+<tr><td>merge_entity_registry</td><td class="num">53</td><td class="num">2 s</td><td class="num">3 s</td><td class="num">4 s</td></tr>
+</tbody></table></div>
+<div class="card">
+  <p style="margin:0"><strong>The shape of the problem.</strong> A loop costs roughly <span class="tnum">576 + 522 + 2 + 2 ≈ 1 100 s (~18 min)</span>, and <strong>99.6 % of that is network-and-model latency</strong> — two blocking <code>claude -p</code> calls. The two steps that actually touch shared state, the prefetch and the merge, take about <strong>4 seconds combined</strong>. The lanes are therefore almost perfectly I/O-bound and almost entirely independent: exactly the workload that should run concurrently, and the one place the current design forbids it.</p>
+</div>
+
+<h2>6 · Why it cannot currently run in parallel</h2>
+<div class="h2sub">Four shared files, three distinct failure modes</div>
+<p>Nothing in the loop is CPU-bound and nothing about topic <em>agent</em> depends on topic <em>mcp</em>. The blocker is purely that four lanes would write the same files. Every shared write is a read-whole-file → transform → <code>mv</code> cycle with no lock:</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Shared file</th><th>Written by</th><th>Pattern</th><th>Failure under concurrency</th></tr></thead>
+<tbody>
+<tr><td><code>state/entity_registry.json</code></td><td>every lane, once per loop</td><td><code>jq</code> reads the whole master, writes <code>mktemp</code>, <code>mv</code></td><td><b style="color:var(--bad)">Lost update.</b> Lane B reads the master before lane A&rsquo;s <code>mv</code> lands, then overwrites it. A&rsquo;s whole batch disappears — silently, since the merge reports success and recomputes metadata that looks self-consistent.</td></tr>
+<tr><td><code>state/visited_url_ledger.json</code></td><td>every lane, <em>twice</em> per loop</td><td>same, but through a <strong>fixed</strong> temp path <code>$LEDGER.tmp</code></td><td><b style="color:var(--bad)">File corruption.</b> Two lanes write the same <code>.tmp</code> at once → interleaved bytes → invalid JSON, then <code>mv</code> installs it. The <code>jq empty</code> guard catches it and aborts, so the run dies rather than silently corrupting — but it dies. Plus the same lost-update race.</td></tr>
+<tr><td><code>state/github_meta_cache.json</code></td><td>every lane, once per loop</td><td>Python load → <code>atomic_write_json</code></td><td><b style="color:var(--warn)">Cache-entry loss.</b> The write itself is atomic, so no corruption — but a concurrent lane&rsquo;s newly cached repos are dropped, causing avoidable re-fetches against the 60/hr unauthenticated limit.</td></tr>
+<tr><td><code>tally()</code> reads of the registry</td><td>every lane, several times per loop</td><td><code>jq</code> read during another lane&rsquo;s <code>mv</code></td><td><b style="color:var(--warn)">Transient mis-read</b> of progress/termination state — can trip a false <code>no_progress</code> increment.</td></tr>
+</tbody></table></div>
+
+<div class="card bad">
+<p style="margin:0 0 8px"><strong>The lost update is the dangerous one.</strong> Corruption is loud: <code>jq empty</code> fires and the script exits 1. A lost update is silent — the registry stays valid JSON, the metadata block is recomputed and internally consistent, the merge prints <code>[merge] folded N entities</code>, and the only trace is that a batch that cost ~18 minutes of model time is simply not there. Given that the merge window is ~2 s inside an ~1 100 s loop, the per-loop collision probability with four lanes is low but nonzero, and it compounds: over a 40-loop, 4-lane run it is a near-certainty that at least one batch is silently discarded.</p>
+</div>
+
+<h3>Not blockers</h3>
+<p>For completeness, these are already correctly sharded and need no change: <code>state/harvest_&lt;topic&gt;_{hits,entity_batch,attempted,raw_*,github_meta}.json</code>, <code>state/harvest_&lt;topic&gt;.err</code>, and the timing log <code>state/logs/harvest_&lt;run_id&gt;.jsonl</code> (run-id includes the PID). The per-topic seed inputs — the awesome-list report and <code>search_hits_&lt;topic&gt;.json</code> — are read-only.</p>
+
+<h2>7 · Secondary constraint</h2>
+<div class="h2sub">Session rate limits</div>
+<p>Beyond file contention there is a known external ceiling, recorded from earlier runs: long or concurrent harvests can hit the Claude session rate limit, at which point <em>all</em> in-flight lanes fail their candidate-batch step at the same moment. Any parallel design therefore needs per-lane failure isolation — one lane hitting the ceiling must not take down the run — and a staggered start rather than four simultaneous cold launches.</p>
+
+<h2>8 · Conclusion</h2>
+<div class="card good">
+<p style="margin:0"><strong>The algorithm is sound; the storage layout is the bottleneck.</strong> Verification discipline, dedup, conflict logging, bounded termination and honest completion checks are all enforced structurally and are working — 975 verified entities with 26 flagged conflicts and zero invented fields. What does not scale is that four independent, 99.6 %-I/O-bound lanes are serialised behind a single mutable registry file and a single mutable ledger. The fix is not to add locking around a shared file but to give each lane a file it exclusively owns, and to reduce the union to a derived artefact produced by a single writer after the lanes finish. That is the subject of Report&nbsp;#2.</p>
+</div>
+
+<div class="foot">
+  Report #1 · generated 2026-07-22 · axCaseResearch4 · sources: <code>scripts/harvest_entities.sh</code>, <code>scripts/harvest_all.sh</code>, <code>scripts/merge_entity_registry.sh</code>, <code>scripts/github_meta.py</code>, <code>state/entity_registry.json</code>, <code>state/visited_url_ledger.json</code>, <code>state/logs/*.jsonl</code> (22 files).
+</div>
+</div>
+</body>
+</html>

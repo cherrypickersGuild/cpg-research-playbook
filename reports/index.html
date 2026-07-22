@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>axCaseResearch4 — Analysis Index</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent);text-decoration:none}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:48px 0 16px;font-weight:650}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.92em}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:31px;line-height:1.14;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:66ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n small{font-size:13px;color:var(--muted);font-weight:500}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:8px}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  /* through-line callout */
+  .through{background:var(--surface);border:1px solid var(--accent-line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-top:26px}
+  .through .t{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .through h3{font-size:19px;margin:0 0 10px;letter-spacing:-.015em}
+  .through p{margin:0 0 10px;color:var(--muted);font-size:14.5px}
+  .through p:last-child{margin-bottom:0}
+  .through b{color:var(--ink)}
+
+  /* report cards */
+  .cards{display:grid;gap:12px}
+  .rc{display:block;background:var(--surface);border:1px solid var(--hair);border-radius:13px;padding:18px 20px;box-shadow:var(--shadow);transition:border-color .12s,transform .12s}
+  .rc:hover{border-color:var(--accent-line);transform:translateY(-1px)}
+  .rc .top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .rc .ttl{font-size:16.5px;font-weight:650;letter-spacing:-.01em;color:var(--ink)}
+  .rc .fn{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+  .rc .hook{margin:7px 0 0;font-size:14px;color:var(--muted)}
+  .rc .tags{margin-top:11px;display:flex;gap:6px;flex-wrap:wrap}
+  .chip{display:inline-block;background:var(--chip);color:var(--chip-ink);border-radius:999px;padding:2px 9px;font-size:11px;font-family:var(--mono);white-space:nowrap}
+  .chip.good{background:rgba(18,128,92,.12);color:var(--good)}
+  .chip.warn{background:rgba(165,98,15,.12);color:var(--warn)}
+  .chip.bad{background:rgba(179,38,30,.12);color:var(--bad)}
+  .num-badge{width:26px;height:26px;flex:none;border-radius:7px;background:var(--accent-soft);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-right:10px;vertical-align:middle}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .tblscroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.c{text-align:center}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  ol{margin:0 0 14px;padding-left:20px}li{margin-bottom:8px;font-size:14.5px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--surface);border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;box-shadow:var(--shadow);z-index:9}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<button class="toggle" id="tt">◐ theme</button>
+<div class="wrap">
+
+<header><div class="head-in">
+  <div class="eyebrow">ANALYSIS INDEX · axCaseResearch4 / cpg-research-playbook</div>
+  <h1>Seven reports, one through-line</h1>
+  <p class="lede">A hub for the analyses produced on this repository — the two-repo comparison, four deep-dives into how the pipeline actually behaves, then the parallel-harvest rework. Every report is standalone, self-contained, and theme-aware. Click any card to open it.</p>
+  <div class="meta">
+    <span>REPORTS <b>7</b></span>
+    <span>SPAN <b>2026-07-15 → 2026-07-18</b></span>
+    <span>REPO HEAD <b>a6f28e3</b></span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n tnum">1,161</div><div class="k">entities catalogued</div></div>
+    <div class="kpi"><div class="n tnum">231</div><div class="k">AX cases harvested</div></div>
+    <div class="kpi"><div class="n tnum" style="color:var(--bad)">0</div><div class="k">Tier-A sources · gate-passed</div></div>
+    <div class="kpi"><div class="n tnum" style="color:var(--warn)">3 of 4</div><div class="k">pipeline stages never ran</div></div>
+  </div>
+</div></header>
+
+<div class="through">
+  <div class="t">The through-line</div>
+  <h3>The discovery net worked. Every quality mechanism the project designed lives in stages that never ran.</h3>
+  <p>The repository split into two halves. The <b>discovery half</b> — harvesting entities and cases — is complete, tested, and pushed: 1,161 entities and 231 cases on disk. The <b>vetting half</b> — validate, select, build the deck — exists only as specs, three of them uncommitted on one machine, and none of it has ever executed.</p>
+  <p>Every problem the deep-dives surface traces back to that one fact. Low-tier sources, the misleading "verified" label, the empty gate, the missing star counts — each is a place where a designed safeguard was written but never switched on. The fix across the board is not more harvesting; it is turning on the vetting that already exists, after pointing it at better inputs.</p>
+</div>
+
+<h2>Part 1 · The two-repo question (#1–#3)</h2>
+<div class="cards">
+  <a class="rc" href="2026-07-17_local_work_axCaseResearch4.html">
+    <div class="top"><span class="ttl"><span class="num-badge">1</span>Local work — everything built so far</span><span class="fn">2026-07-17_local_work_axCaseResearch4.html</span></div>
+    <p class="hook">The full state of the working copy: 41 commits over 20 days, the four-stage pipeline, the seven-agent discovery harness, the corpus it produced, and the gated safety layer.</p>
+    <div class="tags"><span class="chip">local copy</span><span class="chip">git history</span><span class="chip">corpus stats</span></div>
+  </a>
+  <a class="rc" href="2026-07-17_published_cpg_research_playbook.html">
+    <div class="top"><span class="ttl"><span class="num-badge">2</span>Published repository — what GitHub shows</span><span class="fn">2026-07-17_published_cpg_research_playbook.html</span></div>
+    <p class="hook">The public surface of <code>cherrypickersGuild/cpg-research-playbook</code>: 40 commits, 92 files, the committed corpus — and the three pipeline stages <code>CLAUDE.md</code> promises but does not contain.</p>
+    <div class="tags"><span class="chip">published</span><span class="chip warn">3 stages absent</span></div>
+  </a>
+  <a class="rc" href="2026-07-17_local_vs_published_comparison.html">
+    <div class="top"><span class="ttl"><span class="num-badge">3</span>Local vs published — one repo, not two</span><span class="fn">2026-07-17_local_vs_published_comparison.html</span></div>
+    <p class="hook">They are the same repository at the same HEAD. The real gap is 63 untracked files and one unpushed commit — including the 32 KB of deck-building specs that exist nowhere but this machine.</p>
+    <div class="tags"><span class="chip good">main in sync</span><span class="chip bad">32 KB unbacked</span></div>
+  </a>
+</div>
+
+<h2>Part 2 · Deep-dive analyses (#4–#7)</h2>
+<div class="cards">
+  <a class="rc" href="2026-07-17_validator_necessity_analysis.html">
+    <div class="top"><span class="ttl"><span class="num-badge">4</span>Is the validator redundant?</span><span class="fn">2026-07-17_validator_necessity_analysis.html</span></div>
+    <p class="hook">No — against the harvest path that actually ran, it is the <em>only</em> validation there is. "208 verified" means only "208 pages loaded"; by the project's own rule, zero of 231 KPIs are verified.</p>
+    <div class="tags"><span class="chip">verification overlap</span><span class="chip bad">"verified" ≠ verified</span></div>
+  </a>
+  <a class="rc" href="2026-07-18_low_tier_sources_root_cause.html">
+    <div class="top"><span class="ttl"><span class="num-badge">5</span>Why the corpus is all low-tier sources</span><span class="fn">2026-07-18_low_tier_sources_root_cause.html</span></div>
+    <p class="hook">The seed is a directory of company blogs, the harvest never mentions "tier," and the resolver strips out what independence there was — the HBR hits in the seeds were dropped before the registry.</p>
+    <div class="tags"><span class="chip bad">0 Tier-A</span><span class="chip">seed ceiling</span><span class="chip">fix: seeds first</span></div>
+  </a>
+  <a class="rc" href="2026-07-17_github_stars_collection_issue.html">
+    <div class="top"><span class="ttl"><span class="num-badge">6</span>GitHub stars — the collection bug</span><span class="fn">2026-07-17_github_stars_collection_issue.html</span></div>
+    <p class="hook">Not the rate limit. An ordering bug: the fetcher runs before the URLs it needs exist, so it makes zero requests and returns nothing. 307 of 549 eligible repos have no star count.</p>
+    <div class="tags"><span class="chip bad">ordering bug</span><span class="chip">backfill, no re-harvest</span></div>
+  </a>
+  <a class="rc" href="2026-07-15_harvest_session_report.html">
+    <div class="top"><span class="ttl"><span class="num-badge">7</span>Harvest session report (pre-existing)</span><span class="fn">2026-07-15_harvest_session_report.html</span></div>
+    <p class="hook">The original run report for the 2026-07-15 harvest — the session that drove all four topic registries to target and the AX cases from 0 to 208. Context for everything above.</p>
+    <div class="tags"><span class="chip">run report</span><span class="chip">in-repo since a6f28e3</span></div>
+  </a>
+</div>
+
+<h2>Part 3 · Parallel harvest rework (#8–#9)</h2>
+<div class="cards">
+  <a class="rc" href="2026-07-22_report1_harvesting_algorithm.html">
+    <div class="top"><span class="ttl"><span class="num-badge">8</span>The harvesting algorithm, as built</span><span class="fn">2026-07-22_report1_harvesting_algorithm.html</span></div>
+    <p class="hook">Ground truth on the crawl/harvest loop and its cost: ~18 min per loop, 99.6 % of it model latency, 24.2 h logged — all of it serial, because four independent lanes shared one mutable registry file.</p>
+    <div class="tags"><span class="chip">baseline</span><span class="chip bad">silent lost update</span><span class="chip">24.2 h serial</span></div>
+  </a>
+  <a class="rc" href="2026-07-22_report2_parallel_harvest.html">
+    <div class="top"><span class="ttl"><span class="num-badge">9</span>Parallel harvesting: rework &amp; findings</span><span class="fn">2026-07-22_report2_parallel_harvest.html</span></div>
+    <p class="hook">Shard per topic, derive the union. Concurrent merges keep 48/48 rows where the old layout silently lost a third to two-thirds; 2.90× measured speedup; three defects found by running it end to end, all fixed.</p>
+    <div class="tags"><span class="chip good">48/48 preserved</span><span class="chip">2.90× faster</span><span class="chip">62 assertions</span></div>
+  </a>
+</div>
+
+<h2>How the findings connect</h2>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th style="width:30%">Finding</th><th>Root fact it traces to</th><th class="c">Report</th></tr></thead>
+  <tbody>
+    <tr><td>0 Tier-A sources; all single-sourced</td><td>Seeds are company-blog directories; the tier-enforcing stages never ran</td><td class="c">#5</td></tr>
+    <tr><td>"208 verified" overstates quality</td><td><code>verified</code> means "fetched," not "confirmed"; no validation ran to recompute it</td><td class="c">#4, #5</td></tr>
+    <tr><td>0 cases <code>gate_passed</code>; <code>ax_case_db.json</code> empty</td><td>Stage 2 spec is uncommitted and has never executed</td><td class="c">#3, #4</td></tr>
+    <tr><td>56% of eligible repos missing stars</td><td>Fetch ordered before URL resolution; a designed non-fatal path went silent</td><td class="c">#6</td></tr>
+    <tr><td>Deck-building work exists nowhere but this laptop</td><td>Stages 2–4 written but never committed</td><td class="c">#1, #3</td></tr>
+  </tbody>
+</table></div></div>
+
+<h2>What to do next — in priority order</h2>
+<ol>
+  <li><b>Commit the four deck-stage files</b> (<code>02_validator.md</code>, <code>03_selector.md</code>, <code>04_slide_builder.md</code>, <code>.claude/agents/ax-validator.md</code>). 32 KB of finished design with no backup — the cheapest work to protect is currently the least protected. <span class="chip">report 1, 3</span></li>
+  <li><b>Fix the AX seeds and invert their priority</b> before any re-harvest — add Tier-A-first sources so the pipeline can source what the validator will later demand. <span class="chip">report 5</span></li>
+  <li><b>Backfill GitHub stars from the registry</b> — no re-harvest needed; the merge already takes the latest non-null measurement. Set <code>GITHUB_TOKEN</code> first. <span class="chip">report 6</span></li>
+  <li><b>Bridge harvest → pipeline and run the validator</b> — feed the 231 cases into <code>ax_case_db.json</code>, then let Stage 2 gate them. Expect heavy, correct attrition. <span class="chip">report 3, 4, 5</span></li>
+  <li><b>Rename <code>verification_status</code></b> to something that says what it means (<code>fetch_status: fetched | snippet_only</code>). <span class="chip">report 4, 5</span></li>
+</ol>
+
+<div class="note">All seven reports are self-contained HTML with no external dependencies — open any file directly in a browser, or from the repo root run <code>start reports\index.html</code>. Nothing here was committed, pushed, or published externally; these are local working files.</div>
+
+<footer>Index generated 2026-07-18 · links are relative to reports/ · reports 1–6 authored 2026-07-17/18; report 7 pre-existing in the repo · no repository files were modified to build this index</footer>
+</div>
+<script>
+  const r=document.documentElement,b=document.getElementById('tt');
+  b.onclick=()=>{const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+</script>
+</body>
+</html>

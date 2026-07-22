@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Report #2 — Parallel Harvesting: Sharded Rework, Tests &amp; Findings</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:52px 0 8px;font-weight:650}
+  .h2sub{font-size:20px;color:var(--ink);letter-spacing:-.015em;margin:0 0 18px;font-weight:650}
+  h3{font-size:15.5px;margin:24px 0 6px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.9em;background:var(--chip);color:var(--chip-ink);padding:1px 5px;border-radius:4px}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 6px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:32px;line-height:1.13;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:16px;color:var(--muted);max-width:68ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:7px}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+  .card.warn{border-left:3px solid var(--warn)}
+  .card.bad{border-left:3px solid var(--bad)}
+  .card.good{border-left:3px solid var(--good)}
+  .card h3{margin-top:0}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .ok{color:var(--good);font-weight:600}
+  .no{color:var(--bad);font-weight:600}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:12px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:inherit}
+
+  .bars{display:grid;gap:10px;margin:16px 0}
+  .barrow{display:grid;grid-template-columns:150px 1fr 92px;gap:12px;align-items:center;font-size:13px}
+  .bar{height:22px;border-radius:5px;background:var(--chip);overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:5px}
+  .bar>i.g{background:var(--good)} .bar>i.r{background:var(--bad)} .bar>i.a{background:var(--accent)}
+  .barval{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;text-align:right}
+  .find{display:grid;grid-template-columns:30px 1fr;gap:14px;margin-bottom:6px}
+  .find .no2{font-family:var(--mono);font-size:12px;color:var(--bad);background:rgba(179,38,30,.10);border-radius:8px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:600}
+  .find .bd{padding-bottom:16px;border-bottom:1px solid var(--hair)}
+  .find:last-child .bd{border-bottom:none}
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="head-in">
+  <div class="eyebrow">REPORT #2 · 2026-07-22 · axCaseResearch4</div>
+  <h1>Parallel harvesting: the sharded rework, what testing found, and what it cost</h1>
+  <p class="lede">Report&nbsp;#1 established that four independent, 99.6&nbsp;%-I/O-bound harvest lanes were serialised behind one mutable registry file. This is what was changed, the evidence that it works, and the three defects that only appeared once the thing was actually run concurrently.</p>
+  <div class="meta">
+    <span><b>Scope</b> 5 new files (1&nbsp;224 lines) · 9 modified (+313 / −34)</span>
+    <span><b>Verification</b> 62 new assertions · full suite PASS · 2 end-to-end runs</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n">48/48</div><div class="l">rows survive concurrent merge<br>(was 16–24 of 48)</div></div>
+    <div class="kpi"><div class="n">2.90×</div><div class="l">measured wall-clock speedup,<br>identical output</div></div>
+    <div class="kpi"><div class="n">3</div><div class="l">defects found by testing<br>and fixed</div></div>
+    <div class="kpi"><div class="n">1&nbsp;161</div><div class="l">entities re-sharded,<br>zero records altered</div></div>
+  </div>
+</div></header>
+
+<h2>1 · The change in one line</h2>
+<div class="h2sub">Give every lane a file it owns; make the union derived</div>
+<p>No locking was bolted onto the shared registry. The shared registry stopped being shared:</p>
+<pre><code>BEFORE                                  AFTER
+  agent ─┐                                agent  → BuildingBlocks_Agent.json  ─┐
+  mcp   ─┼→ entity_registry.json          mcp    → BuildingBlocks_MCP.json    ─┤
+  prompt─┤   (4 concurrent writers,       prompt → BuildingBlocks_Prompt.json ─┼→ merge_building_blocks.sh
+  skill ─┘    read-modify-write)          skill  → BuildingBlocks_Skill.json  ─┘      (1 writer, after)
+                                                                                            ↓
+                                                                              entity_registry.json (derived)</code></pre>
+<p>Shards use the <strong>identical schema</strong> to the union, so every existing <code>jq</code> query, the <code>--check</code> tally and the merge logic work on them unchanged. The same treatment was applied to the other two contended files: the visited-URL ledger and the GitHub-metadata cache are now per-topic as well.</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Contention point from Report #1</th><th>Resolution</th></tr></thead>
+<tbody>
+<tr><td>Lost update on <code>entity_registry.json</code></td><td>Per-topic shard; union derived by a single writer under <code>state/locks/entity_registry.lock</code></td></tr>
+<tr><td>Corruption via the fixed temp path <code>$LEDGER.tmp</code></td><td>Ledger sharded per topic <em>and</em> every temp path switched to <code>mktemp</code> — an un-collidable name in the same directory, so the rename stays atomic</td></tr>
+<tr><td>Cache-entry loss in <code>github_meta_cache.json</code></td><td>Cache sharded per topic (cross-topic repo overlap is ~0, so the reuse lost is negligible)</td></tr>
+<tr><td>Transient mis-read of the registry by <code>tally()</code></td><td>Gone by construction — nothing else writes a lane's shard while it reads it</td></tr>
+<tr><td><em>New risk:</em> two sessions harvesting the same topic</td><td>Advisory per-topic lane lock (<code>mkdir</code>-based, portable, stale-breaking) held for the whole run</td></tr>
+</tbody></table></div>
+
+<h2>2 · What was built</h2>
+<div class="h2sub">Five new files, nine touched</div>
+<div class="scroll"><table>
+<thead><tr><th>File</th><th class="num">Lines</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>scripts/harvest_parallel.sh</code></td><td class="num">222</td><td><b>New.</b> Concurrent orchestrator. Pre-checks and skips complete lanes, launches the rest <code>STAGGER_SEC</code> apart, waits <em>per-PID</em> so one lane dying never aborts the others, folds, then re-checks every lane honestly.</td></tr>
+<tr><td><code>scripts/merge_building_blocks.sh</code></td><td class="num">287</td><td><b>New.</b> Single-writer fold: shards → union, plus ledger shards → union ledger. Idempotent; preserves union rows no shard carries.</td></tr>
+<tr><td><code>scripts/split_entity_registry.py</code></td><td class="num">192</td><td><b>New.</b> Derives the four shards from the union. Refuses to clobber a shard that has drifted ahead (unmerged harvest work).</td></tr>
+<tr><td><code>scripts/lib/lockdir.sh</code></td><td class="num">104</td><td><b>New.</b> <code>mkdir</code>-based advisory lock — atomic on every filesystem here, unlike <code>flock</code> which is absent on Windows/Git&nbsp;Bash. Breaks provably-dead or &gt;2 h-old locks; never breaks a live one.</td></tr>
+<tr><td><code>tests/test_parallel_harvest.sh</code></td><td class="num">419</td><td><b>New.</b> 62 offline assertions across 8 groups.</td></tr>
+<tr><td><code>scripts/harvest_entities.sh</code></td><td class="num">+194</td><td>Sharded paths, shard/ledger bootstrap, lane lock, unique temps, topic guard.</td></tr>
+<tr><td><code>scripts/harvest_all.sh</code> · <code>harvest_ax_cases.sh</code> · <code>validate_task.sh</code> · 2 tests · <code>.gitignore</code> · <code>CLAUDE.md</code> · docs</td><td class="num">+119</td><td>Fold step, AX lane lock, test wiring, ignore rules, documentation.</td></tr>
+</tbody></table></div>
+<p>The sequential <code>harvest_all.sh</code> still works and is still supported; it simply folds at the end too. Running one <code>harvest_entities.sh &lt;topic&gt;</code> per session is now also a first-class way to parallelise, with no orchestrator at all.</p>
+
+<h2>3 · Findings from testing</h2>
+<div class="h2sub">Three defects, all surfaced by actually running it</div>
+<p>The unit assertions passed on the first attempt. Every one of these was found by the two <em>end-to-end</em> runs, which is the argument for doing them.</p>
+
+<div class="find"><div class="no2">1</div><div class="bd">
+  <h3>The fold hard-failed when no shard existed — breaking a previously-passing run</h3>
+  <p><span class="no">Symptom:</span> <code>test_harvest_targets.sh</code> started failing its &ldquo;all stages already at target → exit&nbsp;0&rdquo; assertion. When every lane is already complete, no lane runs, so no lane bootstraps a shard — and the new fold step then aborted, turning a clean run into <code>exit 1</code>.</p>
+  <p><span class="ok">Fix:</span> a missing shard is now <strong>derived from the union</strong> rather than treated as an error. This is provably lossless — the shard is filled with exactly the union's rows for that topic, so folding it back is a no-op — which is why it is safe as the default. <code>--strict</code> preserves the demand that every shard already exist. A shard that <em>exists</em> but is malformed is still always fatal: that cannot be repaired without guessing.</p>
+</div></div>
+
+<div class="find"><div class="no2">2</div><div class="bd">
+  <h3>One stray row poisoned a shard and blocked the fold for <em>all four</em> topics</h3>
+  <p><span class="no">Symptom:</span> in the first end-to-end run every shard ended up with one entity carrying a topic other than its own, and the fold refused all four:</p>
+  <pre><code>ERROR: shard BuildingBlocks_Agent.json contains 1 entity whose topic != 'agent'
+ERROR: shard BuildingBlocks_MCP.json   contains 1 entity whose topic != 'mcp'
+…
+RESULT: union fold FAILED — harvest INCOMPLETE.</code></pre>
+  <p>The trigger was a flaw in the test's mock, but it exposed a real gap: <code>merge_entity_registry.sh</code> merges whatever topic it is handed. Harmless when one registry held every topic — <strong>structurally unsafe</strong> now that shard disjointness is the invariant the whole parallel design rests on. A single mislabelled row from the extractor would take down the union rebuild for every topic at once.</p>
+  <p><span class="ok">Fix:</span> a topic guard in <code>harvest_entities.sh</code>, applied at the lane boundary <em>before</em> the merge, where the correct topic is known for certain. Foreign-topic rows are dropped and named on stderr. Dropping rather than relabelling is deliberate: a row the extractor labelled <code>mcp</code> while working the agent seed list is a row whose <em>content</em> is suspect, not just its label — silently rewriting <code>.topic</code> would launder a model error into the corpus. Covered by 5 new assertions (FT1–FT5).</p>
+</div></div>
+
+<div class="find"><div class="no2">3</div><div class="bd">
+  <h3>Two existing tests encoded the old single-file layout</h3>
+  <p><span class="no">Symptom:</span> <code>test_harvest_1g_shape_guard.sh</code> counted merged entities in <code>entity_registry.json</code>, and <code>test_harvest_github_cache.sh</code> seeded <code>github_meta_cache.json</code> — both paths a lane no longer writes.</p>
+  <p><span class="ok">Fix:</span> repointed at the shard and the per-topic cache. Genuine test updates, not assertions weakened: each still asserts exactly what it did, against the file that now holds the answer.</p>
+</div></div>
+
+<div class="card warn">
+  <p style="margin:0"><strong>One non-finding, recorded for honesty.</strong> An early run showed each lane adding only one entity and then stopping. That was the test mock keying its counter off the candidate-sourcing call, which is the one call whose prompt does not name the topic — so all four lanes shared a counter and the extractor re-emitted the same record every loop. The harvester's no-progress detection, dedup and honest &ldquo;target NOT met&rdquo; stop all behaved correctly throughout. Mock fixed; no product change.</p>
+</div>
+
+<h2>4 · Evidence</h2>
+<div class="h2sub">The concurrency regression, measured</div>
+<p>The decisive test drives four lanes merging 12 distinct entities each, concurrently — once into per-topic shards, once into a single shared file (the pre-fix layout), same workload both times:</p>
+<div class="bars">
+  <div class="barrow"><span>Sharded (after)</span><div class="bar"><i class="g" style="width:100%"></i></div><span class="barval">48 / 48</span></div>
+  <div class="barrow"><span>Shared file, run 1</span><div class="bar"><i class="r" style="width:33.3%"></i></div><span class="barval">16 / 48</span></div>
+  <div class="barrow"><span>Shared file, run 2</span><div class="bar"><i class="r" style="width:50%"></i></div><span class="barval">24 / 48</span></div>
+</div>
+<p><strong>Between half and two-thirds of all merged rows vanished</strong> under the old layout — silently, with every merge reporting success and the file remaining valid JSON throughout. That is the lost-update failure mode from Report&nbsp;#1 §6, reproduced on demand. The shard run lost nothing, in either execution.</p>
+<p>The assertion in the suite is one-directional: <em>sharded is never worse than shared</em>. It never demands that the shared run must lose rows — a race that happens not to collide on a fast machine would make that a flaky test.</p>
+
+<h3>End-to-end orchestrator run</h3>
+<p>Four real lanes, mock extractor, isolated state directory, target 6 verified per topic:</p>
+<pre><code>[parallel] 4 lane(s) running concurrently; waiting…
+  entity:agent  COMPLETE  (current=6 target=6 remaining=0 status=complete)
+  entity:mcp    COMPLETE  (current=6 target=6 remaining=0 status=complete)
+  entity:prompt COMPLETE  (current=6 target=6 remaining=0 status=complete)
+  entity:skill  COMPLETE  (current=6 target=6 remaining=0 status=complete)
+RESULT: all requested lanes at/above target and folded into the union — harvest COMPLETE.
+
+union entities : 24     by topic: {"agent":6,"mcp":6,"prompt":6,"skill":6}
+dup entity_keys: 0      shards=24 union=24  → no entity lost or duplicated in the fold
+ledger rows    : 17 (was 1)   old ledger row preserved: 1
+lane timing    : all four start 02:50:15 — OVERLAP CONFIRMED</code></pre>
+
+<h3>Wall-clock, identical fixture and workload</h3>
+<div class="bars">
+  <div class="barrow"><span>Sequential</span><div class="bar"><i class="a" style="width:100%"></i></div><span class="barval">415 s</span></div>
+  <div class="barrow"><span>Parallel</span><div class="bar"><i class="g" style="width:34.5%"></i></div><span class="barval">143 s</span></div>
+</div>
+<p><strong>2.90×</strong>, with both runs producing byte-equivalent corpora (32 entities in shards, 32 in the union, valid JSON, both <code>exit 0</code>). The ceiling is 4× and the shortfall is the expected one: lanes finish at different times, so the run is bounded by the slowest, not the average.</p>
+<p>Projecting onto the real per-topic costs recorded in Report&nbsp;#1 (agent 19&nbsp;760&nbsp;s · mcp 11&nbsp;726&nbsp;s · prompt 16&nbsp;623&nbsp;s · skill 13&nbsp;303&nbsp;s): sequential is their <em>sum</em>, 61&nbsp;412&nbsp;s ≈ <b>17.1&nbsp;h</b>; parallel is their <em>max</em>, 19&nbsp;760&nbsp;s ≈ <b>5.5&nbsp;h</b> — about <b>3.1×</b>. Adding the AX lane (29&nbsp;408&nbsp;s) makes it 25.2&nbsp;h → 8.2&nbsp;h.</p>
+
+<h2>5 · Verification status</h2>
+<div class="scroll"><table>
+<thead><tr><th>Check</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td><code>tests/test_parallel_harvest.sh</code> — 62 assertions, 8 groups</td><td class="ok">62 passed, 0 failed</td></tr>
+<tr><td><code>bash scripts/validate_task.sh --all</code> — every isolation-safe regression</td><td class="ok">PASS</td></tr>
+<tr><td>Production <code>state/</code> untouched during all validation</td><td class="ok">content hashes + porcelain identical</td></tr>
+<tr><td>End-to-end <code>harvest_parallel.sh</code>, 4 concurrent lanes</td><td class="ok">exit 0, all lanes at target</td></tr>
+<tr><td>Fold conservation: Σ shards == union, no duplicate keys</td><td class="ok">24 == 24, 0 dups</td></tr>
+<tr><td>Sequential <code>harvest_all.sh</code> still correct after the change</td><td class="ok">exit 0, 32 == 32</td></tr>
+</tbody></table></div>
+<p>What the 62 assertions cover: exact partitioning of the union · drift protection · lock mutual-exclusion, release, stale-breaking and <em>never</em> breaking a live lock · <code>--check</code> reading the shard, falling back to the union, and creating nothing · same-topic lanes refused while different topics run freely · lock released when a lane is killed · the concurrency regression · the topic guard · fold correctness, idempotence, orphan preservation, ledger latching, and the two conditions that must still abort a fold.</p>
+
+<h2>6 · Production migration</h2>
+<div class="h2sub">1 161 entities re-sharded, verified lossless</div>
+<div class="scroll"><table>
+<thead><tr><th>Shard</th><th class="num">Entities</th><th class="num">Verified</th><th class="num">Snippet-only</th></tr></thead>
+<tbody>
+<tr><td><code>state/BuildingBlocks_Agent.json</code></td><td class="num">293</td><td class="num">244</td><td class="num">49</td></tr>
+<tr><td><code>state/BuildingBlocks_MCP.json</code></td><td class="num">305</td><td class="num">280</td><td class="num">25</td></tr>
+<tr><td><code>state/BuildingBlocks_Prompt.json</code></td><td class="num">204</td><td class="num">180</td><td class="num">24</td></tr>
+<tr><td><code>state/BuildingBlocks_Skill.json</code></td><td class="num">359</td><td class="num">271</td><td class="num">88</td></tr>
+<tr><td><b>Total</b></td><td class="num"><b>1 161</b></td><td class="num"><b>975</b></td><td class="num"><b>186</b></td></tr>
+</tbody></table></div>
+<p>Checked directly against the live registry, not assumed:</p>
+<pre><code>union entities   : 1161      shard entities : 1161
+key sets equal   : True      missing: 0   extra: 0
+records differing from the union : 0
+every shard single-topic, schema_version 2, metadata recomputed from its own rows</code></pre>
+<p>The round trip was then exercised on production data. Folding the untouched shards back reported <code>delta=+0</code> for all four topics, and an order-independent content fingerprint of <code>entity_registry.json</code> is <strong>unchanged</strong> (<code>8ce3e719bd6d357c</code>) against the committed version. The only difference in the file is that entities are now grouped by topic and <code>last_merged_at</code> is restamped — <b>no record was added, removed or modified</b>.</p>
+
+<h2>7 · How to run it</h2>
+<pre><code># concurrent, all lanes + AX, then one fold
+bash scripts/harvest_parallel.sh
+
+# a subset, or entity topics only
+bash scripts/harvest_parallel.sh --topics agent,mcp
+bash scripts/harvest_parallel.sh --entities-only
+bash scripts/harvest_parallel.sh --dry-run       # show the launch plan, run nothing
+
+# or one lane per session — the lane locks make this safe with no orchestrator
+bash scripts/harvest_entities.sh agent           # session A
+bash scripts/harvest_entities.sh mcp             # session B
+bash scripts/merge_building_blocks.sh            # once, when both are done</code></pre>
+<p>Per-lane console output lands in <code>state/logs/parallel_&lt;run_id&gt;/&lt;lane&gt;.log</code>; interleaving five lanes onto one terminal is unreadable. Lanes start 20 s apart by default — four cold model calls in the same instant is the shape most likely to trip the session rate limit, which fails every lane at once and would defeat the isolation this design exists for.</p>
+
+<h2>8 · Honest limits</h2>
+<div class="card">
+<ul style="margin:0">
+  <li><strong>The speedup is bounded by the slowest lane</strong>, not the average. If one topic has far more remaining work, parallelism buys correspondingly less.</li>
+  <li><strong>The session rate limit is untouched by this work.</strong> Four concurrent lanes consume quota four times faster. Staggered starts and per-lane failure isolation reduce the blast radius; they do not raise the ceiling. A lane that hits it fails alone, is reported <code>INCOMPLETE</code>, and the fold still runs — but it will still fail.</li>
+  <li><strong>Locks are advisory.</strong> They bind the scripts that call them, not a human running <code>jq &gt; file</code> by hand.</li>
+  <li><strong>Ledger shards are transient</strong> (gitignored). Crawl history survives only because the fold merges them back into the committed union ledger — so <em>run the fold</em>, or a lane's visited-URL knowledge is lost and pages get re-crawled next run. Both orchestrators do this automatically; a manual multi-session run must not skip it.</li>
+  <li><strong>The AX lane was already parallel-safe</strong> alongside the entity lanes — it touches neither the ledger nor the entity registry. It gained only a self-collision lock.</li>
+  <li><strong>Not verified against live model calls.</strong> Every run here used a deterministic mock. The concurrency, fold and locking guarantees are structural and fully exercised; real-world extraction quality under concurrent load is not something these runs can speak to.</li>
+</ul>
+</div>
+
+<h2>9 · Conclusion</h2>
+<div class="card good">
+<p style="margin:0">The bottleneck identified in Report&nbsp;#1 is removed, and removed by construction rather than by coordination: there is no lock protecting the entity registry during a harvest because no harvest lane writes it any more. Concurrent merges now preserve <span class="tnum">48/48</span> rows where the previous layout silently discarded a third to two-thirds of them, measured wall-clock falls <span class="tnum">2.90×</span> on identical work with identical output, and the 1&nbsp;161-entity production corpus migrated with zero records altered. Three defects surfaced during testing and all three are fixed and covered — two of them only became visible when the system was actually run end to end, which is the strongest argument in this report for having done so.</p>
+</div>
+
+<div class="foot">
+  Report #2 · generated 2026-07-22 · axCaseResearch4 · companion to <a href="2026-07-22_report1_harvesting_algorithm.html">Report&nbsp;#1</a>.
+  Evidence: <code>tests/test_parallel_harvest.sh</code> (62 assertions) · <code>scripts/validate_task.sh --all</code> · two end-to-end <code>harvest_parallel.sh</code> runs · a sequential-vs-parallel comparison on an identical fixture · direct verification of the production split and fold.
+</div>
+</div>
+</body>
+</html>
