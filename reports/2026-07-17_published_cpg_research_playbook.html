@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cpg-research-playbook — Published Repository Report</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:48px 0 16px;font-weight:650}
+  h3{font-size:16px;margin:0 0 4px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:64ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n small{font-size:14px;color:var(--muted);font-weight:500}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:8px}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card-pad{padding:18px 20px}
+  .tblscroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+  th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--hair)}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  .chip{display:inline-block;background:var(--chip);color:var(--chip-ink);border-radius:999px;padding:2px 9px;font-size:11.5px;font-family:var(--mono)}
+  .chip.good{background:rgba(18,128,92,.12);color:var(--good)}
+  .chip.warn{background:rgba(165,98,15,.12);color:var(--warn)}
+  .chip.bad{background:rgba(179,38,30,.12);color:var(--bad)}
+
+  .meter{height:9px;border-radius:5px;background:var(--chip);overflow:hidden;min-width:120px}
+  .meter i{display:block;height:100%;background:var(--accent);border-radius:5px}
+
+  /* tree */
+  .tree{font-family:var(--mono);font-size:13px;line-height:1.9;margin:0;white-space:pre;overflow-x:auto}
+  .tree .dir{color:var(--accent);font-weight:600}
+  .tree .cm{color:var(--muted)}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  .note.warn{border-left-color:var(--warn);background:rgba(165,98,15,.08)}
+  ul{margin:0 0 14px;padding-left:20px}li{margin-bottom:6px;font-size:14.5px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--surface);border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;box-shadow:var(--shadow);z-index:9}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<button class="toggle" id="tt">◐ theme</button>
+<div class="wrap">
+
+<header><div class="head-in">
+  <div class="eyebrow">REPORT 2 / 3 · PUBLISHED REPOSITORY</div>
+  <h1>cherrypickersGuild/cpg-research-playbook</h1>
+  <p class="lede">"Archiving multiple strategies and memory systems used for searching in the Cherry seeding stage." This is what the repository actually presents to anyone who opens it on GitHub — the published surface, distinct from any local working copy.</p>
+  <div class="meta">
+    <span>REMOTE <b>github.com/cherrypickersGuild/cpg-research-playbook</b></span>
+    <span>origin/main <b>a6f28e3</b></span>
+    <span>DEFAULT <b>main</b></span>
+    <span>VERIFIED <b>2026-07-17</b></span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n tnum">40</div><div class="k">commits on main</div></div>
+    <div class="kpi"><div class="n tnum">92</div><div class="k">files published</div></div>
+    <div class="kpi"><div class="n tnum">1</div><div class="k">branch (main)</div></div>
+    <div class="kpi"><div class="n tnum">3</div><div class="k">author identities</div></div>
+  </div>
+</div></header>
+
+<div class="note"><b>This repository is the origin of the local <code>axCaseResearch4</code> folder.</b> They are not two projects. <code>git remote -v</code> in <code>axCaseResearch4</code> points here, and both HEADs are the same commit — <code>a6f28e3</code>. Report 3 works out what that means and what still differs.</div>
+
+<h2>What a visitor sees</h2>
+<p>A seven-agent discovery pipeline for finding credible AI-transformation case studies and cataloging related entities (agents, MCP servers, prompts, skills), with the harvested state committed alongside the code. Language mix is Shell 74.9%, Python 18.2%, HTML 5.5%, PowerShell 1.4% — an operations harness, not an application.</p>
+
+<div class="card"><div class="card-pad"><div class="tree"><span class="dir">CLAUDE.md</span>                    <span class="cm">— pipeline contract; validation as a hard gate</span>
+<span class="dir">README.md</span>                    <span class="cm">— project entry point</span>
+<span class="dir">pipeline.config.sh</span>           <span class="cm">— run configuration</span>
+
+<span class="dir">agents/</span>                      <span class="cm">— 12 specs</span>
+  00_pipeline_overview.md
+  01_case_finder.md          <span class="cm">— Stage 1 of 4</span>
+  <span class="dir">stage1/</span>                    <span class="cm">— 1A…1G discovery agents + ax_case_harvest_extractor</span>
+
+<span class="dir">scripts/</span>                     <span class="cm">— 18 files: harvest, merge, discover, calibrate, safety</span>
+<span class="dir">state/</span>                       <span class="cm">— 18 files: registries, ledger, search hits</span>
+<span class="dir">tests/</span>                       <span class="cm">— 18 files: error propagation, guards, schema</span>
+<span class="dir">docs/</span>                        <span class="cm">— 8 files: seeding strategy, harvest workflows</span>
+<span class="dir">reports/</span>                     <span class="cm">— 8 files: run reports + awesome-list verifications</span>
+<span class="dir">schedule/</span>                    <span class="cm">— crontab + Windows Task Scheduler registration</span>
+<span class="dir">config/</span>                      <span class="cm">— output + registry templates</span>
+<span class="dir">.claude/</span>                     <span class="cm">— awesome-list-crawler agent, guard_command.py hook</span></div></div></div>
+
+<h2>Published history</h2>
+<p>Forty commits between <b>2026-06-26</b> and <b>2026-07-15</b>, authored almost entirely by one contributor under three git identities.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Identity</th><th class="num">Commits</th><th style="width:200px">Share</th></tr></thead>
+  <tbody>
+    <tr><td>cherrypickersGuild &lt;sjty97@gmail.com&gt;</td><td class="num">38</td><td><div class="meter"><i style="width:92.7%"></i></div></td></tr>
+    <tr><td>ShineYourL1ght</td><td class="num">2</td><td><div class="meter"><i style="width:4.9%"></i></div></td></tr>
+    <tr><td>SungJun Kim</td><td class="num">1</td><td><div class="meter"><i style="width:2.4%"></i></div></td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">The history reads in three movements: <b>specs first</b> (Jun 26–Jul 3), <b>harness and hardening</b> (Jul 6–Jul 11), <b>harvest at scale</b> (Jul 12–Jul 15). Roughly half the commits are harvest runs that carry their own before/after counts in the subject line — <code>"mcp verified 230->270"</code> — which makes the published history self-documenting about corpus growth.</p>
+
+<h2>The committed corpus</h2>
+<p>Unusually, the harvested data ships with the code. Anyone cloning gets the full corpus, not just the tooling to rebuild it.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>State file</th><th class="num">Size</th><th>Holds</th></tr></thead>
+  <tbody>
+    <tr><td><code>state/entity_registry.json</code></td><td class="num">1.3 MB</td><td>1,161 entities · 975 verified across agent/mcp/prompt/skill</td></tr>
+    <tr><td><code>state/visited_url_ledger.json</code></td><td class="num">532 KB</td><td>crawl memory — what has already been seen</td></tr>
+    <tr><td><code>state/ax_case_harvest_registry.json</code></td><td class="num">432 KB</td><td>231 AX cases · 208 verified</td></tr>
+    <tr><td><code>state/search_hits*.json</code></td><td class="num">216 KB</td><td>the Stage-1B search corpus (64 queries → 510 hits) + per-topic hits</td></tr>
+    <tr><td><code>state/source_registry.json</code></td><td class="num">4 KB</td><td>source tiering</td></tr>
+    <tr><td><code>state/ax_case_db.json</code></td><td class="num">1 KB</td><td><span class="chip bad">empty</span> <code>{"cases": []}</code> — the pipeline's own case DB</td></tr>
+  </tbody>
+</table></div></div>
+
+<div class="note warn"><b>What the published repo promises but does not contain.</b> <code>CLAUDE.md</code> — the first file a reader opens — declares a four-stage pipeline and states that "validation is a hard gate: never select or present a case that has not passed validation." It maps each stage to a file. But only stages 1 and 2's <i>overview</i> are published:
+<ul style="margin:10px 0 0">
+  <li><code>agents/01_case_finder.md</code> — <span class="chip good">published</span></li>
+  <li><code>agents/02_validator.md</code> — <span class="chip bad">absent</span></li>
+  <li><code>agents/03_selector.md</code> — <span class="chip bad">absent</span></li>
+  <li><code>agents/04_slide_builder.md</code> — <span class="chip bad">absent</span></li>
+  <li><code>.claude/agents/ax-validator.md</code> — <span class="chip bad">absent</span>, though <code>CLAUDE.md</code> tells the reader to use it by name</li>
+</ul>
+</div>
+
+<h2>Reproducibility for a fresh clone</h2>
+<p>What a new reader can and cannot do with only what is published:</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Task</th><th>Status</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Read the full discovery design</td><td><span class="chip good">works</span></td><td>1A–1G specs, seeding strategy, and harvest workflows are all committed</td></tr>
+    <tr><td>Re-run entity or AX harvesting</td><td><span class="chip good">works</span></td><td>scripts, config templates, and the visited-URL ledger are present</td></tr>
+    <tr><td>Use the harvested corpus</td><td><span class="chip good">works</span></td><td>1,161 entities and 231 cases ship in <code>state/</code></td></tr>
+    <tr><td>Run the test suite</td><td><span class="chip good">works</span></td><td>18 tests, offline by design</td></tr>
+    <tr><td>Validate cases through the gate</td><td><span class="chip bad">blocked</span></td><td><code>02_validator.md</code> and the <code>ax-validator</code> subagent are not published</td></tr>
+    <tr><td>Select cases / build the deck</td><td><span class="chip bad">blocked</span></td><td><code>03_selector.md</code> and <code>04_slide_builder.md</code> are not published</td></tr>
+    <tr><td>Follow <code>CLAUDE.md</code> end to end</td><td><span class="chip bad">blocked</span></td><td><code>run_pipeline.sh</code> is published, but three of the four stages it orchestrates are not</td></tr>
+  </tbody>
+</table></div></div>
+
+<h2>Assessment</h2>
+<p>As a <i>research playbook</i> — which is what the description claims — the published repository delivers: the strategies, the memory systems, the crawl harness, and the harvested corpus are all here, documented, and tested. That half is complete and someone else could genuinely pick it up.</p>
+<p>As an implementation of the pipeline <code>CLAUDE.md</code> describes, it is half-published. The discovery stages are in; the validation-and-deck stages are named, required, and missing. A reader following the repo's own front-page instructions hits a wall at stage 2.</p>
+
+<footer>Generated 2026-07-17 · verified against the live remote (<code>git ls-remote</code> + GitHub page fetch) and cross-checked against the local mirror at a6f28e3<br>Report 2 of 3 — see also: local-work report, and the local-vs-published comparison.</footer>
+</div>
+<script>
+  const r=document.documentElement,b=document.getElementById('tt');
+  b.onclick=()=>{const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+</script>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GitHub stars collection — problem, cause, solution</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:48px 0 16px;font-weight:650}
+  h3{font-size:16px;margin:0 0 4px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.92em}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:66ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .verdict{background:var(--surface);border:1px solid var(--accent-line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-top:26px}
+  .verdict .t{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .verdict h3{font-size:19px;margin:0 0 8px;letter-spacing:-.015em}
+  .verdict p{margin:0;color:var(--muted);font-size:14.5px}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n small{font-size:14px;color:var(--muted);font-weight:500}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:8px}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card-pad{padding:18px 20px}
+  .tblscroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:600px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  td.c,th.c{text-align:center}
+
+  .chip{display:inline-block;background:var(--chip);color:var(--chip-ink);border-radius:999px;padding:2px 9px;font-size:11.5px;font-family:var(--mono);white-space:nowrap}
+  .chip.good{background:rgba(18,128,92,.12);color:var(--good)}
+  .chip.warn{background:rgba(165,98,15,.12);color:var(--warn)}
+  .chip.bad{background:rgba(179,38,30,.12);color:var(--bad)}
+
+  .meter{height:9px;border-radius:5px;background:var(--chip);overflow:hidden;min-width:110px}
+  .meter i{display:block;height:100%;border-radius:5px;background:var(--accent)}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;margin:0 0 14px}
+  pre .hl{color:var(--bad);font-weight:700}
+  pre .ok{color:var(--good);font-weight:700}
+  pre .cm{color:var(--muted)}
+
+  /* pipeline flow */
+  .flow{display:grid;gap:10px;margin:14px 0}
+  .step{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .step.bad{border-color:rgba(179,38,30,.4);background:rgba(179,38,30,.05)}
+  .step .no{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step.bad .no{background:rgba(179,38,30,.14);color:var(--bad)}
+  .step .bd{font-size:14px}
+  .step .bd b{display:block;margin-bottom:2px}
+  .step .bd span{color:var(--muted);font-size:13.5px}
+
+  blockquote{margin:14px 0;padding:12px 16px;border-left:3px solid var(--accent-line);background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:14px}
+  blockquote cite{display:block;margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted);font-style:normal}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  .note.warn{border-left-color:var(--warn);background:rgba(165,98,15,.08)}
+  .note.bad{border-left-color:var(--bad);background:rgba(179,38,30,.07)}
+  ul{margin:0 0 14px;padding-left:20px}li{margin-bottom:7px;font-size:14.5px}
+  ol{margin:0 0 14px;padding-left:20px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--surface);border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;box-shadow:var(--shadow);z-index:9}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<button class="toggle" id="tt">◐ theme</button>
+<div class="wrap">
+
+<header><div class="head-in">
+  <div class="eyebrow">INCIDENT ANALYSIS · ENTITY REGISTRY</div>
+  <h1>GitHub stars: why 55% of eligible repos have none</h1>
+  <p class="lede">The registry holds 549 entities whose <code>target_url</code> is a GitHub repository. Only 242 carry a star count. The received explanation is "the unauthenticated 60/hour rate limit." The run artifacts on disk say otherwise — and the real cause is more interesting.</p>
+  <div class="meta">
+    <span>SUBJECT <b>scripts/github_meta.py · harvest_entities.sh</b></span>
+    <span>COMMITS <b>8e74412 → a3ff811 → 77c7f01</b></span>
+    <span>DATE <b>2026-07-17</b></span>
+  </div>
+
+  <div class="verdict">
+    <div class="t">Diagnosis</div>
+    <h3>Not a rate limit. An <em>ordering</em> bug: the fetcher runs before the URLs it needs exist.</h3>
+    <p>The prefetch reads <code>target_url</code> from the candidate batch — but at that moment most candidates carry the literal string <code>"unknown"</code>, because the pipeline deliberately defers URL resolution to the model in the <i>next</i> step. The fetcher finds no repositories, fetches nothing, and hands the model an empty file. The model then dutifully writes <code>github_stars: null</code>.</p>
+  </div>
+</div></header>
+
+<h2>1 · The problem, measured</h2>
+<div class="kpis" style="margin-top:0">
+  <div class="kpi"><div class="n tnum">549</div><div class="k">entities eligible (repo root)</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--good)">242</div><div class="k">have a star count</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">307</div><div class="k">eligible but blank</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">472</div><div class="k">repos the fetcher never saw</div></div>
+</div>
+<p style="margin-top:22px">Coverage is not merely low, it is <b>inverted against expectation</b>. The topics harvested <i>after</i> the fix landed have the worst coverage; <code>mcp</code>, harvested <i>before</i> it, has the best.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Topic</th><th class="num">Entities</th><th class="num">Repo-root (eligible)</th><th class="num">With stars</th><th class="num">Coverage</th><th style="width:130px">&nbsp;</th><th>Harvested under</th></tr></thead>
+  <tbody>
+    <tr><td>mcp</td><td class="num">305</td><td class="num">253</td><td class="num">142</td><td class="num">56.1%</td><td><div class="meter"><i style="width:56.1%"></i></div></td><td><span class="chip warn">old in-model path</span></td></tr>
+    <tr><td>skill</td><td class="num">359</td><td class="num">132</td><td class="num">56</td><td class="num">42.4%</td><td><div class="meter"><i style="width:42.4%"></i></div></td><td><span class="chip">new prefetch path</span></td></tr>
+    <tr><td>agent</td><td class="num">293</td><td class="num">112</td><td class="num">39</td><td class="num">34.8%</td><td><div class="meter"><i style="width:34.8%"></i></div></td><td><span class="chip">new prefetch path</span></td></tr>
+    <tr><td>prompt</td><td class="num">204</td><td class="num">52</td><td class="num">8</td><td class="num">15.4%</td><td><div class="meter"><i style="width:15.4%"></i></div></td><td><span class="chip">new prefetch path</span></td></tr>
+    <tr><td><b>Total</b></td><td class="num"><b>1,161</b></td><td class="num"><b>549</b></td><td class="num"><b>242</b></td><td class="num"><b>44.1%</b></td><td><div class="meter"><i style="width:44.1%"></i></div></td><td>—</td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">The blanks are not obscure projects. Missing star counts include <code>modelcontextprotocol/servers</code> and <code>jlowin/fastmcp</code> — two of the most-starred repositories in the entire MCP ecosystem. Any ranking, prioritisation, or "top N by popularity" cut over this registry is currently reading mostly nulls.</p>
+
+<h2>2 · What the run artifacts prove</h2>
+<p>Each harvest writes a sanitized metadata file for the model to read. Three survive on disk. They are the whole case.</p>
+
+<div class="card"><div class="card-pad">
+<div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px">state/harvest_agent_github_meta.json &nbsp;·&nbsp; 206 bytes &nbsp;·&nbsp; 2026-07-14</div>
+<pre>{
+  "generated_at": "2026-07-14T13:16:02Z",
+  "mode": "unauthenticated",
+  "rate_limit": { "limit": <span class="hl">null</span>, "remaining": <span class="hl">null</span>, "reset": <span class="hl">null</span> },   <span class="cm">&lt;- no API call was EVER made</span>
+  "rate_limited": <span class="ok">false</span>,                                        <span class="cm">&lt;- not rate limited</span>
+  "repos": <span class="hl">{}</span>                                              <span class="cm">&lt;- found zero repositories</span>
+}</pre>
+<p style="margin:0;font-size:13.5px;color:var(--muted)">The <code>prompt</code> run's file is byte-identical in shape (206 bytes, empty <code>repos</code>). The <code>skill</code> run's file is the only substantial one: 30 repos, 29 <code>ok</code>.</p>
+</div></div>
+
+<div class="note bad"><b>Read those three fields together.</b> <code>rate_limited: false</code> and every <code>rate_limit</code> number <code>null</code> means <b>the code never issued a single HTTP request</b> — a rate limit leaves fingerprints (<code>limit: 60</code>, a <code>remaining</code> count, a <code>reset</code> timestamp). There are none. The fetcher didn't fail, didn't get throttled, didn't time out. It looked at the candidate batch, found nothing that parsed as a GitHub repository URL, and correctly exited having done nothing. <b>The rate limit is not the cause. Zero work was attempted.</b></div>
+
+<h2>3 · The main reason — resolution happens after the fetch</h2>
+<p>The harvest loop runs three steps in this order. Step 1 emits URLs, step 2 fetches metadata for them, step 3 resolves the URLs. Steps 2 and 3 are the wrong way round.</p>
+
+<div class="flow">
+  <div class="step"><div class="no">1</div><div class="bd"><b>Candidate sourcing</b> <span class="mono" style="color:var(--muted)">— harvest_entities.sh:330</span>
+    <span>Asks the model for <code>source_url</code> + a best-effort <code>target_url</code>, and explicitly instructs: <i>"If you cannot confidently determine target_url, emit the literal string <code>"unknown"</code> rather than guessing — <b>Stage 1G will try to resolve it separately via WebFetch</b>."</i></span></div></div>
+
+  <div class="step bad"><div class="no">2</div><div class="bd"><b>GitHub prefetch</b> <span class="mono" style="color:var(--muted)">— harvest_entities.sh:425</span>
+    <span><code>github_meta.py prefetch --hits $BATCH_HITS</code> reads <code>target_url</code> from those hits and calls <code>parse_repo()</code> on each. <code>parse_repo("unknown")</code> → <code>None</code>. Every deferred candidate is silently skipped. <b>repos = [] → no requests → GH_META = <code>{"repos":{}}</code></b>.</span></div></div>
+
+  <div class="step bad"><div class="no">3</div><div class="bd"><b>1G entity extraction</b> <span class="mono" style="color:var(--muted)">— harvest_entities.sh:442</span>
+    <span>Now the model resolves <code>target_url</code> via WebFetch — <i>this</i> is where <code>github.com/owner/repo</code> finally appears. It is then told: <i>"look up its lowercase owner/repo in <code>$GH_META</code>'s <code>.repos</code>… <b>otherwise (missing entry</b>, non-ok status, non-repo target_url…) set <code>github_stars: null</code> — never estimate it from a page."</i> The entry is missing, because step 2 ran before the URL existed. <b>→ null</b>.</span></div></div>
+</div>
+
+<p>The model behaves perfectly. The instruction is precise, the fallback is safe, and the anti-fabrication rule ("never estimate it from a page") is exactly right. The data simply cannot arrive in time. <b>A repository whose URL the model discovers can never receive a star count</b> — only repositories already resolved in the candidate batch are eligible, and by design the candidate step is allowed to defer.</p>
+
+<div class="note"><b>Why <code>mcp</code> is the healthiest topic — the irony at the centre of this.</b> Before commit <code>77c7f01</code>, the model fetched <code>api.github.com</code> itself, <i>after</i> resolving <code>target_url</code>. The <b>order was right</b>; the <b>mechanism was wrong</b> (60/hr exhaustion, and per <code>a3ff811</code> a rate-limit prose deferral that collapsed to <code>[]</code> and crashed the ledger merge). The fix corrected the mechanism — deterministic, cached, sanitized, token-ready, non-fatal — and in moving the fetch outside the model, moved it <b>upstream of the resolution step that produces its input</b>. The new path has the right mechanism and the wrong order. <code>mcp</code> scores best because it was harvested under the old, broken-but-correctly-ordered path.</div>
+
+<h2>4 · The contributing reason — no token</h2>
+<p>The ordering bug explains the empty runs. It does not explain everything: the <code>skill</code> run <i>did</i> find 30 repositories and fetched 29 successfully. Its metadata file records how close that came to the ceiling:</p>
+<pre>state/harvest_skill_github_meta.json
+  mode:         <span class="hl">"unauthenticated"</span>
+  rate_limited: false
+  rate_limit:   { "limit": <span class="hl">60</span>, "remaining": <span class="hl">5</span>, "reset": 1784093733 }   <span class="cm">&lt;- 5 requests from the wall</span></pre>
+<p>Neither <code>GITHUB_TOKEN</code> nor <code>GH_TOKEN</code> is set in this environment, so <code>github_meta.py</code> runs in its bounded unauthenticated mode: <code>live_budget = max_unauth</code> (default <b>50</b>) per batch, against GitHub's <b>60 requests/hour</b> for anonymous callers. With <code>BATCH_SIZE=40</code>, a single well-resolved batch can consume most of an hour's quota. The deterministic cache — which is working correctly and reuses fresh entries for free — holds just <b>86 repositories</b>, of which only 77 correspond to eligible entities. <b>The fetcher has seen 14% of the repos it should have.</b></p>
+<p>So the two causes stack: the ordering bug means most repositories are never <i>offered</i> to the fetcher, and the missing token means the few that are offered exhaust the quota quickly.</p>
+
+<h2>5 · Solution</h2>
+<p>Three layers, in the order worth doing them. The first two are cheap and need no re-harvest.</p>
+
+<h3 style="margin-top:22px">A · Set a token <span class="chip good">2 minutes · 83× headroom</span></h3>
+<p>The fetcher already supports this fully and securely — env-only, <code>Authorization</code> header, never logged, never cached, never passed to the model. Nothing to build:</p>
+<pre><span class="cm"># PowerShell — session scope</span>
+$env:GITHUB_TOKEN = "ghp_..."      <span class="cm"># a bare public-read PAT; no scopes needed</span></pre>
+<p>Unauthenticated <b>60/hr</b> → authenticated <b>5,000/hr</b>. All 549 eligible repositories become a single sub-minute pass instead of a ten-hour drip.</p>
+
+<h3 style="margin-top:22px">B · Backfill the existing registry <span class="chip good">no re-harvest needed</span></h3>
+<p>This is the key insight, and the merge layer was already built for it. From <code>merge_entity_registry.sh:108</code>:</p>
+<blockquote><code>github_stars</code>: latest non-null measurement always wins — not identity data, so unlike <code>target_url</code> no conflict log is needed.
+<cite>scripts/merge_entity_registry.sh, line 108</cite></blockquote>
+<p>Star counts are <b>freshness data, not identity data</b>. That means a standalone pass may repair all 307 blanks at any time without re-running discovery, re-fetching pages, or touching the ledger. The 549 <code>target_url</code>s are already resolved and sitting in the registry — the hard part is done. There is even a precedent to copy: <code>scripts/backfill_entity_target_url.py</code>, added in <code>daa5162</code> for exactly this shape of repair.</p>
+<pre><span class="cm"># the shape of the fix — reads the registry, not the hits</span>
+scripts/backfill_entity_github_stars.py \
+    --registry state/entity_registry.json \
+    --cache    state/github_meta_cache.json      <span class="cm"># reuses the 86 already cached</span></pre>
+<p>With a token this is one pass over 549 repos; the existing cache covers 77 for free, and <code>is_fresh()</code> keeps repeat runs nearly free within its 7-day window.</p>
+
+<h3 style="margin-top:22px">C · Fix the ordering so new harvests self-populate <span class="chip warn">the real repair</span></h3>
+<p>Backfill treats the symptom every run. To stop the bug recurring, the fetch must happen <b>after</b> resolution. Two viable shapes:</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th style="width:26%">Option</th><th>How</th><th>Assessment</th></tr></thead>
+  <tbody>
+    <tr><td><b>Second prefetch pass</b><br><span class="chip">smaller change</span></td><td>Keep step 2 as-is (it still catches pre-resolved candidates). After 1G emits its batch, run <code>github_meta.py prefetch</code> again with the <b>batch output</b> as <code>--hits</code> — its <code>target_url</code>s are now real — then patch <code>github_stars</code> into the batch before the merge.</td><td>Fits the existing flow; <code>_repos_from_hits()</code> already reads <code>target_url</code>, so the batch output needs no reshaping. Requires one new deterministic step between 1G and merge.</td></tr>
+    <tr><td><b>Take stars out of the model entirely</b><br><span class="chip good">cleaner</span></td><td>1G never sets <code>github_stars</code> (always <code>null</code>). A deterministic post-step owns the field end-to-end, exactly as option B's backfill does — just wired into every loop.</td><td>Better separation: the model resolves and describes, the script measures. Removes ~120 words of star-handling instruction from the 1G prompt and deletes a whole class of model-compliance risk. The merge's "latest non-null wins" already makes this safe.</td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px"><b>Recommendation: option B now, option C-second later.</b> The backfill script is the same code either way — write it once for the repair, then call it per-loop to make the pipeline self-healing. Option A is a prerequisite for both being fast.</p>
+
+<h3 style="margin-top:22px">D · Make the failure loud</h3>
+<p>The deepest problem is not the null stars — it is that this ran <b>three times, wrote a 206-byte file each time, and said nothing</b>. The prefetch is deliberately non-fatal so "a metadata hiccup cannot abort the harvest," which is correct. But silent and non-fatal are different things:</p>
+<ul>
+  <li><b>Warn on the impossible-looking case.</b> If <code>$BATCH_HITS</code> contains any <code>github.com</code> string but <code>repos_seen == 0</code>, log a warning. That single check would have surfaced this on 2026-07-14.</li>
+  <li><b>Log the coverage ratio per loop</b> — <code>repos_seen</code>, <code>fetched</code>, <code>from_cache</code>, <code>rate_limit_remaining</code> are already in the JSON summary that <code>prefetch</code> prints; it goes to <code>$ERR_LOG</code> and nothing reads it.</li>
+  <li><b>Warn when <code>mode == "unauthenticated"</code></b> at harvest start — one line, tells you the run has 60 requests for the hour.</li>
+  <li><b>Add a regression test</b> alongside <code>tests/test_harvest_github_cache.sh</code>: hits carrying <code>target_url: "unknown"</code> whose entity resolves to a repo root must still end with a non-null <code>github_stars</code>. That test fails today and would pin the fix.</li>
+</ul>
+
+<h2>6 · Correcting the record</h2>
+<div class="note warn"><b>The standing explanation for this is wrong, and worth updating wherever it is written down.</b> "The MCP 1G star-fetch exhausts GitHub's 60/hr limit; it needs a token" was an accurate description of the <b>old</b> in-model path, and it is why <code>77c7f01</code> was written. It has not been the failure mode since 2026-07-13. Today the fetcher makes <b>zero requests</b> on most runs and never reaches the rate limit at all. A token is still needed — but a token alone would not have moved the agent or prompt coverage by a single entity, because those runs never issued a request to be throttled.</div>
+
+<h2>Summary</h2>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th style="width:16%">&nbsp;</th><th>Finding</th></tr></thead>
+  <tbody>
+    <tr><td><b>Problem</b></td><td>307 of 549 star-eligible entities (56%) have <code>github_stars: null</code>, including flagship repos like <code>modelcontextprotocol/servers</code>. The deterministic fetcher has seen only 77 of the 549 (14%).</td></tr>
+    <tr><td><b>Main reason</b></td><td>An ordering bug. The prefetch (step 2) reads <code>target_url</code> from the candidate batch, where it is routinely the literal <code>"unknown"</code> because resolution is deferred to 1G (step 3). <code>parse_repo("unknown")</code> → <code>None</code> → zero repos → empty <code>GH_META</code> → the model correctly writes <code>null</code>. Proven by <code>rate_limited: false</code> with all-<code>null</code> rate-limit fields: <b>no request was ever made</b>.</td></tr>
+    <tr><td><b>Root cause</b></td><td>Commit <code>77c7f01</code> fixed a real rate-limit failure by moving the fetch outside the model — and thereby moved it upstream of the step that produces its input. Right mechanism, wrong order. The old path had the right order and the wrong mechanism, which is why <code>mcp</code> still has the best coverage.</td></tr>
+    <tr><td><b>Contributing</b></td><td>No <code>GITHUB_TOKEN</code> → 60 req/hr and a 50-per-batch budget. The one run that did find repos (<code>skill</code>) finished with <code>remaining: 5</code> of 60.</td></tr>
+    <tr><td><b>Solution</b></td><td><b>A.</b> Set <code>GITHUB_TOKEN</code> (60 → 5,000/hr). <b>B.</b> Backfill from the registry's 549 resolved <code>target_url</code>s — no re-harvest, because the merge takes the latest non-null measurement. <b>C.</b> Re-order: fetch after 1G resolves, or take <code>github_stars</code> out of the model entirely. <b>D.</b> Warn when hits contain GitHub URLs but <code>repos_seen == 0</code>.</td></tr>
+  </tbody>
+</table></div></div>
+
+<footer>Generated 2026-07-17 · evidence: state/harvest_{agent,prompt,skill}_github_meta.json, state/github_meta_cache.json (86 repos), state/entity_registry.json (1,161 entities / 549 repo-root) · code read: scripts/github_meta.py, scripts/harvest_entities.sh:330/425/442, scripts/merge_entity_registry.sh:108 · commits: 8e74412, a3ff811, 77c7f01<br>No files were modified to produce this analysis.</footer>
+</div>
+<script>
+  const r=document.documentElement,b=document.getElementById('tt');
+  b.onclick=()=>{const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+</script>
+</body>
+</html>

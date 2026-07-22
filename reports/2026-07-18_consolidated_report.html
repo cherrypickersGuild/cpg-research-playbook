@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>axCaseResearch4 — Consolidated Report</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:52px 0 8px;font-weight:650}
+  .h2sub{font-size:20px;color:var(--ink);letter-spacing:-.015em;margin:0 0 18px;font-weight:650}
+  h3{font-size:15.5px;margin:22px 0 4px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.92em}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:32px;line-height:1.13;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:16px;color:var(--muted);max-width:66ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n small{font-size:13px;color:var(--muted);font-weight:500}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:8px}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  /* TOC */
+  .toc{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin-top:26px}
+  .toc .t{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:32px}
+  @media (max-width:600px){.toc ol{columns:1}}
+  .toc li{margin-bottom:6px;font-size:13.5px}
+  .toc a{color:var(--ink)}
+
+  .through{background:var(--surface);border:1px solid var(--accent-line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin:20px 0}
+  .through .t{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .through h3{font-size:19px;margin:0 0 8px;letter-spacing:-.015em}
+  .through p{margin:0 0 10px;color:var(--muted);font-size:14.5px}
+  .through p:last-child{margin-bottom:0}
+  .through b{color:var(--ink)}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .tblscroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  td.c,th.c{text-align:center}
+
+  .chip{display:inline-block;background:var(--chip);color:var(--chip-ink);border-radius:999px;padding:2px 9px;font-size:11.5px;font-family:var(--mono);white-space:nowrap}
+  .chip.good{background:rgba(18,128,92,.12);color:var(--good)}
+  .chip.warn{background:rgba(165,98,15,.12);color:var(--warn)}
+  .chip.bad{background:rgba(179,38,30,.12);color:var(--bad)}
+  .y{color:var(--good);font-weight:700}.n{color:var(--bad);font-weight:700}
+
+  .meter{height:9px;border-radius:5px;background:var(--chip);overflow:hidden;display:flex;gap:2px;min-width:120px}
+  .meter i{display:block;height:100%}.meter i.v{background:var(--good);border-radius:5px 0 0 5px}.meter i.s{background:var(--warn);border-radius:0 5px 5px 0}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;margin:0 0 14px}
+  pre .hl{color:var(--bad);font-weight:700}pre .ok{color:var(--good);font-weight:700}pre .cm{color:var(--muted)}
+  blockquote{margin:14px 0;padding:12px 16px;border-left:3px solid var(--accent-line);background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:14px}
+  blockquote cite{display:block;margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted);font-style:normal}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  .note.warn{border-left-color:var(--warn);background:rgba(165,98,15,.08)}
+  .note.bad{border-left-color:var(--bad);background:rgba(179,38,30,.07)}
+  ul{margin:0 0 14px;padding-left:20px}li{margin-bottom:7px;font-size:14.5px}
+  ol.rec{margin:0 0 14px;padding-left:20px}ol.rec li{margin-bottom:12px}
+  .sec{scroll-margin-top:20px;border-top:1px solid var(--hair);margin-top:8px}
+  .lead-in{font-size:14px;color:var(--muted);margin:-4px 0 16px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--surface);border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;box-shadow:var(--shadow);z-index:9}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+  .src{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+  .src a{color:var(--accent)}
+</style>
+</head>
+<body>
+<button class="toggle" id="tt">◐ theme</button>
+<div class="wrap">
+
+<header><div class="head-in">
+  <div class="eyebrow">CONSOLIDATED REPORT · axCaseResearch4 / cpg-research-playbook</div>
+  <h1>The AX pipeline: what was built, and what was never turned on</h1>
+  <p class="lede">One document covering the full analysis of this repository — the two-repo comparison and every deep-dive into how the harvest pipeline actually behaves. Self-contained: read this file alone and you have the whole picture. Section links to the standalone reports appear where relevant.</p>
+  <div class="meta">
+    <span>REPO HEAD <b>a6f28e3</b></span>
+    <span>CORPUS <b>1,161 entities · 231 cases</b></span>
+    <span>COMPILED <b>2026-07-18</b></span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n tnum">41</div><div class="k">commits · 20 days</div></div>
+    <div class="kpi"><div class="n tnum">1,161</div><div class="k">entities catalogued</div></div>
+    <div class="kpi"><div class="n tnum">231</div><div class="k">AX cases harvested</div></div>
+    <div class="kpi"><div class="n tnum" style="color:var(--bad)">3 of 4</div><div class="k">stages never ran</div></div>
+  </div>
+
+  <div class="toc">
+    <div class="t">Contents</div>
+    <ol>
+      <li><a href="#s1">The two repositories are one</a></li>
+      <li><a href="#s2">What is actually on disk</a></li>
+      <li><a href="#s3">Designed vs. run: the four stages</a></li>
+      <li><a href="#s4">"Verified" does not mean verified</a></li>
+      <li><a href="#s5">Why every source is low-tier</a></li>
+      <li><a href="#s6">Is the validator redundant?</a></li>
+      <li><a href="#s7">The GitHub-stars collection bug</a></li>
+      <li><a href="#s8">Recommendations, in priority order</a></li>
+    </ol>
+  </div>
+</div></header>
+
+<div class="through">
+  <div class="t">The one finding everything reduces to</div>
+  <h3>The discovery net worked. Every quality mechanism the project designed lives in stages that never ran.</h3>
+  <p>The project has two halves. The <b>discovery half</b> — harvesting entities and cases — is complete, tested, and pushed: 1,161 entities and 231 cases sit on disk. The <b>vetting half</b> — validate, select, build the deck — exists only as specifications, three of them uncommitted on a single machine, and none of it has ever executed.</p>
+  <p>Low-tier sources, the misleading "verified" label, the empty validation gate, the missing star counts — each is the same story: a safeguard that was designed and written, then never switched on. The remedy is not more harvesting. It is turning on the vetting that already exists, after pointing it at better inputs.</p>
+</div>
+
+<!-- ============ 1 ============ -->
+<h2 class="sec" id="s1">Section 1</h2>
+<div class="h2sub">The two repositories are one</div>
+<p class="lead-in">The task began as "compare axCaseResearch4 with cpg-research-playbook." They are not two projects.</p>
+<p><code>axCaseResearch4</code> is the local working copy of the GitHub repository <code>cherrypickersGuild/cpg-research-playbook</code> — it is that repo's <code>origin</code>, and both point at the same commit. There is no content divergence on <code>main</code>: zero commits ahead or behind, zero modified tracked files.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>&nbsp;</th><th>Local — axCaseResearch4</th><th>Published — cpg-research-playbook</th></tr></thead>
+  <tbody>
+    <tr><td>HEAD commit</td><td class="mono">a6f28e3</td><td class="mono">a6f28e3</td></tr>
+    <tr><td>Commits on main</td><td>40</td><td>40</td></tr>
+    <tr><td>Tracked files</td><td>92</td><td>92</td></tr>
+    <tr><td>Relationship</td><td colspan="2"><code>git ls-remote</code> HEAD ≡ local HEAD — working copy of the same repo</td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">The meaningful difference is not between the two — it is between what is <b>committed</b> and what only exists locally: <b>63 untracked files and one unpushed commit</b>. Most is disposable scratch, but four files are not — and they matter more than all the rest.</p>
+<div class="note bad"><b>32 KB of finished design work exists nowhere but this laptop.</b> <code>agents/02_validator.md</code>, <code>03_selector.md</code>, <code>04_slide_builder.md</code>, and <code>.claude/agents/ax-validator.md</code> — the entire deck-building half of the pipeline — are uncommitted. <code>CLAUDE.md</code> declares all four mandatory and names them by path, yet the published repo does not contain them. The best-tested, fully-backed part of the project is the replaceable harvest corpus; the irreplaceable design work has no backup at all.</div>
+<div class="src">Full detail: <a href="2026-07-17_local_work_axCaseResearch4.html">local-work report</a> · <a href="2026-07-17_published_cpg_research_playbook.html">published-repo report</a> · <a href="2026-07-17_local_vs_published_comparison.html">comparison</a></div>
+
+<!-- ============ 2 ============ -->
+<h2 class="sec" id="s2">Section 2</h2>
+<div class="h2sub">What is actually on disk</div>
+<p class="lead-in">The discovery half delivered a real, sizeable corpus across four topics.</p>
+<p>The entity registry holds <b>1,161</b> records. Here "verified" means the description was confirmed against the entity's own page rather than a search snippet — every per-topic target of 250 verified records was reached or driven to source exhaustion.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Topic</th><th class="num">Total</th><th class="num">Verified</th><th class="num">Snippet-only</th><th style="width:170px">Mix</th></tr></thead>
+  <tbody>
+    <tr><td>skill</td><td class="num">359</td><td class="num">271</td><td class="num">88</td><td><div class="meter"><i class="v" style="width:75.5%"></i><i class="s" style="width:24.5%"></i></div></td></tr>
+    <tr><td>mcp</td><td class="num">305</td><td class="num">280</td><td class="num">25</td><td><div class="meter"><i class="v" style="width:91.8%"></i><i class="s" style="width:8.2%"></i></div></td></tr>
+    <tr><td>agent</td><td class="num">293</td><td class="num">244</td><td class="num">49</td><td><div class="meter"><i class="v" style="width:83.3%"></i><i class="s" style="width:16.7%"></i></div></td></tr>
+    <tr><td>prompt</td><td class="num">204</td><td class="num">180</td><td class="num">24</td><td><div class="meter"><i class="v" style="width:88.2%"></i><i class="s" style="width:11.8%"></i></div></td></tr>
+    <tr><td><b>Total</b></td><td class="num"><b>1,161</b></td><td class="num"><b>975</b></td><td class="num"><b>186</b></td><td><div class="meter"><i class="v" style="width:84%"></i><i class="s" style="width:16%"></i></div></td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">Separately, the AX case registry holds <b>231</b> transformation cases (208 fetched, 23 snippet-only). Every case has a named company, a KPI, a KPI value, an evidence quote, and a source URL — no blanks. Two structural gaps sit underneath those clean fields, and they set up the rest of this report:</p>
+<div class="kpis" style="margin-top:0">
+  <div class="kpi"><div class="n tnum" style="color:var(--warn)">183 <small>/231</small></div><div class="k">no transformation date</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">0 <small>/231</small></div><div class="k">gate_passed</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">231 <small>/231</small></div><div class="k">single-sourced</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">0 <small>/231</small></div><div class="k">Tier-A source</div></div>
+</div>
+
+<!-- ============ 3 ============ -->
+<h2 class="sec" id="s3">Section 3</h2>
+<div class="h2sub">Designed vs. run: the four stages</div>
+<p class="lead-in">The gap between the two halves, made concrete.</p>
+<p><code>CLAUDE.md</code> defines a four-stage pipeline and calls validation "a hard gate: never select or present a case that has not passed validation." Here is how far each stage actually got.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Stage</th><th class="c">Spec written</th><th class="c">Committed</th><th class="c">Ever run</th><th>Result on disk</th></tr></thead>
+  <tbody>
+    <tr><td>1 — Case Finder</td><td class="c y">yes</td><td class="c y">yes</td><td class="c y">yes*</td><td>231 cases via the <i>lean harvest sibling</i>, not the rich finder</td></tr>
+    <tr><td>2 — Validator</td><td class="c y">yes</td><td class="c n">no</td><td class="c n">no</td><td><code>ax_case_db.json</code> empty; 0 <code>gate_passed</code></td></tr>
+    <tr><td>3 — Selector</td><td class="c y">yes</td><td class="c n">no</td><td class="c n">no</td><td>—</td></tr>
+    <tr><td>4 — Slide Builder</td><td class="c y">yes</td><td class="c n">no</td><td class="c n">no</td><td>—</td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px" class="mono" style="font-size:12px;color:var(--muted)">*The rich <code>01_case_finder.md</code> (source tiers, KPI verification, corroboration) never ran either. All 231 cases came from <code>ax_case_harvest_extractor.md</code>, a deliberately lighter net — the distinction drives sections 4–6.</p>
+<div class="note"><b>There is also a plumbing disconnect.</b> The harvested cases live in <code>ax_case_harvest_registry.json</code>, but Stage 2's declared input is <code>ax_case_db.json</code> — which is <code>{"cases": []}</code>. The harvest path and the pipeline path were built separately and never joined. Even with the validator committed, it has nothing to read until an adapter bridges the two.</div>
+
+<!-- ============ 4 ============ -->
+<h2 class="sec" id="s4">Section 4</h2>
+<div class="h2sub">"Verified" does not mean verified</div>
+<p class="lead-in">The single most misleading number in the corpus.</p>
+<p>The registry reports <b>208 verified</b> cases. In the extractor's schema, <code>verification_status</code> has exactly two legal values:</p>
+<blockquote><code>"verified"</code> = description pulled from the page itself &nbsp;·&nbsp; <code>"snippet-only"</code> = page couldn't be fetched
+<cite>agents/stage1/ax_case_harvest_extractor.md, lines 79–80</cite></blockquote>
+<p><b><code>verified</code> means the HTTP fetch succeeded.</b> It says nothing about whether the company is real, the KPI is true, the source is independent, or the claim was later retracted. "208 verified" means "208 pages loaded."</p>
+<div class="note bad"><b>By the project's own rule, zero cases are verified.</b> <code>01_case_finder.md</code> line 44 defines it: <i>"a KPI counts as verified only if it traces to Tier A, Tier B primary financials, or two independent sources."</i> In the corpus: <b>0</b> Tier-A sources, <b>0</b> multi-sourced cases (all <code>corroboration_count = 1</code>), <b>0</b> Tier-B primary financials. The label and the definition are unrelated words that happen to be spelled the same — and only one of them is in the data.</div>
+
+<!-- ============ 5 ============ -->
+<h2 class="sec" id="s5">Section 5</h2>
+<div class="h2sub">Why every source is low-tier</div>
+<p class="lead-in">Not bad luck in what surfaced — the deterministic output of the seeds and a tier-blind harvest.</p>
+<p>Zero of 231 cases have an independent Tier-A outlet (no Reuters, WSJ, FT, Bloomberg, HBR, MIT Sloan). ~62% are company self-published engineering blogs; the rest are vendor pages and open platforms (Medium, LinkedIn). Three causes stack:</p>
+<ol>
+  <li><b>The seed sets the ceiling.</b> The primary AX seed crawls <code>genai-llm-ml-case-studies</code> — described in the crawl report as <i>"500+ case studies with links to the original engineering blog posts."</i> A directory of self-published blogs has a hard tier ceiling of B/D; it contains zero independent outlets to find.</li>
+  <li><b>The harvest is tier-blind.</b> <code>harvest_ax_cases.sh</code> never mentions "tier"; the extractor's only mention is the line disclaiming it (<i>"no source-tier classification"</i>). Nothing prefers, requires, or records source independence.</li>
+  <li><b>The resolver pushes down-tier.</b> The candidate prompt says resolve to <i>"the company blog post"</i>; paywalls drop the independent outlets that live behind them; there is no corroboration pass.</li>
+</ol>
+<div class="note bad"><b>Proof it is the pipeline, not the world:</b> the secondary seed <i>did</i> contain higher-tier hits — HBR (Tier A, ×2), Deloitte (×3), Gartner (×2). Traced seed → registry, <b>all were dropped</b>; only 2 McKinsey (Tier C) survived. The pipeline didn't just fail to find Tier A — it discarded the Tier A it was handed.</div>
+<p>The deepest reason is a real domain skew: AX stories genuinely live mostly on company blogs, and independent coverage is scarcer and paywalled. <code>01_case_finder.md</code> was designed precisely to counteract this (<i>"start Tier A/B, verify upward, never let a vendor page be a sole source"</i>). The harvest is that design with every countermeasure removed.</p>
+<div class="src">Full detail: <a href="2026-07-18_low_tier_sources_root_cause.html">low-tier sources root-cause report</a></div>
+
+<!-- ============ 6 ============ -->
+<h2 class="sec" id="s6">Section 6</h2>
+<div class="h2sub">Is the validator redundant?</div>
+<p class="lead-in">A fair question — the case finder tiers sources and checks KPIs, and the validator does it again.</p>
+<p><b>Answer: not redundant. Against the pipeline that actually ran, it is the only validation that exists.</b> The apparent overlap is with <code>01_case_finder.md</code>, which never ran and holds zero cases. All 231 cases came from the harvest extractor, which explicitly disclaims source tiering, KPI verification, and contradictory-evidence search. Remove the validator and nothing performs those checks at all.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Check</th><th class="c">harvest extractor<br><span style="font-weight:400;text-transform:none">(ran)</span></th><th class="c">02_validator</th></tr></thead>
+  <tbody>
+    <tr><td>Named org · workflow · KPI present</td><td class="c y">yes</td><td class="c y">yes</td></tr>
+    <tr><td>Source tier A/B/C/D</td><td class="c n">disclaimed</td><td class="c y">yes</td></tr>
+    <tr><td>KPI traceable to Tier A/B or 2 sources</td><td class="c n">disclaimed</td><td class="c y">yes</td></tr>
+    <tr><td>Contradictory-evidence search</td><td class="c n">disclaimed</td><td class="c y">yes</td></tr>
+    <tr><td>URL re-fetch · status · paywall</td><td class="c n">no</td><td class="c y">yes</td></tr>
+    <tr><td>Deck-readiness · <code>gate_passed</code></td><td class="c n">no</td><td class="c y">yes</td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">The architecture you actually have — a cheap wide net, then one rigorous gate — is sound, arguably better than the rich finder, because the validator <b>derives</b> tier and contradictions itself rather than trusting upstream. One caveat: it filters, it cannot manufacture. Validating the current 231 without fixing seeds first yields a correctly-labelled pile of low-tier cases and a near-empty main deck. Fix sources first (section 5), then gate.</p>
+<div class="src">Full detail: <a href="2026-07-17_validator_necessity_analysis.html">validator necessity analysis</a></div>
+
+<!-- ============ 7 ============ -->
+<h2 class="sec" id="s7">Section 7</h2>
+<div class="h2sub">The GitHub-stars collection bug</div>
+<p class="lead-in">A separate, self-contained defect in the entity harvest.</p>
+<p>Of 549 entities whose <code>target_url</code> is a GitHub repo, only 242 carry a star count — <b>307 are blank</b>, including flagship repos like <code>modelcontextprotocol/servers</code>. The received explanation ("the 60/hour rate limit") is wrong for the current code.</p>
+<p><b>The real cause is an ordering bug.</b> The metadata prefetch reads <code>target_url</code> from the candidate batch — but at that moment most candidates carry the literal string <code>"unknown"</code>, because URL resolution is deliberately deferred to the next step. The fetcher finds no repositories, makes no request, and hands the model an empty file; the model then correctly writes <code>github_stars: null</code>. The run artifacts prove no request was ever attempted:</p>
+<pre><span class="cm"># state/harvest_agent_github_meta.json — 206 bytes</span>
+"rate_limited": <span class="ok">false</span>,   "rate_limit": { "limit": <span class="hl">null</span>, "remaining": <span class="hl">null</span>, "reset": <span class="hl">null</span> },   "repos": <span class="hl">{}</span></pre>
+<p>A real rate limit leaves <code>limit: 60</code> plus a <code>remaining</code> count and a <code>reset</code> timestamp. All null means zero requests. Ironically, <code>mcp</code> — harvested under the <i>old</i> in-model path — has the best coverage (56%), because that path fetched <i>after</i> resolving the URL. Commit <code>77c7f01</code> fixed the mechanism and, in moving the fetch outside the model, moved it upstream of the step that produces its input.</p>
+<div class="note"><b>The good news: repair needs no re-harvest.</b> <code>merge_entity_registry.sh</code> treats stars as freshness data — "latest non-null measurement always wins." A standalone backfill over the 549 already-resolved URLs fixes all 307 blanks. Set <code>GITHUB_TOKEN</code> first (60 → 5,000 req/hr), then either re-order the fetch (after resolution) or take stars out of the model entirely.</div>
+<div class="src">Full detail: <a href="2026-07-17_github_stars_collection_issue.html">GitHub-stars collection report</a></div>
+
+<!-- ============ 8 ============ -->
+<h2 class="sec" id="s8">Section 8</h2>
+<div class="h2sub">Recommendations, in priority order</div>
+<ol class="rec">
+  <li><b>Commit the four deck-stage files.</b> <code>02_validator.md</code>, <code>03_selector.md</code>, <code>04_slide_builder.md</code>, <code>.claude/agents/ax-validator.md</code>. 32 KB of finished design with no backup, on one machine — the cheapest work to protect is currently the least protected. Also gitignore <code>state/_*</code> and <code>.scratch_ax/</code> so scratch stops hiding real files. <span class="chip">§1</span></li>
+  <li><b>Fix the AX seeds and invert their priority</b> before any re-harvest — add Tier-A-first sources (HBR/MIT Sloan archives, Reuters/Bloomberg desks, SEC EDGAR) so the pipeline can source what the validator will later demand. Sourcing quality is set upstream; nothing downstream can add it back. <span class="chip">§5</span></li>
+  <li><b>Backfill GitHub stars from the registry.</b> Set <code>GITHUB_TOKEN</code>, run a standalone pass over the 549 resolved URLs — no re-harvest, because the merge takes the latest non-null value. Then re-order the fetch so new harvests self-populate. <span class="chip">§7</span></li>
+  <li><b>Bridge harvest → pipeline, then run the validator.</b> Feed the 231 cases into <code>ax_case_db.json</code> (or repoint Stage 2 at the harvest registry), then let the gate run. Expect heavy, correct attrition — 6–10 main-deck cases from 231 is the designed yield, not a failure. <span class="chip">§3, §6</span></li>
+  <li><b>Rename <code>verification_status</code></b> to say what it means — e.g. <code>fetch_status: fetched | snippet_only</code> — and report a separate source-tier stat, so the corpus stops looking stronger than its sources justify. <span class="chip">§4</span></li>
+</ol>
+<div class="note"><b>The order matters.</b> Items 1 and 3 are safe housekeeping. Item 2 must precede item 4 — validating before fixing the seeds only labels the problem. The end state is a smaller, source-verified, gated set feeding a deck — which is exactly what the pipeline was designed to produce, once its unused half is switched on.</div>
+
+<footer>Consolidated 2026-07-18 · sources: git history + state/ registries at HEAD a6f28e3; agent specs read in full; seed→registry tier trace and star coverage computed, not estimated · component reports linked inline (all self-contained, local) · no repository files were modified to produce this analysis</footer>
+</div>
+<script>
+  const r=document.documentElement,b=document.getElementById('tt');
+  b.onclick=()=>{const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+</script>
+</body>
+</html>

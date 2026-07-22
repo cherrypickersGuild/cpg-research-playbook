@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>axCaseResearch4 — Local Work Report</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:48px 0 16px;font-weight:650}
+  h3{font-size:16px;margin:0 0 4px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:64ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n small{font-size:14px;color:var(--muted);font-weight:500}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:8px}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card-pad{padding:18px 20px}
+  .tblscroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+  th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--hair)}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  .chip{display:inline-block;background:var(--chip);color:var(--chip-ink);border-radius:999px;padding:2px 9px;font-size:11.5px;font-family:var(--mono)}
+  .chip.good{background:rgba(18,128,92,.12);color:var(--good)}
+  .chip.warn{background:rgba(165,98,15,.12);color:var(--warn)}
+
+  /* meter */
+  .meter{height:9px;border-radius:5px;background:var(--chip);overflow:hidden;display:flex;gap:2px;min-width:120px}
+  .meter i{display:block;height:100%}
+  .meter i.v{background:var(--good);border-radius:5px 0 0 5px}
+  .meter i.s{background:var(--warn);border-radius:0 5px 5px 0}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin:0 0 14px;align-items:center;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* timeline */
+  .tl{position:relative;padding-left:22px}
+  .tl:before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--hair)}
+  .ph{position:relative;margin-bottom:22px}
+  .ph:before{content:"";position:absolute;left:-21px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--surface);box-shadow:0 0 0 2px var(--accent-line)}
+  .ph .d{font-family:var(--mono);font-size:11.5px;color:var(--accent);letter-spacing:.03em}
+  .ph p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  .note.warn{border-left-color:var(--warn);background:rgba(165,98,15,.08)}
+  ul{margin:0 0 14px;padding-left:20px}li{margin-bottom:6px;font-size:14.5px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--surface);border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;box-shadow:var(--shadow);z-index:9}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<button class="toggle" id="tt">◐ theme</button>
+<div class="wrap">
+
+<header><div class="head-in">
+  <div class="eyebrow">REPORT 1 / 3 · LOCAL WORKING COPY</div>
+  <h1>axCaseResearch4 — everything built so far</h1>
+  <p class="lede">A discovery-and-vetting pipeline that harvests AI-transformation ("AX") case studies and catalogs the surrounding ecosystem, aimed at producing a source-verified executive deck for Samsung Electronics. This is the state of the local working copy on disk.</p>
+  <div class="meta">
+    <span>PATH <b>C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4</b></span>
+    <span>HEAD <b>a6f28e3</b></span>
+    <span>SPAN <b>2026-06-26 → 2026-07-15</b></span>
+    <span>AS OF <b>2026-07-17</b></span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n tnum">41</div><div class="k">commits (all refs)</div></div>
+    <div class="kpi"><div class="n tnum">92 <small>tracked</small></div><div class="k">files · 81,100 lines</div></div>
+    <div class="kpi"><div class="n tnum">1,161</div><div class="k">catalogued entities</div></div>
+    <div class="kpi"><div class="n tnum">231</div><div class="k">AX cases harvested</div></div>
+  </div>
+</div></header>
+
+<h2>What this project is</h2>
+<p>The repository holds two connected bodies of work that grew in sequence.</p>
+<ul>
+  <li><b>A four-stage deck pipeline</b> (declared in <code>CLAUDE.md</code>): Case Finder → Case Integrity Validator → AX Case Selector → Executive Slide Builder. Validation is designed as a hard gate — no case reaches a slide without passing it.</li>
+  <li><b>A seven-agent Stage-1 discovery system</b> (<code>agents/stage1/1A</code>–<code>1G</code>) that builds search strategies, crawls, extracts cases and entities, monitors news, and schedules refreshes. This is where nearly all the actual engineering went.</li>
+</ul>
+<p>Underneath both sits a hand-built harvest harness in Bash and Python: bounded harvest loops, JSON cleaning, dedup-on-merge registries, a visited-URL ledger, and a gated autonomous-coding safety layer.</p>
+
+<h2>How it was built — 20 days, six phases</h2>
+<div class="tl">
+  <div class="ph"><div class="d">JUN 26 – JUN 28 · bootstrap</div><h3>Search strategy, then a real crawl</h3>
+    <p>Initial commit, the Stage 1A Strategy Builder spec, and the files to run it. Stage 1B then executed a search-only run: <b>64 queries → 510 hits</b>, the corpus everything downstream was seeded from.</p></div>
+  <div class="ph"><div class="d">JUN 30 – JUL 3 · pipeline shape</div><h3>The deck pipeline and the awesome-list crawler</h3>
+    <p>The AX case research pipeline agents landed, followed by an <code>awesome-list-crawler</code> subagent and five per-topic verification reports (agent, mcp, prompt, skill, ax-cases).</p></div>
+  <div class="ph"><div class="d">JUL 6 – JUL 8 · harness</div><h3>Seeding strategy and the entity extractor</h3>
+    <p>The 1G entity extractor, seeding-strategy infrastructure, and <code>harvest_entities.sh</code>. Scripts and docs were reorganized into subfolders; schema drift was fixed; entity <code>url</code> was split into <code>source_url</code> / <code>target_url</code>.</p></div>
+  <div class="ph"><div class="d">JUL 8 – JUL 10 · hardening</div><h3>Making failures loud</h3>
+    <p>A run of correctness work: JSONL timing logs, target_url backfill, and four consecutive commits forcing merge scripts and pipelines to <b>fail loudly on jq errors</b> instead of silently writing bad state. Also recovery of prose-wrapped JSON from nested <code>claude -p</code> output.</p></div>
+  <div class="ph"><div class="d">JUL 11 – JUL 13 · safety + scale</div><h3>Gated autonomous coding, then MCP to target</h3>
+    <p>The safety workflow (guard hook, <code>validate_task.sh</code>, <code>safe_commit.sh</code>, <code>safe_push_main.sh</code>) landed in one commit. MCP harvesting ran in bounded increments — 115 → 149 → 169 → 202 → 230 → 270 — passing the 250 target. GitHub metadata was moved out of the model into a deterministic fetcher.</p></div>
+  <div class="ph"><div class="d">JUL 14 – JUL 15 · the big harvest</div><h3>All four topics to target; AX cases 0 → 208</h3>
+    <p>The largest commit in the repo (<b>+31,902 / −2,248</b>): agent → 244, prompt → 180, skill → 271, mcp → 280, and the AX case registry from 0 to 208 verified cases. The run survived a session-limit 429 and a network outage. An HTML session report closed the phase.</p></div>
+</div>
+
+<h2>The corpus it produced</h2>
+<p>The entity registry holds <b>1,161</b> records across four topics. "Verified" here means the description was confirmed against the entity's own page rather than taken from a search snippet.</p>
+<div class="legend">
+  <span><i class="sw" style="background:var(--good)"></i> verified description</span>
+  <span><i class="sw" style="background:var(--warn)"></i> snippet-only</span>
+</div>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Topic</th><th class="num">Total</th><th class="num">Verified</th><th class="num">Snippet-only</th><th style="width:180px">Mix</th></tr></thead>
+  <tbody>
+    <tr><td>skill</td><td class="num">359</td><td class="num">271</td><td class="num">88</td>
+      <td><div class="meter"><i class="v" style="width:75.5%"></i><i class="s" style="width:24.5%"></i></div></td></tr>
+    <tr><td>mcp</td><td class="num">305</td><td class="num">280</td><td class="num">25</td>
+      <td><div class="meter"><i class="v" style="width:91.8%"></i><i class="s" style="width:8.2%"></i></div></td></tr>
+    <tr><td>agent</td><td class="num">293</td><td class="num">244</td><td class="num">49</td>
+      <td><div class="meter"><i class="v" style="width:83.3%"></i><i class="s" style="width:16.7%"></i></div></td></tr>
+    <tr><td>prompt</td><td class="num">204</td><td class="num">180</td><td class="num">24</td>
+      <td><div class="meter"><i class="v" style="width:88.2%"></i><i class="s" style="width:11.8%"></i></div></td></tr>
+    <tr><td><b>Total</b></td><td class="num"><b>1,161</b></td><td class="num"><b>975</b></td><td class="num"><b>186</b></td>
+      <td><div class="meter"><i class="v" style="width:84%"></i><i class="s" style="width:16%"></i></div></td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">Every per-topic target of 250 verified records was either reached or driven to source exhaustion. 1,024 of 1,161 entities carry a resolved <code>target_url</code>; 245 carry GitHub star counts fetched deterministically.</p>
+
+<div class="note warn"><b>Corroboration is thin.</b> 1,108 of 1,161 entities (95.4%) rest on a single source; only 53 have <code>corroboration_count</code> ≥ 2. "Verified" means <i>the description matches the entity's own page</i> — not that two independent sources agree. 26 entities carry logged conflicting evidence.</div>
+
+<h2>AX cases — 231 harvested</h2>
+<p>Separate from the entity registry, <code>ax_case_harvest_registry.json</code> holds <b>231</b> transformation cases: 208 verified, 23 snippet-only. Every case has a named company, a measurable KPI, a KPI value, an evidence quote, and a source URL — no blanks in any of those fields.</p>
+<div class="kpis" style="margin-top:0">
+  <div class="kpi"><div class="n tnum" style="color:var(--good)">208</div><div class="k">verified cases</div></div>
+  <div class="kpi"><div class="n tnum">0 <small>/ 231</small></div><div class="k">missing company or KPI</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--warn)">183</div><div class="k">no transformation date</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">0</div><div class="k">gate_passed</div></div>
+</div>
+<p style="margin-top:22px">Source spread is led by <code>medium.com</code> (36), <code>microsoft.com</code> (25), <code>uber.com</code> (8), <code>linkedin.com</code> (7), then engineering blogs (<code>github.blog</code>, <code>tech.instacart.com</code>, <code>engineering.atspotify.com</code>, <code>openai.com</code> — 6 each). Confidence scores cluster between 0.5 and 0.7.</p>
+
+<div class="note warn"><b>Two gaps stand between this corpus and a deck.</b> First, <code>transformation_date</code> is unknown for 183 of 231 cases (79%) — yet the project's own rule is that transformation date must be kept separate from publication date, and Stage 2 validates them independently. Second, <b>no case carries <code>gate_passed</code></b>, and <code>state/ax_case_db.json</code> — the file Stage 2 actually reads — is still an empty array. The 231 cases live in the harvest registry, not in the pipeline.</div>
+
+<h2>Engineering surface</h2>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Area</th><th class="num">Files</th><th>Contents</th></tr></thead>
+  <tbody>
+    <tr><td>scripts/</td><td class="num">18</td><td>harvest loops, merges, discovery, calibration, and the safety wrappers</td></tr>
+    <tr><td>tests/</td><td class="num">18</td><td>shell + python tests: guard rules, merge error propagation, JSON cleaning, date/schema checks</td></tr>
+    <tr><td>agents/</td><td class="num">12</td><td>pipeline overview, case finder, and the 1A–1G Stage-1 specs</td></tr>
+    <tr><td>state/</td><td class="num">18</td><td>entity registry, AX case registries, search hits, visited-URL ledger</td></tr>
+    <tr><td>docs/ + reports/</td><td class="num">16</td><td>seeding strategy, harvest workflows, awesome-list verifications, session reports</td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">Composition by language: 34 shell scripts, 32 markdown specs/docs, 17 JSON state files, 5 Python scripts. The test suite is unusually weighted toward <i>failure modes</i> — error propagation, shape guards, permission rules — which matches the hardening phase in the history.</p>
+
+<h2>The safety layer</h2>
+<p>Autonomous work in this repo runs behind a deliberate gate, configured in <code>.claude/settings.local.json</code> and <code>.claude/hooks/guard_command.py</code>:</p>
+<ul>
+  <li><code>validate_task.sh</code> — the single allowlisted, offline validation entry point (isolated temp state, mocked agents, no production writes).</li>
+  <li><code>safe_commit.sh</code> — explicit file lists only; <code>-A</code>, <code>.</code>, and globs are refused.</li>
+  <li><code>safe_push_main.sh --check</code> — push preflight; the actual push always needs a human.</li>
+  <li>A standing stop-and-ask list: pushing, deploying, external side effects, production <code>state/</code> writes, anything needing credentials.</li>
+</ul>
+
+<h2>What exists only on this machine</h2>
+<p>Beyond the 92 tracked files, the working copy carries <b>63 untracked entries</b> and one unpushed commit. This is the material difference between the local copy and the published repository — it is the subject of report 3.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Local-only material</th><th class="num">Count</th><th>Significance</th></tr></thead>
+  <tbody>
+    <tr><td><code>agents/02_validator.md</code>, <code>03_selector.md</code>, <code>04_slide_builder.md</code></td><td class="num">3</td><td><span class="chip warn">high</span> Stages 2–4 of the declared pipeline</td></tr>
+    <tr><td><code>.claude/agents/ax-validator.md</code>, <code>.claude/settings.json</code></td><td class="num">2</td><td><span class="chip warn">high</span> the validator subagent + harness config</td></tr>
+    <tr><td><code>state/_*.json</code>, <code>state/_*.py</code></td><td class="num">56</td><td><span class="chip">low</span> harvest scratch: candidate sets, exclusion sets, ad-hoc extractors</td></tr>
+    <tr><td><code>.scratch_ax/</code></td><td class="num">445 files · 6.3 MB</td><td><span class="chip">low</span> scratch working directory</td></tr>
+    <tr><td><code>2026-07-10-224926-mcp-harvest-117.txt</code></td><td class="num">560 KB</td><td><span class="chip">low</span> raw harvest transcript</td></tr>
+    <tr><td><code>backup/evidence-url-migration</code> @ <code>3b6beeb</code></td><td class="num">1 commit</td><td><span class="chip warn">med</span> a second URL-split attempt, never merged</td></tr>
+  </tbody>
+</table></div></div>
+
+<h2>Where it stands</h2>
+<p>The discovery half of this project is essentially complete and well-tested: four topic registries at or beyond target, 231 AX cases with full KPI and evidence fields, a hardened harness, and a real safety gate. Every seed the project knows about has been driven to exhaustion.</p>
+<p>The deck half has not started. Stages 2–4 exist as specs on this machine only, <code>ax_case_db.json</code> is empty, and nothing has been validated or gated. The corpus is ready to be vetted; the vetting has not run.</p>
+
+<footer>Generated 2026-07-17 · from git history and <code>state/</code> registries at HEAD a6f28e3 · counts computed, not estimated<br>Report 1 of 3 — see also: published-repository report, and the local-vs-published comparison.</footer>
+</div>
+<script>
+  const r=document.documentElement,b=document.getElementById('tt');
+  b.onclick=()=>{const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+</script>
+</body>
+</html>

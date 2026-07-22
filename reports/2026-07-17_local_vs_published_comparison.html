@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comparison — Local axCaseResearch4 vs Published cpg-research-playbook</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:48px 0 16px;font-weight:650}
+  h3{font-size:16px;margin:0 0 4px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:64ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n small{font-size:14px;color:var(--muted);font-weight:500}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:8px}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card-pad{padding:18px 20px}
+  .tblscroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+  th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--hair)}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  td.mono{font-family:var(--mono);font-size:12.5px}
+
+  .chip{display:inline-block;background:var(--chip);color:var(--chip-ink);border-radius:999px;padding:2px 9px;font-size:11.5px;font-family:var(--mono)}
+  .chip.good{background:rgba(18,128,92,.12);color:var(--good)}
+  .chip.warn{background:rgba(165,98,15,.12);color:var(--warn)}
+  .chip.bad{background:rgba(179,38,30,.12);color:var(--bad)}
+
+  /* verdict banner */
+  .verdict{background:var(--surface);border:1px solid var(--accent-line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-top:26px}
+  .verdict .t{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .verdict h3{font-size:19px;margin:0 0 8px;letter-spacing:-.015em}
+  .verdict p{margin:0;color:var(--muted);font-size:14.5px}
+
+  /* identity proof */
+  .proof{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media (max-width:720px){.proof{grid-template-columns:1fr}}
+  .side{background:var(--raise);border:1px solid var(--hair);border-radius:12px;padding:16px}
+  .side .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px}
+  .side .row{font-family:var(--mono);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--hair)}
+  .side .row:last-child{border-bottom:none}
+  .side .row b{color:var(--ink);font-weight:600}
+  .eq{text-align:center;font-family:var(--mono);color:var(--accent);font-size:13px;margin:14px 0 0;letter-spacing:.05em}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  .note.warn{border-left-color:var(--warn);background:rgba(165,98,15,.08)}
+  .note.bad{border-left-color:var(--bad);background:rgba(179,38,30,.07)}
+  ul{margin:0 0 14px;padding-left:20px}li{margin-bottom:6px;font-size:14.5px}
+  ol{margin:0 0 14px;padding-left:20px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--surface);border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;box-shadow:var(--shadow);z-index:9}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<button class="toggle" id="tt">◐ theme</button>
+<div class="wrap">
+
+<header><div class="head-in">
+  <div class="eyebrow">REPORT 3 / 3 · COMPARISON</div>
+  <h1>Local vs published — one repository, not two</h1>
+  <p class="lede">The comparison was set up as "axCaseResearch4 versus cpg-research-playbook." Those are not two projects to weigh against each other. The first is the working copy of the second. What is worth comparing is what sits on disk but has never left this machine.</p>
+  <div class="meta">
+    <span>SCOPE <b>working copy ↔ origin/main</b></span>
+    <span>METHOD <b>git ls-remote · git status · registry counts</b></span>
+    <span>AS OF <b>2026-07-17</b></span>
+  </div>
+
+  <div class="verdict">
+    <div class="t">Headline</div>
+    <h3>Same repository, same HEAD, fully pushed on <code>main</code>.</h3>
+    <p>The real gap is <b>63 untracked files and one unpushed commit</b> — and among them are the three agent specs that make up the entire deck-building half of the pipeline that <code>CLAUDE.md</code> declares mandatory.</p>
+  </div>
+</div></header>
+
+<h2>The evidence they are the same repo</h2>
+<div class="proof">
+  <div class="side">
+    <div class="lbl">#1 · Local — axCaseResearch4</div>
+    <div class="row"><span>HEAD</span><b>a6f28e3</b></div>
+    <div class="row"><span>commits on main</span><b>40</b></div>
+    <div class="row"><span>tracked files</span><b>92</b></div>
+    <div class="row"><span>origin</span><b>cpg-research-playbook</b></div>
+    <div class="row"><span>tracking</span><b>main…origin/main</b></div>
+  </div>
+  <div class="side">
+    <div class="lbl">#2 · Published — cpg-research-playbook</div>
+    <div class="row"><span>HEAD</span><b>a6f28e3</b></div>
+    <div class="row"><span>commits on main</span><b>40</b></div>
+    <div class="row"><span>files</span><b>92</b></div>
+    <div class="row"><span>default branch</span><b>main</b></div>
+    <div class="row"><span>HEAD → </span><b>origin/main</b></div>
+  </div>
+</div>
+<p class="eq">git ls-remote → a6f28e3 &nbsp;≡&nbsp; local HEAD → a6f28e3</p>
+<p style="margin-top:18px">Every committed byte in report 1 is the same byte described in report 2. There is no content divergence, no drift, no ahead/behind on <code>main</code>, and <b>zero modified tracked files</b>. Comparing the two on features, corpus, or code quality would be comparing a thing to itself.</p>
+
+<h2>The actual delta</h2>
+<div class="kpis" style="margin-top:0">
+  <div class="kpi"><div class="n tnum" style="color:var(--good)">0</div><div class="k">commits ahead/behind on main</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--good)">0</div><div class="k">modified tracked files</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--warn)">63</div><div class="k">untracked entries</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--warn)">1</div><div class="k">unpushed commit</div></div>
+</div>
+
+<div class="card" style="margin-top:24px"><div class="tblscroll"><table>
+  <thead><tr><th>Local-only material</th><th class="num">Size</th><th>Risk if this machine is lost</th></tr></thead>
+  <tbody>
+    <tr><td><code>agents/02_validator.md</code><br><span class="chip">Stage 2 — the hard gate</span></td><td class="num">12 KB</td><td><span class="chip bad">critical</span> unrecoverable design work</td></tr>
+    <tr><td><code>agents/03_selector.md</code><br><span class="chip">Stage 3 — case curation</span></td><td class="num">8 KB</td><td><span class="chip bad">critical</span> unrecoverable design work</td></tr>
+    <tr><td><code>agents/04_slide_builder.md</code><br><span class="chip">Stage 4 — deck emission</span></td><td class="num">8 KB</td><td><span class="chip bad">critical</span> unrecoverable design work</td></tr>
+    <tr><td><code>.claude/agents/ax-validator.md</code><br><span class="chip">the subagent CLAUDE.md names</span></td><td class="num">4 KB</td><td><span class="chip bad">critical</span> referenced but unpublished</td></tr>
+    <tr><td><code>.claude/settings.json</code></td><td class="num">1 KB</td><td><span class="chip warn">medium</span> harness config, reconstructible</td></tr>
+    <tr><td><code>backup/evidence-url-migration</code> @ <code>3b6beeb</code></td><td class="num">1 commit</td><td><span class="chip warn">medium</span> a second URL-split attempt superseded by <code>118fc0c</code> on main</td></tr>
+    <tr><td><code>state/_*.json</code> + <code>state/_*.py</code></td><td class="num">56 files</td><td><span class="chip good">low</span> harvest scratch — regenerable</td></tr>
+    <tr><td><code>.scratch_ax/</code></td><td class="num">445 files · 6.3 MB</td><td><span class="chip good">low</span> scratch — regenerable</td></tr>
+    <tr><td><code>2026-07-10-224926-mcp-harvest-117.txt</code></td><td class="num">560 KB</td><td><span class="chip good">low</span> raw transcript of an already-merged run</td></tr>
+  </tbody>
+</table></div></div>
+
+<h2>Why those four files matter more than the other 59</h2>
+<p><code>CLAUDE.md</code> is the repository's contract, and it opens by mapping every stage to a file:</p>
+<div class="card"><div class="card-pad" style="font-family:var(--mono);font-size:13px;line-height:1.85;color:var(--muted)">
+1. Case Finder — <span style="color:var(--good)">agents/01_case_finder.md</span> → ax_case_db.json<br>
+2. Case Integrity Validator — <span style="color:var(--bad)">agents/02_validator.md</span> → adds gate_passed<br>
+3. AX Case Selector — <span style="color:var(--bad)">agents/03_selector.md</span> → main + appendix<br>
+4. Executive Slide Builder — <span style="color:var(--bad)">agents/04_slide_builder.md</span> → deck_plan.json
+</div></div>
+<p style="margin-top:14px">Three of those four paths resolve to nothing in the published repository. The same document also instructs the reader to "use the matching subagent in <code>.claude/agents/</code> (e.g. <code>ax-validator</code>)" — which is likewise absent. The published repo therefore documents a pipeline it cannot run, and names files it does not contain.</p>
+
+<div class="note bad"><b>The concentration of risk is the finding.</b> The discovery half — 20 days of work, 1,161 entities, 231 cases, 18 tests, a safety harness — is fully committed and pushed. It is safe. The deck half exists as <b>32 KB across four uncommitted files on one Windows machine</b>, with no backup, no history, and no copy anywhere else. The cheapest work to protect is the least protected.</div>
+
+<h2>Stage-by-stage: declared, built, published, run</h2>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>Stage</th><th>Declared</th><th>Spec written</th><th>Published</th><th>Ever run</th></tr></thead>
+  <tbody>
+    <tr><td>Stage 1 — Case Finder</td><td><span class="chip good">yes</span></td><td><span class="chip good">yes</span></td><td><span class="chip good">yes</span></td><td><span class="chip good">yes</span> → 231 cases</td></tr>
+    <tr><td>Stage 2 — Validator</td><td><span class="chip good">yes</span></td><td><span class="chip good">yes</span></td><td><span class="chip bad">no</span></td><td><span class="chip bad">no</span> → 0 gate_passed</td></tr>
+    <tr><td>Stage 3 — Selector</td><td><span class="chip good">yes</span></td><td><span class="chip good">yes</span></td><td><span class="chip bad">no</span></td><td><span class="chip bad">no</span></td></tr>
+    <tr><td>Stage 4 — Slide Builder</td><td><span class="chip good">yes</span></td><td><span class="chip good">yes</span></td><td><span class="chip bad">no</span></td><td><span class="chip bad">no</span></td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">The specs are not stubs — <code>02_validator.md</code> defines seven concrete checks (fabrication risk, URL accessibility with a status enum, A–D source tiering, KPI traceability, separate date validation, contradictory-evidence search, deck-readiness); <code>03_selector.md</code> carries a weighted 0–100 scoring model; <code>04_slide_builder.md</code> specifies a ten-section deck. This is finished design work that simply never got committed.</p>
+
+<h2>A second, quieter gap</h2>
+<p>Stage 2 cannot run today even if its spec were committed, because its declared input is empty. The 231 harvested cases sit in <code>ax_case_harvest_registry.json</code>, while Stage 2 reads <code>ax_case_db.json</code> — which contains <code>{"cases": []}</code>. The harvest path and the pipeline path were built separately and were never joined.</p>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th>File</th><th class="num">Cases</th><th>Role</th><th>State</th></tr></thead>
+  <tbody>
+    <tr><td><code>state/ax_case_harvest_registry.json</code></td><td class="num">231</td><td>output of the standalone harvest path</td><td><span class="chip good">populated</span> 208 verified</td></tr>
+    <tr><td><code>state/ax_case_db.json</code></td><td class="num">0</td><td>input Stage 2 validates</td><td><span class="chip bad">empty</span></td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin-top:14px">And when the two are joined, a data gap surfaces: <code>transformation_date</code> is unknown for <b>183 of 231</b> cases (79%), while Stage 2 validates transformation and publication dates separately and routes out-of-window cases to the appendix. Roughly four in five cases will land in manual review on the date check alone.</p>
+
+<h2>What to do about it</h2>
+<ol>
+  <li><b>Commit the four deck files.</b> <code>agents/02_validator.md</code>, <code>03_selector.md</code>, <code>04_slide_builder.md</code>, <code>.claude/agents/ax-validator.md</code>. This removes the single point of failure and makes <code>CLAUDE.md</code> honest. It is a five-minute change against 32 KB of otherwise-unbacked work.</li>
+  <li><b>Decide on <code>.claude/settings.json</code>.</b> Commit it or ignore it deliberately — right now it is neither.</li>
+  <li><b>Bridge harvest → pipeline.</b> Either feed <code>ax_case_harvest_registry.json</code> into <code>ax_case_db.json</code>, or update <code>CLAUDE.md</code> to name the registry as Stage 2's real input. The current mismatch is silent.</li>
+  <li><b>Add <code>state/_*</code> and <code>.scratch_ax/</code> to <code>.gitignore</code>.</b> 501 scratch files currently show up as untracked noise on every <code>git status</code>, which is exactly how four critical files stayed invisible for a week.</li>
+  <li><b>Resolve or delete <code>backup/evidence-url-migration</code>.</b> Its work was superseded by <code>118fc0c</code> on main; it is now a dangling branch that only exists here.</li>
+</ol>
+<p>Items 1–2 and 4–5 are local git hygiene. Item 3 is a design decision worth making explicitly.</p>
+
+<div class="note"><b>The comparison in one line.</b> Nothing is out of sync between local and published on <code>main</code> — the divergence is not drift but <i>omission</i>: the half of the project that turns a vetted corpus into an executive deck has never been committed, and therefore does not exist anywhere except this machine.</div>
+
+<footer>Generated 2026-07-17 · local: working copy at a6f28e3 · remote: github.com/cherrypickersGuild/cpg-research-playbook @ a6f28e3<br>Report 3 of 3 — reports 1 and 2 cover each side in full. No files were modified to produce this comparison.</footer>
+</div>
+<script>
+  const r=document.documentElement,b=document.getElementById('tt');
+  b.onclick=()=>{const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+</script>
+</body>
+</html>

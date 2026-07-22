@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Why the corpus is low-tier — root cause & fix</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:48px 0 16px;font-weight:650}
+  h3{font-size:16px;margin:0 0 4px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.92em}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:66ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .verdict{background:var(--surface);border:1px solid var(--accent-line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-top:26px}
+  .verdict .t{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .verdict h3{font-size:19px;margin:0 0 8px;letter-spacing:-.015em}
+  .verdict p{margin:0;color:var(--muted);font-size:14.5px}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n small{font-size:14px;color:var(--muted);font-weight:500}
+  .kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:8px}
+  @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card-pad{padding:18px 20px}
+  .tblscroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:600px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  td.c,th.c{text-align:center}
+
+  .chip{display:inline-block;background:var(--chip);color:var(--chip-ink);border-radius:999px;padding:2px 9px;font-size:11.5px;font-family:var(--mono);white-space:nowrap}
+  .chip.good{background:rgba(18,128,92,.12);color:var(--good)}
+  .chip.warn{background:rgba(165,98,15,.12);color:var(--warn)}
+  .chip.bad{background:rgba(179,38,30,.12);color:var(--bad)}
+
+  .meter{height:9px;border-radius:5px;background:var(--chip);overflow:hidden;min-width:110px}
+  .meter i{display:block;height:100%;border-radius:5px;background:var(--accent)}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;margin:0 0 14px}
+  pre .hl{color:var(--bad);font-weight:700}
+  pre .ok{color:var(--good);font-weight:700}
+  pre .cm{color:var(--muted)}
+
+  .flow{display:grid;gap:10px;margin:14px 0}
+  .step{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .step.bad{border-color:rgba(179,38,30,.4);background:rgba(179,38,30,.05)}
+  .step .no{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step.bad .no{background:rgba(179,38,30,.14);color:var(--bad)}
+  .step .bd{font-size:14px}
+  .step .bd b{display:block;margin-bottom:2px}
+  .step .bd span{color:var(--muted);font-size:13.5px}
+
+  blockquote{margin:14px 0;padding:12px 16px;border-left:3px solid var(--accent-line);background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:14px}
+  blockquote cite{display:block;margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted);font-style:normal}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  .note.warn{border-left-color:var(--warn);background:rgba(165,98,15,.08)}
+  .note.bad{border-left-color:var(--bad);background:rgba(179,38,30,.07)}
+  ul{margin:0 0 14px;padding-left:20px}li{margin-bottom:7px;font-size:14.5px}
+  ol{margin:0 0 14px;padding-left:20px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--surface);border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;box-shadow:var(--shadow);z-index:9}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<button class="toggle" id="tt">◐ theme</button>
+<div class="wrap">
+
+<header><div class="head-in">
+  <div class="eyebrow">ROOT-CAUSE ANALYSIS · SOURCE QUALITY</div>
+  <h1>Why the AX corpus is almost all low-tier sources</h1>
+  <p class="lede">231 harvested cases, 96 domains, zero independent Tier-A outlets. This is not bad luck in what surfaced — it is the deterministic output of the seeds chosen and a harvest path with no concept of source tier. The pipeline could not have produced a high-tier corpus.</p>
+  <div class="meta">
+    <span>SUBJECT <b>harvest_ax_cases.sh · awesome_ax-cases.md · search_hits_ax.json</b></span>
+    <span>CORPUS <b>ax_case_harvest_registry.json (231 cases)</b></span>
+    <span>DATE <b>2026-07-18</b></span>
+  </div>
+
+  <div class="verdict">
+    <div class="t">Diagnosis</div>
+    <h3>Garbage-tier-in, garbage-tier-out — plus a resolver that strips out what little independence there was.</h3>
+    <p>The primary seed is a curated directory of <b>company engineering blogs</b>, so its entire universe is self-reported. The secondary seed contained almost no independent outlets to begin with. And the harvest path never mentions "tier" once — it has no way to prefer, require, or even notice an independent source. The few Tier-A/C domains that did appear in the seeds were dropped before they reached the registry.</p>
+  </div>
+</div></header>
+
+<h2>1 · The symptom, restated precisely</h2>
+<div class="kpis" style="margin-top:0">
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">0 <small>/ 231</small></div><div class="k">Tier-A independent outlet</div></div>
+  <div class="kpi"><div class="n tnum">≈62%</div><div class="k">company self-published blogs</div></div>
+  <div class="kpi"><div class="n tnum">≈37%</div><div class="k">vendor pages + open platforms</div></div>
+  <div class="kpi"><div class="n tnum" style="color:var(--bad)">231 <small>/ 231</small></div><div class="k">single-sourced (corrob = 1)</div></div>
+</div>
+<p style="margin-top:22px">Every case is a company, a vendor, or an individual describing their own success. No Reuters, WSJ, FT, Bloomberg, Economist, HBR, or MIT Sloan appears anywhere in the corpus. There is no independent verification because there is no independent source. The question is why — and the answer is entirely upstream of extraction.</p>
+
+<h2>2 · Cause one — the seed sets the ceiling</h2>
+<p>A harvest cannot produce sources higher-quality than the places it is told to look. The AX harvest has exactly two seeds, and the script consults them <b>in priority order</b>.</p>
+
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th style="width:30%">Seed (priority)</th><th>What it actually is</th><th>Tier reachable</th></tr></thead>
+  <tbody>
+    <tr><td><b>(a) awesome_ax-cases.md</b><br><span class="chip">primary · dominates by volume</span></td><td>A crawl of <code>themanojdesai/genai-llm-ml-case-studies</code> — described in the report itself as <i>"500+ real named-company ML/LLM case studies with links to the <b>original engineering blog posts</b>, organized by company."</i> A directory of self-published eng blogs.</td><td><span class="chip warn">B / D only</span> by construction</td></tr>
+    <tr><td><b>(b) search_hits_ax.json</b><br><span class="chip">secondary · tiny</span></td><td>111 hits from 14 generic Google queries. Top domains: medium.com (11), linkedin.com (7), mckinsey.com (6), deloitte.com (3).</td><td><span class="chip warn">mostly C / open-platform</span></td></tr>
+  </tbody>
+</table></div></div>
+
+<blockquote>"…curates 500+ real named-company ML/LLM system-design case studies with links to the <b>original engineering blog posts</b>, organized by industry, use case, and company."
+<cite>reports/awesome-lists/awesome_ax-cases.md — describing the primary seed</cite></blockquote>
+
+<div class="note bad"><b>The seed is not a flaw in the seed — it is an excellent list of engineering blogs. The flaw is asking it for something it structurally cannot contain.</b> An index of company blog posts has a hard tier ceiling of B (company primary) and D (vendor). It contains zero Reuters, zero HBR, zero SEC filings, because that is not what it curates. Pointing a case harvest at it guarantees a self-reported corpus before a single page is fetched.</div>
+
+<h2>3 · Cause two — the harvest path has no concept of tier</h2>
+<p>The project <i>defines</i> a rigorous four-tier source model — but only in specs that never ran (<code>01_case_finder.md</code>, <code>02_validator.md</code>). In the path that actually produced the 231 cases, the harvest script never mentions tier at all, and the extractor mentions it exactly once — <b>to say it doesn't do it</b>. Grep the two files that ran:</p>
+<pre><span class="cm"># scripts/harvest_ax_cases.sh + ax_case_harvest_extractor.md</span>
+$ grep -ni 'tier' scripts/harvest_ax_cases.sh agents/stage1/ax_case_harvest_extractor.md
+<span class="cm">scripts/harvest_ax_cases.sh:</span>            <span class="hl">(no matches)</span>
+agents/stage1/ax_case_harvest_extractor.md:9: "…no KPI breakdown, <span class="hl">no source-tier</span>
+                                                classification, no contradictory-evidence search"</pre>
+<p>The extractor's only reference to source tier is the line disclaiming it — this is deliberate, a fast net rather than a quality filter:</p>
+<blockquote>"deliberately a lighter-weight sibling… <b>no source-tier classification, no contradictory-evidence search</b>. Speed and volume over exhaustive rigor."
+<cite>agents/stage1/ax_case_harvest_extractor.md, lines 8–12</cite></blockquote>
+<p>So there is no step that prefers an independent source, requires corroboration for a vendor claim, or even records what tier a source is. Nothing steers the harvest upward, because nothing in it knows "up" exists.</p>
+
+<h2>4 · Cause three — the resolver actively pushes <em>down</em>-tier</h2>
+<p>Worse than tier-blind: the candidate-sourcing instruction contains a rule that systematically prefers the self-reported source over the independent one.</p>
+<blockquote>"resolve it to the page that <b>actually describes the transformation story</b> (a news article, case study, or <b>company blog post</b>) — not an index/listicle page."
+<cite>scripts/harvest_ax_cases.sh:277 — the candidate-sourcing prompt</cite></blockquote>
+<p>For a self-reported AX story, the page that "actually describes the transformation" <i>is</i> the company's own engineering blog — that is where the numbers, the before/after, and the detail live. An independent outlet typically summarises and often paywalls. So three mechanisms compound, each stripping independence out:</p>
+<div class="flow">
+  <div class="step bad"><div class="no">1</div><div class="bd"><b>Resolve-to-primary</b><span>When both a company blog and a news write-up exist, "the page that describes the story" resolves to the company blog. The independent coverage is discarded as less detailed.</span></div></div>
+  <div class="step bad"><div class="no">2</div><div class="bd"><b>Paywall attrition</b><span>The extractor marks an unfetchable page <code>snippet-only</code> and prefers fetchable ones. Reuters/WSJ/FT/HBR are exactly the sources behind paywalls — so they lose to an open company blog every time. <i>(The validator spec fixes this with <code>accessible_with_paywall</code>; the harvest has no such rule.)</i></span></div></div>
+  <div class="step bad"><div class="no">3</div><div class="bd"><b>No corroboration pass</b><span>The rich case finder says: <i>"For each candidate from a vendor page, run a follow-up query for independent confirmation before including it."</i> The harvest omits this entirely. Every case ends at <code>corroboration_count = 1</code> — the first source found is the only source recorded.</span></div></div>
+</div>
+
+<div class="note bad"><b>The proof: the little Tier-A/C that reached the seeds never reached the registry.</b> The secondary seed did contain some higher-tier hits. We traced each one from seed → registry:
+<div class="card" style="margin:12px 0 0"><div class="tblscroll"><table>
+  <thead><tr><th>Domain</th><th class="c">Tier</th><th class="num">In seed hits</th><th class="c">In final registry</th></tr></thead>
+  <tbody>
+    <tr><td>hbr.org</td><td class="c"><span class="chip bad">A</span></td><td class="num">2</td><td class="c" style="color:var(--bad)">dropped</td></tr>
+    <tr><td>deloitte.com</td><td class="c"><span class="chip warn">C</span></td><td class="num">3</td><td class="c" style="color:var(--bad)">dropped</td></tr>
+    <tr><td>gartner.com</td><td class="c"><span class="chip warn">C</span></td><td class="num">2</td><td class="c" style="color:var(--bad)">dropped</td></tr>
+    <tr><td>ibm.com</td><td class="c"><span class="chip warn">C/D</span></td><td class="num">2</td><td class="c" style="color:var(--bad)">dropped</td></tr>
+    <tr><td>mckinsey.com</td><td class="c"><span class="chip warn">C</span></td><td class="num">6</td><td class="c" style="color:var(--good)">2 survived</td></tr>
+  </tbody>
+</table></div></div>
+<p style="margin:10px 0 0">The one independent Tier-A outlet in the seeds (HBR) was dropped. The only higher-tier domain that partly survived is McKinsey — an analyst (Tier C), self-publishing. The pipeline didn't just fail to <i>find</i> Tier A; it discarded the Tier A it was handed.</p></div>
+
+<h2>5 · The deepest reason — a real domain skew the pipeline ignored</h2>
+<p>Part of this is genuine, not just a coding gap: <b>AX stories overwhelmingly live on company blogs.</b> Firms publish their own AI wins in detail; independent outlets cover a smaller, more selective slice, later, and often behind a paywall. Tier A is genuinely scarcer <i>and</i> harder to fetch for this exact topic. That reality is precisely why <code>01_case_finder.md</code> was designed the way it was:</p>
+<blockquote>"Start from Tier A/B; use Tier C/D only to <b>discover</b> candidates, then <b>verify upward</b>… a KPI counts as verified only if it traces to Tier A, Tier B primary financials, or two independent sources… Tier D — vendor case studies, press releases — leads only, <b>never a sole source</b>."
+<cite>agents/01_case_finder.md, lines 42–44 &amp; 136–137</cite></blockquote>
+<p>Every countermeasure the domain skew demands already exists on paper. The harvest is the version with all of them removed. This corpus is what you get when you run the fast net and skip the pipeline it was meant to feed.</p>
+
+<h2>6 · How to resolve it</h2>
+<p>Ordered by leverage. The first two change what enters; the rest change what survives.</p>
+
+<h3 style="margin-top:22px">A · Fix the seeds — you cannot filter in what you never sourced <span class="chip warn">highest leverage</span></h3>
+<ul>
+  <li><b>Add Tier-A-first seeds.</b> Curated query sets and lists that target independent outlets and primary filings: HBR / MIT Sloan case archives, Reuters/Bloomberg/FT technology desks, SEC 10-K/8-K full-text search (EDGAR), NBER / arXiv econ-of-AI. These are the domains <code>01_case_finder</code> already names — nothing new to invent.</li>
+  <li><b>Rebalance seed priority.</b> Today the eng-blog directory is priority (a) and dominates by sheer volume. Make independent-outlet seeds priority (a) and use the eng-blog directory as the corroborating <i>second</i> source, not the primary one — the inverse of the current order.</li>
+  <li><b>Expand the search-hit seed.</b> 14 generic queries yielded 111 hits with almost no Tier A. Tier-targeted queries (<code>"[company] AI" site:reuters.com</code>, <code>site:sec.gov "artificial intelligence"</code>) would surface independent coverage the current queries never asked for.</li>
+</ul>
+
+<h3 style="margin-top:22px">B · Make the harvest tier-aware <span class="chip">medium leverage</span></h3>
+<ul>
+  <li><b>Classify tier at candidate time</b> — a cheap domain lookup adds a <code>source_tier</code> field the extractor currently lacks. You cannot manage what you don't measure.</li>
+  <li><b>Set per-tier quotas / floors</b> (mirroring the anti-skew quotas already in <code>01_case_finder</code>): e.g. no more than N% Tier D, a minimum % with an independent source.</li>
+  <li><b>Add a corroboration pass:</b> for any Tier-D/self-published candidate, run one follow-up query for an independent source before accepting — raising <code>corroboration_count</code> above its current uniform 1.</li>
+  <li><b>Stop discarding independent coverage.</b> Change the resolver rule to keep <i>both</i> the primary (detailed) source and an independent (corroborating) one, rather than collapsing to the company blog.</li>
+</ul>
+
+<h3 style="margin-top:22px">C · Run the validator — enforce the tier rule that exists <span class="chip">it's built, unused</span></h3>
+<p><code>02_validator.md</code> already encodes <i>"Tier D alone may never anchor a main-deck claim; require Tier A/B or two independent sources"</i> and treats a paywalled Reuters/HBR as usable (<code>accessible_with_paywall</code>), not a reject. Running it will correctly route today's vendor-only cases to <code>appendix</code>/<code>manual_review</code>. But be clear about what this can and cannot do:</p>
+<div class="note warn"><b>The validator filters; it cannot manufacture.</b> It can down-rank the low-tier cases you have — but it cannot create the Tier-A sources that were never sourced. If you validate the current 231 without fixing the seeds first, you will get a <i>correctly-labelled</i> pile of low-tier cases and a near-empty main deck. Fix step A first, then let the validator enforce. Sourcing quality is set upstream; validation only reveals it.</div>
+
+<h3 style="margin-top:22px">D · Reset expectations on the word "verified"</h3>
+<p>As the earlier analysis showed, <code>verification_status: "verified"</code> here means only "the page was fetched," not "the claim is independently confirmed." Combined with 0% Tier A, "208 verified cases" currently reads as far stronger than it is. Renaming the field (<code>fetch_status: fetched | snippet_only</code>) and reporting a separate tier-mix stat would stop the corpus from looking more credible than its sources justify.</p>
+
+<h2>Summary</h2>
+<div class="card"><div class="tblscroll"><table>
+  <thead><tr><th style="width:16%">&nbsp;</th><th>Finding</th></tr></thead>
+  <tbody>
+    <tr><td><b>Problem</b></td><td>0 of 231 cases have an independent Tier-A source; ~62% are company self-published blogs, the rest vendor pages and open platforms (Medium/LinkedIn). Every case is single-sourced.</td></tr>
+    <tr><td><b>Cause 1 — seed ceiling</b></td><td>The primary seed is a curated directory of company engineering blogs. Its tier ceiling is B/D by construction; it contains zero independent outlets to find.</td></tr>
+    <tr><td><b>Cause 2 — tier-blind path</b></td><td>The scripts and extractor that actually ran contain the word "tier" zero times. Nothing prefers, requires, or records source independence. The extractor disclaims tier classification by design.</td></tr>
+    <tr><td><b>Cause 3 — down-tier resolver</b></td><td>The candidate prompt resolves to "the company blog post," paywall attrition drops independent outlets, and there is no corroboration pass. The HBR/Deloitte/Gartner hits present in the seeds were dropped before the registry; only 2 McKinsey (Tier C) survived.</td></tr>
+    <tr><td><b>Deepest reason</b></td><td>AX stories genuinely live mostly on company blogs — Tier A is scarce and paywalled for this topic. <code>01_case_finder.md</code> was designed to counteract exactly this (start Tier A/B, verify upward, corroborate vendor claims). The harvest is that design with every countermeasure removed.</td></tr>
+    <tr><td><b>Solution</b></td><td><b>A.</b> Add Tier-A-first seeds and invert seed priority (highest leverage). <b>B.</b> Make the harvest tier-aware — classify tier, set quotas, add a corroboration pass, keep independent coverage. <b>C.</b> Run <code>02_validator.md</code> to enforce the tier rule — but only after A, since it filters and cannot manufacture. <b>D.</b> Rename "verified" so the corpus stops looking stronger than its sources.</td></tr>
+  </tbody>
+</table></div></div>
+
+<footer>Generated 2026-07-18 · evidence: reports/awesome-lists/awesome_ax-cases.md, state/search_hits_ax.json (111 hits / 14 queries), state/ax_case_harvest_registry.json (231 cases / 96 domains) · code read: scripts/harvest_ax_cases.sh:277, agents/stage1/ax_case_harvest_extractor.md, agents/01_case_finder.md:42-44,136-137 · seed→registry tier trace computed<br>Tier buckets are domain-approximated; the Tier-A = 0 result and the HBR-dropped trace are exact. No files were modified to produce this analysis.</footer>
+</div>
+<script>
+  const r=document.documentElement,b=document.getElementById('tt');
+  b.onclick=()=>{const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+</script>
+</body>
+</html>
