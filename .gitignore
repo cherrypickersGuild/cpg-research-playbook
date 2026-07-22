@@ -31,6 +31,15 @@ state/.tmp_*
 # ledger state/visited_url_ledger.json remains the committed, persistent truth
 # they are seeded from.
 state/visited_url_ledger_*.json
+
+# Matrix harvest (state/matrix/). The KEPT outputs are manifest.json, the
+# per-cell query sets (queries_category#i_topic#j.json), the per-cell harvest
+# files (category#i_topic#j.json) and the derived matrix_union.json — none of
+# which are ignored. Every transient per-cell working file is dot-prefixed, so
+# one rule covers them all: ledgers, attempted sets, hit batches, entity
+# batches, raw model output, error logs, GitHub caches and temp files.
+state/matrix/.*
+
 # ax_case_harvest transient scratch files — listed explicitly (not a wildcard)
 # so state/ax_case_harvest_registry.json (the persistent output) is never
 # accidentally matched.

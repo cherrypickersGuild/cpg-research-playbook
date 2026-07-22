@@ -24,6 +24,18 @@ into directly. This is what makes the four lanes safe to run concurrently — no
 - Advisory locks live in `state/locks/`. Same topic twice = refused; different topics never block.
 - Never add a new shared mutable file to the harvest path. If something must be shared, it gets a lock and an atomic write-then-rename via a **unique** temp name — a fixed `<file>.tmp` is a shared name and will interleave.
 
+## Matrix harvest: arbitrary (category × topic) cells
+
+For anything outside the four fixed topics, type the lists and every intersection is expanded and
+harvested concurrently — see `docs/matrix_harvest_workflow.md`.
+
+- `bash scripts/run_matrix.sh --categories "healthcare,finance" --topics "agent,rag"` (add `--dry-run` first).
+- A **cell** is one (category, topic) pair; `i`/`j` are 1-based indices into the lists **as typed**, which is what `category#i_topic#j.json` means. List order is load-bearing; `state/matrix/manifest.json` is the index.
+- Each lane does its own query expansion (`expand_queries_cell.sh`, per-cell Stage 1A) then its own harvest (`harvest_matrix_cell.sh`), so expansions run in parallel and no cell waits at a phase barrier. `--phased` if you want a barrier.
+- `MAX_PARALLEL` (default 4) caps in-flight lanes. Do not remove it: a 4×5 matrix is 20 cells and 20 simultaneous model lanes exhaust the session limit and fail together.
+- `topic`/`category` on every harvested entity are stamped **from the manifest**, never trusted from the model. Expansion refuses to shrink an existing query set.
+- Fold with `bash scripts/merge_matrix.sh`; union identity is (category, topic, name), not `entity_key` — the same tool in two cells is two findings, not a duplicate.
+
 When asked to run a single stage interactively, use the matching subagent in `.claude/agents/` (e.g. `ax-validator`) and pass the input file path explicitly.
 
 ## Autonomous coding safety & repair policy
