@@ -9,8 +9,53 @@ bash scripts/harvest_entities.sh <agent|mcp|prompt|skill> [target=250] [--check]
 ```
 
 `target` is the **final total** of `description_source:"verified"` entities the topic should reach in
-`state/entity_registry.json` (the canonical registry) — **not** a number to add. Existing verified
-entities count toward it, so the loop only closes the gap (`target - current`). Default is **250**.
+that topic's **BuildingBlocks shard** — **not** a number to add. Existing verified entities count
+toward it, so the loop only closes the gap (`target - current`). Default is **250**.
+
+### Where entities are stored (sharded, as of 2026-07-22)
+
+Each topic owns one file. `state/entity_registry.json` is now a **derived union**, rebuilt from the
+shards by a single writer — nothing harvests into it directly.
+
+| Topic | Shard (authoritative) | Ledger shard | GitHub cache shard |
+|---|---|---|---|
+| `agent`  | `state/BuildingBlocks_Agent.json`  | `visited_url_ledger_agent.json`  | `github_meta_cache_agent.json` |
+| `mcp`    | `state/BuildingBlocks_MCP.json`    | `visited_url_ledger_mcp.json`    | `github_meta_cache_mcp.json` |
+| `prompt` | `state/BuildingBlocks_Prompt.json` | `visited_url_ledger_prompt.json` | `github_meta_cache_prompt.json` |
+| `skill`  | `state/BuildingBlocks_Skill.json`  | `visited_url_ledger_skill.json`  | `github_meta_cache_skill.json` |
+
+Shards use the **same schema** as the union, so every existing `jq` query works on them unchanged.
+A shard absent on first use is derived from the union automatically (lossless); ledger shards are
+seeded from `state/visited_url_ledger.json` so a lane inherits the full crawl history.
+
+This is what makes concurrent harvesting safe: no two lanes read-modify-write the same file, so the
+lost-update race that silently discarded whole batches cannot occur. Each lane additionally holds an
+advisory lock at `state/locks/harvest_<topic>.lock` for its entire run, so the **same** topic can
+never be harvested twice at once (different topics never block each other).
+
+### Fold the shards back into the union
+
+```
+bash scripts/merge_building_blocks.sh            # shards -> state/entity_registry.json (+ ledger)
+bash scripts/merge_building_blocks.sh --check    # report the delta, write nothing
+bash scripts/merge_building_blocks.sh --strict   # require every shard to already exist
+```
+
+Single-writer (holds `state/locks/entity_registry.lock`), atomic, and **idempotent** — folding twice
+with unchanged shards yields a byte-identical union apart from `last_merged_at`. It also folds the
+per-topic ledger shards back into `state/visited_url_ledger.json`, latching extraction flags true and
+unioning id lists, so crawl history survives even though the shards are transient. Union rows no
+shard carries are **preserved, never deleted**. Both orchestrators run this automatically at the end.
+
+### (Re)create the shards from the union
+
+```
+python scripts/split_entity_registry.py [--dry-run] [--force]
+```
+
+Refuses by default to overwrite a shard holding entities the union lacks — that means a lane
+harvested into it and the union has not absorbed those rows yet. Fold first, or pass `--force` to
+discard them.
 
 Runs candidate-sourcing → Stage 1G (fetch + verify) → `merge_entity_registry.sh` in a loop until the
 topic has `target` verified entities, `NO_PROGRESS_THRESHOLD` consecutive loops add zero new verified
@@ -25,13 +70,35 @@ printing why it stopped. **A clean (exit 0) stop does not imply the target was m
 ```
 Use it to see remaining counts, or as the skip signal in orchestration. Needs only `jq`.
 
-### Grow all four topics + AX cases (orchestrator)
+### Grow all four topics + AX cases (orchestrators)
+
+**Concurrent** — every lane at once, then one fold. Use this by default; the lanes are ~99 % model
+latency, so overlapping them collapses the wall-clock from the sum of the lanes to the slowest lane:
+
+```
+bash scripts/harvest_parallel.sh                  # 4 entity lanes + AX, concurrently
+bash scripts/harvest_parallel.sh --entities-only  # the four entity topics only
+bash scripts/harvest_parallel.sh --topics agent,mcp
+bash scripts/harvest_parallel.sh --dry-run        # show the launch plan, run nothing
+```
+
+Lanes start `STAGGER_SEC` apart (default 20) rather than simultaneously — four cold `claude -p` calls
+in the same instant is the shape most likely to trip the session rate limit, which fails every lane at
+once. Per-lane console output goes to `state/logs/parallel_<run_id>/<lane>.log`; interleaving five
+lanes onto one terminal is unreadable. A lane that dies never aborts the others (`wait` is per-PID),
+and the fold still runs so the surviving lanes' work reaches the union.
+
+**Sequential** — the original one-at-a-time path, still supported and easier to watch:
 
 ```
 bash scripts/harvest_all.sh                 # agent → mcp → prompt → skill → AX, sequentially
 bash scripts/harvest_all.sh --entities-only # the four entity topics only
 bash scripts/harvest_all.sh --ax-only       # AX cases only
 ```
+
+Running lanes from **separate sessions** is also safe and needs no orchestrator — just run
+`bash scripts/harvest_entities.sh <topic>` in each, then `bash scripts/merge_building_blocks.sh`
+once when they are all done. The per-topic lane locks stop two sessions taking the same topic.
 
 `harvest_all.sh` runs each stage in order, first `--check`s it (skipping any topic already at target),
 runs the harvest, then **re-checks**: a bounded child that stops below target is reported INCOMPLETE, and

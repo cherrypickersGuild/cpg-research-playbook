@@ -12,6 +12,18 @@ Shared rules carried through every stage: named company · concrete before/after
 
 To run the whole thing non-interactively: `bash scripts/run_pipeline.sh` (edit `pipeline.config.sh` first). Outputs land in `runs/<timestamp>/outputs/`, logs in `runs/<timestamp>/logs/`, newest run symlinked at `runs/latest/`.
 
+## Entity harvest: sharded storage, parallel lanes
+
+Each entity topic owns one file; `state/entity_registry.json` is a **derived union**, never harvested
+into directly. This is what makes the four lanes safe to run concurrently — no two writers share a file.
+
+- `agent`→`state/BuildingBlocks_Agent.json` · `mcp`→`BuildingBlocks_MCP.json` · `prompt`→`BuildingBlocks_Prompt.json` · `skill`→`BuildingBlocks_Skill.json` (same schema as the union)
+- Ledger and GitHub-metadata cache are sharded per topic too (`visited_url_ledger_<topic>.json`, `github_meta_cache_<topic>.json`).
+- Run concurrently: `bash scripts/harvest_parallel.sh` — or one `harvest_entities.sh <topic>` per session.
+- Fold to the union when lanes finish: `bash scripts/merge_building_blocks.sh` (single-writer, idempotent, also folds the ledger shards). Both orchestrators do this automatically.
+- Advisory locks live in `state/locks/`. Same topic twice = refused; different topics never block.
+- Never add a new shared mutable file to the harvest path. If something must be shared, it gets a lock and an atomic write-then-rename via a **unique** temp name — a fixed `<file>.tmp` is a shared name and will interleave.
+
 When asked to run a single stage interactively, use the matching subagent in `.claude/agents/` (e.g. `ax-validator`) and pass the input file path explicitly.
 
 ## Autonomous coding safety & repair policy

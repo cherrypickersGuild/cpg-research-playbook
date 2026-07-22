@@ -42,9 +42,12 @@ chmod +x "$MOCK"
 STATE="$TMP/state"; mkdir -p "$STATE"
 echo '{"schema_version":2,"last_merged_at":null,"metadata":{},"entities":[]}' > "$STATE/entity_registry.json"
 echo '{"ledger":[]}' > "$STATE/visited_url_ledger.json"
-# pre-seed a FRESH cache entry -> prefetch is a pure cache read (0 network calls)
+# pre-seed a FRESH cache entry -> prefetch is a pure cache read (0 network calls).
+# The cache is sharded per topic (github_meta_cache_<topic>.json) so concurrent
+# lanes don't clobber each other's entries; this run harvests topic `prompt`.
+GH_CACHE_FILE="$STATE/github_meta_cache_prompt.json"
 NOW="$(python -c "import datetime;print(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))")"
-cat > "$STATE/github_meta_cache.json" <<CACHE
+cat > "$GH_CACHE_FILE" <<CACHE
 {"repos":{"$KEY":{"status":"ok","stars":4242,"canonical_url":"$REPO_URL","archived":false,"pushed_at":"2026-07-01T00:00:00Z","fetched_at":"$NOW"}}}
 CACHE
 
@@ -68,7 +71,7 @@ if grep -qE 'fetch https?://api\.github\.com' "$CAPTURE" 2>/dev/null; then bad "
 
 # no token / bearer header anywhere it could leak
 LEAK=0
-for f in "$STATE/github_meta_cache.json" "$GM" "$CAPTURE" "$STATE/harvest_prompt.err"; do
+for f in "$GH_CACHE_FILE" "$GM" "$CAPTURE" "$STATE/harvest_prompt.err"; do
   [ -f "$f" ] && grep -qiE 'ghp_[A-Za-z0-9]|gho_[A-Za-z0-9]|github_pat_|authorization:|bearer ' "$f" && LEAK=1
 done
 asrt "no token/authorization header in cache/meta/args/logs" "0" "$LEAK"

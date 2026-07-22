@@ -1,7 +1,25 @@
 #!/usr/bin/env bash
 # harvest_entities.sh — repeatedly builds candidate batches for one topic,
-# runs Stage 1G over them, and merges into state/entity_registry.json until
-# the topic has >= target verified entities, or sources are exhausted.
+# runs Stage 1G over them, and merges into that topic's BuildingBlocks shard
+# until the topic has >= target verified entities, or sources are exhausted.
+#
+# PARALLEL-SAFE BY OWNERSHIP. Every mutable file this script writes is scoped to
+# its topic, so four lanes (agent, mcp, prompt, skill) can run concurrently in
+# separate sessions without any shared-file race:
+#
+#     agent  -> state/BuildingBlocks_Agent.json   + visited_url_ledger_agent.json
+#     mcp    -> state/BuildingBlocks_MCP.json     + visited_url_ledger_mcp.json
+#     prompt -> state/BuildingBlocks_Prompt.json  + visited_url_ledger_prompt.json
+#     skill  -> state/BuildingBlocks_Skill.json   + visited_url_ledger_skill.json
+#
+# state/entity_registry.json is no longer written here at all — it became a
+# DERIVED union, rebuilt from the four shards by scripts/merge_building_blocks.sh
+# under a single-writer lock. The shard is authoritative for its topic; the union
+# is a read-only view for anything that wants the whole corpus.
+#
+# Two lanes for the SAME topic would still collide (same shard), so each lane
+# takes an advisory per-topic lock for its whole run; a second invocation of the
+# same topic refuses to start rather than silently interleaving writes.
 #
 # "Verified" means description_source:"verified" — the description was
 # fetched from the entity's OWN primary page (target_url: repo, docs page,
@@ -30,7 +48,7 @@
 # `target` is the FINAL total number of verified entities the registry should
 # reach for this topic — NOT a number to add. Existing verified entities count
 # toward it, so the loop only needs to close the gap (target - current). The
-# canonical count is: entities in state/entity_registry.json whose topic
+# canonical count is: entities in this topic's BuildingBlocks shard whose topic
 # exactly matches AND description_source == "verified". Dedup is by entity_key
 # at merge time, so duplicates/rejects/search-hits are never counted.
 #
@@ -63,6 +81,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
+# Function definitions only — sourcing this is side-effect-free, so it is safe
+# above the --check early-exit.
+source "$ROOT/scripts/lib/lockdir.sh"
 
 # ---------------------------------------------------------------------------
 # Argument parsing FIRST — before ANY side effect — so `--check` is a pure,
@@ -94,16 +115,35 @@ esac
 # here as a plain variable — NOT created — so --check can read the registry path
 # with zero filesystem side effects.
 STATE="${STATE_DIR:-$ROOT/state}"
-REGISTRY="$STATE/entity_registry.json"
 
-# --check: pure read-only status. No trap, no mkdir, no file creation. A missing
-# registry counts as 0 (it is NOT created). Needs only jq. Emits one
-# machine-readable line for scripts/harvest_all.sh and the target tests, exit 0.
+# Per-topic shard file name. Capitalisation is fixed and explicit rather than
+# computed from $TOPIC, because "mcp" -> "MCP" is not a title-case rule and a
+# clever transform here would silently produce "BuildingBlocks_Mcp.json" — a
+# second, empty registry that looks plausible in a directory listing.
+case "$TOPIC" in
+  agent)  SHARD_NAME="BuildingBlocks_Agent.json" ;;
+  mcp)    SHARD_NAME="BuildingBlocks_MCP.json" ;;
+  prompt) SHARD_NAME="BuildingBlocks_Prompt.json" ;;
+  skill)  SHARD_NAME="BuildingBlocks_Skill.json" ;;
+esac
+REGISTRY="$STATE/$SHARD_NAME"
+UNION="$STATE/entity_registry.json"
+
+# --check: pure read-only status. No trap, no mkdir, no file creation. Needs only
+# jq. Emits one machine-readable line for the orchestrators and the target tests,
+# exit 0.
+#
+# Source of truth order: the topic's shard, else the union filtered to this topic
+# (so --check answers correctly on a repo that has not been split yet, WITHOUT
+# creating the shard as a side effect), else 0.
 if [ "$CHECK_MODE" = true ]; then
   command -v jq >/dev/null 2>&1 || { echo "ERROR: 'jq' not found." >&2; exit 1; }
   if [ -f "$REGISTRY" ]; then
     jq empty "$REGISTRY" 2>/dev/null || { echo "ERROR: $REGISTRY is not valid JSON." >&2; exit 1; }
     current="$(jq --arg t "$TOPIC" '[.entities[] | select(.topic==$t and .description_source=="verified")] | length' "$REGISTRY")"
+  elif [ -f "$UNION" ]; then
+    jq empty "$UNION" 2>/dev/null || { echo "ERROR: $UNION is not valid JSON." >&2; exit 1; }
+    current="$(jq --arg t "$TOPIC" '[.entities[] | select(.topic==$t and .description_source=="verified")] | length' "$UNION")"
   else
     current=0
   fi
@@ -200,6 +240,10 @@ on_exit() {
     log_event topic_end topic="$CURRENT_TOPIC" loop="$CURRENT_LOOP" verified_after="$vafter" exit_code="$ec" detail="ended_with_error"
   fi
   log_event script_end exit_code="$ec" duration_sec="$total_duration"
+  # Release the lane lock LAST, after logging, and only if this run took it —
+  # lock_release is a no-op when LOCK_HELD_DIR is empty (e.g. we exited because
+  # someone else held it, in which case yanking their lock would be a bug).
+  lock_release
 }
 trap on_exit EXIT
 # ---------------------------------------------------------------------------
@@ -218,8 +262,12 @@ S1="$ROOT/agents/stage1"
 HITS_TOPIC="$TOPIC"; [ "$TOPIC" = "skill" ] && HITS_TOPIC="skills"
 HITS_SHARD="$STATE/search_hits_${HITS_TOPIC}.json"
 AWESOME_LIST="$ROOT/reports/awesome-lists/awesome_${TOPIC}.md"
-REGISTRY="$STATE/entity_registry.json"
-LEDGER="$STATE/visited_url_ledger.json"
+# REGISTRY / UNION / SHARD_NAME were resolved above (shared with --check).
+# Per-topic ledger shard: this lane's exclusive copy of the visited-URL ledger.
+# The old single state/visited_url_ledger.json is kept as the SEED (copied in on
+# first use, below) and as the case-side lane's file — it is never written here.
+LEDGER="$STATE/visited_url_ledger_${TOPIC}.json"
+UNION_LEDGER="$STATE/visited_url_ledger.json"
 BATCH_HITS="$STATE/harvest_${TOPIC}_hits.json"
 BATCH_ENTITIES="$STATE/harvest_${TOPIC}_entity_batch.json"
 ATTEMPTED="$STATE/harvest_${TOPIC}_attempted.json"
@@ -233,11 +281,70 @@ RAW_1G="$STATE/harvest_${TOPIC}_raw_1g.json"
 # Deterministic GitHub metadata: a persistent cross-run cache, plus a per-loop
 # sanitized file handed to 1G so it never calls api.github.com itself. GH_CACHE
 # is the reusable cache (gitignored); GH_META matches state/harvest_* (gitignored).
-GH_CACHE="$STATE/github_meta_cache.json"
+#
+# The cache is sharded per topic too. It is a read-modify-write from Python, so a
+# shared cache under four concurrent lanes loses entries (last writer wins) and
+# causes exactly the redundant api.github.com traffic the cache exists to avoid.
+# Cross-topic reuse is worth little here — candidate repos barely overlap between
+# topics — so per-lane ownership is the cheaper trade.
+GH_CACHE="$STATE/github_meta_cache_${TOPIC}.json"
 GH_META="$STATE/harvest_${TOPIC}_github_meta.json"
 
-[ -f "$REGISTRY" ] || echo '{"schema_version":1,"last_merged_at":null,"entities":[]}' > "$REGISTRY"
-[ -f "$LEDGER" ]   || echo '{"ledger":[]}' > "$LEDGER"
+# ---------------------------------------------------------------------------
+# Lane lock: one harvester per topic, repo-wide. Different topics never block
+# each other (that is the whole point); a SECOND lane on the SAME topic would
+# write the same shard and the same ledger, so it must not start.
+# Held for the entire run and released by the exit trap.
+# ---------------------------------------------------------------------------
+LANE_LOCK="$STATE/locks/harvest_${TOPIC}.lock"
+if ! lock_acquire "$LANE_LOCK" "harvest_entities:$TOPIC"; then
+  EXIT_REASON="lane_lock_held"
+  echo "ERROR: another harvest lane for topic '$TOPIC' is already running (lock: $LANE_LOCK)." >&2
+  echo "       Topics run in parallel; the SAME topic does not. Wait for it, or remove the lock" >&2
+  echo "       directory if you are certain the holder is dead." >&2
+  exit 1
+fi
+
+# Shard bootstrap. An absent shard is derived from the union (one-shot migration
+# for a repo harvested before sharding existed) rather than starting empty —
+# starting empty would re-harvest hundreds of already-catalogued entities and
+# then reintroduce them as duplicates when the union is rebuilt.
+if [ ! -f "$REGISTRY" ]; then
+  if [ -f "$UNION" ] && jq empty "$UNION" 2>/dev/null; then
+    echo "[harvest][$TOPIC] shard $SHARD_NAME absent — deriving it from $UNION"
+    TMP_SHARD="$(mktemp "$STATE/.tmp_shard_XXXXXX")"
+    if jq --arg t "$TOPIC" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+          [.entities[] | select(.topic==$t)] as $e
+          | {schema_version:2, topic:$t, last_merged_at:$now,
+             metadata:{topics:($e|map(.topic)|unique|sort),
+                       entity_types:($e|map(.entity_type)|unique|sort),
+                       total_entities:($e|length),
+                       entity_count_by_topic:($e|group_by(.topic)|map({key:.[0].topic,value:length})|from_entries),
+                       entity_count_by_entity_type:($e|group_by(.entity_type)|map({key:.[0].entity_type,value:length})|from_entries)},
+             entities:$e}' "$UNION" > "$TMP_SHARD" && jq empty "$TMP_SHARD" 2>/dev/null; then
+      mv "$TMP_SHARD" "$REGISTRY"
+    else
+      rm -f "$TMP_SHARD"
+      EXIT_REASON="shard_bootstrap_failed"
+      echo "ERROR: could not derive $REGISTRY from $UNION — refusing to start with an empty shard." >&2
+      exit 1
+    fi
+  else
+    echo '{"schema_version":2,"last_merged_at":null,"entities":[]}' > "$REGISTRY"
+  fi
+fi
+
+# Ledger shard bootstrap, same reasoning: seed from the union ledger so this lane
+# inherits every already-visited URL and does not re-crawl the whole corpus.
+if [ ! -f "$LEDGER" ]; then
+  if [ -f "$UNION_LEDGER" ] && jq empty "$UNION_LEDGER" 2>/dev/null; then
+    echo "[harvest][$TOPIC] ledger shard absent — seeding it from $UNION_LEDGER"
+    cp "$UNION_LEDGER" "$LEDGER"
+  else
+    echo '{"ledger":[]}' > "$LEDGER"
+  fi
+fi
+
 # attempted-set is transient and scoped to this invocation — reset every run
 echo '{"attempted_urls":[]}' > "$ATTEMPTED"
 
@@ -369,15 +476,20 @@ while :; do
   # separately by the candidate-batch prompt's registry-target_url exclusion
   # and by merge_entity_registry.sh's entity_key dedup — both layer on top of
   # this, they don't replace it.
+  # Unique temp, not a fixed "<file>.tmp". A fixed temp path is a shared name:
+  # any second writer aiming at it interleaves bytes into the same file and the
+  # `mv` then installs the wreckage. mktemp in the same directory keeps the
+  # rename atomic (same filesystem) while making the name un-collidable.
+  ATT_TMP="$(mktemp "$STATE/.tmp_attempted_${TOPIC}_XXXXXX")"
   if ! jq -s '{attempted_urls: ((.[0].attempted_urls // []) + [.[1].hits[]?.source_url]) | unique}' \
-       "$ATTEMPTED" "$BATCH_HITS" > "$ATTEMPTED.tmp"; then
-    rm -f "$ATTEMPTED.tmp"
+       "$ATTEMPTED" "$BATCH_HITS" > "$ATT_TMP"; then
+    rm -f "$ATT_TMP"
     EXIT_REASON="attempted_set_merge_failed"
     echo "ERROR: attempted-set merge (jq) failed for topic '$TOPIC' — aborting." >&2
     exit 1
   fi
-  jq empty "$ATTEMPTED.tmp" 2>/dev/null || { rm -f "$ATTEMPTED.tmp"; EXIT_REASON="attempted_set_invalid_json"; echo "ERROR: attempted-set merge produced invalid JSON — aborting." >&2; exit 1; }
-  mv "$ATTEMPTED.tmp" "$ATTEMPTED"
+  jq empty "$ATT_TMP" 2>/dev/null || { rm -f "$ATT_TMP"; EXIT_REASON="attempted_set_invalid_json"; echo "ERROR: attempted-set merge produced invalid JSON — aborting." >&2; exit 1; }
+  mv "$ATT_TMP" "$ATTEMPTED"
 
   # seed a ledger row for every candidate URL that doesn't already have one — these URLs came
   # straight from the candidate-batch step, not through 1B's own ledger-append, so without this
@@ -394,6 +506,7 @@ while :; do
   # weaker guarantee, since entity_key dedup at merge_entity_registry.sh already catches same-
   # entity re-cataloging, and a target_url-keyed ledger would say nothing about whether the
   # citing page itself has been re-fetched. Source_url is the right key for "visited URL" semantics.
+  LED_TMP="$(mktemp "$STATE/.tmp_ledger_${TOPIC}_XXXXXX")"
   if ! jq -s --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
       (.[1].hits // []) as $hits
       | { ledger: ( (.[0].ledger // []) + ($hits | map({
@@ -402,14 +515,14 @@ while :; do
             http_status_last: null, content_hash: null,
             extracted: false, case_ids: [], entity_extracted: false, entity_ids: []
           })) ) | unique_by(.url) }' \
-       "$LEDGER" "$BATCH_HITS" > "$LEDGER.tmp"; then
-    rm -f "$LEDGER.tmp"
+       "$LEDGER" "$BATCH_HITS" > "$LED_TMP"; then
+    rm -f "$LED_TMP"
     EXIT_REASON="ledger_seed_failed"
     echo "ERROR: ledger seed (jq) failed for topic '$TOPIC' — aborting." >&2
     exit 1
   fi
-  jq empty "$LEDGER.tmp" 2>/dev/null || { rm -f "$LEDGER.tmp"; EXIT_REASON="ledger_seed_invalid_json"; echo "ERROR: ledger seed produced invalid JSON — aborting." >&2; exit 1; }
-  mv "$LEDGER.tmp" "$LEDGER"
+  jq empty "$LED_TMP" 2>/dev/null || { rm -f "$LED_TMP"; EXIT_REASON="ledger_seed_invalid_json"; echo "ERROR: ledger seed produced invalid JSON — aborting." >&2; exit 1; }
+  mv "$LED_TMP" "$LEDGER"
 
   # ---- deterministic GitHub metadata prefetch (OUTSIDE the model) -------------
   # Fetch stars / canonical URL for candidate GitHub repos here — authenticated
@@ -461,16 +574,49 @@ while :; do
   # $e must stay bound across the $u computation, so the whole tail is inside one `. as $e | ...`
   # (an earlier version scoped $e only inside the inner parens, which is a jq compile error that
   # `&&`-chaining silently swallowed under `set -e` — checked explicitly here instead).
+  LEDP_TMP="$(mktemp "$STATE/.tmp_ledgerpatch_${TOPIC}_XXXXXX")"
   if ! jq -s '(.[1].ledger_patch // []) as $p
          | {ledger: [ .[0].ledger[] | . as $e | (($p[] | select(.url==$e.url)) // {}) as $u | $e + $u ]}' \
-       "$LEDGER" "$BATCH_ENTITIES" > "$LEDGER.tmp"; then
-    rm -f "$LEDGER.tmp"
+       "$LEDGER" "$BATCH_ENTITIES" > "$LEDP_TMP"; then
+    rm -f "$LEDP_TMP"
     EXIT_REASON="ledger_patch_merge_failed"
     echo "ERROR: ledger merge (jq) failed for topic '$TOPIC' — aborting." >&2
     exit 1
   fi
-  jq empty "$LEDGER.tmp" 2>/dev/null || { rm -f "$LEDGER.tmp"; EXIT_REASON="ledger_patch_invalid_json"; echo "ERROR: ledger merge produced invalid JSON — aborting." >&2; exit 1; }
-  mv "$LEDGER.tmp" "$LEDGER"
+  jq empty "$LEDP_TMP" 2>/dev/null || { rm -f "$LEDP_TMP"; EXIT_REASON="ledger_patch_invalid_json"; echo "ERROR: ledger merge produced invalid JSON — aborting." >&2; exit 1; }
+  mv "$LEDP_TMP" "$LEDGER"
+
+  # ---- topic guard: a lane merges ONLY its own topic ------------------------
+  # The sharded layout rests on one invariant: shard files hold disjoint topics,
+  # which is what lets four lanes append concurrently without coordinating. 1G is
+  # told the topic, but it is a model and can return a row labelled something
+  # else. Merged unchecked, that row poisons this lane's shard, and the fold then
+  # refuses the shard — blocking the union rebuild for EVERY topic, not just this
+  # one. (Observed exactly this in an end-to-end run: one stray row per shard
+  # took the whole fold down.)
+  #
+  # So drop foreign-topic rows HERE, at the lane boundary, where the correct
+  # topic is known for certain, and say so loudly. Dropping is the conservative
+  # choice over rewriting .topic: a row 1G labelled `mcp` while working the agent
+  # seed list is a row whose CONTENT is suspect, not merely its label — silently
+  # relabelling it would launder a model error into the corpus.
+  n_batch=$(jq '.entities | length' "$BATCH_ENTITIES")
+  n_foreign=$(jq --arg t "$TOPIC" '[.entities[] | select(.topic != $t)] | length' "$BATCH_ENTITIES")
+  if [ "${n_foreign:-0}" -gt 0 ]; then
+    echo "[harvest][$TOPIC] loop $loop: WARNING — 1G returned $n_foreign/$n_batch entit(y/ies) with a topic other than '$TOPIC'; dropping them (not merged)." >&2
+    jq -r --arg t "$TOPIC" '.entities[] | select(.topic != $t) | "  dropped: topic=\(.topic // "null") name=\(.name // "?")"' "$BATCH_ENTITIES" >&2
+    log_event merge_start topic="$TOPIC" loop="$loop" command_label="topic_guard" detail="dropped=${n_foreign};batch=${n_batch}"
+    GUARD_TMP="$(mktemp "$STATE/.tmp_topicguard_${TOPIC}_XXXXXX")"
+    if jq --arg t "$TOPIC" '.entities |= map(select(.topic == $t))' "$BATCH_ENTITIES" > "$GUARD_TMP" \
+       && jq empty "$GUARD_TMP" 2>/dev/null; then
+      mv "$GUARD_TMP" "$BATCH_ENTITIES"
+    else
+      rm -f "$GUARD_TMP"
+      EXIT_REASON="topic_guard_failed"
+      echo "ERROR: topic guard (jq) failed for topic '$TOPIC' — refusing to merge an unfiltered batch." >&2
+      exit 1
+    fi
+  fi
 
   before="$(tally)"
   MERGE_START_EPOCH="$(date +%s)"

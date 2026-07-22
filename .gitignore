@@ -19,8 +19,18 @@ state/news_entity_batch.json
 state/harvest_*
 state/logs/
 state/backups/
-# deterministic GitHub metadata cache — regenerated/refreshed per run, never committed
+# deterministic GitHub metadata cache — regenerated/refreshed per run, never committed.
+# Sharded per topic for the parallel harvest (github_meta_cache_<topic>.json).
 state/github_meta_cache.json
+state/github_meta_cache_*.json
+# advisory lane/union lock directories — runtime coordination only, never source
+state/locks/
+# unique temp files from the atomic write-then-rename steps; present only mid-write
+state/.tmp_*
+# Per-topic visited-URL ledger shards. Each parallel lane owns one; the union
+# ledger state/visited_url_ledger.json remains the committed, persistent truth
+# they are seeded from.
+state/visited_url_ledger_*.json
 # ax_case_harvest transient scratch files — listed explicitly (not a wildcard)
 # so state/ax_case_harvest_registry.json (the persistent output) is never
 # accidentally matched.

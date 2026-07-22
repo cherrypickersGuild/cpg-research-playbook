@@ -73,8 +73,13 @@ new_state() {
   echo '{"ledger":[]}' > "$d/visited_url_ledger.json"
   echo "$d"
 }
-reg_entities()  { jq '.entities | length' "$1/entity_registry.json"; }
-ledger_stamped(){ jq '[.ledger[] | select((.entity_ids // []) | length > 0)] | length' "$1/visited_url_ledger.json"; }
+# Entity merges land in the topic's BuildingBlocks shard, not the union registry
+# — the union is derived later by merge_building_blocks.sh. Every run below uses
+# topic `mcp`, so that is the shard to count.
+reg_entities()  { jq '.entities | length' "$1/BuildingBlocks_MCP.json"; }
+# Likewise the ledger: each lane patches its own per-topic ledger shard, seeded
+# from the union ledger. The union ledger is only rebuilt by the fold step.
+ledger_stamped(){ jq '[.ledger[] | select((.entity_ids // []) | length > 0)] | length' "$1/visited_url_ledger_mcp.json"; }
 
 # --- real-state protection: snapshot BEFORE --------------------------------
 REAL_FILES=(state/entity_registry.json state/visited_url_ledger.json)

@@ -56,6 +56,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/pipeline.config.sh"
+# Function definitions only — side-effect-free, safe above the --check exit.
+source "$ROOT/scripts/lib/lockdir.sh"
 
 TOPIC="ax_cases"   # single lane (no per-topic split); used as the log/label key
 
@@ -179,6 +181,7 @@ on_exit() {
     log_event topic_end topic="$TOPIC" loop="$CURRENT_LOOP" verified_after="$vafter" exit_code="$ec" detail="ended_with_error"
   fi
   log_event script_end exit_code="$ec" duration_sec="$total_duration"
+  lock_release   # no-op unless this run actually took the lane lock
 }
 trap on_exit EXIT
 # ---------------------------------------------------------------------------
@@ -190,6 +193,17 @@ trap on_exit EXIT
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"
 command -v "$CLAUDE_BIN" >/dev/null 2>&1 || { EXIT_REASON="missing_dependency_claude"; echo "ERROR: CLAUDE_BIN '$CLAUDE_BIN' not on PATH." >&2; exit 1; }
 command -v jq            >/dev/null 2>&1 || { EXIT_REASON="missing_dependency_jq"; echo "ERROR: 'jq' not found." >&2; exit 1; }
+
+# Lane lock. This lane is already parallel-safe ALONGSIDE the entity lanes — it
+# never touches the visited-URL ledger or the entity registry, and writes only
+# state/ax_case_harvest_*. What it is not safe against is a second copy of
+# ITSELF, which would read-modify-write the same ax_case_harvest_registry.json.
+AX_LANE_LOCK="$STATE/locks/harvest_ax_cases.lock"
+if ! lock_acquire "$AX_LANE_LOCK" "harvest_ax_cases"; then
+  EXIT_REASON="lane_lock_held"
+  echo "ERROR: another ax_cases harvest lane is already running (lock: $AX_LANE_LOCK)." >&2
+  exit 1
+fi
 
 EXTRACTOR_SPEC="$ROOT/agents/stage1/ax_case_harvest_extractor.md"
 AWESOME_LIST="$ROOT/reports/awesome-lists/awesome_ax-cases.md"

@@ -19,6 +19,10 @@
 #   STATE_DIR, CLAUDE_BIN) are read by the child scripts and inherited from this
 #   process's environment — set them as a prefix and they flow through.
 #
+# For the CONCURRENT equivalent see scripts/harvest_parallel.sh — same targets,
+# same honesty rules, lanes overlapped in time. This script stays sequential on
+# purpose: it is the low-contention, easy-to-read path for a single session.
+#
 # Sequential and bounded: each stage runs to completion before the next starts
 # (no `&`, no parallelism); each child is itself bounded by MAX_LOOPS /
 # NO_PROGRESS_THRESHOLD. Resumable: every stage first runs the child's --check,
@@ -113,6 +117,21 @@ if [ "$MODE" = "all" ] || [ "$MODE" = "entities" ]; then
 fi
 if [ "$MODE" = "all" ] || [ "$MODE" = "ax" ]; then
   run_stage "ax_cases" "$AX" "$AX_TARGET"
+fi
+
+# Entity lanes now write per-topic BuildingBlocks shards, not the union registry.
+# Fold them back so state/entity_registry.json reflects this run — same step the
+# parallel orchestrator runs, for the same reason: one writer, after the lanes.
+FOLD_EC=0
+if [ "$MODE" = "all" ] || [ "$MODE" = "entities" ]; then
+  echo ""
+  echo "=== [fold] shards -> entity_registry.json ==="
+  bash "$ROOT/scripts/merge_building_blocks.sh" || FOLD_EC=$?
+  if [ "$FOLD_EC" -ne 0 ]; then
+    echo "WARNING: union fold failed (exit $FOLD_EC) — the shards still hold every harvested entity; re-run: bash scripts/merge_building_blocks.sh" >&2
+    incomplete=$((incomplete+1))
+    summary+=("union_fold  FAILED (exit $FOLD_EC)")
+  fi
 fi
 
 echo ""
