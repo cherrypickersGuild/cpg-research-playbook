@@ -169,7 +169,7 @@
   </a>
 </div>
 
-<h2>Part 3 · Parallel harvest rework (#8–#9)</h2>
+<h2>Part 3 · Parallel harvest rework (#8–#10)</h2>
 <div class="cards">
   <a class="rc" href="2026-07-22_report1_harvesting_algorithm.html">
     <div class="top"><span class="ttl"><span class="num-badge">8</span>The harvesting algorithm, as built</span><span class="fn">2026-07-22_report1_harvesting_algorithm.html</span></div>
@@ -180,6 +180,11 @@
     <div class="top"><span class="ttl"><span class="num-badge">9</span>Parallel harvesting: rework &amp; findings</span><span class="fn">2026-07-22_report2_parallel_harvest.html</span></div>
     <p class="hook">Shard per topic, derive the union. Concurrent merges keep 48/48 rows where the old layout silently lost a third to two-thirds; 2.90× measured speedup; three defects found by running it end to end, all fixed.</p>
     <div class="tags"><span class="chip good">48/48 preserved</span><span class="chip">2.90× faster</span><span class="chip">62 assertions</span></div>
+  </a>
+  <a class="rc" href="2026-07-22_report3_matrix_harvest.html">
+    <div class="top"><span class="ttl"><span class="num-badge">10</span>Matrix harvest: category × topic cells</span><span class="fn">2026-07-22_report3_matrix_harvest.html</span></div>
+    <p class="hook">Type two lists, harvest every intersection in parallel — and make query expansion per-cell, the last monolithic serial stage. Two concurrency bugs found only by running it: a zombie-blind worker pool and a CRLF that reached filenames.</p>
+    <div class="tags"><span class="chip">n × m cells</span><span class="chip">parallel query expansion</span><span class="chip">64 assertions</span></div>
   </a>
 </div>
 

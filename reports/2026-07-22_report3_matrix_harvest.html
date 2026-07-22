@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Report #3 — Matrix Harvest: Category × Topic Cells in Parallel</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:52px 0 8px;font-weight:650}
+  .h2sub{font-size:20px;color:var(--ink);letter-spacing:-.015em;margin:0 0 18px;font-weight:650}
+  h3{font-size:15.5px;margin:24px 0 6px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.9em;background:var(--chip);color:var(--chip-ink);padding:1px 5px;border-radius:4px}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 6px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:32px;line-height:1.13;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:16px;color:var(--muted);max-width:68ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:7px}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+  .card.warn{border-left:3px solid var(--warn)}
+  .card.bad{border-left:3px solid var(--bad)}
+  .card.good{border-left:3px solid var(--good)}
+  .card h3{margin-top:0}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .ok{color:var(--good);font-weight:600}
+  .no{color:var(--bad);font-weight:600}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:12px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:inherit}
+
+  /* matrix grid */
+  .mx{display:grid;gap:8px;margin:16px 0;font-size:13px;grid-template-columns:auto 1fr 1fr;min-width:420px}
+  .mx .hd{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;padding:4px 8px;align-self:end}
+  .mx .rh{font-size:12.5px;font-weight:600;padding:12px 8px;display:flex;align-items:center}
+  .mx .cell{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:10px;padding:11px 13px}
+  .mx .cell .cid{font-family:var(--mono);font-size:11.5px;color:var(--accent);font-weight:600}
+  .mx .cell .nm{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+  .bars{display:grid;gap:10px;margin:16px 0}
+  .barrow{display:grid;grid-template-columns:190px 1fr 60px;gap:12px;align-items:center;font-size:13px}
+  .bar{height:20px;border-radius:5px;background:var(--chip);overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:5px;background:var(--accent)}
+  .barval{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;text-align:right}
+
+  .find{display:grid;grid-template-columns:30px 1fr;gap:14px;margin-bottom:6px}
+  .find .no2{font-family:var(--mono);font-size:12px;color:var(--bad);background:rgba(179,38,30,.10);border-radius:8px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:600}
+  .find .bd{padding-bottom:16px;border-bottom:1px solid var(--hair)}
+  .find:last-child .bd{border-bottom:none}
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="head-in">
+  <div class="eyebrow">REPORT #3 · 2026-07-22 · axCaseResearch4 · commit 1e0c9d9</div>
+  <h1>Matrix harvest: typing two lists to harvest every category × topic cell in parallel</h1>
+  <p class="lede">Reports&nbsp;#1 and&nbsp;#2 removed the single-file bottleneck from the four fixed entity topics. This one generalises the harvest to anything you can type — a list of categories crossed with a list of topics — and makes query expansion parallel too, which it never was. Plus the two concurrency bugs that only surfaced once the thing ran.</p>
+  <div class="meta">
+    <span><b>Scope</b> 5 new scripts · 1 new test · docs · 1 518 insertions across 10 files</span>
+    <span><b>Verification</b> 64 offline assertions in 8 groups · full suite PASS</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n">n × m</div><div class="l">cells from two typed lists,<br>all independent</div></div>
+    <div class="kpi"><div class="n">64</div><div class="l">offline assertions,<br>0 failing</div></div>
+    <div class="kpi"><div class="n">2</div><div class="l">concurrency bugs found<br>and fixed</div></div>
+    <div class="kpi"><div class="n">4</div><div class="l">default in-flight lane cap<br>(quota protection)</div></div>
+  </div>
+</div></header>
+
+<h2>1 · The gap</h2>
+<div class="h2sub">Two fixed things, one of them still serial</div>
+<p>After Report&nbsp;#2 the entity harvest ran four lanes concurrently — but it was still <em>four specific topics</em>, each seeded by a hand-maintained <code>reports/awesome-lists/awesome_&lt;topic&gt;.md</code>. There was no way to ask for, say, <em>agents in healthcare</em>: no curated list exists, and nothing in the pipeline expressed the idea of a category at all.</p>
+<p>The second gap was quieter. <strong>Query expansion was never parallelised.</strong> Stage&nbsp;1A (<code>scripts/run_stage1.sh</code>) expands <em>every</em> seed topic in a single <code>claude</code> call and writes one shared <code>state/search_strategy_db.json</code> — precisely the monolith-plus-shared-mutable-file shape that Report&nbsp;#1 identified in the harvest and Report&nbsp;#2 removed. It survived untouched because the earlier work only followed the harvest path.</p>
+
+<h2>2 · The cell</h2>
+<div class="h2sub">One (category, topic) pair, owning everything it writes</div>
+<pre><code>bash scripts/run_matrix.sh --categories "healthcare,finance" --topics "agent,rag"</code></pre>
+<div class="scroll"><div class="mx">
+  <div></div>
+  <div class="hd">topic #1 · agent</div>
+  <div class="hd">topic #2 · rag</div>
+  <div class="rh">category #1<br>healthcare</div>
+  <div class="cell"><div class="cid">category#1_topic#1.json</div><div class="nm">healthcare × agent</div></div>
+  <div class="cell"><div class="cid">category#1_topic#2.json</div><div class="nm">healthcare × rag</div></div>
+  <div class="rh">category #2<br>finance</div>
+  <div class="cell"><div class="cid">category#2_topic#1.json</div><div class="nm">finance × agent</div></div>
+  <div class="cell"><div class="cid">category#2_topic#2.json</div><div class="nm">finance × rag</div></div>
+</div></div>
+<p><code>i</code> and <code>j</code> are 1-based indices <strong>into the lists as typed</strong> — that is the entire meaning of the filenames, and it makes list order load-bearing: reordering <code>--categories</code> renames every cell. Nothing downstream has to infer anything, because <code>state/matrix/manifest.json</code> records the index-to-name mapping and every cell file repeats its own category and topic inside.</p>
+<p>Each cell owns every file written for it. That is the same ownership argument as the BuildingBlocks shards, applied one dimension up — not a new mechanism:</p>
+<div class="scroll"><table>
+<thead><tr><th>Path</th><th>Contents</th><th>Kept?</th></tr></thead>
+<tbody>
+<tr><td><code>state/matrix/manifest.json</code></td><td>index → names, the only mapping authority</td><td class="ok">kept</td></tr>
+<tr><td><code>state/matrix/queries_category#i_topic#j.json</code></td><td>the cell's expanded query set</td><td class="ok">kept</td></tr>
+<tr><td><code>state/matrix/category#i_topic#j.json</code></td><td>the cell's harvested entities</td><td class="ok">kept</td></tr>
+<tr><td><code>state/matrix/matrix_union.json</code></td><td>derived read-only view</td><td class="ok">kept</td></tr>
+<tr><td><code>state/matrix/.ledger_… .attempted_… .hits_… .batch_… .raw_… .err_… .ghcache_…</code></td><td>transient per-cell working files</td><td>gitignored</td></tr>
+<tr><td><code>state/locks/expand_… · harvest_…</code></td><td>one expander and one harvester per cell</td><td>runtime only</td></tr>
+</tbody></table></div>
+<p>Every transient file is dot-prefixed, so one rule — <code>state/matrix/.*</code> — covers them all. That was verified with <code>git check-ignore</code> against thirteen real filenames rather than assumed: all four kept outputs tracked, all nine transient patterns ignored.</p>
+
+<h2>3 · Both phases parallel, no barrier</h2>
+<div class="h2sub">Each lane expands and harvests its own cell</div>
+<pre><code>lane 1:1  ── expand ──▶ harvest ──────────────▶ done
+lane 1:2  ── expand ──────▶ harvest ──────────────▶ done
+lane 2:1  ── expand ─▶ harvest ──────────▶ done
+lane 2:2  ── expand ────────▶ harvest ────────────────▶ done
+             ▲ all expansions run concurrently
+                          ▲ a cell starts harvesting on ITS OWN expansion</code></pre>
+<p>Chaining inside the lane is what makes it &ldquo;each by each&rdquo;: cell 2:1 begins harvesting the moment its own expansion finishes, rather than waiting at a global barrier for the slowest expansion in the run. <code>--phased</code> restores that barrier for when you want to read every query set before committing harvest budget.</p>
+<p>The per-cell expander is Stage&nbsp;1A scoped down: one intersection, one file only that cell writes. Queries must be about the topic <em>as applied to</em> the category — a generic tool with no connection to the category does not belong in the cell, and neither does a category resource unrelated to the topic.</p>
+
+<h2>4 · Four invariants, enforced in code</h2>
+<div class="h2sub">Not asked of the model — taken away from it</div>
+<div class="scroll"><table>
+<thead><tr><th>Invariant</th><th>Why a prompt is not enough</th></tr></thead>
+<tbody>
+<tr><td><b>Identity is stamped from the manifest.</b> Every harvested entity's <code>topic</code> and <code>category</code> are overwritten from <code>manifest.json</code> before the merge.</td><td>Unlike the four fixed topics, <code>category</code> is a label <em>this pipeline assigns to a cell</em>, not a property the model discovers. The manifest is authoritative by definition, so there is no judgement to defer. The test mock deliberately emits <code>WRONG-TOPIC</code>/<code>WRONG-CATEGORY</code> on every extraction; assertions D2–D4 confirm neither ever reaches a cell file.</td></tr>
+<tr><td><b>Expansion can never shrink.</b> A result holding fewer queries than already existed is rejected outright.</td><td>The prompt says &ldquo;preserve existing rows&rdquo;; a prompt is not a guarantee. A model returning a fresh short list would otherwise destroy expansion work that has already been paid for.</td></tr>
+<tr><td><b>No query set, no harvest.</b> Harvesting a cell with no expansion is a hard error.</td><td>The alternative is falling back to the model choosing its own scope — exactly the uncontrolled sourcing the matrix exists to prevent.</td></tr>
+<tr><td><b>Concurrency is capped.</b> <code>MAX_PARALLEL</code> (default 4) bounds in-flight lanes; <code>STAGGER_SEC</code> spaces the starts.</td><td>A 4×5 matrix is 20 cells. Twenty simultaneous model lanes would exhaust the account session limit in minutes and fail <em>together</em> — the opposite of what parallelism is for.</td></tr>
+</tbody></table></div>
+<p>Input is validated the same way. Duplicate or case-variant names are <strong>refused, not deduped</strong>: two identical categories would harvest the same thing into two cells, and the duplicated work would read as real coverage in the summary.</p>
+
+<h2>5 · Two bugs, both found by running it</h2>
+<div class="h2sub">Neither was visible in review</div>
+
+<div class="find"><div class="no2">1</div><div class="bd">
+  <h3>The bounded-concurrency pool was unsound</h3>
+  <p>Two plausible implementations are both wrong on this workload, and I wrote one of them first:</p>
+  <ul>
+    <li><code>kill -0 $pid</code> <strong>cannot detect a finished lane.</strong> An exited background child stays a zombie until it is waited on, and its process entry still exists — so <code>kill -0</code> keeps reporting it alive forever and the pool never refills.</li>
+    <li><code>wait -n</code> unblocks on the first exit but does not say <em>which</em> child it was, and it <em>reaps</em> that child — so the later <code>wait &lt;pid&gt;</code> used to recover the exit code returns &ldquo;no such job&rdquo; instead.</li>
+  </ul>
+  <p><span class="ok">Fix:</span> drive the pool from <code>jobs -rp</code>, which lists only still-<em>running</em> children. A pid that has dropped off that list is finished and can be waited on exactly once for its true status. Assertion F9 confirms a capped pool of 4 finishes the same workload faster than a pool of 1 — i.e. that the pool actually refills rather than stalling.</p>
+</div></div>
+
+<div class="find"><div class="no2">2</div><div class="bd">
+  <h3>This platform's <code>jq</code> emits CRLF, and it reached filenames</h3>
+  <p>The manifest on disk is clean, but <code>jq -r</code> on this build terminates lines with <code>\r\n</code>. <code>read</code> strips only the <code>\n</code>, so a trailing carriage return survived <strong>in the last field only</strong>:</p>
+  <pre><code>$ jq -r '.cells[0] | [...] | @tsv' manifest.json | cat -A
+1^I1^Ihealthcare^Iagent^Icategory#1_topic#1^M$
+                                            ^^ carriage return
+
+read  → cid = "category#1_topic#1\r"   len 19   ← corrupted
+$(…)  → cid = "category#1_topic#1"     len 18   ← clean</code></pre>
+  <p>Invisible in normal output, but <code>CELL_ID</code> feeds the per-cell log filename and the run summary, so lanes were writing logs with a control character in the name. Command substitution strips it, which is why only the <code>@tsv</code> read loops were affected — and why the harvests themselves still worked: the orchestrator passes <code>i</code>/<code>j</code> to the children, which re-derive the id via <code>$(…)</code>.</p>
+  <p><span class="ok">Fix:</span> <code>IFS=$'\t\r'</code> in both read loops, with a regression assertion (F2b) that the plan output contains no carriage return, and F8b that exactly one cleanly-named log file exists per cell.</p>
+</div></div>
+
+<div class="card warn">
+  <p style="margin:0"><strong>The bug that wasn't.</strong> An early test run showed every cell file containing one foreign-topic row. That turned out to be the test mock inferring the topic from prose that also appears in the appended 1G system prompt — but it is the same class of failure the entity harvest's topic guard was added for, and it is why identity here is stamped from the manifest rather than merely validated. Recorded because a fixed test is not evidence that the concern was imaginary.</p>
+</div>
+
+<h2>6 · Verification</h2>
+<div class="h2sub">64 assertions, 8 groups, no network</div>
+<div class="scroll"><table>
+<thead><tr><th>Group</th><th>Covers</th><th class="num">Assertions</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>cross product, 1-based indexing, filename shape, manifest, <code>pairs[]</code> subsetting</td><td class="num">8</td></tr>
+<tr><td>B</td><td>input refusal: duplicate and case-variant names, empty lists, path-reserved characters, out-of-range pairs, conflicting flags — and that a refused spec writes nothing</td><td class="num">8</td></tr>
+<tr><td>C</td><td>expansion is per-cell, stamps identity, augments, refuses to shrink; harvest without a query set is refused</td><td class="num">11</td></tr>
+<tr><td>D</td><td>per-cell file ownership, identity stamped over the model's wrong values, no leakage into a sibling cell, query yield stamped back</td><td class="num">9</td></tr>
+<tr><td>E</td><td>cell locks: same cell refused, different cell free, lock released when a lane is killed</td><td class="num">5</td></tr>
+<tr><td>F</td><td>orchestrator: dry-run plan, no stray CR, four cells to target, per-cell identity, clean log filenames, capped pool genuinely concurrent</td><td class="num">14</td></tr>
+<tr><td>G</td><td>fold: union contents, per-category and per-topic counts, same name in two cells stays two rows, idempotence, invalid cell aborts</td><td class="num">8</td></tr>
+<tr><td>H</td><td>production <code>state/</code> byte-identical before and after</td><td class="num">1</td></tr>
+<tr><td colspan="2"><b>Total</b></td><td class="num"><b>64</b></td></tr>
+</tbody></table></div>
+<p>Everything runs against a mocked model under a temp <code>STATE_DIR</code> — no live <code>claude</code>, no network, no production write. <code>bash scripts/validate_task.sh --all</code>: <span class="ok">PASS</span>, with production <code>state/</code> content hashes and porcelain unchanged.</p>
+
+<div class="card bad">
+  <h3>A benchmark I removed</h3>
+  <p style="margin:0 0 10px">An earlier draft of the commit message claimed a <span class="tnum">58 s vs 159 s</span> speedup. Re-running the identical test three times gave:</p>
+  <div class="bars" style="margin:12px 0">
+    <div class="barrow"><span>run 1 · 4 lanes / 1 lane</span><div class="bar"><i style="width:34%"></i></div><span class="barval">58 / 169</span></div>
+    <div class="barrow"><span>run 2 · 4 lanes / 1 lane</span><div class="bar"><i style="width:36%"></i></div><span class="barval">58 / 159</span></div>
+    <div class="barrow"><span>run 3 · 4 lanes / 1 lane</span><div class="bar"><i style="width:47%"></i></div><span class="barval">84 / 179</span></div>
+  </div>
+  <p style="margin:0">The ratio swings between roughly <span class="tnum">2.1×</span> and <span class="tnum">2.9×</span> on machine load alone, and it measures <em>scheduling against a mocked model</em>, not harvest throughput. Quoting a single figure would have dressed noise up as a measurement, so the commit keeps only the claim the test actually asserts: a pool of 4 finishes the same workload faster than a pool of 1.</p>
+</div>
+
+<h2>7 · What shipped</h2>
+<div class="scroll"><table>
+<thead><tr><th>File</th><th class="num">Lines</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>scripts/run_matrix.sh</code></td><td class="num">277</td><td><b>New.</b> Orchestrator: manifest, cell selection, capped concurrent pool, optional fold, honest post-check.</td></tr>
+<tr><td><code>scripts/harvest_matrix_cell.sh</code></td><td class="num">314</td><td><b>New.</b> One cell's harvest loop, seeded by its query set.</td></tr>
+<tr><td><code>scripts/matrix_spec.py</code></td><td class="num">181</td><td><b>New.</b> Lists → validated cell manifest.</td></tr>
+<tr><td><code>scripts/expand_queries_cell.sh</code></td><td class="num">162</td><td><b>New.</b> Per-cell Stage 1A, augment-only.</td></tr>
+<tr><td><code>scripts/merge_matrix.sh</code></td><td class="num">111</td><td><b>New.</b> Cells → derived union, single writer, idempotent.</td></tr>
+<tr><td><code>tests/test_matrix_harvest.sh</code></td><td class="num">308</td><td><b>New.</b> The 64 assertions above.</td></tr>
+<tr><td><code>docs/matrix_harvest_workflow.md</code></td><td class="num">139</td><td><b>New.</b> Usage, contract, honest limits.</td></tr>
+<tr><td><code>CLAUDE.md</code> · <code>.gitignore</code> · <code>scripts/validate_task.sh</code></td><td class="num">+26 / −3</td><td>Project rules, ignore rule, test wiring.</td></tr>
+</tbody></table></div>
+<p><strong>Purely additive.</strong> No existing script, state file or entry point changes behaviour; <code>validate_task.sh</code> only gains test wiring. The four-topic harvest and both its orchestrators are untouched.</p>
+
+<h2>8 · The union view</h2>
+<div class="h2sub">And the identity decision inside it</div>
+<p><code>merge_matrix.sh</code> folds the cell files into <code>state/matrix/matrix_union.json</code> — derived, single-writer, under a lock, idempotent, with the cell files staying authoritative. One decision there is worth stating explicitly:</p>
+<div class="card">
+  <p style="margin:0">Identity across cells is <strong>(category, topic, name)</strong>, not the <code>topic|name</code> <code>entity_key</code> used <em>inside</em> a cell. Two cells sharing a topic legitimately hold the same tool — &ldquo;this matters for healthcare agents&rdquo; and &ldquo;…for finance agents&rdquo; are two findings, not a duplicate. Collapsing them on <code>entity_key</code> would silently drop one, and the loss would look like successful dedup. Assertions G5 and G6 pin this.</p>
+</div>
+<p>A missing cell file is fine — not every cell has been harvested. A cell file that is <em>present but invalid</em> aborts the fold rather than being skipped.</p>
+
+<h2>9 · Honest limits</h2>
+<div class="card">
+<ul style="margin:0">
+  <li><strong>List order is load-bearing.</strong> Reordering <code>--categories</code> renames every cell. Use <code>--harvest-only</code>, which reuses the stored manifest, rather than retyping lists for a follow-up run.</li>
+  <li><strong>Cost scales with cells, not lists.</strong> An n×m matrix is n·m harvests. Use <code>--dry-run</code> first and start with a small <code>--target</code>.</li>
+  <li><strong>Parallelism does not raise the quota ceiling</strong> — it consumes it faster. <code>MAX_PARALLEL</code> is the throttle; raise it only with headroom to spare.</li>
+  <li><strong>Not exercised against live model calls.</strong> Every run here used a deterministic mock. Ownership, locking, identity stamping, pool behaviour and fold semantics are structural and fully covered; whether expansion produces <em>good</em> queries for a given intersection is not something these runs can speak to.</li>
+  <li><strong>Query quality is unmeasured.</strong> The no-shrink rule protects the query set's size, not its usefulness. Yield counts are stamped back per loop, but nothing yet prunes low-yield queries the way Stage 1D does for the seed topics.</li>
+</ul>
+</div>
+
+<h2>10 · Conclusion</h2>
+<div class="card good">
+<p style="margin:0">The harvest is no longer limited to four hand-curated topics: any (category, topic) intersection you can type becomes a cell that owns its files and runs alongside the others, and query expansion — the last monolithic, shared-file, serial stage — is now per-cell and parallel with the rest. The invariants that matter are enforced in code rather than requested in prompts, and the concurrency cap is deliberate quota protection, not an oversight. Both defects found were in the parts that only exist because of concurrency, and both were invisible until the system actually ran — the same lesson as Report&nbsp;#2, arrived at independently.</p>
+</div>
+
+<div class="foot">
+  Report #3 · generated 2026-07-22 · axCaseResearch4 · commit <code>1e0c9d9</code> · follows
+  <a href="2026-07-22_report1_harvesting_algorithm.html">Report&nbsp;#1</a> and
+  <a href="2026-07-22_report2_parallel_harvest.html">Report&nbsp;#2</a>.
+  Evidence: <code>tests/test_matrix_harvest.sh</code> (64 assertions, 8 groups) · <code>scripts/validate_task.sh --all</code> · three repeated pool-timing runs · <code>git check-ignore</code> against 13 real filenames.
+</div>
+</div>
+</body>
+</html>
