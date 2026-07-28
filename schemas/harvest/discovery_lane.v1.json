@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/discovery_lane.v1.json",
+  "title": "Discovery lane (v1)",
+  "description": "A lane is one bounded unit of discovery in one round: either a configured cell (round 1) or a gap lane opened by the adaptive scheduler. Lane membership is PROVENANCE ONLY and carries zero classification weight — the lane_id is never evidence for any facet value. Its query terms may become evidence, but only when independently found in the extracted target document.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "lane_id", "round", "kind", "harvest_run_id"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "lane_id": {
+      "type": "string",
+      "pattern": "^(cell__[a-z0-9-]+__[a-z0-9-]+|gap__(industry|business_function|use_case_type)__[a-z0-9-]+)$",
+      "description": "Either cell__<topic>__<category> or gap__<axis>__<slug>. A gap lane is never opened for cross-industry or other-unclear."
+    },
+    "round": { "type": "integer", "minimum": 1 },
+    "kind": { "type": "string", "enum": ["configured_cell", "gap"] },
+    "harvest_run_id": { "type": "string" },
+
+    "axis": { "type": ["string", "null"], "enum": [null, "industry", "business_function", "use_case_type"] },
+    "slug": { "type": ["string", "null"] },
+
+    "cell_id": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z0-9-]+__[a-z0-9-]+$",
+      "description": "Set for configured_cell lanes. Facets create no cells: the approved 12-cell set is unchanged by anything in this file."
+    },
+
+    "query_terms": {
+      "type": "array", "items": { "type": "string" },
+      "description": "What the lane looked for. These are a SEARCH hint, not a label. A term here becomes facet evidence only by being found in the fetched body, and then the evidence cites the body — never this array."
+    },
+
+    "source_request_keys": {
+      "type": "array", "uniqueItems": true, "items": { "type": "string" }
+    },
+
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_candidates": { "type": "integer", "minimum": 1 },
+        "max_requests": { "type": "integer", "minimum": 1 },
+        "budget_sec": { "type": "number", "minimum": 0 }
+      }
+    },
+
+    "opened_because": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Why the scheduler opened a gap lane. Seven ranking factors, not remaining gap alone.",
+      "required": ["gap", "rank_score"],
+      "properties": {
+        "gap": { "type": "integer", "minimum": 0 },
+        "rank_score": { "type": "number" },
+        "factors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "remaining_gap": { "type": "number" },
+            "configured_priority": { "type": "number" },
+            "acceptance_yield": { "type": "number" },
+            "duplicate_rate": { "type": "number" },
+            "quality_rejection_rate": { "type": "number" },
+            "credible_source_available": { "type": "number" },
+            "remaining_budget": { "type": "number" }
+          }
+        },
+        "credible_source_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "not_opened_reason": {
+      "type": ["string", "null"],
+      "enum": [null, "no_credible_source", "budget_exhausted", "target_met", "record_only_value"],
+      "description": "record_only_value covers cross-industry and other-unclear, which never launch a gap lane at all."
+    },
+
+    "outcome": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Reported per lane and NEVER fed back into classification.",
+      "properties": {
+        "candidates": { "type": "integer", "minimum": 0 },
+        "accepted": { "type": "integer", "minimum": 0 },
+        "duplicates": { "type": "integer", "minimum": 0 },
+        "quality_rejected": { "type": "integer", "minimum": 0 },
+        "label_agreement": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "label_mismatch_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

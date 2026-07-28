@@ -133,6 +133,7 @@ def make_full_record(
     link_history=None,
     domain_fields=None,
     rejection_reason=None,
+    case_facets=None,
 ):
     """Build a `full` record. Every schema-required key is always present.
 
@@ -211,6 +212,14 @@ def make_full_record(
         rec["link_history"] = link_history
     if domain_fields:
         rec["domain_fields"] = domain_fields
+    # Same rule, and it carries meaning here: an ABSENT case_facets means
+    # enrichment was never attempted (reporting state "not_enriched"), which is
+    # deliberately distinct from a present payload whose axes are empty ("looked,
+    # found nothing"). Writing null or {} for the untried case would erase that
+    # difference. Facets are never read by urlkey.py, so adding or removing this
+    # key changes no id, no cell_id and no filename.
+    if case_facets:
+        rec["case_facets"] = case_facets
     return rec
 
 

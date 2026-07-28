@@ -103,30 +103,55 @@ push_state:                  local only — nothing pushed to origin/main
    a regression test that starts and exits a real process. (An earlier hypothesis that the probe
    *terminated* live processes was tested and disproved.)
 
-## Stage 2.5 — case facets and shared discovery ⟵ **NEXT. Design fully approved.**
+## Stage 2.5 — case facets and shared discovery
 
 Design: `docs/harvest/DOMAIN_FACETS_PROPOSAL.md` (revision 4, plus its §16 Errata).
-Plan: `docs/harvest/STAGE_2_5_IMPLEMENTATION_PLAN.md` — **approved**
+Plan: `docs/harvest/STAGE_2_5_IMPLEMENTATION_PLAN.md` — approved
 (deviations DV-1 … DV-6 and design corrections D1–D10, including the D7 five-state model).
-**Nothing implemented.** R1–R4 and V1–V4 are all decided; no design questions remain open.
+Reference: `docs/harvest/FACET_VOCABULARY.md`.
 
-- [ ] `config/harvest/facets/{industries,business-functions,use-case-types}.v1.json`
-      — **18 / 19 / 22** entries, tiers 7-8-3 / 10-8-1 / 10-11-1
-- [ ] `config/harvest/facets/legacy_industry_map.v1.json` · `config/harvest/coverage_targets.v1.json`
-- [ ] `record.v1.json` — `case_facets`, 5 new `$defs`, one `allOf` conditional, 5 new rejection reasons
-- [ ] `schemas/harvest/{candidate_pool,discovery_lane,coverage_report}.v1.json`
-- [ ] `facets.generated.v1.json` — generated, never hand-edited, drift-tested
-- [ ] `src/harvest/{facets,pool,coverage,scheduler,request_key}.py`
-- [ ] `scripts/harvest/{gen_facet_schema,check_facets}.py`
-- [ ] `tests/test_taxonomy_{facets,facet_ambiguity,facet_identity,facet_states,customer_interaction,pool,coverage}.sh`
-- [ ] **Rerun the full 199-assertion Stage 0–2 baseline** — it must still pass
+- [x] `config/harvest/facets/{industries,business-functions,use-case-types}.v1.json`
+      — **18 / 19 / 22** entries, tiers 7-8-3 / 10-8-1 / **10-11-1**
+- [x] `config/harvest/facets/legacy_industry_map.v1.json` — a reviewed **seed**: the 231 AX cases
+      carry 173 distinct free-text values, so the long tail stays `unmapped_legacy_value`
+- [x] `config/harvest/coverage_targets.v1.json` — 3/2/0 + overrides; a `record_only` override
+      above 0 is refused
+- [x] `schemas/harvest/facet_vocabulary.v1.json` *(DV-3)*
+- [x] `record.v1.json` — `case_facets`, 5 new `$defs`, the `allOf` **inside `$defs/full_record`**
+      *(DV-5)*, `vocabulary_versions` required *(DV-6)*, 5 new rejection reasons
+- [x] `run_manifest.v1.json` — optional `rounds[]` · `coverage[]` · `lane_quality[]` ·
+      `request_accounting`; none added to `required`
+- [x] `schemas/harvest/{candidate_pool,discovery_lane,coverage_report}.v1.json`
+- [x] `facets.generated.v1.json` — generated, never hand-edited, drift-tested, malformed-file tested
+- [x] `src/harvest/{facets,pool,coverage,scheduler,request_key}.py`
+- [x] `src/harvest/records.py` — one keyword-only `case_facets=None`, omitted when falsy *(DV-2)*
+- [x] `scripts/harvest/{gen_facet_schema,check_facets}.py` —
+      `check_config.py` left **byte-unchanged** *(DV-1)*
+- [x] `tests/test_taxonomy_{facets,facet_ambiguity,facet_identity,facet_states,customer_interaction,pool,coverage}.sh`
+      — **175 new assertions**
+- [x] **Rerun of the full 199-assertion Stage 0–2 baseline** — still green
+- [x] `docs/harvest/FACET_VOCABULARY.md`
 
-Stage 2 remains functionally complete. **Stage 3 stays blocked until both the existing suites and the
-new facet suites pass.**
+**Stage 2.5 status: complete.** 374 assertions across 14 suites (199 existing + 175 new), all green;
+protected baseline verified; `check_facets.py`, `gen_facet_schema.py --check` and `check_config.py`
+all exit 0. No live harvest, migration, refresh, link-check or promotion was performed.
+
+### One defect found by these tests, fixed
+
+**`source_request_key` double-counted the query.** The key material carried the full normalized URL
+*and* a separately-computed `canonical_query`. `canonicalize_string` preserves parameter order, so the
+unsorted copy inside the URL leaked back in and two order-equivalent API requests still hashed
+differently — defeating the whole point of sorting the query for order-insignificant adapters. Fixed
+by splitting the normalized URL and hashing the query exactly once, via `canonical_query`, which is
+now the single authority on query significance. Pinned by
+`test_pool.test_query_order_is_insignificant_only_for_api_adapters`.
 
 ---
 
-## Stage 3 — discovery adapters
+## Stage 3 — discovery adapters ⟵ **NEXT. Not started.**
+
+The Stage 2.5 gate is satisfied (374 assertions green), so Stage 3 is no longer blocked by it.
+**It has not been started and requires explicit approval to begin.**
 
 - [ ] `src/harvest/adapters/{base,feed,sitemap,jsonapi,seed,model_search}.py`
 - [ ] Recorded fixtures for all 25 configured sources

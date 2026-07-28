@@ -1,0 +1,118 @@
+{
+  "_about": "Reviewed seed mapping legacy AX free-text industry strings onto industry facet slugs. This is deliberately NOT a complete table. Measured against state/ax_case_harvest_registry.json at implementation time: 231 cases carry 173 DISTINCT free-text values ('grocery delivery / e-commerce', 'superapp (mobility, delivery, fintech)', ...). A complete one-to-one table is not achievable, and pretending otherwise would invite guessing.",
+  "config_version": 1,
+  "map_version": 1,
+
+  "_normalization": "Lookup key = the original string with Unicode NFKC applied, whitespace runs collapsed to one space, ends stripped, then casefold(). NOTHING else. The normalization must not itself be a guess: no synonym folding, no punctuation removal, no token reordering. The record always keeps the EXACT original in provenance.raw.",
+
+  "_unmapped_policy": "A non-empty legacy value with no entry here becomes reporting state 'unmapped_legacy_value': an unresolved[] entry carrying the exact term, the exact original preserved in provenance.raw, NO slug guessed, and the legacy value NEVER presented as classification evidence. It is counted separately and never folded into 'unresolved'. Migration is never blocked on it: the 231 AX cases land in cases/case-studies, where case_facets is schema-optional and coverage is report-only in v1.",
+
+  "_admission_rule": "An entry belongs here only when the string alone unambiguously identifies the ADOPTING organisation's industry. Hybrids, platforms, marketplaces and super-apps are deliberately left out: 'superapp (mobility, delivery, fintech)' and 'e-commerce / fintech' name several industries and the string cannot say which one the deployment served. Leaving them unmapped is the honest outcome, not a gap to be closed by judgement.",
+
+  "_evidence_rule": "A mapped value yields facet_evidence with field 'legacy_field' and the exact original as matched_term. An UNMAPPED value yields no evidence at all — it is a reviewer to-do, not a fact about the case.",
+
+  "entries": [
+    { "legacy_value": "banking", "industry": "financial-services-insurance" },
+    { "legacy_value": "banking / financial services", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services / banking", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services / digital banking", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services / investment banking", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services / wealth management", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services / fintech", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services / payments", "industry": "financial-services-insurance" },
+    { "legacy_value": "financial services / payment processing", "industry": "financial-services-insurance" },
+    { "legacy_value": "capital markets / financial services", "industry": "financial-services-insurance" },
+    { "legacy_value": "capital markets / investment management", "industry": "financial-services-insurance" },
+    { "legacy_value": "islamic banking / financial services", "industry": "financial-services-insurance" },
+    { "legacy_value": "fintech (buy now pay later)", "industry": "financial-services-insurance" },
+    { "legacy_value": "fintech (buy now pay later / digital banking)", "industry": "financial-services-insurance" },
+    { "legacy_value": "fintech (corporate cards / spend management)", "industry": "financial-services-insurance" },
+    { "legacy_value": "fintech / digital banking", "industry": "financial-services-insurance" },
+    { "legacy_value": "fintech / payments", "industry": "financial-services-insurance" },
+    { "legacy_value": "insurance", "industry": "financial-services-insurance" },
+    { "legacy_value": "insurance / finance", "industry": "financial-services-insurance" },
+
+    { "legacy_value": "healthcare", "industry": "healthcare-life-sciences" },
+    { "legacy_value": "healthcare / hospital management", "industry": "healthcare-life-sciences" },
+    { "legacy_value": "consumer healthcare", "industry": "healthcare-life-sciences" },
+    { "legacy_value": "pharmaceuticals", "industry": "healthcare-life-sciences" },
+    { "legacy_value": "pharmaceuticals / life sciences", "industry": "healthcare-life-sciences" },
+    { "legacy_value": "biotechnology", "industry": "healthcare-life-sciences" },
+    { "legacy_value": "biotechnology / pharmaceuticals", "industry": "healthcare-life-sciences" },
+
+    { "legacy_value": "retail", "industry": "retail-cpg" },
+    { "legacy_value": "retail / e-commerce", "industry": "retail-cpg" },
+    { "legacy_value": "retail / fashion e-commerce", "industry": "retail-cpg" },
+    { "legacy_value": "retail (home improvement)", "industry": "retail-cpg" },
+    { "legacy_value": "e-commerce", "industry": "retail-cpg" },
+    { "legacy_value": "e-commerce / retail", "industry": "retail-cpg" },
+    { "legacy_value": "e-commerce retail (home goods)", "industry": "retail-cpg" },
+    { "legacy_value": "e-commerce retail (footwear and apparel)", "industry": "retail-cpg" },
+    { "legacy_value": "apparel / sportswear (retail)", "industry": "retail-cpg" },
+    { "legacy_value": "beauty / cosmetics", "industry": "retail-cpg" },
+    { "legacy_value": "consumer packaged goods (food)", "industry": "retail-cpg" },
+    { "legacy_value": "consumer packaged goods (ice cream)", "industry": "retail-cpg" },
+    { "legacy_value": "food & beverage / consumer packaged goods", "industry": "retail-cpg" },
+
+    { "legacy_value": "industrial manufacturing", "industry": "manufacturing-industrial" },
+    { "legacy_value": "electronics manufacturing", "industry": "manufacturing-industrial" },
+    { "legacy_value": "semiconductors", "industry": "manufacturing-industrial" },
+    { "legacy_value": "ev batteries / manufacturing", "industry": "manufacturing-industrial" },
+
+    { "legacy_value": "energy / oil and gas", "industry": "energy-utilities-resources" },
+    { "legacy_value": "energy / oil refining", "industry": "energy-utilities-resources" },
+    { "legacy_value": "energy / utilities", "industry": "energy-utilities-resources" },
+    { "legacy_value": "mining", "industry": "energy-utilities-resources" },
+    { "legacy_value": "mining / metals", "industry": "energy-utilities-resources" },
+
+    { "legacy_value": "transportation & logistics", "industry": "transportation-logistics" },
+
+    { "legacy_value": "hospitality / hotels", "industry": "travel-hospitality" },
+    { "legacy_value": "travel / hospitality", "industry": "travel-hospitality" },
+    { "legacy_value": "travel / online travel agency", "industry": "travel-hospitality" },
+    { "legacy_value": "quick-service restaurant / food service", "industry": "travel-hospitality" },
+
+    { "legacy_value": "media & entertainment", "industry": "media-entertainment" },
+    { "legacy_value": "media / streaming", "industry": "media-entertainment" },
+    { "legacy_value": "streaming media", "industry": "media-entertainment" },
+    { "legacy_value": "streaming services / media & entertainment", "industry": "media-entertainment" },
+    { "legacy_value": "music streaming", "industry": "media-entertainment" },
+    { "legacy_value": "audio streaming", "industry": "media-entertainment" },
+    { "legacy_value": "video hosting / streaming", "industry": "media-entertainment" },
+
+    { "legacy_value": "telecommunications", "industry": "telecommunications" },
+    { "legacy_value": "telecommunications / satellite", "industry": "telecommunications" },
+
+    { "legacy_value": "higher education", "industry": "education-research" },
+    { "legacy_value": "primary and secondary education (k-12)", "industry": "education-research" },
+
+    { "legacy_value": "professional services / consulting", "industry": "professional-services" },
+    { "legacy_value": "professional information services (legal, tax)", "industry": "professional-services" },
+
+    { "legacy_value": "it services", "industry": "technology-software" },
+    { "legacy_value": "developer tools / software", "industry": "technology-software" },
+    { "legacy_value": "software development tools", "industry": "technology-software" },
+    { "legacy_value": "cloud storage / saas", "industry": "technology-software" },
+    { "legacy_value": "cloud computing / software engineering", "industry": "technology-software" },
+    { "legacy_value": "e-commerce platform / saas", "industry": "technology-software" },
+    { "legacy_value": "observability software / saas", "industry": "technology-software" },
+    { "legacy_value": "workplace communication software", "industry": "technology-software" },
+    { "legacy_value": "incident management software", "industry": "technology-software" },
+    { "legacy_value": "enterprise software / customer support", "industry": "technology-software" }
+  ],
+
+  "_deliberately_unmapped_examples": [
+    "superapp (mobility, delivery, fintech)",
+    "ride-hailing / food delivery / fintech superapp",
+    "e-commerce / fintech",
+    "grocery delivery / e-commerce",
+    "technology / ride-hailing & delivery platform",
+    "live-commerce marketplace",
+    "professional networking / recruitment technology",
+    "social media",
+    "athletic footwear manufacturing",
+    "online travel & hospitality platform"
+  ],
+  "_deliberately_unmapped_why": "Each names two or more industries, or leaves the adopting organisation's own business genuinely ambiguous (is a social platform media-entertainment or technology-software? is athletic footwear a manufacturer or a consumer brand?). They become unmapped_legacy_value until a reviewer decides — which is the correct outcome, not a defect."
+}

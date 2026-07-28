@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/candidate_pool.v1.json",
+  "title": "Shared candidate pool (v1)",
+  "description": "One per run. Sources are fetched ONCE per normalized request and the snapshot is immutable for the whole run; candidates are deduplicated on canonical identity BEFORE extraction, and every contributing lane is preserved. The distinction that runs through this file: logical OWNERSHIP is asserted (one owner per key), while HTTP ATTEMPTS are merely observed (retries and redirect hops are legitimate and counted separately).",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "harvest_run_id", "generated_at", "sources", "candidates"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "harvest_run_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+
+    "sources": {
+      "type": "array",
+      "description": "One entry per source_request_key. A logical source definition may legitimately produce SEVERAL keys — an API queried by a broad lane and by a gap lane is two requests and two fetches, correctly.",
+      "items": { "$ref": "#/$defs/source_snapshot" }
+    },
+
+    "candidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/candidate" }
+    }
+  },
+
+  "$defs": {
+    "source_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_request_key", "source_id", "normalized_url", "adapter_mode",
+                   "established_by", "http_attempts", "contributing_lanes"],
+      "description": "The run-scoped IMMUTABLE snapshot. A 200 or a conditional 304 establishes it; every later lane and every later adaptive round reuses it, and no round may revalidate or replace it. A changed source needs a new run, or an explicit refresh/linkcheck. Allowing mid-run revalidation would make output depend on when a round happened to execute.",
+      "properties": {
+        "source_request_key": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "source_id": { "type": "string" },
+        "normalized_url": { "type": "string", "pattern": "^https?://" },
+        "method": { "type": "string" },
+        "adapter_mode": {
+          "type": "string",
+          "description": "Distinguishes e.g. seed 'index' from seed 'record' against the same URL — two different logical requests."
+        },
+        "canonicalization_version": {
+          "type": "integer",
+          "description": "Pinned into the key. Without it a canonicalization config bump would silently change every key across runs."
+        },
+        "established_by": {
+          "type": "string",
+          "enum": ["200", "304"],
+          "description": "A conditional 304 establishes the snapshot just as a 200 does — the cached body is the run's view of that source."
+        },
+        "established_at": { "type": "string" },
+        "etag": { "type": ["string", "null"] },
+        "last_modified": { "type": ["string", "null"] },
+        "body_sha256": { "oneOf": [{ "type": "string", "pattern": "^[0-9a-f]{64}$" }, { "type": "null" }] },
+        "owner_lane_id": {
+          "type": "string",
+          "description": "The single logical source-fetch owner. Three lanes sharing a feed produce one owner, not three."
+        },
+        "contributing_lanes": {
+          "type": "array", "uniqueItems": true, "items": { "type": "string" },
+          "description": "Every lane that referenced this source. Preserved in full: provenance is never collapsed to the winner."
+        },
+        "reused_in_rounds": {
+          "type": "array", "items": { "type": "integer", "minimum": 1 },
+          "description": "Rounds that read this snapshot without issuing a request. A second conditional request for the same key within one run is a defect."
+        },
+        "http_attempts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["attempts"],
+          "description": "Physical accounting, charged to the shared RequestBudget exactly as Stage 2 already does. Independent of the single logical owner above.",
+          "properties": {
+            "attempts": { "type": "integer", "minimum": 0 },
+            "retries": { "type": "integer", "minimum": 0 },
+            "redirect_hops": { "type": "integer", "minimum": 0 },
+            "conditional_revalidations": { "type": "integer", "minimum": 0 },
+            "budget_charged": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_key", "target_url", "canonical_key", "contributing_lanes",
+                   "target_fetch_owner", "extraction_owner"],
+      "description": "Deduplicated on canonical identity BEFORE extraction, so a page found by four lanes is fetched once and parsed once.",
+      "properties": {
+        "candidate_key": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "target_url": { "type": "string", "pattern": "^https?://" },
+        "canonical_key": {
+          "type": "string",
+          "description": "urlkey.canonicalize_string(target_url). The dedup key — NOT an identity_url claim, which is fixed only at acceptance."
+        },
+        "first_seen_lane_id": { "type": ["string", "null"] },
+        "contributing_lanes": {
+          "type": "array", "uniqueItems": true, "minItems": 1, "items": { "type": "string" },
+          "description": "Provenance only. A record found via gap__function__marketing gets NO marketing label for that reason; the lane's terms may become evidence only when independently found in the fetched document."
+        },
+        "source_request_keys": {
+          "type": "array", "uniqueItems": true, "items": { "type": "string" }
+        },
+        "target_fetch_owner": {
+          "type": ["string", "null"],
+          "description": "The one lane that actually fetched the page, or null when it was never fetched."
+        },
+        "extraction_owner": {
+          "type": ["string", "null"],
+          "description": "The one lane that parsed the accepted response body. No double parsing."
+        },
+        "duplicate_of": { "type": ["string", "null"] },
+        "dropped_reason": {
+          "type": ["string", "null"],
+          "enum": [null, "duplicate_in_pool", "already_in_ledger", "robots_denied",
+                   "budget_exhausted", "not_fetched"]
+        }
+      }
+    }
+  }
+}

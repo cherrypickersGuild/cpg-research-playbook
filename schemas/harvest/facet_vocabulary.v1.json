@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/facet_vocabulary.v1.json",
+  "title": "Facet vocabulary (v1)",
+  "description": "Shape of config/harvest/facets/<axis>.v1.json. One file per axis; the file is the SINGLE SOURCE OF TRUTH for its axis, and schemas/harvest/facets.generated.v1.json is derived from it. This schema checks shape only — membership counts, tier splits, axis disjointness and the record_only rules are semantic and live in scripts/harvest/check_facets.py, because a schema cannot express them.",
+
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["config_version", "axis", "vocabulary_version", "entries"],
+  "properties": {
+    "config_version": { "type": "integer", "minimum": 1 },
+    "axis": {
+      "type": "string",
+      "enum": ["industry", "business_function", "use_case_type"],
+      "description": "Singular, and identical to the axis names used in case_facets.unresolved[].axis."
+    },
+    "vocabulary_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Recorded on every classified record as case_facets.vocabulary_versions.<plural axis>. Bumping it is how a vocabulary change becomes auditable."
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+
+  "$defs": {
+    "facet_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Identical pattern to record.v1.json#/$defs/facet_slug. Must already be a slug: slugify(slug) == slug."
+    },
+
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "display_name", "definition", "positive_terms", "synonyms",
+                   "exclusions", "disambiguation", "parent_group", "coverage_policy",
+                   "status", "replaced_by"],
+      "description": "Every field is required on every entry. An omitted 'exclusions' would be an unstated assumption about where the value stops, which is exactly the ambiguity this vocabulary exists to remove — so an entry with nothing to exclude says so with an empty array.",
+      "properties": {
+        "slug": { "$ref": "#/$defs/facet_slug" },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "For UI only. It is NOT required to slugify to the slug: 'Financial Services & Insurance' slugifies to 'financial-services-and-insurance', while the approved slug is 'financial-services-insurance'. The slug is authoritative."
+        },
+        "definition": { "type": "string", "minLength": 20 },
+        "positive_terms": {
+          "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 2 },
+          "description": "Terms that, when found IN THE DOCUMENT, may support this value. They are candidate evidence, never a rule: a match is necessary, not sufficient."
+        },
+        "synonyms": {
+          "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 2 }
+        },
+        "exclusions": {
+          "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 2 },
+          "description": "Readings this value must NOT absorb. Empty array = nothing to exclude, stated deliberately."
+        },
+        "disambiguation": {
+          "type": "string",
+          "description": "Prose boundary against the nearest competing value, on this axis or another. Empty string when no near miss exists."
+        },
+        "parent_group": {
+          "type": ["string", "null"],
+          "description": "UI navigation grouping ONLY. Never semantic, never used by the classifier, never part of coverage."
+        },
+        "coverage_policy": {
+          "type": "string",
+          "enum": ["priority", "standard", "record_only"],
+          "description": "The scheduler tier. record_only means: recorded faithfully when evidenced, never actively sought, target_min 0."
+        },
+        "status": { "type": "string", "enum": ["active", "deprecated"] },
+        "replaced_by": {
+          "oneOf": [{ "$ref": "#/$defs/facet_slug" }, { "type": "null" }],
+          "description": "Set only when status is 'deprecated'. A deprecated value still validates on historical records; it may not be newly assigned."
+        }
+      }
+    }
+  }
+}

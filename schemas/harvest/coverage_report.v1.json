@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/coverage_report.v1.json",
+  "title": "Coverage report (v1)",
+  "description": "Per-run facet coverage. Two jobs: report target-versus-observed per axis value (targets are scheduler HINTS, never acceptance gates), and publish the per-record reporting state and derived publication eligibility so a consumer never has to re-derive them — and so neither has to be persisted on the record itself.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "harvest_run_id", "generated_at",
+               "vocabulary_versions", "by_category"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "harvest_run_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+
+    "vocabulary_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["industries", "business_functions", "use_case_types"],
+      "properties": {
+        "industries": { "type": "integer" },
+        "business_functions": { "type": "integer" },
+        "use_case_types": { "type": "integer" }
+      }
+    },
+
+    "thresholds_constant": {
+      "type": ["boolean", "null"],
+      "description": "True when min_relevance, min_quality and accept_composite were identical in every round — the property that makes 'coverage targets never change what is accepted' checkable rather than merely asserted."
+    },
+
+    "by_category": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/category_coverage" }
+    },
+
+    "records": {
+      "type": "array",
+      "description": "Optional per-record projection, keyed by record_id. Present so a consumer can read the reporting state and eligibility directly instead of re-deriving them from topic, primary_category, case_facets and legacy provenance. This is a REPORT, not a record field: record.v1.json gains no eligibility property.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["record_id", "reporting_state"],
+        "properties": {
+          "record_id": { "type": "string" },
+          "topic_slug": { "type": "string" },
+          "category_slug": { "type": "string" },
+          "reporting_state": { "$ref": "#/$defs/reporting_state" },
+          "publication_eligible": {
+            "type": "boolean",
+            "description": "Derived. True means FACETS do not withhold the record; rejection_reason, the run-level publication_eligible flag and link-check outcomes are separate gates that still apply."
+          },
+          "withheld_reason": {
+            "type": ["string", "null"],
+            "description": "The reporting state that caused a gated record to be withheld. Withheld is NOT rejected: the record keeps its record_id, carries no rejection_reason, and stays auditable."
+          }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "reporting_state": {
+      "type": "string",
+      "enum": ["facet_complete", "facet_partial", "unresolved",
+               "not_enriched", "unmapped_legacy_value"],
+      "description": "Five mutually exclusive, exhaustive states over applicable (record_type == 'full') records. Precedence, first match wins: unmapped_legacy_value, then not_enriched, then facet_complete, then facet_partial, then unresolved. unmapped_legacy_value ranks FIRST and is never folded into unresolved — a legacy value with no reviewed mapping is a fact a reviewer must act on."
+    },
+
+    "category_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topic_slug", "category_slug", "applicable_full_records", "states", "gated"],
+      "properties": {
+        "topic_slug": { "type": "string" },
+        "category_slug": { "type": "string" },
+        "applicable_full_records": {
+          "type": "integer", "minimum": 0,
+          "description": "Records with record_type == 'full'. cross_reference rows are excluded from every count here: a pointer is not an independent record and counting it would double-count the record it points at."
+        },
+        "states": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["facet_complete", "facet_partial", "unresolved",
+                       "not_enriched", "unmapped_legacy_value"],
+          "description": "All five counted separately, always. They sum EXACTLY to applicable_full_records; weak facets are never invented to improve a number.",
+          "properties": {
+            "facet_complete": { "type": "integer", "minimum": 0 },
+            "facet_partial": { "type": "integer", "minimum": 0 },
+            "unresolved": { "type": "integer", "minimum": 0 },
+            "not_enriched": { "type": "integer", "minimum": 0 },
+            "unmapped_legacy_value": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "gated": {
+          "type": "boolean",
+          "description": "true only for cases/domain-applications. Case Studies and Product Discovery are report-only in v1: their states are counted and reported but block neither migration nor publication."
+        },
+        "publication_eligible_records": { "type": "integer", "minimum": 0 },
+        "publication_withheld_records": { "type": "integer", "minimum": 0 },
+        "axis_targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["axis", "slug", "coverage_policy", "target_min", "observed", "gap"],
+            "properties": {
+              "axis": { "enum": ["industry", "business_function", "use_case_type"] },
+              "slug": { "type": "string" },
+              "coverage_policy": { "enum": ["priority", "standard", "record_only"] },
+              "target_min": { "type": "integer", "minimum": 0 },
+              "observed": { "type": "integer", "minimum": 0 },
+              "gap": { "type": "integer", "minimum": 0 },
+              "counts_toward_gap": {
+                "type": "boolean",
+                "description": "false for cross-industry and other-unclear: they are counted and reported, but never close or reduce the gap of any concrete value."
+              },
+              "unmet_reason": {
+                "type": ["string", "null"],
+                "enum": [null, "no_credible_source", "budget_exhausted", "max_rounds",
+                         "duplicate_rate", "no_progress"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

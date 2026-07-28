@@ -60,7 +60,114 @@
                "insufficient_evidence", "duplicate_announcement", "misleading_title",
                "developer_only_audience", "off_topic", "below_relevance_threshold",
                "below_quality_threshold", "category_exclusion_applied",
-               "ambiguous_legacy_url"]
+               "ambiguous_legacy_url",
+               "not_a_case_trend_piece", "not_a_case_product_announcement",
+               "not_a_case_tutorial", "not_a_case_hypothetical", "keyword_only_match"],
+      "description": "The five not_a_case_* / keyword_only_match values distinguish 'this is not a case study' from 'this is a poor one'. A record withheld for weak FACETS is NOT rejected and carries none of these: it keeps its record_id, stays auditable, and its publication eligibility is derived, never persisted."
+    },
+
+    "facet_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "SHAPE only. Membership is checked by facets.generated.v1.json (for standalone consumers) and scripts/harvest/check_facets.py (for this repo). Putting the enum here would make record.v1.json a generated file."
+    },
+
+    "facet_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "matched_term", "quote"],
+      "description": "Why a facet value was assigned, quoted from the document. 'publisher' is a legal FIELD but never valid grounds for an industry: check_facets.py refuses industry evidence sourced from it, because a vendor-published customer case takes the CUSTOMER's industry.",
+      "properties": {
+        "field": { "enum": ["title", "summary", "body", "publisher", "target_url", "legacy_field"] },
+        "matched_term": { "type": "string", "minLength": 2 },
+        "quote": { "type": "string", "minLength": 3, "maxLength": 400 },
+        "offset": { "type": ["integer", "null"] }
+      }
+    },
+
+    "facet_axis_single": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary", "secondary", "confidence", "evidence"],
+      "description": "The industry axis: exactly one primary, at most two secondaries. Secondary means DEPLOYMENT CONTEXT, never corporate portfolio — a bank owned by a conglomerate that also makes turbines is financial-services-insurance and nothing else.",
+      "properties": {
+        "primary": { "oneOf": [{ "$ref": "#/$defs/facet_slug" }, { "type": "null" }] },
+        "secondary": {
+          "type": "array", "maxItems": 2, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/facet_slug" }
+        },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/facet_evidence" } }
+      },
+      "if": { "properties": { "primary": { "type": "string" } }, "required": ["primary"] },
+      "then": {
+        "properties": {
+          "evidence": { "minItems": 1 },
+          "confidence": { "type": "number" }
+        }
+      }
+    },
+
+    "facet_axis_multi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "confidence", "evidence"],
+      "description": "One asserted value on a multi-value axis. Evidence is mandatory: a value with no quoted grounding is a guess.",
+      "properties": {
+        "slug": { "$ref": "#/$defs/facet_slug" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidence": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/facet_evidence" }
+        }
+      }
+    },
+
+    "facet_unresolved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["axis", "state", "detail"],
+      "description": "Four distinct states, never collapsed. unmapped_legacy_value in particular is NOT ordinary unresolved: it means a legacy source carried a non-empty value with no reviewed mapping, and it is counted separately so a reviewer can see it.",
+      "properties": {
+        "axis": { "enum": ["industry", "business_function", "use_case_type"] },
+        "state": { "enum": ["other-unclear", "unmapped_legacy_value",
+                            "insufficient_evidence", "not_applicable"] },
+        "term": { "type": ["string", "null"] },
+        "detail": { "type": "string", "minLength": 3 }
+      }
+    },
+
+    "case_facets": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["facets_version", "vocabulary_versions", "classification_state",
+                   "industry", "business_functions", "use_case_types"],
+      "description": "Three independent, versioned, evidence-grounded axes. NEVER part of record_id, content_id, identity_url, cell_id or a published filename — urlkey.py and slug.py do not know this field exists. Absent means enrichment was not attempted (reporting state 'not_enriched'); that is deliberately distinct from an empty axis array, which means 'looked, found nothing'.",
+      "properties": {
+        "facets_version": { "type": "integer", "const": 1 },
+        "vocabulary_versions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["industries", "business_functions", "use_case_types"],
+          "description": "Required: the runtime match against the loaded vocabularies is unenforceable if this key may be absent, and a record classified under v1 would be indistinguishable from one classified under a later revision.",
+          "properties": {
+            "industries": { "type": "integer" },
+            "business_functions": { "type": "integer" },
+            "use_case_types": { "type": "integer" }
+          }
+        },
+        "classification_state": { "enum": ["resolved", "unresolved"] },
+        "industry": { "$ref": "#/$defs/facet_axis_single" },
+        "business_functions": {
+          "type": "array", "maxItems": 4,
+          "items": { "$ref": "#/$defs/facet_axis_multi" }
+        },
+        "use_case_types": {
+          "type": "array", "maxItems": 4,
+          "items": { "$ref": "#/$defs/facet_axis_multi" }
+        },
+        "unresolved": { "type": "array", "items": { "$ref": "#/$defs/facet_unresolved" } }
+      }
     },
 
     "alias_kind": {
@@ -279,8 +386,36 @@
         "domain_fields": {
           "type": ["object", "null"],
           "description": "Topic-specific structured fields that have no home in the generic contract (e.g. migrated AX case KPI fields). Always mirrored in provenance.raw."
+        },
+        "case_facets": { "$ref": "#/$defs/case_facets" }
+      },
+
+      "allOf": [
+        {
+          "_comment": "Applicability lives INSIDE this branch, never at the document root. At the root it would also bind cross_reference_record, whose closed property set cannot carry case_facets — making every cases__domain-applications cross_reference row unsatisfiable, which would silently break the cross-topic policy for one of the twelve cells.",
+          "if": {
+            "properties": {
+              "topic": { "const": "cases" },
+              "primary_category": { "const": "domain-applications" }
+            },
+            "required": ["topic", "primary_category"]
+          },
+          "then": {
+            "required": ["case_facets"],
+            "properties": { "case_facets": { "type": "object" } }
+          }
+        },
+        {
+          "_comment": "Facets describe a CASE. research-and-models and discourse full records may not carry them at all; absent or explicit null are both accepted.",
+          "if": {
+            "properties": { "topic": { "enum": ["research-and-models", "discourse"] } },
+            "required": ["topic"]
+          },
+          "then": {
+            "properties": { "case_facets": { "type": "null" } }
+          }
         }
-      }
+      ]
     },
 
     "cross_reference_record": {

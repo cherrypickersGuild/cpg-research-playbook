@@ -1,0 +1,464 @@
+{
+  "$defs": {
+    "business_function_slug": {
+      "enum": [
+        "customer-service-support",
+        "data-analytics",
+        "executive-strategy",
+        "facilities-workplace",
+        "finance-accounting",
+        "human-resources",
+        "information-security",
+        "it-infrastructure",
+        "knowledge-management",
+        "legal-risk-compliance",
+        "marketing",
+        "other-unclear",
+        "procurement-sourcing",
+        "production-operations",
+        "rnd-product-development",
+        "sales",
+        "software-engineering",
+        "supply-chain-operations",
+        "training-enablement"
+      ]
+    },
+    "case_facets": {
+      "additionalProperties": false,
+      "properties": {
+        "business_functions": {
+          "items": {
+            "$ref": "#/$defs/facet_axis_multi_business_function"
+          },
+          "maxItems": 4,
+          "type": "array"
+        },
+        "classification_state": {
+          "enum": [
+            "resolved",
+            "unresolved"
+          ]
+        },
+        "facets_version": {
+          "const": 1,
+          "type": "integer"
+        },
+        "industry": {
+          "$ref": "#/$defs/facet_axis_single_industry"
+        },
+        "unresolved": {
+          "items": {
+            "$ref": "#/$defs/facet_unresolved"
+          },
+          "type": "array"
+        },
+        "use_case_types": {
+          "items": {
+            "$ref": "#/$defs/facet_axis_multi_use_case_type"
+          },
+          "maxItems": 4,
+          "type": "array"
+        },
+        "vocabulary_versions": {
+          "additionalProperties": false,
+          "properties": {
+            "business_functions": {
+              "type": "integer"
+            },
+            "industries": {
+              "type": "integer"
+            },
+            "use_case_types": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "industries",
+            "business_functions",
+            "use_case_types"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "facets_version",
+        "vocabulary_versions",
+        "classification_state",
+        "industry",
+        "business_functions",
+        "use_case_types"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "facet_axis_multi_business_function": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "evidence": {
+          "$ref": "#/$defs/facet_evidence_array_items",
+          "minItems": 1,
+          "type": "array"
+        },
+        "slug": {
+          "enum": [
+            "customer-service-support",
+            "data-analytics",
+            "executive-strategy",
+            "facilities-workplace",
+            "finance-accounting",
+            "human-resources",
+            "information-security",
+            "it-infrastructure",
+            "knowledge-management",
+            "legal-risk-compliance",
+            "marketing",
+            "other-unclear",
+            "procurement-sourcing",
+            "production-operations",
+            "rnd-product-development",
+            "sales",
+            "software-engineering",
+            "supply-chain-operations",
+            "training-enablement"
+          ]
+        }
+      },
+      "required": [
+        "slug",
+        "confidence",
+        "evidence"
+      ],
+      "type": "object"
+    },
+    "facet_axis_multi_use_case_type": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "evidence": {
+          "$ref": "#/$defs/facet_evidence_array_items",
+          "minItems": 1,
+          "type": "array"
+        },
+        "slug": {
+          "enum": [
+            "agentic-orchestration",
+            "anomaly-detection",
+            "classification-routing",
+            "code-generation",
+            "content-generation",
+            "conversational-assistant",
+            "customer-interaction",
+            "data-analysis-bi",
+            "decision-support",
+            "document-processing",
+            "forecasting-prediction",
+            "other-unclear",
+            "recommendation-personalization",
+            "risk-fraud-compliance",
+            "search-retrieval",
+            "simulation-design",
+            "speech-audio",
+            "summarization-extraction",
+            "training-education",
+            "translation-localization",
+            "vision-inspection",
+            "workflow-automation"
+          ]
+        }
+      },
+      "required": [
+        "slug",
+        "confidence",
+        "evidence"
+      ],
+      "type": "object"
+    },
+    "facet_axis_single_industry": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "evidence": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "enum": [
+                  "title",
+                  "summary",
+                  "body",
+                  "publisher",
+                  "target_url",
+                  "legacy_field"
+                ]
+              },
+              "matched_term": {
+                "minLength": 2,
+                "type": "string"
+              },
+              "offset": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "quote": {
+                "maxLength": 400,
+                "minLength": 3,
+                "type": "string"
+              }
+            },
+            "required": [
+              "field",
+              "matched_term",
+              "quote"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "primary": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/industry_slug"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "secondary": {
+          "items": {
+            "$ref": "#/$defs/industry_slug"
+          },
+          "maxItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "primary",
+        "secondary",
+        "confidence",
+        "evidence"
+      ],
+      "type": "object"
+    },
+    "facet_evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "enum": [
+            "title",
+            "summary",
+            "body",
+            "publisher",
+            "target_url",
+            "legacy_field"
+          ]
+        },
+        "matched_term": {
+          "minLength": 2,
+          "type": "string"
+        },
+        "offset": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "quote": {
+          "maxLength": 400,
+          "minLength": 3,
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "matched_term",
+        "quote"
+      ],
+      "type": "object"
+    },
+    "facet_evidence_array_items": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "enum": [
+              "title",
+              "summary",
+              "body",
+              "publisher",
+              "target_url",
+              "legacy_field"
+            ]
+          },
+          "matched_term": {
+            "minLength": 2,
+            "type": "string"
+          },
+          "offset": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quote": {
+            "maxLength": 400,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "matched_term",
+          "quote"
+        ],
+        "type": "object"
+      }
+    },
+    "facet_unresolved": {
+      "additionalProperties": false,
+      "properties": {
+        "axis": {
+          "enum": [
+            "industry",
+            "business_function",
+            "use_case_type"
+          ]
+        },
+        "detail": {
+          "minLength": 3,
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "other-unclear",
+            "unmapped_legacy_value",
+            "insufficient_evidence",
+            "not_applicable"
+          ]
+        },
+        "term": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "axis",
+        "state",
+        "detail"
+      ],
+      "type": "object"
+    },
+    "industry_slug": {
+      "enum": [
+        "agriculture-food",
+        "cross-industry",
+        "education-research",
+        "energy-utilities-resources",
+        "financial-services-insurance",
+        "healthcare-life-sciences",
+        "manufacturing-industrial",
+        "media-entertainment",
+        "nonprofit-social-impact",
+        "other-unclear",
+        "professional-services",
+        "public-sector-government",
+        "real-estate-construction",
+        "retail-cpg",
+        "technology-software",
+        "telecommunications",
+        "transportation-logistics",
+        "travel-hospitality"
+      ]
+    },
+    "use_case_type_slug": {
+      "enum": [
+        "agentic-orchestration",
+        "anomaly-detection",
+        "classification-routing",
+        "code-generation",
+        "content-generation",
+        "conversational-assistant",
+        "customer-interaction",
+        "data-analysis-bi",
+        "decision-support",
+        "document-processing",
+        "forecasting-prediction",
+        "other-unclear",
+        "recommendation-personalization",
+        "risk-fraud-compliance",
+        "search-retrieval",
+        "simulation-design",
+        "speech-audio",
+        "summarization-extraction",
+        "training-education",
+        "translation-localization",
+        "vision-inspection",
+        "workflow-automation"
+      ]
+    }
+  },
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/facets.generated.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "_generated": {
+    "deterministic": "sorted keys, indent 2, LF newlines, no timestamp — regenerating an unchanged vocabulary is byte-identical",
+    "generator": "scripts/harvest/gen_facet_schema.py",
+    "never_hand_edit": "GENERATED FILE — DO NOT HAND-EDIT. Produced by scripts/harvest/gen_facet_schema.py from config/harvest/facets/*.v1.json, which are the single source of truth. Any manual change is overwritten by the next generation and is reported as drift by tests/test_taxonomy_facets.sh.",
+    "sources": [
+      {
+        "axis": "industry",
+        "config_version": 1,
+        "entry_count": 18,
+        "file": "industries.v1.json",
+        "sha256": "6c5120a5b7aa43127732a5c650c5a2582f85591965df8502c6c6a473c307e8d0",
+        "vocabulary_version": 1
+      },
+      {
+        "axis": "business_function",
+        "config_version": 1,
+        "entry_count": 19,
+        "file": "business-functions.v1.json",
+        "sha256": "365631a2226fb11b936e33503f29243d90f44f29c8054badcdbd96309cfcb46d",
+        "vocabulary_version": 1
+      },
+      {
+        "axis": "use_case_type",
+        "config_version": 1,
+        "entry_count": 22,
+        "file": "use-case-types.v1.json",
+        "sha256": "093876f2e833565c3fad57e74d21cb9fe9ccd5c5743dacd8a942ed9e0d75ef72",
+        "vocabulary_version": 1
+      }
+    ]
+  },
+  "description": "Standalone, enum-bearing constraints for case_facets. record.v1.json checks slug SHAPE only; this file checks MEMBERSHIP, so a published artifact validates without repository access. GENERATED FILE — DO NOT HAND-EDIT. Produced by scripts/harvest/gen_facet_schema.py from config/harvest/facets/*.v1.json, which are the single source of truth. Any manual change is overwritten by the next generation and is reported as drift by tests/test_taxonomy_facets.sh.",
+  "properties": {
+    "case_facets": {
+      "$ref": "#/$defs/case_facets"
+    }
+  },
+  "title": "Case facets — generated slug constraints (v1)",
+  "type": "object"
+}

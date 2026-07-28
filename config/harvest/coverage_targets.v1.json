@@ -1,0 +1,36 @@
+{
+  "_about": "Scheduler HINTS. Never acceptance gates. Raising a target changes WHERE the scheduler looks; it never changes WHAT is accepted. min_relevance, min_quality and accept_composite live in policy.v1.json, are read once per run, and are never touched by the scheduler. An unmet target is reported as an unmet target.",
+  "config_version": 1,
+
+  "tiers": {
+    "priority":    { "target_min": 3 },
+    "standard":    { "target_min": 2 },
+    "record_only": { "target_min": 0 }
+  },
+
+  "_overrides_about": "Per-slug overrides, expected to be revised upward once real yield is observed. A slug whose coverage_policy is record_only may NOT be given a target above 0 — check_facets.py refuses it. That keeps decisions R4 (cross-industry never closes a concrete gap) and C6 (technology-software is never actively sought) enforceable in code rather than by convention.",
+  "overrides": {},
+
+  "_record_only_about": "cross-industry, technology-software and other-unclear are record_only by decision. other-unclear is target_min 0 by construction: seeking more unclassifiable records is meaningless.",
+
+  "scheduler": {
+    "max_rounds": 3,
+    "no_progress_min": 1,
+    "duplicate_rate_stop": 0.8,
+    "_stop_about": "Any one of these stops the loop: max_rounds reached, newly accepted below no_progress_min, duplicate_rate above duplicate_rate_stop, global or lane budget exhausted, or all targets met.",
+
+    "gap_rank_weights": {
+      "remaining_gap": 0.30,
+      "configured_priority": 0.20,
+      "acceptance_yield": 0.15,
+      "duplicate_rate": 0.10,
+      "quality_rejection_rate": 0.10,
+      "credible_source_available": 0.10,
+      "remaining_budget": 0.05
+    },
+    "_rank_about": "Seven factors, not remaining gap alone. duplicate_rate and quality_rejection_rate are penalties: a lane that keeps returning duplicates or low-quality items ranks DOWN even when its gap is large. A gap lane opens only where a credible source exists; otherwise the round records stop_reason 'no_credible_source' and the gap is reported honestly.",
+
+    "never_schedule_gap_lane_for": ["cross-industry", "other-unclear"],
+    "_never_about": "cross-industry never launches a gap-filling lane of its own and never closes or reduces a concrete industry gap (decision R4). other-unclear is meaningless to seek."
+  }
+}

@@ -121,6 +121,126 @@
       }
     },
 
+    "rounds": {
+      "type": "array",
+      "description": "Adaptive scheduling. Round 1 is always the 12 configured cells; later rounds open bounded gap lanes only where a credible source exists. Optional: a run that never scheduled a second round omits this rather than writing an empty claim.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["round", "lanes", "stop_reason"],
+        "properties": {
+          "round": { "type": "integer", "minimum": 1 },
+          "lanes": { "type": "array", "items": { "type": "string" } },
+          "new_accepted": { "type": "integer", "minimum": 0 },
+          "duplicate_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "stop_reason": {
+            "type": ["string", "null"],
+            "enum": [null, "max_rounds", "no_progress", "duplicate_rate", "budget_exhausted",
+                     "all_targets_met", "no_credible_source"],
+            "description": "no_credible_source is reported, never papered over: an unmet target with no source to fill it is an honest result."
+          },
+          "thresholds": {
+            "type": "object",
+            "description": "The acceptance thresholds in force for this round. Recorded so it is provable they never moved: the scheduler changes WHERE it looks, never WHAT is accepted.",
+            "additionalProperties": false,
+            "properties": {
+              "min_relevance": { "type": "number" },
+              "min_quality": { "type": "number" },
+              "accept_composite": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+
+    "coverage": {
+      "type": "array",
+      "description": "Per (topic, category). The five reporting-state counts are mutually exclusive and sum EXACTLY to applicable_full_records; cross_reference rows are excluded from all of them.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["topic_slug", "category_slug", "applicable_full_records", "states"],
+        "properties": {
+          "topic_slug": { "type": "string" },
+          "category_slug": { "type": "string" },
+          "applicable_full_records": { "type": "integer", "minimum": 0 },
+          "states": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["facet_complete", "facet_partial", "unresolved",
+                         "not_enriched", "unmapped_legacy_value"],
+            "properties": {
+              "facet_complete": { "type": "integer", "minimum": 0 },
+              "facet_partial": { "type": "integer", "minimum": 0 },
+              "unresolved": { "type": "integer", "minimum": 0 },
+              "not_enriched": { "type": "integer", "minimum": 0 },
+              "unmapped_legacy_value": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "publication_eligible_records": { "type": "integer", "minimum": 0 },
+          "publication_withheld_records": { "type": "integer", "minimum": 0 },
+          "gated": {
+            "type": "boolean",
+            "description": "false for case-studies and product-discovery: report-only in v1, so their states block nothing."
+          },
+          "axis_targets": {
+            "type": "array",
+            "description": "Target versus observed per axis value. A target is a scheduler HINT; an unmet one is reported as unmet, never met by lowering acceptance.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["axis", "slug", "target_min", "observed"],
+              "properties": {
+                "axis": { "enum": ["industry", "business_function", "use_case_type"] },
+                "slug": { "type": "string" },
+                "coverage_policy": { "enum": ["priority", "standard", "record_only"] },
+                "target_min": { "type": "integer", "minimum": 0 },
+                "observed": { "type": "integer", "minimum": 0 },
+                "gap": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "lane_quality": {
+      "type": "array",
+      "description": "Per discovery lane. Reported and NEVER fed back into classification: lane membership is provenance only, and a lane's terms become evidence only when independently found in the fetched document.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lane_id"],
+        "properties": {
+          "lane_id": { "type": "string" },
+          "axis": { "type": ["string", "null"] },
+          "slug": { "type": ["string", "null"] },
+          "candidates": { "type": "integer", "minimum": 0 },
+          "accepted": { "type": "integer", "minimum": 0 },
+          "acceptance_yield": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "duplicate_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "quality_rejection_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "label_agreement": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "label_mismatch_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+
+    "request_accounting": {
+      "type": "object",
+      "description": "Logical fetch ownership is asserted; HTTP attempts are merely observed. Three lanes sharing a feed produce ONE source-fetch owner; a 301 plus one 503 retry on that feed still produces one owner and three attempts, with the budget charged 3.",
+      "additionalProperties": false,
+      "properties": {
+        "source_fetch_owners": { "type": "integer", "minimum": 0 },
+        "target_fetch_owners": { "type": "integer", "minimum": 0 },
+        "extraction_owners": { "type": "integer", "minimum": 0 },
+        "http_attempts": { "type": "integer", "minimum": 0 },
+        "retries": { "type": "integer", "minimum": 0 },
+        "redirect_hops": { "type": "integer", "minimum": 0 },
+        "conditional_revalidations": { "type": "integer", "minimum": 0 }
+      }
+    },
+
     "alias_conflicts_count": { "type": "integer", "minimum": 0 },
     "merges": {
       "type": "array",
