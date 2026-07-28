@@ -83,8 +83,16 @@ class EmptyResponse(HttpError):
 
 
 class ClientError(HttpError):
-    """4xx that is not worth retrying (404, 410, 401, 403 …)."""
-    reason = "http_5xx"     # generic bucket; `status` carries the detail
+    """4xx that is not worth retrying (404, 410, 401, 403 …).
+
+    Its own reason, not the server-error bucket: a dead configured feed is a
+    client-side 404 and reporting it as `http_5xx` would send an operator
+    looking for an outage that never happened. `status` still carries the exact
+    code. A retryable 4xx (429, and anything else listed in retry_on_status) is
+    NOT a ClientError — it is retried and, once attempts are exhausted, raised
+    as the generic HttpError, which keeps `http_5xx`.
+    """
+    reason = "http_4xx"
 
 
 # --------------------------------------------------------------------------- result

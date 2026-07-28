@@ -516,5 +516,101 @@ class TestPreflight(Base):
         self.assertEqual(out["reason"], "unexpected_content_type")
 
 
+class TestClientErrorIsClassifiedAs4xx(Base):
+    """A non-retryable 4xx is `http_4xx`, never the server-error bucket.
+
+    A dead configured feed answers 404. Reporting that as `http_5xx` sends an
+    operator hunting an outage that never happened, and the manifest's
+    infrastructure_error vocabulary then describes the wrong failure class. The
+    numeric status was always carried; the reason string was simply wrong.
+    """
+
+    def _get(self, status):
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (status, {}, b""),
+        })
+        with self.assertRaises(hc.ClientError) as cm:
+            c.get("https://x.test/a")
+        return cm.exception
+
+    def test_404_is_http_4xx_with_status_preserved(self):
+        exc = self._get(404)
+        self.assertEqual(exc.reason, "http_4xx")
+        self.assertEqual(exc.status, 404)
+
+    def test_401_and_403_are_http_4xx_with_status_preserved(self):
+        for status in (401, 403):
+            with self.subTest(status=status):
+                exc = self._get(status)
+                self.assertEqual(exc.reason, "http_4xx")
+                self.assertEqual(exc.status, status)
+
+    def test_robots_denial_stays_robots_denied(self):
+        # Raised before any response exists, so it can never be reclassified
+        # as a status-bearing 4xx.
+        c = self.client({
+            "https://x.test/robots.txt": self.robots("User-agent: *\nDisallow: /\n"),
+            "https://x.test/a": (200, {}, b"ok"),
+        })
+        with self.assertRaises(hc.RobotsDenied) as cm:
+            c.get("https://x.test/a")
+        self.assertEqual(cm.exception.reason, "robots_denied")
+        self.assertNotEqual(cm.exception.reason, "http_4xx")
+
+    def test_server_failure_stays_http_5xx(self):
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (500, {}, b""),
+        })
+        with self.assertRaises(hc.ServerError) as cm:
+            c.get("https://x.test/a")
+        self.assertEqual(cm.exception.reason, "http_5xx")
+        self.assertEqual(cm.exception.status, 500)
+
+    def test_retryable_4xx_behaviour_is_unchanged(self):
+        # 429 is in retry_on_status, so it is NOT a ClientError: it is retried,
+        # and on exhaustion raised as the generic HttpError, which keeps
+        # http_5xx. This correction deliberately does not touch that path.
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (429, {}, b""),
+        })
+        with self.assertRaises(hc.HttpError) as cm:
+            c.get("https://x.test/a")
+        self.assertNotIsInstance(cm.exception, hc.ClientError)
+        self.assertEqual(cm.exception.reason, "http_5xx")
+        self.assertEqual(cm.exception.status, 429)
+        self.assertEqual(self.opener.calls.count("https://x.test/a"), 3)
+
+    def test_retryable_4xx_that_recovers_still_succeeds(self):
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": [(429, {}, b""), (200, {}, b"ok")],
+        })
+        self.assertEqual(c.get("https://x.test/a").status, 200)
+        self.assertEqual(self.opener.calls.count("https://x.test/a"), 2)
+
+    def test_http_4xx_is_never_used_for_a_statusless_error(self):
+        # The reason names an HTTP status class, so it must not leak onto
+        # transport failures that never received a response.
+        for exc_cls in (hc.HttpTimeout, hc.DnsFailure, hc.RobotsDenied,
+                        hc.ResponseTooLarge, hc.EmptyResponse,
+                        hc.UnexpectedContentType, hc.ServerError, hc.HttpError):
+            with self.subTest(cls=exc_cls.__name__):
+                self.assertNotEqual(exc_cls.reason, "http_4xx")
+        self.assertEqual(hc.ClientError.reason, "http_4xx")
+
+    def test_preflight_reports_a_404_as_infrastructure_http_4xx(self):
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/feed": (404, {}, b""),
+        })
+        out = c.preflight("https://x.test/feed")
+        self.assertEqual(out["result"], "infrastructure_error")
+        self.assertEqual(out["reason"], "http_4xx")
+        self.assertEqual(out["http_status"], 404)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

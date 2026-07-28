@@ -265,8 +265,15 @@ result: "ok"|"adapter_error"|"infrastructure_error", reason}`. A failing source 
 `all_duplicates_of_existing` · `category_exclusion_applied`.
 `adapter_error`: `feed_parse_error` · `unexpected_content_type` · `empty_response` ·
 `schema_mapping_failed` · `response_too_large` · `index_parse_failed`.
-`infrastructure_error`: `robots_denied` · `http_timeout` · `http_5xx` · `dns_failure` ·
+`infrastructure_error`: `robots_denied` · `http_timeout` · `http_4xx` · `http_5xx` · `dns_failure` ·
 `lease_timeout` · `budget_exhausted` · `circuit_open` · `preflight_failed`.
+
+`http_4xx` and `http_5xx` are distinct because they send an operator to different places: a dead
+configured feed answers 404, and reporting that as a server error starts a hunt for an outage that
+never happened. A **retryable** 4xx (429, and anything else in `retry_on_status`) is not a
+`ClientError` — it is retried and, once attempts are exhausted, reported as `http_5xx` by the generic
+error path. `robots_denied` is raised before any response exists and is never reclassified. Every
+status-bearing failure carries its numeric status alongside the reason.
 
 Expected legitimate zero-results: **Case Studies** (measurable-KPI cases are rare in a 12-item
 window) and **Product Discovery** (dev-tool exclusion). Relevance rules are never loosened.
