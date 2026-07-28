@@ -4,11 +4,13 @@ Updated as each item is completed **and tested**. An item is only ticked when it
 passes; "written" is not "done".
 
 ```text
-verified_code_checkpoint:    3b85a8102fb89ae0585ef0fc080f518238e4c1bc  (short: 3b85a81)
-implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34  (short: 8865c54)
-stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e  (short: 0edbf50)
-approved_facet_design:       3b85a8102fb89ae0585ef0fc080f518238e4c1bc  (short: 3b85a81)
+verified_code_checkpoint:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7   Stage 2.5 implementation
+documentation_approval:      79389e1460a13492fcdc42ab8c96af5313ad9bca   approved plan
+approved_facet_design:       3b85a8102fb89ae0585ef0fc080f518238e4c1bc
+stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
+implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
+assertions:                  387 across 14 suites (199 Stage 0–2 + 188 Stage 2.5), all green
 ```
 
 ---
@@ -128,13 +130,20 @@ Reference: `docs/harvest/FACET_VOCABULARY.md`.
 - [x] `scripts/harvest/{gen_facet_schema,check_facets}.py` —
       `check_config.py` left **byte-unchanged** *(DV-1)*
 - [x] `tests/test_taxonomy_{facets,facet_ambiguity,facet_identity,facet_states,customer_interaction,pool,coverage}.sh`
-      — **175 new assertions**
+      — **188 new assertions**
 - [x] **Rerun of the full 199-assertion Stage 0–2 baseline** — still green
 - [x] `docs/harvest/FACET_VOCABULARY.md`
 
-**Stage 2.5 status: complete.** 374 assertions across 14 suites (199 existing + 175 new), all green;
-protected baseline verified; `check_facets.py`, `gen_facet_schema.py --check` and `check_config.py`
-all exit 0. No live harvest, migration, refresh, link-check or promotion was performed.
+**Stage 2.5 status: complete**, committed as `46ab67c` (36 files, 6650 insertions).
+**387 assertions across 14 suites** (199 existing + 188 new), all green; protected baseline verified;
+`check_facets.py`, `gen_facet_schema.py --check` and `check_config.py` all exit 0. Zero tracked
+modifications afterwards; the 508 pre-existing untracked files unchanged; nothing pushed. No live
+source request, harvest, migration application, refresh, link-check or promotion was performed.
+
+Implemented per `STAGE_2_5_IMPLEMENTATION_PLAN.md` with **no plan deviations**, except one separately
+approved correction: **request-key query normalization is opt-in per request**
+(`query_order_policy`, default `preserve`); adapter class never enables sorting, and repeated-key
+value order and multiplicity stay significant under both policies.
 
 ### One defect found by these tests, fixed
 
@@ -148,10 +157,20 @@ now the single authority on query significance. Pinned by
 
 ---
 
-## Stage 3 — discovery adapters ⟵ **NEXT. Not started.**
+## Stage 3 — discovery adapters ⟵ **NEXT. NOT STARTED, NOT APPROVED.**
 
-The Stage 2.5 gate is satisfied (374 assertions green), so Stage 3 is no longer blocked by it.
-**It has not been started and requires explicit approval to begin.**
+The Stage 2.5 gate is satisfied (387 assertions green), so Stage 3 is no longer blocked *by that
+gate*. It is still blocked by approval. Entry conditions are §18 of
+`docs/harvest/handoffs/HANDOFF_STAGE_2_5_COMPLETE_2026-07-28.md`: a new session must independently
+verify the handoff, verify `HEAD` and repository cleanliness, rerun or spot-verify the
+trust-establishing checks, review this scope against the actual Stage 2.5 interfaces
+(`pool.CandidatePool`, `request_key.source_request_key`, the `candidate_pool` / `discovery_lane`
+schemas), present a Stage 3 implementation plan, and **receive explicit approval before editing any
+file**.
+
+Two design questions deliberately deferred to that plan: the per-source config field for
+`query_order_policy` (which needs a `taxonomy.v1.json` change and its own deviation request), and how
+the 25 recorded fixtures are captured without performing a live harvest.
 
 - [ ] `src/harvest/adapters/{base,feed,sitemap,jsonapi,seed,model_search}.py`
 - [ ] Recorded fixtures for all 25 configured sources
