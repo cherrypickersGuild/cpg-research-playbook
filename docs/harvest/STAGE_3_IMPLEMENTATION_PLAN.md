@@ -479,6 +479,59 @@ likewise · robots denial still `robots_denied`, **not** `http_4xx` · 500 after
 
 ---
 
+## 7A · DV-8 — per-logical-fetch HTTP accounting (approved, commits **after** DV-7)
+
+**Why.** `SourceFetchCache` must record what one logical fetch cost, and the only per-call figure
+`HttpClient` exposed was `Response.redirects`. `attempts` and `retries` existed solely in the shared
+client-lifetime `self.stats` dict. A before/after delta around one `get()` is therefore race-prone —
+**measured, not supposed**: two concurrent fetches, each truly 2 attempts / 1 retry, synchronized on a
+barrier, each read `delta_requests = 4`, `delta_retries = 2`. `pool.establish_snapshot(attempts=…)`
+would have recorded double, and the manifest's `request_accounting` would have been systematically
+wrong under exactly the concurrency Stage 3 introduces.
+
+**Budget-flow findings that fix the counting semantics** (established by inspection before coding):
+
+- `RequestBudget.charge_request` has **exactly one call site in the repository** — inside
+  `HttpClient._attempt`. Nothing else in `src/` or `scripts/` charges requests.
+- **Robots retrieval never charges the budget.** `RobotsCache._fetch` calls `_raw_opener` directly and
+  takes no budget parameter, so robots traffic is deliberately outside the request budget and is
+  **not** a target attempt.
+- **`DomainLease` never charges requests.** It calls only `check_time()` / `would_exceed_time()`, and
+  raises `BudgetExhausted("pacing", "seconds", …)` for wall-clock.
+
+**Model.** One private mutable accumulator is created inside `get()`, threaded through every redirect
+hop and every `_attempt` call, and frozen into an immutable `FetchAccounting` when `get()` returns
+**or raises**. It is never derived from `self.stats`, which remains untouched client-lifetime
+telemetry.
+
+```python
+@dataclasses.dataclass(frozen=True, slots=True)
+class FetchAccounting:
+    attempts: int = 0          # every target attempt: first, retries, and redirect targets
+    retries: int = 0           # retry-policy attempts only; following a redirect is not a retry
+    redirect_hops: int = 0     # redirects actually followed
+    request_charges: int = 0   # successful charge_request(1) calls for THIS fetch
+```
+
+`request_charges` counts charges, not intent: with a budget it equals `attempts`; with `budget=None`
+it is 0. A `charge_request` that raises `BudgetExhausted` buys no attempt, so neither counter moves.
+
+**Surface.** `Response.accounting` on success, with `Response.attempts` / `.retries` retained as
+properties **derived** from that same object so the two cannot disagree. `HttpError.accounting` on
+every typed failure, defaulting to `ZERO_ACCOUNTING` for errors built outside `get()`.
+`BudgetExhausted` leaving `get()` carries it too. Concrete exception types, `reason`, `status` and
+messages are all preserved — no generic wrapper.
+
+**Verified counts:** clean 200 → 1/0/0/1 · one retry → 2/1/0/2 · one redirect → 2/0/1/2 · redirect +
+retry → 3/1/1/3 · 404 `ClientError` → 1/0/0/1 · exhausted 500 `ServerError` → 3/2/0/3 · timeout and
+DNS failure → 3/2/0/3 · robots denial → **0/0/0/0** with the budget untouched · exhausted 429 →
+3/2/0/3, still not a `ClientError`.
+
+**Files:** `src/harvest/httpclient.py` · `tests/harvest/test_http.py` (+15, none removed or relaxed) ·
+this document. No budget, throttle, pool, cache, adapter, fixture, taxonomy or schema file changed.
+
+---
+
 ## 8 · Ordered checkpoints
 
 Each ends with its own commit. **C4 and DV-7 are never combined.**
@@ -488,7 +541,9 @@ Each ends with its own commit. **C4 and DV-7 are never combined.**
 | **1** | **Stage 3 plan approval** (this document) | `STAGE_3_IMPLEMENTATION_PLAN.md`, `TODO.md` | documentation only; 387 unchanged |
 | **2** | **C4 — `http_4xx`** | `httpclient.py`, `test_http.py`, `IMPLEMENTATION_PLAN.md` | 387 + new HTTP assertions green |
 | **3** | **DV-7 — pool determinism and ownership semantics** | `pool.py`, `candidate_pool.v1.json`, `test_pool.py` | previous total + 10 new green; `test_taxonomy_schema.sh` run **first** after the schema edit |
-| **4** | **Stage 3 — coordinator and adapters** | everything in §9 | full gate of §11 |
+| **3A** | **DV-8 — per-logical-fetch HTTP accounting** (§7A) | `httpclient.py`, `test_http.py`, this document | previous total + new HTTP assertions green; concurrency probe shows isolated per-call counters |
+| **4A** | **Stage 3 — `SourceFetchCache` + `pool.record_established_source()`** | `sourcecache.py`, `pool.py`, `test_source_cache.py`, `tests/test_taxonomy_source_cache.sh` | one logical fetch on success and failure; no pool row after any failure path |
+| **4B** | **Stage 3 — adapters and fixtures** | the remainder of §9 | full gate of §11 |
 
 Checkpoint 4 is itself built in order, each step gated by its narrowest test before the next begins:
 `base` + registry → `fixtures.py` + fixtures + `check_fixtures.py` → `sourcecache.py` → `feed` →

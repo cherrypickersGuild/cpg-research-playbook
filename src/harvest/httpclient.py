@@ -28,6 +28,7 @@ Everything raises a typed error rather than returning a sentinel, so a caller
 can never mistake a failure for an empty result — the zero-result vs error
 distinction the run manifest depends on.
 """
+import dataclasses
 import io
 import random
 import time
@@ -43,10 +44,65 @@ from .urlkey import content_hash as _content_hash
 DEFAULT_UA = "cherry-harvest/1.0 (+https://cherryinthehaystack.com)"
 
 
+# ----------------------------------------------------------------- accounting
+@dataclasses.dataclass(frozen=True, slots=True)
+class FetchAccounting:
+    """Immutable counters for ONE logical fetch — one call to HttpClient.get().
+
+    Deliberately not derived from HttpClient.stats. That dict is a
+    client-lifetime aggregate shared by every concurrent call, so a
+    before/after delta around one get() attributes other calls' work to this
+    one: two concurrent 2-attempt fetches each measure 4. Measured, not
+    supposed. Every counter here is incremented at the exact point the event
+    happens, on an accumulator private to one call.
+
+      attempts         every target HTTP attempt, including the first, every
+                       retry, and every request issued for a followed redirect
+                       target. Robots.txt retrieval is NOT a target attempt.
+      retries          attempts made because of retry policy only. Following a
+                       redirect is not a retry.
+      redirect_hops    redirects actually followed.
+      request_charges  successful RequestBudget.charge_request(1) calls for this
+                       fetch. Equal to `attempts` when a budget is supplied and
+                       0 when it is not, because the charge is what is counted,
+                       not the intent to charge. `charge_request` has exactly
+                       one call site in the repository (_attempt below), robots
+                       retrieval never charges, and DomainLease only ever checks
+                       time — so nothing outside the target attempt loop can
+                       contribute.
+    """
+    attempts: int = 0
+    retries: int = 0
+    redirect_hops: int = 0
+    request_charges: int = 0
+
+
+ZERO_ACCOUNTING = FetchAccounting()
+
+
+class _CallAccounting:
+    """Private mutable accumulator. One per get(), never shared."""
+    __slots__ = ("attempts", "retries", "redirect_hops", "request_charges")
+
+    def __init__(self):
+        self.attempts = self.retries = self.redirect_hops = self.request_charges = 0
+
+    def freeze(self):
+        return FetchAccounting(attempts=self.attempts, retries=self.retries,
+                               redirect_hops=self.redirect_hops,
+                               request_charges=self.request_charges)
+
+
 # --------------------------------------------------------------------------- errors
 class HttpError(Exception):
-    """Base. `reason` maps onto the run manifest's enumerated error reasons."""
+    """Base. `reason` maps onto the run manifest's enumerated error reasons.
+
+    Carries the same immutable FetchAccounting a successful Response does, so a
+    caller can record exactly what a failed logical fetch cost. Defaults to all
+    zeros for an error constructed outside get().
+    """
     reason = "http_5xx"
+    accounting = ZERO_ACCOUNTING
 
     def __init__(self, message, url=None, status=None):
         super().__init__(message)
@@ -98,10 +154,12 @@ class ClientError(HttpError):
 # --------------------------------------------------------------------------- result
 class Response:
     __slots__ = ("url", "final_url", "status", "headers", "body", "elapsed_sec",
-                 "redirects", "permanent_redirect", "from_cache", "content_hash")
+                 "redirects", "permanent_redirect", "from_cache", "content_hash",
+                 "accounting")
 
     def __init__(self, url, final_url, status, headers, body, elapsed_sec,
-                 redirects, permanent_redirect, from_cache=False):
+                 redirects, permanent_redirect, from_cache=False,
+                 accounting=ZERO_ACCOUNTING):
         self.url = url
         self.final_url = final_url
         self.status = status
@@ -114,6 +172,17 @@ class Response:
         self.permanent_redirect = permanent_redirect
         self.from_cache = from_cache
         self.content_hash = _content_hash(body) if body is not None else None
+        self.accounting = accounting
+
+    # Convenience only — DERIVED from the one immutable accounting object, never
+    # maintained separately, so the two can never disagree.
+    @property
+    def attempts(self):
+        return self.accounting.attempts
+
+    @property
+    def retries(self):
+        return self.accounting.retries
 
     @property
     def text(self):
@@ -485,13 +554,30 @@ class HttpClient:
 
         Never returns a sentinel: a caller must not be able to confuse "the
         server said no" with "there was nothing there".
+
+        Per-logical-fetch accounting is attached to whatever leaves this method —
+        `Response.accounting` on success, `HttpError.accounting` on failure — so
+        a caller recording what a fetch cost never has to diff shared counters.
         """
         started = self._monotonic()
         seen = []
         current = url
         permanent_only = True
         redirects = 0
+        acct = _CallAccounting()      # private to THIS call; never shared
 
+        try:
+            return self._get(url, current, seen, permanent_only, redirects,
+                             started, acct, budget, accept, expect_content_types,
+                             extra_headers)
+        except (HttpError, BudgetExhausted) as exc:
+            # Freeze onto the exception instance: the failure path needs exact
+            # accounting just as much as the success path does.
+            exc.accounting = acct.freeze()
+            raise
+
+    def _get(self, url, current, seen, permanent_only, redirects, started, acct,
+             budget, accept, expect_content_types, extra_headers):
         while True:
             host = urllib.parse.urlsplit(current).hostname or ""
 
@@ -513,7 +599,7 @@ class HttpClient:
                 self.stats["paced_sec"] += paced
 
                 status, headers, body = self._attempt(current, lease, budget,
-                                                      accept, extra_headers)
+                                                      accept, extra_headers, acct)
             finally:
                 lease.release()
 
@@ -532,6 +618,7 @@ class HttpClient:
                 if status not in (301, 308):
                     permanent_only = False
                 redirects += 1
+                acct.redirect_hops += 1      # following a redirect is NOT a retry
                 self.stats["redirects"] += 1
                 current = nxt
                 continue
@@ -542,7 +629,8 @@ class HttpClient:
             resp = Response(url=url, final_url=current, status=status, headers=headers,
                             body=body, elapsed_sec=self._monotonic() - started,
                             redirects=redirects,
-                            permanent_redirect=(redirects > 0 and permanent_only))
+                            permanent_redirect=(redirects > 0 and permanent_only),
+                            accounting=acct.freeze())
 
             if expect_content_types:
                 ct = resp.content_type
@@ -553,12 +641,21 @@ class HttpClient:
                         url=current, status=status)
             return resp
 
-    def _attempt(self, url, lease, budget, accept, extra_headers):
-        """One URL, with bounded retries. Returns (status, headers, body)."""
+    def _attempt(self, url, lease, budget, accept, extra_headers, acct):
+        """One URL, with bounded retries. Returns (status, headers, body).
+
+        `acct` is the caller's private accumulator. Counters are incremented at
+        the moment the event occurs, never reconstructed afterwards from a
+        formula that a later edit could silently invalidate.
+        """
         last = None
         for attempt in range(1, self.max_attempts + 1):
             if budget is not None:
                 budget.charge_request(1)      # charge BEFORE, so a budget cannot be overspent
+                # Counted only once the charge SUCCEEDED — a charge that raises
+                # BudgetExhausted buys no attempt and must not be recorded.
+                acct.request_charges += 1
+            acct.attempts += 1
             self.stats["requests"] += 1
 
             headers = {"User-Agent": self.user_agent,
@@ -576,6 +673,7 @@ class HttpClient:
                 if attempt >= self.max_attempts:
                     raise
                 self._sleep(self._backoff(attempt))
+                acct.retries += 1      # a retry, not a redirect hop
                 self.stats["retries"] += 1
                 continue
             except BudgetExhausted:
@@ -585,6 +683,7 @@ class HttpClient:
                 if attempt >= self.max_attempts:
                     raise
                 self._sleep(self._backoff(attempt))
+                acct.retries += 1      # a retry, not a redirect hop
                 self.stats["retries"] += 1
                 continue
 
@@ -606,6 +705,7 @@ class HttpClient:
                 if budget is not None and budget.would_exceed_time(wait):
                     budget.check_time()
                 self._sleep(wait)
+                acct.retries += 1      # a retry, not a redirect hop
                 self.stats["retries"] += 1
                 continue
 

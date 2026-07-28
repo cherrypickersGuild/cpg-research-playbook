@@ -5,6 +5,7 @@ Fully mocked: a scripted opener stands in for the network, following the
 MockOpener pattern already used by tests/test_github_meta.py. No request leaves
 the machine, and no test sleeps for real.
 """
+import io
 import os
 import shutil
 import sys
@@ -610,6 +611,222 @@ class TestClientErrorIsClassifiedAs4xx(Base):
         self.assertEqual(out["result"], "infrastructure_error")
         self.assertEqual(out["reason"], "http_4xx")
         self.assertEqual(out["http_status"], 404)
+
+
+class TestPerFetchAccounting(Base):
+    """Exact per-logical-fetch counters, on success AND on failure.
+
+    The defect this replaces was measured, not theorised: two concurrent
+    2-attempt fetches sharing one client each read a before/after delta of 4
+    requests and 2 retries off HttpClient.stats. Counters now live on an
+    accumulator private to one get() call and are incremented where the event
+    happens, so nothing can attribute another call's work to this one.
+    """
+
+    def acct_of_get(self, routes, **kw):
+        c = self.client(routes)
+        budget = kw.pop("budget", None)
+        resp = c.get("https://x.test/a", budget=budget, **kw)
+        return resp.accounting, resp, c
+
+    def acct_of_failure(self, routes, exc_cls, **kw):
+        c = self.client(routes)
+        budget = kw.pop("budget", None)
+        with self.assertRaises(exc_cls) as cm:
+            c.get("https://x.test/a", budget=budget, **kw)
+        return cm.exception.accounting, cm.exception, c
+
+    def assertAccounting(self, acct, attempts, retries, redirect_hops, request_charges):
+        self.assertEqual(
+            (acct.attempts, acct.retries, acct.redirect_hops, acct.request_charges),
+            (attempts, retries, redirect_hops, request_charges),
+            "got attempts=%d retries=%d redirect_hops=%d request_charges=%d"
+            % (acct.attempts, acct.retries, acct.redirect_hops, acct.request_charges))
+
+    # ------------------------------------------------------------- success
+    def test_1_clean_200(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, resp, _ = self.acct_of_get({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (200, {}, b"ok"),
+        }, budget=b)
+        self.assertAccounting(acct, 1, 0, 0, 1)
+        # the convenience properties are DERIVED, never independent
+        self.assertEqual((resp.attempts, resp.retries), (1, 0))
+        self.assertIs(resp.accounting, acct)
+
+    def test_2_one_retry_then_success(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, _, _ = self.acct_of_get({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": [(503, {}, b""), (200, {}, b"ok")],
+        }, budget=b)
+        self.assertAccounting(acct, 2, 1, 0, 2)
+
+    def test_3_one_redirect_then_success(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (301, {"location": "https://x.test/b"}, b""),
+            "https://x.test/b": (200, {}, b"ok"),
+        })
+        resp = c.get("https://x.test/a", budget=b)
+        # a followed redirect costs an ATTEMPT but is not a RETRY
+        self.assertAccounting(resp.accounting, 2, 0, 1, 2)
+
+    def test_4_redirect_plus_retry_then_success(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (301, {"location": "https://x.test/b"}, b""),
+            "https://x.test/b": [(503, {}, b""), (200, {}, b"ok")],
+        })
+        resp = c.get("https://x.test/a", budget=b)
+        self.assertAccounting(resp.accounting, 3, 1, 1, 3)
+
+    # ------------------------------------------------------------- failure
+    def test_5_non_retryable_404_on_client_error(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, exc, _ = self.acct_of_failure({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (404, {}, b""),
+        }, hc.ClientError, budget=b)
+        self.assertAccounting(acct, 1, 0, 0, 1)
+        self.assertEqual(exc.reason, "http_4xx")      # C4 preserved
+        self.assertEqual(exc.status, 404)
+
+    def test_6_exhausted_500_on_server_error(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, exc, _ = self.acct_of_failure({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (500, {}, b""),
+        }, hc.ServerError, budget=b)
+        self.assertAccounting(acct, 3, 2, 0, 3)
+        self.assertEqual(exc.reason, "http_5xx")
+        self.assertEqual(exc.status, 500)
+
+    def test_7_timeout_failure_accounting(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, exc, _ = self.acct_of_failure({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": hc.HttpTimeout("timed out"),
+        }, hc.HttpTimeout, budget=b)
+        self.assertAccounting(acct, 3, 2, 0, 3)
+        self.assertEqual(exc.reason, "http_timeout")
+
+    def test_7b_dns_failure_accounting(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, exc, _ = self.acct_of_failure({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": hc.DnsFailure("no such host"),
+        }, hc.DnsFailure, budget=b)
+        self.assertAccounting(acct, 3, 2, 0, 3)
+        self.assertEqual(exc.reason, "dns_failure")
+
+    def test_8_robots_denial_has_zero_target_attempts(self):
+        # Robots retrieval is not a target attempt and never charges the budget:
+        # RobotsCache._fetch calls the raw opener directly.
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, exc, _ = self.acct_of_failure({
+            "https://x.test/robots.txt": self.robots("User-agent: *\nDisallow: /\n"),
+            "https://x.test/a": (200, {}, b"ok"),
+        }, hc.RobotsDenied, budget=b)
+        self.assertAccounting(acct, 0, 0, 0, 0)
+        self.assertEqual(exc.reason, "robots_denied")
+        self.assertEqual(b.usage()[0]["requests"], 0, "robots must not charge the budget")
+
+    def test_9_retryable_429_unchanged_and_accounted_exactly(self):
+        b = RequestBudget().push("cell", max_requests=10)
+        acct, exc, c = self.acct_of_failure({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (429, {}, b""),
+        }, hc.HttpError, budget=b)
+        self.assertNotIsInstance(exc, hc.ClientError)      # still retryable, not 4xx-typed
+        self.assertEqual(exc.reason, "http_5xx")
+        self.assertEqual(exc.status, 429)
+        self.assertAccounting(acct, 3, 2, 0, 3)
+        self.assertEqual(self.opener.calls.count("https://x.test/a"), 3)
+
+    def test_request_charges_count_charges_not_intent(self):
+        # No budget passed => nothing was charged. attempts still counts.
+        acct, _, _ = self.acct_of_get({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": [(503, {}, b""), (200, {}, b"ok")],
+        })
+        self.assertAccounting(acct, 2, 1, 0, 0)
+
+    def test_a_budget_refusal_records_neither_attempt_nor_charge(self):
+        b = RequestBudget().push("cell", max_requests=0)
+        acct, _, _ = self.acct_of_failure({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (200, {}, b"ok"),
+        }, BudgetExhausted, budget=b)
+        # charge_request raised, so the attempt never happened
+        self.assertAccounting(acct, 0, 0, 0, 0)
+
+    # --------------------------------------------------------- concurrency
+    def test_10_concurrent_calls_have_isolated_accounting(self):
+        import threading
+        barrier = threading.Barrier(2)
+        seen = {}
+        lock = threading.Lock()
+
+        def opener(req, timeout=None):
+            url = req.full_url
+            if url.endswith("robots.txt"):
+                return 200, {"content-type": "text/plain"}, io.BytesIO(
+                    b"User-agent: *\nAllow: /\n")
+            with lock:
+                n = seen.get(url, 0)
+                seen[url] = n + 1
+            if n == 0:
+                barrier.wait(timeout=10)      # force the two fetches to interleave
+                return 503, {}, io.BytesIO(b"")
+            return 200, {}, io.BytesIO(b"ok")
+
+        c = hc.HttpClient(policy(), lease_root=self.tmp, opener=opener,
+                          sleep=lambda s: None)
+        out = {}
+
+        def worker(url):
+            out[url] = c.get(url).accounting
+
+        ts = [threading.Thread(target=worker, args=(u,))
+              for u in ("https://x.test/a", "https://y.test/b")]
+        for t in ts:
+            t.start()
+        for t in ts:
+            t.join()
+
+        self.assertEqual(len(out), 2)
+        for url, acct in out.items():
+            with self.subTest(url=url):
+                # each reports ITS OWN work, not the combined total of 4/2
+                self.assertAccounting(acct, 2, 1, 0, 0)
+
+    def test_11_aggregate_client_stats_remain_correct(self):
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": [(503, {}, b""), (200, {}, b"ok")],
+            "https://x.test/c": (200, {}, b"ok"),
+        })
+        c.get("https://x.test/a")
+        c.get("https://x.test/c")
+        # client-lifetime aggregate across BOTH fetches: 2 + 1 requests, 1 retry
+        self.assertEqual(c.stats["requests"], 3)
+        self.assertEqual(c.stats["retries"], 1)
+
+    def test_12_no_caller_derives_logical_accounting_from_shared_stats(self):
+        import inspect
+        from src.harvest import pool as pool_mod
+        for mod in (hc, pool_mod):
+            text = inspect.getsource(mod)
+            for banned in ('stats["requests"] -', "stats['requests'] -",
+                           'stats["retries"] -', "stats['retries'] -"):
+                self.assertNotIn(banned, text,
+                                 "%s must not diff shared counters" % mod.__name__)
+        # and the accumulator is per-call, never an attribute of the client
+        self.assertFalse(hasattr(self.client({}), "_acct"))
 
 
 if __name__ == "__main__":
