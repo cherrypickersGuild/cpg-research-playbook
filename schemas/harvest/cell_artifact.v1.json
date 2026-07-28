@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/cell_artifact.v1.json",
+  "title": "Per-cell harvest artifact (v1)",
+  "description": "The output of one (topic, category) cell: <topic_slug>__<category_slug>__harvest.json. Records are sorted deterministically by (topic, primary_category, record_id) so two runs over the same input produce byte-identical files.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "topic", "topic_slug", "category",
+               "category_slug", "cell_id", "generated_at", "harvest_run_id",
+               "metadata", "records"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "artifact_type": { "const": "cell" },
+    "topic": { "type": "string" },
+    "topic_slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "category": { "type": "string" },
+    "category_slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "cell_id": { "type": "string", "pattern": "^[a-z0-9-]+__[a-z0-9-]+$" },
+    "generated_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
+    "harvest_run_id": { "type": "string" },
+
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_records", "full_records", "cross_references", "sources"],
+      "properties": {
+        "total_records": { "type": "integer", "minimum": 0 },
+        "full_records": { "type": "integer", "minimum": 0 },
+        "cross_references": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "sources": {
+          "type": "array",
+          "description": "Per-source outcome. A zero-result source is recorded with its reason and is NOT an error.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source_id", "adapter", "result"],
+            "properties": {
+              "source_id": { "type": "string" },
+              "adapter": { "type": "string" },
+              "result": { "type": "string", "enum": ["ok", "zero_result", "adapter_error", "infrastructure_error"] },
+              "reason": { "type": ["string", "null"] },
+              "candidates": { "type": "integer", "minimum": 0 },
+              "accepted": { "type": "integer", "minimum": 0 },
+              "requests_made": { "type": "integer", "minimum": 0 },
+              "elapsed_sec": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+
+    "records": {
+      "type": "array",
+      "items": { "$ref": "record.v1.json" }
+    }
+  }
+}

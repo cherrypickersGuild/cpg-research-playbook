@@ -1,0 +1,109 @@
+{
+  "_about": "Fetch politeness, request/time budgets, per-domain overrides and scoring weights. Every value here is enforced in code, not advisory.",
+  "config_version": 1,
+
+  "user_agent": "cherry-harvest/1.0 (+https://cherryinthehaystack.com; contact: sjty97@gmail.com)",
+
+  "_budgets_about": "Seven distinct timeouts/budgets plus three caps. A single RequestBudget object is threaded through the HTTP client; every attempt, retry and redirect hop decrements the counters. Exceeding any one raises a typed budget_exhausted error and is recorded — never a silent truncation.",
+  "budgets": {
+    "connect_timeout_sec": 5,
+    "read_timeout_sec": 15,
+    "request_timeout_sec": 20,
+    "max_response_bytes": 8388608,
+    "adapter_max_requests": 25,
+    "adapter_budget_sec": 120,
+    "cell_max_requests": 60,
+    "cell_budget_sec": 300,
+    "lease_wait_max_sec": 60,
+    "smoke_budget_sec": 1800
+  },
+
+  "retry": {
+    "max_attempts": 3,
+    "backoff_base_sec": 0.5,
+    "backoff_multiplier": 2.0,
+    "jitter_frac": 0.25,
+    "retry_on_status": [429, 500, 502, 503, 504],
+    "max_redirects": 3
+  },
+
+  "_robots_about": "RFC 9309 semantics: robots.txt returning 4xx means allow-all; 5xx or a network failure means DISALLOW (fail closed). Crawl-delay is honoured pipeline-wide via the shared next_allowed_at gate.",
+  "robots": {
+    "enabled": true,
+    "respect_crawl_delay": true,
+    "cache_ttl_sec": 3600,
+    "unavailable_4xx_policy": "allow",
+    "unreachable_5xx_policy": "disallow"
+  },
+
+  "_domain_about": "Cross-process coordination. min_interval_sec is the floor; the effective interval is max(min_interval_sec, robots Crawl-delay, per-domain override).",
+  "domain_defaults": {
+    "max_concurrency": 1,
+    "min_interval_sec": 2.0,
+    "lease_stale_sec": 120
+  },
+
+  "domain_overrides": {
+    "arxiv.org": {
+      "min_interval_sec": 15.0,
+      "_why": "arxiv.org robots.txt declares Crawl-delay: 15. /abs and /pdf are explicitly Allowed; /e-print, /src, /ps, /find and others are Disallowed."
+    },
+    "rss.arxiv.org": {
+      "min_interval_sec": 5.0,
+      "_why": "Separate host from arxiv.org and serves no robots.txt (404 -> RFC 9309 allow-all). Kept slower than default anyway: it is the same organisation."
+    },
+    "microsoft.com": {
+      "min_interval_sec": 10.0,
+      "_why": "blogs.microsoft.com robots.txt declares Crawl-delay: 10."
+    },
+    "github.com": {
+      "min_interval_sec": 2.0,
+      "max_concurrency": 1,
+      "_why": "Three release feeds are configured; serialising them keeps well inside anonymous limits."
+    }
+  },
+
+  "_breaker_about": "STAGED feature — implemented after the baseline gates pass. The interface is reserved from day one so enabling it is additive.",
+  "circuit_breaker": {
+    "enabled": false,
+    "consecutive_failures_to_open": 5,
+    "open_duration_sec": 900
+  },
+
+  "_conditional_about": "STAGED feature — ETag/Last-Modified conditional requests and body caching accelerate refresh and link-check. content_hash is computed in the BASELINE regardless, because link-check needs it to detect material change.",
+  "conditional_requests": {
+    "enabled": false
+  },
+
+  "_scoring_about": "Weights for the four scores. Scores are advisory signals recorded on every record; the accept/reject decision is made by verify.py against the thresholds below, not by a weighted sum alone.",
+  "scoring": {
+    "weights": {
+      "relevance": 0.40,
+      "quality": 0.25,
+      "audience_fit": 0.20,
+      "freshness": 0.15
+    },
+    "thresholds": {
+      "min_relevance": 0.35,
+      "min_quality": 0.30,
+      "min_audience_fit": 0.20,
+      "accept_composite": 0.40
+    },
+    "freshness_half_life_days": 90
+  },
+
+  "_source_tier_about": "Authority ordering from the curation rules. Recorded on every record as provenance; a lower tier does not auto-reject, it lowers quality_score.",
+  "source_tiers": {
+    "tier_1_original_publisher": 1.00,
+    "tier_2_official_documentation": 0.90,
+    "tier_3_reputable_secondary": 0.70,
+    "tier_4_community": 0.50
+  },
+
+  "smoke": {
+    "max_candidates_per_cell": 12,
+    "max_accepted_per_cell": 5,
+    "enrich": false,
+    "_enrich_why": "Disabled by default. arxiv.org mandates Crawl-delay: 15, so enriching 12 candidates from that one source alone costs >=180s of mandatory pacing — infeasible under adapter_budget_sec. Target-page fetching is exercised deliberately by `linkcheck` instead, where the 15s delay becomes a useful test of the global limiter."
+  }
+}

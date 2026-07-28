@@ -1,0 +1,39 @@
+# protected-file baseline
+# generated_from_commit: 8865c54e2cc8d879410576f247baac4aea149f34
+# generated_at: 2026-07-28T09:19:52Z
+# core.autocrlf: true
+# gitattributes: absent
+#
+# format: <raw_sha256>  <eol_form>  <blob_id>  <path>
+#
+#   raw_sha256  hashlib.sha256 over the EXACT working-tree bytes.
+#   eol_form    which Git rendering of the commit those bytes matched:
+#                 filtered  = git cat-file --filters (a fresh checkout; CRLF here)
+#                 blob      = git cat-file blob      (stored verbatim; LF here)
+#                 identical = both renderings are the same for this file
+#               Pinning the observed form is what catches an LF-only rewrite of a
+#               CRLF file, which `git diff` normalizes away and reports as clean.
+#   blob_id     git object id at the commit; anchors the row to the commit.
+#
+# file_count: 18  (filtered=8 blob=10 identical=0)
+# path_list: tests/fixtures/taxonomy/protected_paths.txt
+#
+# Verify with: bash scripts/harvest/verify_protected_baseline.sh
+2f345fad92d3f815dd956a33e3313636cf8f73372f34cd1016a6d637cf013810  blob  e9d198807417af9cb0344491ca953f03c35de9a2  scripts/expand_queries_cell.sh
+09b83a4831c7a3fe0bfb7eefc6a8c47fc23c356294f163306a700d2f25f6700d  blob  09a9c091e5ba8dbff03b1b378f64f14b9facfdc4  scripts/github_meta.py
+7dba089758f3f564d704fb5e1c93b21d9c4773b4d3da01d75d0b7e02213d7dfb  blob  6239002728679caf2f225426175512826a219ba3  scripts/harvest_matrix_cell.sh
+bb178c1c6e01ebf2c69211826ad422ebc4e4503f64a61791ae9a5bc747ce0531  blob  bc0144c925763ad8ec42adac3941b49cad617bd5  scripts/lib/clean_json.sh
+e2452827f69804cb28276d1a11b3de544ea703a2772fd500242641f99de51e97  blob  919e6ad7c151188201176e0c9aa63e797501fd09  scripts/lib/lockdir.sh
+225d94ec00c863a5ca130e1a696259f699376ebde75344f05dca5cbd9a34a24d  blob  c937d15418ac46bdda62d99c8d872187f7a646bd  scripts/matrix_spec.py
+23b8eb377720388ee1ae55c78fd3b0dfbdaa21b915d14e8207018e4f8ae9ae3a  filtered  266be49be21fadeb234586f0ec150be97caba49d  scripts/merge_entity_registry.sh
+a5a0017086f5ebd09f67288c3ae7c52d27a5311bce4f5b2090d177c56a0703c6  blob  33daf151efed9c86deef4585f45dc238672057a2  scripts/merge_matrix.sh
+bfdaa3ce96e49be647eeace20ea8bed6fb07cb6b9c24eddbb01e12b5fa43d46e  blob  ce41a022b4cda7686901b22571df90ee703d8b04  scripts/run_matrix.sh
+d32bd0fd005d74956d651c6fd869833afc0ed14a4bf2e04bd5d1422f0844be0e  filtered  c805f9c5075223c5a2b6d8a871c298e9102d2f6e  state/BuildingBlocks_Agent.json
+6d07844af7a163686a89dfc06b7605ead4626bb288778713827221982be4b943  filtered  b5a3b90d78d6119a57929e016af3a5b46ac5da58  state/BuildingBlocks_MCP.json
+c6983e1df3d30f83ca824c3aa6b0941675bdf84f6b0d3e8409f46e2372900034  filtered  300c9988816f5b4191fdc9f2f420874399e6a009  state/BuildingBlocks_Prompt.json
+e2d4cfa63aec1636af1b5492f0ec173b1fa97363650b2efed7dc10cb860d2b3c  filtered  d1beed84197fadec2bfd4f3c81244519121ccb39  state/BuildingBlocks_Skill.json
+ee5de1227355d56e3b12edb5fcdad43bf81d27b53cef4c0aaf25dfd70398dbd7  filtered  10ba7579bacbd66f402d9128fcd90bc698baf495  state/ax_case_harvest_registry.json
+310af2c8f8193ef48ec8c944b817fbe17ab4e5c5e9ceb0d285716662db24ee86  filtered  67bf26b9f4ac46da94fc852df8def2a8257ab222  state/entity_registry.json
+decb2c693b2ee64ff97324c7c42ae4005e5e5609bc402d1d162c8cd47e745300  filtered  fc10dfc8a52d0f56f482f7a0cda285dfb4cb0260  state/visited_url_ledger.json
+ae3790f02cde254f5f7d0e580f78fb5f232ed10ed8d955a6e6f407366ef4289d  blob  c652dcc115d2b0afd3def7adb749a8c3112528d4  tests/test_matrix_harvest.sh
+7786bbbd7ad1b9dc0b81df52311bb6e066bde7ad1602530d8f33e7f186cbbdb8  blob  9d442232fecb617934398b27927dcf2d1066c974  tests/test_parallel_harvest.sh

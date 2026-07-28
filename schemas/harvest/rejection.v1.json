@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/rejection.v1.json",
+  "title": "Per-cell rejection log (v1)",
+  "description": "Every candidate that was considered and not accepted, with the reason and the evidence. Kept so 'the cell returned nothing' is always explainable, and so a threshold change can be evaluated against what it would have admitted.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "cell_id", "harvest_run_id", "generated_at", "rejections"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "cell_id": { "type": "string", "pattern": "^[a-z0-9-]+__[a-z0-9-]+$" },
+    "harvest_run_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "rejections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["identity_url", "source_id", "rejection_reason", "rejected_at"],
+        "properties": {
+          "identity_url": { "type": "string" },
+          "target_url": { "type": ["string", "null"] },
+          "source_id": { "type": "string" },
+          "title": { "type": ["string", "null"] },
+          "rejection_reason": {
+            "type": "string",
+            "enum": ["seo_spam", "thin_affiliate", "copied_summary", "inaccessible",
+                     "insufficient_evidence", "duplicate_announcement", "misleading_title",
+                     "developer_only_audience", "off_topic", "below_relevance_threshold",
+                     "below_quality_threshold", "category_exclusion_applied",
+                     "ambiguous_legacy_url"]
+          },
+          "detail": { "type": ["string", "null"] },
+          "scores": {
+            "type": ["object", "null"],
+            "properties": {
+              "relevance": { "type": ["number", "null"] },
+              "quality": { "type": ["number", "null"] },
+              "audience_fit": { "type": ["number", "null"] },
+              "freshness": { "type": ["number", "null"] }
+            }
+          },
+          "rejected_at": { "type": "string" }
+        }
+      }
+    }
+  }
+}

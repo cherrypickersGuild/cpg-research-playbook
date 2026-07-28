@@ -1,0 +1,124 @@
+{
+  "_about": "The 10 classification precedence rules, plus cross-topic policy. Rules are evaluated IN ORDER; the first whose signals all fire wins and supplies primary_category. Every record records which rule fired and why.",
+  "config_version": 1,
+
+  "_cross_topic_about": "Duplicate suppression WITHIN one topic is mandatory and not configurable: one record per identity_url per topic. Behaviour ACROSS topics is this setting, because global cross-topic suppression was never an approved requirement and a genuine multi-topic classification must not be silently discarded.",
+  "cross_topic_policy": "cross_reference",
+  "_cross_topic_options": {
+    "cross_reference": "Owning topic (highest precedence rank) emits a full record; every other qualifying topic emits a cross_reference row pointing at it. Not an independent duplicate, and not discarded.",
+    "multi_publish": "Every qualifying topic emits a full record carrying multi_topic[] and multi_topic_reason.",
+    "suppress": "Non-owning topics emit nothing. The run manifest still records the suppression and its reason.",
+    "link": "Full records everywhere, joined only by content_id, with no ownership designation."
+  },
+  "cross_topic_overrides": {},
+
+  "_rank_about": "Topic ownership rank when the same content qualifies under more than one topic. Lower number wins. Derived from how specific the topic's claim on a piece of content is.",
+  "topic_rank": {
+    "research-and-models": 1,
+    "cases": 2,
+    "discourse": 3
+  },
+
+  "_rules_about": "Signals are computed by src/harvest/classify.py from title, summary, publisher, target_url and the source's own category. `all_of` must every fire; `none_of` must none fire. `assign` names the winning category by slug.",
+  "rules": [
+    {
+      "rule_id": "R1_org_implementation_with_results",
+      "order": 1,
+      "description": "A concrete organization-level implementation with measurable results belongs in Case Studies.",
+      "all_of": ["has_named_organization", "has_concrete_implementation", "has_measurable_outcome"],
+      "none_of": [],
+      "assign": {"topic_slug": "cases", "category_slug": "case-studies"}
+    },
+    {
+      "rule_id": "R2_industry_pattern",
+      "order": 2,
+      "description": "A generally applicable industry solution or adoption pattern belongs in Domain Applications.",
+      "all_of": ["has_industry_scope", "is_generally_applicable"],
+      "none_of": ["has_measurable_outcome"],
+      "assign": {"topic_slug": "cases", "category_slug": "domain-applications"}
+    },
+    {
+      "rule_id": "R3_end_user_product",
+      "order": 3,
+      "description": "A standalone end-user or business solution belongs in Product Discovery. Developer-productivity tools are excluded and are never reclassified into this category.",
+      "all_of": ["is_end_user_product"],
+      "none_of": ["is_developer_tool"],
+      "assign": {"topic_slug": "cases", "category_slug": "product-discovery"}
+    },
+    {
+      "rule_id": "R4_model_release",
+      "order": 4,
+      "description": "A model release, model version, API, pricing or protocol change belongs in Model Updates, NOT Big Tech Trends.",
+      "all_of": ["is_model_or_api_change"],
+      "none_of": [],
+      "assign": {"topic_slug": "research-and-models", "category_slug": "model-updates"}
+    },
+    {
+      "rule_id": "R5_funding_event",
+      "order": 5,
+      "description": "Funding, investment, acquisition or financial activity belongs in Market & Investment, NOT Big Tech Trends.",
+      "all_of": ["is_funding_or_ma_event"],
+      "none_of": [],
+      "assign": {"topic_slug": "discourse", "category_slug": "market-and-investment"}
+    },
+    {
+      "rule_id": "R6_eval_resource",
+      "order": 6,
+      "description": "New evaluation resources, datasets, leaderboards or benchmark results belong in Benchmark & Datasets, EVEN WHEN associated with a paper.",
+      "all_of": ["is_eval_resource"],
+      "none_of": [],
+      "assign": {"topic_slug": "research-and-models", "category_slug": "benchmark-and-datasets"}
+    },
+    {
+      "rule_id": "R7_academic_primary",
+      "order": 7,
+      "description": "A primary academic contribution belongs in Papers.",
+      "all_of": ["is_academic_primary"],
+      "none_of": ["is_eval_resource"],
+      "assign": {"topic_slug": "research-and-models", "category_slug": "papers"}
+    },
+    {
+      "rule_id": "R8_engineering_analysis",
+      "order": 8,
+      "description": "Engineering implementation analysis belongs in Technical Deep Dives.",
+      "all_of": ["is_engineering_analysis"],
+      "none_of": ["has_measurable_outcome_for_named_org"],
+      "assign": {"topic_slug": "discourse", "category_slug": "technical-deep-dives"}
+    },
+    {
+      "rule_id": "R9_opinion_thesis",
+      "order": 9,
+      "description": "Argumentative, predictive or thesis-driven commentary belongs in Insights & Opinions.",
+      "all_of": ["is_opinion_or_prediction"],
+      "none_of": [],
+      "assign": {"topic_slug": "discourse", "category_slug": "insights-and-opinions"}
+    },
+    {
+      "rule_id": "R10_default_by_category",
+      "order": 10,
+      "description": "When ambiguity remains, fall back to the cell the candidate was discovered in, and record every competing category plus the rationale in audit metadata. Exactly one primary_category is still chosen.",
+      "all_of": [],
+      "none_of": [],
+      "assign": {"use_discovery_cell": true},
+      "record_ambiguity": true
+    }
+  ],
+
+  "_signal_about": "Signals are keyword/structure predicates over the candidate. Deterministic and auditable — no model call. Each fired signal contributes its matched evidence to classification.evidence[].",
+  "signals": {
+    "has_named_organization": {"any_of_patterns": ["\\b(at|by)\\s+[A-Z][A-Za-z0-9&.\\-]{2,}", "\\b(Inc|Ltd|GmbH|Corp|Corporation|Company)\\b"], "min_matches": 1},
+    "has_concrete_implementation": {"any_of_keywords": ["deployed", "in production", "rolled out", "implemented", "migrated to", "we built", "went live"]},
+    "has_measurable_outcome": {"any_of_patterns": ["\\d+(\\.\\d+)?\\s?%", "\\b\\d+x\\b", "reduced\\s+\\w+\\s+by", "increased\\s+\\w+\\s+by", "saved\\s+\\$?\\d"]},
+    "has_measurable_outcome_for_named_org": {"all_of_signals": ["has_named_organization", "has_measurable_outcome"]},
+    "has_industry_scope": {"any_of_keywords": ["healthcare", "finance", "banking", "retail", "manufacturing", "legal", "insurance", "logistics", "education", "public sector", "pharma", "telecom", "energy"]},
+    "is_generally_applicable": {"any_of_keywords": ["pattern", "approach", "how to", "guide", "reference architecture", "best practice", "playbook", "framework for"]},
+    "is_end_user_product": {"any_of_keywords": ["app", "product", "launch", "now available for", "sign up", "free trial", "pricing"]},
+    "is_developer_tool": {"any_of_keywords": ["sdk", "api client", "cli", "developer tool", "ide", "code editor", "framework", "library", "compiler", "devops", "ci/cd", "kubernetes", "npm", "pypi", "docker image", "for developers"]},
+    "is_model_or_api_change": {"any_of_keywords": ["model release", "new model", "now available", "api update", "deprecat", "version", "context window", "pricing", "per million tokens", "protocol", "endpoint", "model card", "checkpoint"]},
+    "is_funding_or_ma_event": {"any_of_keywords": ["funding", "raises", "raised", "series a", "series b", "series c", "series d", "seed round", "acquisition", "acquires", "acquired", "valuation", "ipo", "merger", "投資"]},
+    "is_eval_resource": {"any_of_keywords": ["benchmark", "dataset", "leaderboard", "evaluation harness", "eval suite", "test set", "we release a dataset", "evaluation framework"]},
+    "is_academic_primary": {"any_of_keywords": ["we propose", "we present", "we introduce", "abstract:", "arxiv", "preprint", "our method", "experiments show"]},
+    "is_engineering_analysis": {"any_of_keywords": ["architecture", "how we built", "under the hood", "latency", "throughput", "performance", "scaling", "internals", "postmortem", "system design"]},
+    "is_opinion_or_prediction": {"any_of_keywords": ["i think", "we believe", "prediction", "i argue", "thesis", "the case for", "the case against", "what this means", "my take", "will change", "overrated", "underrated"]}
+  }
+}

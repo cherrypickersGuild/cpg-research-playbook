@@ -1,0 +1,19 @@
+# Taxonomy harvest pipeline — runtime dependencies.
+#
+# Exactly one direct dependency. Everything else in the pipeline is Python
+# standard library (urllib, xml.etree, html.parser, hashlib, json, tempfile),
+# matching the existing repository convention: scripts/github_meta.py,
+# scripts/matrix_spec.py and scripts/split_entity_registry.py are all stdlib-only.
+#
+# Pinned EXACTLY, not as a lower bound. Schema validation is the gate that
+# decides whether an artifact may be published, so its behaviour must not vary
+# between machines or drift with a minor release. `harvest.sh preflight` refuses
+# to run if the installed version differs.
+#
+#   Install:  python -m pip install -r requirements.txt -c constraints.txt
+#   Verify :  bash scripts/harvest/harvest.sh preflight
+#
+# Supported interpreter: CPython 3.13.x (see constraints.txt). Note that on this
+# machine `python3` resolves to the Windows Store stub — use `python`.
+
+jsonschema==4.26.0

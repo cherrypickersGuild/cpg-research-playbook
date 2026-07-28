@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/record.v1.json",
+  "title": "Harvested record (v1)",
+  "description": "One curated item. A DISCRIMINATED UNION on record_type: a 'full' record carries the complete curation payload, a 'cross_reference' row is a pointer to a full record owned by another topic. Both branches set additionalProperties:false, so a cross_reference can never be accepted where a full record is required, and an underspecified full record can never masquerade as a cross_reference.",
+
+  "type": "object",
+  "required": ["record_type"],
+  "oneOf": [
+    { "$ref": "#/$defs/full_record" },
+    { "$ref": "#/$defs/cross_reference_record" }
+  ],
+
+  "$defs": {
+    "iso8601_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "UTC ISO-8601, second precision, always Z-suffixed. No local times, no offsets."
+    },
+    "sha256_short": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+    "sha256_full": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "absolute_url": { "type": "string", "pattern": "^https?://" },
+    "score": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+
+    "topic_slug": { "type": "string", "enum": ["cases", "research-and-models", "discourse"] },
+
+    "category_slug": {
+      "type": "string",
+      "enum": [
+        "domain-applications", "case-studies", "product-discovery",
+        "model-updates", "papers", "benchmark-and-datasets",
+        "regulations-policy-compliance", "community", "big-tech-trends",
+        "market-and-investment", "technical-deep-dives", "insights-and-opinions"
+      ]
+    },
+
+    "access_status": {
+      "type": "string",
+      "enum": ["not_checked", "ok", "redirected", "not_found", "gone",
+               "auth_required", "paywalled", "server_error", "timeout",
+               "robots_denied", "unreachable"],
+      "description": "not_checked is the honest default when enrichment is disabled — it is NOT a claim that the URL works."
+    },
+
+    "verification_status": {
+      "type": "string",
+      "enum": ["unverified", "fetched", "snippet_only", "corroborated", "contradicted"],
+      "description": "'fetched' means only that the fetch succeeded. It is deliberately NOT called 'verified': the legacy AX field of that name meant exactly this and was routinely misread as an editorial judgement."
+    },
+
+    "content_type": {
+      "type": "string",
+      "enum": ["article", "paper", "release", "dataset", "benchmark", "product",
+               "regulation", "announcement", "discussion", "video", "other"]
+    },
+
+    "rejection_reason": {
+      "type": ["string", "null"],
+      "enum": [null, "seo_spam", "thin_affiliate", "copied_summary", "inaccessible",
+               "insufficient_evidence", "duplicate_announcement", "misleading_title",
+               "developer_only_audience", "off_topic", "below_relevance_threshold",
+               "below_quality_threshold", "category_exclusion_applied",
+               "ambiguous_legacy_url"]
+    },
+
+    "alias_kind": {
+      "type": "string",
+      "enum": ["permanent_redirect", "canonical_tag", "domain_rule", "discovered_variant"]
+    },
+
+    "url_alias": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "kind", "evidence", "observed_at"],
+      "properties": {
+        "url": { "$ref": "#/$defs/absolute_url" },
+        "kind": { "$ref": "#/$defs/alias_kind" },
+        "evidence": {
+          "type": "object",
+          "description": "Why this alias was trusted. A rel=canonical is never trusted merely for being present in HTML.",
+          "properties": {
+            "http_status": { "type": ["integer", "null"] },
+            "location": { "type": ["string", "null"] },
+            "rel_canonical": { "type": ["string", "null"] },
+            "rule_id": { "type": ["string", "null"] },
+            "config": { "type": ["string", "null"] }
+          }
+        },
+        "observed_at": { "$ref": "#/$defs/iso8601_utc" }
+      }
+    },
+
+    "link_history_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checked_at", "access_status"],
+      "description": "Link-check never deletes a record; it appends here. This is the retained history.",
+      "properties": {
+        "checked_at": { "$ref": "#/$defs/iso8601_utc" },
+        "access_status": { "$ref": "#/$defs/access_status" },
+        "http_status": { "type": ["integer", "null"] },
+        "final_url": { "type": ["string", "null"] },
+        "content_hash": { "type": ["string", "null"] },
+        "changed_materially": { "type": ["boolean", "null"] },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "rationale", "evidence", "competing_categories"],
+      "description": "Every record records WHY it landed in its primary_category. Ambiguity is recorded here rather than silently forced.",
+      "properties": {
+        "rule_id": { "type": "string" },
+        "rationale": { "type": "string", "minLength": 1 },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["signal", "matched"],
+            "properties": {
+              "signal": { "type": "string" },
+              "matched": { "type": "string" }
+            }
+          }
+        },
+        "competing_categories": {
+          "type": "array",
+          "description": "Categories that also fired. Populated whenever more than one rule matched; exactly one primary_category is still chosen.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["topic", "category", "rule_id"],
+            "properties": {
+              "topic": { "$ref": "#/$defs/topic_slug" },
+              "category": { "$ref": "#/$defs/category_slug" },
+              "rule_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_adapter"],
+      "description": "Everything needed to audit where a record came from, including the untouched original when migrated.",
+      "properties": {
+        "source_id": { "type": "string" },
+        "source_adapter": { "type": "string", "enum": ["feed", "sitemap", "jsonapi", "seed", "model_search", "migration"] },
+        "source_tier": { "type": ["integer", "null"], "minimum": 1, "maximum": 4 },
+        "discovered_via": {
+          "type": "array",
+          "description": "Discovery metadata. NEVER a URL — legacy AX cases carry {hit_id, platform} here and those are not URLs.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hit_id": { "type": ["string", "null"] },
+              "platform": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "raw": {
+          "type": ["object", "null"],
+          "description": "The complete original source object with its original field names, retained verbatim so nothing is lost in translation."
+        },
+        "migration": {
+          "type": ["object", "null"],
+          "properties": {
+            "adapter": { "type": "string" },
+            "migrated_at": { "$ref": "#/$defs/iso8601_utc" },
+            "assumptions": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+
+    "legacy_id": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "id"],
+      "properties": {
+        "system": { "type": "string" },
+        "id": { "type": "string" },
+        "key": { "type": ["string", "null"] }
+      }
+    },
+
+    "full_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "record_type", "record_id", "content_id",
+        "topic", "primary_category", "tags",
+        "title", "summary", "curation_reason",
+        "source_url", "target_url", "identity_url", "canonical_url", "url_aliases",
+        "publisher", "author", "published_at", "updated_at",
+        "discovered_at", "last_checked_at",
+        "content_type", "language",
+        "access_status", "http_status", "verification_status", "verification_evidence",
+        "relevance_score", "quality_score", "audience_fit_score", "freshness_score",
+        "duplicate_of", "content_hash", "harvest_run_id", "cell_id",
+        "classification", "provenance", "rejection_reason"
+      ],
+      "properties": {
+        "schema_version": { "type": "integer", "const": 1 },
+        "record_type": { "const": "full" },
+        "record_id": { "$ref": "#/$defs/sha256_short" },
+        "content_id": { "$ref": "#/$defs/sha256_short" },
+
+        "topic": { "$ref": "#/$defs/topic_slug" },
+        "primary_category": { "$ref": "#/$defs/category_slug" },
+        "tags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+
+        "title": { "type": ["string", "null"] },
+        "summary": { "type": ["string", "null"] },
+        "curation_reason": { "type": ["string", "null"] },
+
+        "source_url": {
+          "oneOf": [{ "$ref": "#/$defs/absolute_url" }, { "type": "null" }],
+          "description": "The feed, API endpoint, index page or citing page that SURFACED the item. Null when the origin schema had no separate surfacing URL (e.g. migrated AX cases)."
+        },
+        "target_url": {
+          "$ref": "#/$defs/absolute_url",
+          "description": "The item's OWN page, verbatim as discovered, unnormalized."
+        },
+        "identity_url": {
+          "$ref": "#/$defs/absolute_url",
+          "description": "canonicalize_string(target_url), fixed at first acceptance. IMMUTABLE — the sole input to record_id and content_id."
+        },
+        "canonical_url": {
+          "$ref": "#/$defs/absolute_url",
+          "description": "Latest VERIFIED preferred URL. Starts equal to identity_url and may change; changing it never changes any id."
+        },
+        "url_aliases": { "type": "array", "items": { "$ref": "#/$defs/url_alias" } },
+
+        "publisher": { "type": ["string", "null"] },
+        "author": { "type": ["string", "null"] },
+        "published_at": { "oneOf": [{ "$ref": "#/$defs/iso8601_utc" }, { "type": "null" }] },
+        "updated_at": { "oneOf": [{ "$ref": "#/$defs/iso8601_utc" }, { "type": "null" }] },
+        "discovered_at": { "$ref": "#/$defs/iso8601_utc" },
+        "last_checked_at": { "oneOf": [{ "$ref": "#/$defs/iso8601_utc" }, { "type": "null" }] },
+
+        "content_type": { "$ref": "#/$defs/content_type" },
+        "language": { "type": ["string", "null"] },
+
+        "access_status": { "$ref": "#/$defs/access_status" },
+        "http_status": { "type": ["integer", "null"] },
+        "verification_status": { "$ref": "#/$defs/verification_status" },
+        "verification_evidence": { "type": ["string", "null"] },
+
+        "relevance_score": { "$ref": "#/$defs/score" },
+        "quality_score": { "$ref": "#/$defs/score" },
+        "audience_fit_score": { "$ref": "#/$defs/score" },
+        "freshness_score": { "$ref": "#/$defs/score" },
+
+        "duplicate_of": { "oneOf": [{ "$ref": "#/$defs/sha256_short" }, { "type": "null" }] },
+        "merged_into": { "oneOf": [{ "$ref": "#/$defs/sha256_short" }, { "type": "null" }] },
+        "content_hash": { "oneOf": [{ "$ref": "#/$defs/sha256_full" }, { "type": "null" }] },
+
+        "harvest_run_id": { "type": "string" },
+        "cell_id": { "type": "string", "pattern": "^[a-z0-9-]+__[a-z0-9-]+$" },
+
+        "classification": { "$ref": "#/$defs/classification" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "rejection_reason": { "$ref": "#/$defs/rejection_reason" },
+
+        "legacy_ids": { "type": "array", "items": { "$ref": "#/$defs/legacy_id" } },
+        "link_history": { "type": "array", "items": { "$ref": "#/$defs/link_history_entry" } },
+        "multi_topic": {
+          "type": "array",
+          "description": "Set only under cross_topic_policy 'multi_publish'.",
+          "items": { "$ref": "#/$defs/topic_slug" }
+        },
+        "multi_topic_reason": { "type": ["string", "null"] },
+        "domain_fields": {
+          "type": ["object", "null"],
+          "description": "Topic-specific structured fields that have no home in the generic contract (e.g. migrated AX case KPI fields). Always mirrored in provenance.raw."
+        }
+      }
+    },
+
+    "cross_reference_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Emitted by a non-owning topic under cross_topic_policy 'cross_reference'. Deliberately minimal: it is a pointer, not an independent record, so it cannot be mistaken for one or published as one.",
+      "required": [
+        "schema_version", "record_type", "record_id", "content_id",
+        "identity_url", "topic", "primary_category",
+        "duplicate_of", "cross_reference_reason",
+        "harvest_run_id", "discovered_at"
+      ],
+      "properties": {
+        "schema_version": { "type": "integer", "const": 1 },
+        "record_type": { "const": "cross_reference" },
+        "record_id": { "$ref": "#/$defs/sha256_short" },
+        "content_id": { "$ref": "#/$defs/sha256_short" },
+        "identity_url": { "$ref": "#/$defs/absolute_url" },
+        "topic": { "$ref": "#/$defs/topic_slug" },
+        "primary_category": { "$ref": "#/$defs/category_slug" },
+        "duplicate_of": {
+          "$ref": "#/$defs/sha256_short",
+          "description": "record_id of the full record in the owning topic. Required — a cross_reference with nothing to point at is meaningless."
+        },
+        "owner_topic": { "$ref": "#/$defs/topic_slug" },
+        "cross_reference_reason": { "type": "string", "minLength": 1 },
+        "harvest_run_id": { "type": "string" },
+        "discovered_at": { "$ref": "#/$defs/iso8601_utc" },
+        "cell_id": { "type": "string", "pattern": "^[a-z0-9-]+__[a-z0-9-]+$" }
+      }
+    }
+  }
+}

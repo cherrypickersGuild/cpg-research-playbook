@@ -1,0 +1,260 @@
+{
+  "_about": "Taxonomy topic definition: Discourse. Versioned — never edited in place once records exist, because cell identity and therefore record identity depend on the slugs here.",
+  "config_version": 1,
+  "topic": "Discourse",
+  "topic_slug": "discourse",
+  "categories": [
+    {
+      "category": "Regulations · Policy · Compliance",
+      "category_slug": "regulations-policy-compliance",
+      "description": "AI policy, regulation, compliance, legal precedents, governance frameworks, and standards such as ISO or IEC standards.",
+      "precedence_rule_id": "R10_default_by_category",
+      "relevance": {
+        "require_any": ["regulation", "policy", "compliance", "law", "act", "rule", "governance", "standard", "guideline", "directive", "court", "ruling", "enforcement"],
+        "boost": ["eu ai act", "nist", "iso", "iec", "gdpr", "federal register", "executive order", "consultation"],
+        "exclude": []
+      },
+      "sources": [
+        {
+          "source_id": "federal-register-ai",
+          "topic_slug": "discourse",
+          "category_slug": "regulations-policy-compliance",
+          "adapter": "jsonapi",
+          "url": "https://www.federalregister.gov/api/v1/documents.json?conditions%5Bterm%5D=artificial+intelligence&per_page=20&order=newest",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_federal_register_ai",
+          "jsonapi": {
+            "items_path": "results",
+            "field_map": {
+              "title": "title",
+              "target_url": "html_url",
+              "published_at": "publication_date",
+              "summary": "abstract",
+              "publisher": "agencies.0.name"
+            }
+          }
+        },
+        {
+          "source_id": "nist-news",
+          "topic_slug": "discourse",
+          "category_slug": "regulations-policy-compliance",
+          "adapter": "feed",
+          "url": "https://www.nist.gov/news-events/news/rss.xml",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_nist_news"
+        }
+      ]
+    },
+    {
+      "category": "Community",
+      "category_slug": "community",
+      "description": "People, events, meetups, open-source milestones, contributor spotlights, and notable community activity.",
+      "precedence_rule_id": "R10_default_by_category",
+      "relevance": {
+        "require_any": ["release", "contributor", "community", "meetup", "conference", "maintainer", "milestone", "v1", "v2", "hackathon", "discussion"],
+        "boost": ["thanks to", "first release", "1.0", "now open source", "call for"],
+        "exclude": []
+      },
+      "sources": [
+        {
+          "source_id": "hn-algolia",
+          "topic_slug": "discourse",
+          "category_slug": "community",
+          "adapter": "jsonapi",
+          "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&query=AI&hitsPerPage=20",
+          "role": "discovery",
+          "max_candidates": 3,
+          "max_requests": 2,
+          "fixture_id": "fx_hn_algolia",
+          "jsonapi": {
+            "items_path": "hits",
+            "field_map": {
+              "title": "title",
+              "target_url": "url",
+              "published_at": "created_at",
+              "publisher": "author"
+            }
+          }
+        },
+        {
+          "source_id": "oss-ollama-releases",
+          "topic_slug": "discourse",
+          "category_slug": "community",
+          "adapter": "feed",
+          "url": "https://github.com/ollama/ollama/releases.atom",
+          "role": "validation_seed",
+          "max_candidates": 3,
+          "max_requests": 2,
+          "fixture_id": "fx_oss_ollama"
+        },
+        {
+          "source_id": "oss-mcp-servers-releases",
+          "topic_slug": "discourse",
+          "category_slug": "community",
+          "adapter": "feed",
+          "url": "https://github.com/modelcontextprotocol/servers/releases.atom",
+          "role": "validation_seed",
+          "max_candidates": 3,
+          "max_requests": 2,
+          "fixture_id": "fx_oss_mcp_servers"
+        },
+        {
+          "source_id": "oss-langchain-releases",
+          "topic_slug": "discourse",
+          "category_slug": "community",
+          "adapter": "feed",
+          "url": "https://github.com/langchain-ai/langchain/releases.atom",
+          "role": "validation_seed",
+          "max_candidates": 3,
+          "max_requests": 2,
+          "fixture_id": "fx_oss_langchain"
+        }
+      ]
+    },
+    {
+      "category": "Big Tech Trends",
+      "category_slug": "big-tech-trends",
+      "description": "Strategic moves by major technology companies. Excludes model or API updates (Model Updates) and funding or acquisition news (Market & Investment).",
+      "precedence_rule_id": "R10_default_by_category",
+      "relevance": {
+        "require_any": ["strategy", "partnership", "expands", "announces", "datacenter", "chips", "restructur", "initiative", "roadmap"],
+        "boost": ["multi-year", "collaboration", "commitment", "invest in infrastructure"],
+        "exclude": []
+      },
+      "notes": "Precedence rules 4 and 5 take priority over this category: a model/API/pricing/protocol change goes to Model Updates, and funding/M&A goes to Market & Investment, even when published on a corporate newsroom feed.",
+      "sources": [
+        {
+          "source_id": "google-blog",
+          "topic_slug": "discourse",
+          "category_slug": "big-tech-trends",
+          "adapter": "feed",
+          "url": "https://blog.google/rss/",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_google_blog"
+        },
+        {
+          "source_id": "microsoft-blogs",
+          "topic_slug": "discourse",
+          "category_slug": "big-tech-trends",
+          "adapter": "feed",
+          "url": "https://blogs.microsoft.com/feed/",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_microsoft_blogs"
+        }
+      ]
+    },
+    {
+      "category": "Market & Investment",
+      "category_slug": "market-and-investment",
+      "description": "Venture funding, M&A, sponsorship, market activity, and capital flowing into or out of the AI industry.",
+      "precedence_rule_id": "R5_funding_event",
+      "relevance": {
+        "require_any": ["funding", "raises", "raised", "series a", "series b", "series c", "seed round", "acquisition", "acquires", "acquired", "valuation", "ipo", "merger", "investment"],
+        "boost": ["$", "million", "billion", "led by", "participation from"],
+        "exclude": []
+      },
+      "sources": [
+        {
+          "source_id": "techcrunch-ai",
+          "topic_slug": "discourse",
+          "category_slug": "market-and-investment",
+          "adapter": "feed",
+          "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+          "role": "discovery",
+          "max_candidates": 12,
+          "max_requests": 4,
+          "fixture_id": "fx_techcrunch_ai"
+        }
+      ]
+    },
+    {
+      "category": "Technical Deep Dives",
+      "category_slug": "technical-deep-dives",
+      "description": "Long-form engineering articles, architecture and system-design explanations, performance analyses, implementation reports, and comparative evaluations.",
+      "precedence_rule_id": "R8_engineering_analysis",
+      "relevance": {
+        "require_any": ["architecture", "how we built", "under the hood", "performance", "latency", "throughput", "design", "implementation", "scaling", "profiling", "internals"],
+        "boost": ["p99", "benchmarked", "we measured", "tradeoff", "postmortem", "deep dive"],
+        "exclude": []
+      },
+      "sources": [
+        {
+          "source_id": "cloudflare-blog",
+          "topic_slug": "discourse",
+          "category_slug": "technical-deep-dives",
+          "adapter": "feed",
+          "url": "https://blog.cloudflare.com/rss/",
+          "role": "discovery",
+          "max_candidates": 4,
+          "max_requests": 3,
+          "fixture_id": "fx_cloudflare_blog"
+        },
+        {
+          "source_id": "meta-engineering",
+          "topic_slug": "discourse",
+          "category_slug": "technical-deep-dives",
+          "adapter": "feed",
+          "url": "https://engineering.fb.com/feed/",
+          "role": "discovery",
+          "max_candidates": 4,
+          "max_requests": 3,
+          "fixture_id": "fx_meta_engineering"
+        },
+        {
+          "source_id": "netflix-techblog",
+          "topic_slug": "discourse",
+          "category_slug": "technical-deep-dives",
+          "adapter": "feed",
+          "url": "https://netflixtechblog.com/feed",
+          "role": "discovery",
+          "max_candidates": 4,
+          "max_requests": 3,
+          "fixture_id": "fx_netflix_techblog"
+        }
+      ]
+    },
+    {
+      "category": "Insights & Opinions",
+      "category_slug": "insights-and-opinions",
+      "description": "Thought leadership, opinion pieces, emerging patterns, predictions, and forward-looking analysis that meaningfully shape discussion.",
+      "precedence_rule_id": "R9_opinion_thesis",
+      "relevance": {
+        "require_any": ["i think", "we think", "prediction", "argue", "thesis", "why ", "the case for", "the case against", "what this means", "lessons", "reflection"],
+        "boost": ["in my view", "will change", "the next", "misunderstood", "overrated", "underrated"],
+        "exclude": []
+      },
+      "sources": [
+        {
+          "source_id": "simonwillison",
+          "topic_slug": "discourse",
+          "category_slug": "insights-and-opinions",
+          "adapter": "feed",
+          "url": "https://simonwillison.net/atom/everything/",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_simonwillison"
+        },
+        {
+          "source_id": "oneusefulthing",
+          "topic_slug": "discourse",
+          "category_slug": "insights-and-opinions",
+          "adapter": "feed",
+          "url": "https://www.oneusefulthing.org/feed",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_oneusefulthing"
+        }
+      ]
+    }
+  ]
+}

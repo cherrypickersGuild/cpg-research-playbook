@@ -1,0 +1,116 @@
+{
+  "_about": "Taxonomy topic definition: Research & Models. Versioned — never edited in place once records exist, because cell identity and therefore record identity depend on the slugs here.",
+  "config_version": 1,
+  "topic": "Research & Models",
+  "topic_slug": "research-and-models",
+  "categories": [
+    {
+      "category": "Model Updates",
+      "category_slug": "model-updates",
+      "description": "New model releases, API updates, version changes, pricing changes, capability changes, and protocol changes.",
+      "precedence_rule_id": "R4_model_release",
+      "relevance": {
+        "require_any": ["release", "launch", "now available", "version", "api", "pricing", "deprecat", "model card", "context window", "protocol", "endpoint"],
+        "boost": ["general availability", "preview", "changelog", "per million tokens", "rate limit"],
+        "exclude": []
+      },
+      "notes": "Precedence rule 4 routes a model/API/pricing/protocol change here even when it is published on a corporate newsroom feed that would otherwise read as Big Tech Trends.",
+      "sources": [
+        {
+          "source_id": "hf-blog",
+          "topic_slug": "research-and-models",
+          "category_slug": "model-updates",
+          "adapter": "feed",
+          "url": "https://huggingface.co/blog/feed.xml",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_hf_blog"
+        },
+        {
+          "source_id": "google-ai-blog",
+          "topic_slug": "research-and-models",
+          "category_slug": "model-updates",
+          "adapter": "feed",
+          "url": "https://blog.google/technology/ai/rss/",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_google_ai_blog"
+        }
+      ]
+    },
+    {
+      "category": "Papers",
+      "category_slug": "papers",
+      "description": "Academic papers, conference publications, research breakthroughs, and new methods. Links to the original or authoritative external source.",
+      "precedence_rule_id": "R7_academic_primary",
+      "relevance": {
+        "require_any": ["we propose", "we present", "abstract", "method", "results show", "experiments", "novel"],
+        "boost": ["neurips", "icml", "iclr", "acl", "cvpr", "state of the art", "benchmark"],
+        "exclude": []
+      },
+      "notes": "arXiv's API host export.arxiv.org serves robots.txt 'User-agent: * / Disallow: /', so the API is not usable under a robots-respecting policy. The official RSS service is used instead. Enrichment fetches of arxiv.org/abs/ are explicitly Allowed but carry Crawl-delay: 15, honoured pipeline-wide by the domain limiter.",
+      "sources": [
+        {
+          "source_id": "arxiv-cs-ai",
+          "topic_slug": "research-and-models",
+          "category_slug": "papers",
+          "adapter": "feed",
+          "url": "https://rss.arxiv.org/rss/cs.AI",
+          "role": "discovery",
+          "max_candidates": 12,
+          "max_requests": 4,
+          "fixture_id": "fx_arxiv_cs_ai"
+        }
+      ]
+    },
+    {
+      "category": "Benchmark & Datasets",
+      "category_slug": "benchmark-and-datasets",
+      "description": "Benchmark results, newly released datasets, evaluation tools, leaderboards, and curated benchmark landscapes.",
+      "precedence_rule_id": "R6_eval_resource",
+      "relevance": {
+        "require_any": ["benchmark", "dataset", "evaluation", "eval", "leaderboard", "harness", "test suite", "score"],
+        "boost": ["mmlu", "swe-bench", "hellaswag", "gsm8k", "released a dataset", "we release"],
+        "exclude": []
+      },
+      "notes": "Precedence rule 6 claims a new evaluation resource, dataset, leaderboard or benchmark result even when it arrives attached to a paper — so a benchmark paper lands here, not in Papers.",
+      "sources": [
+        {
+          "source_id": "arxiv-cs-lg",
+          "topic_slug": "research-and-models",
+          "category_slug": "benchmark-and-datasets",
+          "adapter": "feed",
+          "url": "https://rss.arxiv.org/rss/cs.LG",
+          "role": "discovery",
+          "max_candidates": 4,
+          "max_requests": 3,
+          "fixture_id": "fx_arxiv_cs_lg"
+        },
+        {
+          "source_id": "lm-eval-harness-releases",
+          "topic_slug": "research-and-models",
+          "category_slug": "benchmark-and-datasets",
+          "adapter": "feed",
+          "url": "https://github.com/EleutherAI/lm-evaluation-harness/releases.atom",
+          "role": "validation_seed",
+          "max_candidates": 4,
+          "max_requests": 3,
+          "fixture_id": "fx_lm_eval_harness"
+        },
+        {
+          "source_id": "openai-evals-releases",
+          "topic_slug": "research-and-models",
+          "category_slug": "benchmark-and-datasets",
+          "adapter": "feed",
+          "url": "https://github.com/openai/evals/releases.atom",
+          "role": "validation_seed",
+          "max_candidates": 4,
+          "max_requests": 3,
+          "fixture_id": "fx_openai_evals"
+        }
+      ]
+    }
+  ]
+}

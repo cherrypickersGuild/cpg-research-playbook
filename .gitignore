@@ -50,3 +50,4 @@ state/ax_case_harvest.err
 state/ax_case_harvest_raw_candidates.json
 state/ax_case_harvest_raw_extract.json
 schedule/logs/
+/state/taxonomy_harvest/

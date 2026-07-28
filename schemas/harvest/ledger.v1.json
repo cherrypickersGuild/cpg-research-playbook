@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/ledger.v1.json",
+  "title": "Per-cell URL ledger (v1)",
+  "description": "Which URLs this cell has already seen, keyed by identity_url (the canonicalized, immutable identity) rather than by the raw string. This is the deliberate difference from the legacy state/visited_url_ledger.json, which keys raw source_url with no canonicalization and therefore treats http/https/www/utm variants as distinct rows.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "cell_id", "updated_at", "entries"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "cell_id": { "type": "string", "pattern": "^[a-z0-9-]+__[a-z0-9-]+$" },
+    "updated_at": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["identity_url", "first_seen_at", "last_seen_at", "seen_count", "outcome"],
+        "properties": {
+          "identity_url": { "type": "string", "pattern": "^https?://" },
+          "content_id": { "type": ["string", "null"] },
+          "source_id": { "type": ["string", "null"] },
+          "first_seen_at": { "type": "string" },
+          "last_seen_at": { "type": "string" },
+          "seen_count": { "type": "integer", "minimum": 1 },
+          "outcome": {
+            "type": "string",
+            "enum": ["accepted", "rejected", "duplicate", "pending"],
+            "description": "Why this URL is not re-processed. 'rejected' is retained deliberately — without it a rejected URL would be re-fetched and re-rejected on every run."
+          },
+          "rejection_reason": { "type": ["string", "null"] },
+          "record_id": { "type": ["string", "null"] },
+          "http_status": { "type": ["integer", "null"] },
+          "content_hash": { "type": ["string", "null"] },
+          "last_checked_at": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

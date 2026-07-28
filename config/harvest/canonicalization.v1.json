@@ -1,0 +1,64 @@
+{
+  "_about": "URL canonicalization policy. The governing principle is: prefer a false negative over a destructive false-positive merge. Keeping two records that turn out to be the same is recoverable — an alias joins them later. Collapsing two records that were actually different destroys information no later step can recover.",
+  "config_version": 1,
+
+  "_strip_about": "Removed unconditionally from every URL. An explicit allowlist of things to STRIP, never a heuristic.",
+  "tracking_params": [
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "utm_id", "utm_source_platform", "utm_creative_format", "utm_marketing_tactic",
+    "gclid", "gclsrc", "dclid", "gbraid", "wbraid",
+    "fbclid", "msclkid", "twclid", "igshid", "ttclid", "yclid",
+    "mc_cid", "mc_eid", "_hsenc", "_hsmi",
+    "vero_id", "vero_conv", "oly_anon_id", "oly_enc_id",
+    "s_cid", "ck_subscriber_id"
+  ],
+
+  "_never_strip_about": "Frequently assumed to be tracking and are NOT. Recorded so a future reader does not helpfully add them: '?ref=' selects a content variant on some sites, '?source=' is part of path identity on others, and the rest are ordinary content selectors.",
+  "never_strip_params": ["ref", "source", "id", "p", "q", "v", "page", "t", "si"],
+
+  "_not_done_about": "Operations deliberately NOT performed during string canonicalization, because none is guaranteed identity-preserving. Each is handled only by evidence-based aliasing.",
+  "not_done_in_string_canonicalization": {
+    "scheme_upgrade": "http: -> https: requires an observed 301/308, a verified rel=canonical, or a domain_equivalence rule. A 302/307 never rewrites identity.",
+    "strip_www": "Same class of assumption as scheme upgrade. Alias-only.",
+    "strip_trailing_slash": "'/a' and '/a/' are distinct resources in RFC 3986. Alias-only.",
+    "sort_query_params": "Parameter order is content-significant on some sites and repeated keys carry order. Only under a per-domain query_sort rule.",
+    "strip_fragment": "Fragments are preserved by default; see fragment_policy."
+  },
+
+  "_fragment_about": "Fragments are PRESERVED by default. Stripped only under an explicit per-domain rule, or with fetched-document evidence that the fragment names an ordinary in-document anchor on a host not configured for hash routing. Structure alone is never sufficient: '#dashboard' is not an anchor merely because it lacks a leading '/' or '!'.",
+  "fragment_policy": {
+    "default": "preserve",
+    "never_strip_when_fragment_starts_with": ["!", "/", "?"],
+    "_never_strip_why": "Hashbang routes, router paths and query-bearing fragments identify the resource itself."
+  },
+
+  "_domain_rules_about": "Per-domain overrides. Each rule must carry a _why documenting the evidence for its safety, and each is covered by its own test. Empty by default — nothing is assumed safe.",
+  "domain_rules": {},
+
+  "_domain_rules_example": {
+    "example.com": {
+      "strip_ordinary_anchors": false,
+      "hash_routing": false,
+      "query_sort": false,
+      "_why": "Template only. Populate a real entry with the evidence that justified it."
+    }
+  },
+
+  "_migration_about": "Authorized cross-domain equivalences. A cross-registrable-domain rel=canonical is accepted ONLY with a rule here or independent 301/308 evidence; otherwise it becomes an alias_conflict. A rule here also authorizes merging two already-independent records. Empty by default.",
+  "domain_migrations": [],
+
+  "_migration_example": {
+    "from": "old-domain.example",
+    "to": "new-domain.example",
+    "observed_at": "YYYY-MM-DDTHH:MM:SSZ",
+    "evidence": "301 observed on 2026-01-01 for 12/12 sampled paths",
+    "_why": "Template only."
+  },
+
+  "_canonical_trust_about": "Trust tiers for a rel=canonical tag. A canonical tag is never trusted merely because it appeared in HTML.",
+  "canonical_tag_trust": {
+    "same_registrable_domain": "auto_accept_after_syntax_and_robots_check",
+    "cross_registrable_domain": "require_domain_migration_rule_or_independent_301_308",
+    "malformed_or_circular_or_multiple": "alias_conflict_never_alias"
+  }
+}

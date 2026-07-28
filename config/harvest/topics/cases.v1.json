@@ -1,0 +1,110 @@
+{
+  "_about": "Taxonomy topic definition: Cases. Versioned — a breaking change to this file's shape gets a new .v2.json, it is never edited in place, because cell identity and therefore record identity depend on the slugs here.",
+  "config_version": 1,
+  "topic": "Cases",
+  "topic_slug": "cases",
+  "categories": [
+    {
+      "category": "Domain Applications",
+      "category_slug": "domain-applications",
+      "description": "Domain-specific AI solutions, improved prompts or workflows by industry, and concise reports on AI adoption in specific professional fields.",
+      "precedence_rule_id": "R2_industry_pattern",
+      "relevance": {
+        "require_any": ["industry", "sector", "vertical", "healthcare", "finance", "banking", "retail", "manufacturing", "legal", "insurance", "logistics", "education", "public sector", "workflow", "adoption"],
+        "boost": ["how we", "solution", "reference architecture", "playbook", "practitioners"],
+        "exclude": []
+      },
+      "sources": [
+        {
+          "source_id": "aws-ml-blog",
+          "topic_slug": "cases",
+          "category_slug": "domain-applications",
+          "adapter": "feed",
+          "url": "https://aws.amazon.com/blogs/machine-learning/feed/",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_aws_ml_blog"
+        },
+        {
+          "source_id": "nvidia-blog",
+          "topic_slug": "cases",
+          "category_slug": "domain-applications",
+          "adapter": "feed",
+          "url": "https://blogs.nvidia.com/feed/",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_nvidia_blog"
+        }
+      ]
+    },
+    {
+      "category": "Case Studies",
+      "category_slug": "case-studies",
+      "description": "Concrete AX and AI-adoption cases, including implementation process, ROI or measurable outcomes, adoption strategy, success and failure factors, and relevant conference presentations.",
+      "precedence_rule_id": "R1_org_implementation_with_results",
+      "relevance": {
+        "require_any": ["customer story", "case study", "deployed", "in production", "rolled out", "results", "roi", "reduced", "increased", "saved", "improved by"],
+        "boost": ["percent", "%", "measured", "baseline", "before and after", "per quarter", "per year"],
+        "exclude": []
+      },
+      "notes": "A measurable-KPI case is genuinely rare inside a bounded feed window. A zero-result outcome here is expected and legitimate; the relevance bar is never lowered to manufacture a result.",
+      "sources": [
+        {
+          "source_id": "openai-news",
+          "topic_slug": "cases",
+          "category_slug": "case-studies",
+          "adapter": "feed",
+          "url": "https://openai.com/news/rss.xml",
+          "role": "discovery",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_openai_news"
+        },
+        {
+          "source_id": "anthropic-customers",
+          "topic_slug": "cases",
+          "category_slug": "case-studies",
+          "adapter": "seed",
+          "url": "https://www.anthropic.com/customers",
+          "role": "validation_seed",
+          "max_candidates": 6,
+          "max_requests": 3,
+          "fixture_id": "fx_anthropic_customers",
+          "seed": {
+            "mode": "index",
+            "same_host_only": true,
+            "path_prefix_allowlist": ["/customers/"],
+            "max_children": 6
+          }
+        }
+      ]
+    },
+    {
+      "category": "Product Discovery",
+      "category_slug": "product-discovery",
+      "description": "AI products that solve practical real-life or business problems. Excludes developer-productivity tools, which belong under Dev Tools.",
+      "precedence_rule_id": "R3_end_user_product",
+      "relevance": {
+        "require_any": ["app", "product", "launch", "tool for", "platform", "service", "assistant"],
+        "boost": ["resume", "hiring", "medical", "screening", "accounting", "scheduling", "customer", "small business"],
+        "exclude": ["sdk", "api client", "cli", "developer tool", "ide", "code editor", "framework", "library", "compiler", "devops", "ci/cd", "kubernetes", "npm package", "pypi package"]
+      },
+      "notes": "The developer-tool exclusion is enforced by verify.py. A cell that returns zero because every candidate was a dev tool reports category_exclusion_applied — it does not relax the exclusion.",
+      "sources": [
+        {
+          "source_id": "producthunt",
+          "topic_slug": "cases",
+          "category_slug": "product-discovery",
+          "adapter": "feed",
+          "url": "https://www.producthunt.com/feed",
+          "role": "discovery",
+          "max_candidates": 12,
+          "max_requests": 4,
+          "fixture_id": "fx_producthunt"
+        }
+      ]
+    }
+  ]
+}

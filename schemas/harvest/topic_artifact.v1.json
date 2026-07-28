@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/topic_artifact.v1.json",
+  "title": "Merged topic artifact (v1)",
+  "description": "<topic_slug>__all__harvest.json — the deterministic fold of every cell in one topic, produced by a single writer after all that topic's cells have completed. Within a topic, at most one record per identity_url.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "topic", "topic_slug",
+               "generated_at", "harvest_run_id", "metadata", "records"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "artifact_type": { "const": "topic" },
+    "topic": { "type": "string" },
+    "topic_slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "generated_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
+    "harvest_run_id": { "type": "string" },
+
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_records", "full_records", "cross_references", "by_category", "cells"],
+      "properties": {
+        "total_records": { "type": "integer", "minimum": 0 },
+        "full_records": { "type": "integer", "minimum": 0 },
+        "cross_references": { "type": "integer", "minimum": 0 },
+        "by_category": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cell_id", "present", "records"],
+            "properties": {
+              "cell_id": { "type": "string" },
+              "present": { "type": "boolean" },
+              "records": { "type": "integer", "minimum": 0 },
+              "note": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+
+    "records": {
+      "type": "array",
+      "items": { "$ref": "record.v1.json" }
+    }
+  }
+}

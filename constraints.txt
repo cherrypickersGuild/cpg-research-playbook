@@ -1,0 +1,22 @@
+# Resolved transitive dependency set for requirements.txt.
+#
+# Captured from the interpreter this task is validated on:
+#
+#     CPython 3.13.9, win32
+#
+# SUPPORT STATEMENT: CPython 3.13.x on win32 is the only interpreter this
+# pipeline has been tested against. No claim is made for 3.9-3.12. Supporting
+# another minor version requires adding a test-matrix run for that version and
+# environment markers here where the transitive set differs — it is not implied
+# by this file.
+#
+# `harvest.sh preflight` enforces (3, 13) <= sys.version_info < (3, 14) and the
+# exact jsonschema version. Both can be relaxed only via the explicit
+# --allow-python-drift / --allow-dep-drift flags, which record
+# python_unverified: true in the run manifest.
+
+jsonschema==4.26.0
+attrs==26.1.0
+jsonschema-specifications==2025.9.1
+referencing==0.37.0
+rpds-py==2026.5.1

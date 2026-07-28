@@ -1,0 +1,33 @@
+{
+  "_about": "Concrete, version-controlled watchlist of open-source repositories whose GitHub release feeds signal community milestones. This file exists so the Community cell's release sources are enumerated rather than described — there is no wildcard and no '<configured>' placeholder anywhere in the source table.",
+  "config_version": 1,
+  "consumed_by": {
+    "topic_slug": "discourse",
+    "category_slug": "community"
+  },
+  "_selection_about": "Chosen for relevance to non-developer-facing AI milestones AND for small feed size, so the bounded smoke stays inside max_response_bytes and adapter_budget_sec. Feed sizes observed at plan time: ollama 11 KB, mcp/servers 8 KB, langchain 72 KB. Deliberately excludes vllm (730 KB) and transformers (771 KB), which are legitimate sources but too heavy for a bounded smoke.",
+  "repositories": [
+    {
+      "source_id": "oss-ollama-releases",
+      "repo": "ollama/ollama",
+      "url": "https://github.com/ollama/ollama/releases.atom",
+      "fixture_id": "fx_oss_ollama",
+      "why": "Local model runtime with a large non-specialist user base; releases are a genuine community milestone signal."
+    },
+    {
+      "source_id": "oss-mcp-servers-releases",
+      "repo": "modelcontextprotocol/servers",
+      "url": "https://github.com/modelcontextprotocol/servers/releases.atom",
+      "fixture_id": "fx_oss_mcp_servers",
+      "why": "Reference MCP server collection; releases track ecosystem-wide protocol adoption."
+    },
+    {
+      "source_id": "oss-langchain-releases",
+      "repo": "langchain-ai/langchain",
+      "url": "https://github.com/langchain-ai/langchain/releases.atom",
+      "fixture_id": "fx_oss_langchain",
+      "why": "One of the most widely referenced AI application frameworks; release cadence is a standing community signal."
+    }
+  ],
+  "_robots": "github.com robots.txt permits /*/releases.atom for the configured user agent (verified at plan time). Requests are serialised via the github.com domain override (max_concurrency 1, min_interval 2s)."
+}

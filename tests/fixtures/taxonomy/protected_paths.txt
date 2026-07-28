@@ -1,0 +1,34 @@
+# Protected paths — files this task must never modify.
+#
+# Read by scripts/harvest/gen_protected_baseline.sh (to generate the baseline)
+# and scripts/harvest/verify_protected_baseline.sh (to verify it). Both compare
+# the working tree against the implementation-start commit, so this list is the
+# single definition of what "protected" means.
+#
+# Blank lines and lines starting with '#' are ignored.
+
+# --- the matrix pipeline: untouched, and proved untouched -------------------
+scripts/run_matrix.sh
+scripts/matrix_spec.py
+scripts/merge_matrix.sh
+scripts/expand_queries_cell.sh
+scripts/harvest_matrix_cell.sh
+
+# --- mandatory regression gates: must stay byte-identical ------------------
+tests/test_matrix_harvest.sh
+tests/test_parallel_harvest.sh
+
+# --- utilities reused UNMODIFIED; the reuse audit assumes these exact bytes -
+scripts/lib/lockdir.sh
+scripts/lib/clean_json.sh
+scripts/github_meta.py
+scripts/merge_entity_registry.sh
+
+# --- production data: read-only to this task -------------------------------
+state/ax_case_harvest_registry.json
+state/entity_registry.json
+state/BuildingBlocks_Agent.json
+state/BuildingBlocks_MCP.json
+state/BuildingBlocks_Prompt.json
+state/BuildingBlocks_Skill.json
+state/visited_url_ledger.json

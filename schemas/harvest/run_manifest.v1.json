@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cherryinthehaystack.com/schemas/harvest/run_manifest.v1.json",
+  "title": "Run manifest (v1)",
+  "description": "One per run. Records what was attempted, what each source returned, why any cell produced nothing, every cross-topic decision, and whether the run is eligible for publication. A zero-result is data; an error is data; the two are never conflated.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "harvest_run_id", "mode", "started_at", "finished_at",
+               "environment", "config", "cells", "source_preflight",
+               "classification_decisions", "publication_eligible"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "harvest_run_id": { "type": "string", "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9]+$" },
+    "mode": { "type": "string", "enum": ["harvest", "smoke", "smoke_model", "refresh", "linkcheck", "migration"] },
+    "started_at": { "type": "string" },
+    "finished_at": { "type": ["string", "null"] },
+
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["python_version", "jsonschema_version", "platform"],
+      "properties": {
+        "python_version": { "type": "string" },
+        "jsonschema_version": { "type": "string" },
+        "platform": { "type": "string" },
+        "python_unverified": {
+          "type": "boolean",
+          "description": "true when --allow-python-drift was used, i.e. the interpreter is outside the tested 3.13.x range."
+        },
+        "dependency_drift": { "type": "boolean" }
+      }
+    },
+
+    "config": {
+      "type": "object",
+      "description": "Which config versions this run used, so an artifact can always be traced to the rules that produced it.",
+      "properties": {
+        "topics": { "type": "array", "items": { "type": "string" } },
+        "policy_version": { "type": "integer" },
+        "precedence_version": { "type": "integer" },
+        "canonicalization_version": { "type": "integer" },
+        "cross_topic_policy": { "type": "string", "enum": ["cross_reference", "multi_publish", "suppress", "link"] },
+        "enrich": { "type": "boolean" },
+        "bounds": { "type": "object" }
+      }
+    },
+
+    "source_preflight": {
+      "type": "array",
+      "description": "Bounded re-check of every configured source at the start of a live run. Planning-time availability is never assumed.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "result"],
+        "properties": {
+          "source_id": { "type": "string" },
+          "url": { "type": "string" },
+          "result": { "type": "string", "enum": ["ok", "adapter_error", "infrastructure_error"] },
+          "reason": { "type": ["string", "null"] },
+          "http_status": { "type": ["integer", "null"] },
+          "content_type": { "type": ["string", "null"] },
+          "robots_allowed": { "type": ["boolean", "null"] },
+          "crawl_delay_sec": { "type": ["number", "null"] },
+          "bytes": { "type": ["integer", "null"] },
+          "elapsed_ms": { "type": ["integer", "null"] }
+        }
+      }
+    },
+
+    "cells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cell_id", "topic_slug", "category_slug", "status"],
+        "properties": {
+          "cell_id": { "type": "string" },
+          "topic_slug": { "type": "string" },
+          "category_slug": { "type": "string" },
+          "status": { "type": "string", "enum": ["ok", "zero_result", "adapter_error", "infrastructure_error", "skipped", "not_run"] },
+          "zero_result_reason": {
+            "type": ["string", "null"],
+            "enum": [null, "no_items_in_window", "all_below_relevance_threshold",
+                     "all_rejected_quality", "all_duplicates_of_existing",
+                     "category_exclusion_applied"]
+          },
+          "error_reason": {
+            "type": ["string", "null"],
+            "enum": [null, "feed_parse_error", "unexpected_content_type", "empty_response",
+                     "schema_mapping_failed", "response_too_large", "index_parse_failed",
+                     "robots_denied", "http_timeout", "http_5xx", "dns_failure",
+                     "lease_timeout", "budget_exhausted", "circuit_open", "preflight_failed"]
+          },
+          "candidates": { "type": "integer", "minimum": 0 },
+          "accepted": { "type": "integer", "minimum": 0 },
+          "rejected": { "type": "integer", "minimum": 0 },
+          "requests_made": { "type": "integer", "minimum": 0 },
+          "elapsed_sec": { "type": "number", "minimum": 0 },
+          "adapters_used": { "type": "array", "items": { "type": "string" } },
+          "promoted": { "type": "boolean", "description": "false when the worker died before promotion; merge ignores unpromoted cells." }
+        }
+      }
+    },
+
+    "classification_decisions": {
+      "type": "array",
+      "description": "One entry for EVERY content seen in more than one topic. Nothing is suppressed without a record here explaining why.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["content_id", "topics", "owner_topic", "policy_applied", "reason"],
+        "properties": {
+          "content_id": { "type": "string" },
+          "topics": { "type": "array", "items": { "type": "string" } },
+          "owner_topic": { "type": "string" },
+          "policy_applied": { "type": "string", "enum": ["cross_reference", "multi_publish", "suppress", "link"] },
+          "reason": { "type": "string" },
+          "competing_categories": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    },
+
+    "alias_conflicts_count": { "type": "integer", "minimum": 0 },
+    "merges": {
+      "type": "array",
+      "description": "Authorized merges of two previously independent records. Only ever populated via a domain_migration rule or an alias established before the second record existed.",
+      "items": { "type": "object" }
+    },
+
+    "publication_eligible": {
+      "type": "boolean",
+      "description": "false for smoke runs. `promote` refuses an ineligible run: a bounded smoke runs with enrichment disabled and deliberately produces unverified fields, so it is an infrastructure test, not publishable output."
+    },
+    "publication_ineligible_reason": { "type": ["string", "null"] },
+
+    "budgets": {
+      "type": "object",
+      "description": "Observed against configured. Present so a run that hit a cap is visible rather than silently truncated.",
+      "properties": {
+        "total_requests": { "type": "integer" },
+        "total_elapsed_sec": { "type": "number" },
+        "budget_exhausted_cells": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "_about": "Explicitly reviewed exceptions for the AX-case migration. A legacy record whose sole URL trips the suspicious-URL guard (looks like a feed, search page, or index rather than the case's own page) is reported UNMAPPABLE and is not migrated. It can only be admitted by being listed here with a human reviewer note, or by passing --allow-unmappable.",
+  "config_version": 1,
+
+  "_guard_about": "The guard NEVER silently reinterprets or rewrites a URL. It only refuses. Rules that trip it are listed in src/harvest/migrate/ax_cases.py and reported by rule id alongside each rejection.",
+
+  "_expected_state": "Against the corpus at implementation start (231 cases, all source_url values being article pages such as uber.com/blog/... and github.blog/...), zero rejections are expected. The count is asserted by the migration test, not assumed.",
+
+  "ax_cases": {
+    "reviewed_unmappable": [],
+    "_reviewed_unmappable_shape": {
+      "case_id": "case-YYYY-NNNN",
+      "legacy_source_url": "https://...",
+      "matched_rule": "search_engine_host | search_query_path | feed_path | index_page",
+      "reviewer": "name or handle",
+      "reviewed_at": "YYYY-MM-DDTHH:MM:SSZ",
+      "decision": "admit | reject",
+      "note": "Why this URL is in fact the case's own page despite tripping the guard, or why it is correctly excluded."
+    }
+  }
+}
