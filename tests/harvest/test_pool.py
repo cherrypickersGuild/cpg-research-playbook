@@ -355,8 +355,11 @@ class TestDeterminism(unittest.TestCase):
             for u in ("https://example.com/case/a", "https://example.com/case/b"):
                 p.add_candidate(u, lane)
         doc = p.to_document(NOW)
-        # ownership provenance legitimately reflects who arrived first; the
-        # SHAPE and the identity set must not.
+        # NOTE: this projection is a WEAKER check than the contract requires and
+        # is retained only because it exercises a different construction path.
+        # It compares shape and the identity set after sorting, so it cannot see
+        # ordering defects inside a row. Full-document byte-determinism — the
+        # actual contract (DV-7) — is asserted by TestArtifactDeterminism below.
         return json.dumps({
             "sources": [s["source_request_key"] for s in doc["sources"]],
             "candidates": [c["candidate_key"] for c in doc["candidates"]],
@@ -399,6 +402,252 @@ class TestDeterminism(unittest.TestCase):
         text = inspect.getsource(pool).lower()
         for needle in ("case_facets", "facet_evidence", "classification_state"):
             self.assertNotIn(needle, text)
+
+
+# --------------------------------------------------------------------- DV-7
+LANES = ["cell__cases__domain-applications",
+         "gap__industry__healthcare-life-sciences",
+         "gap__business_function__marketing"]
+SOURCES = [("openai-news", FEED),
+           ("aws-ml-blog", "https://aws.amazon.com/blogs/machine-learning/feed/")]
+PAGE = "https://example.com/story/alpha"
+
+
+def _blob(doc):
+    return json.dumps(doc, sort_keys=True, separators=(",", ":"))
+
+
+def build_pool(lane_order, source_order, pages=(PAGE,), own=True):
+    """One run, driven in a caller-chosen encounter order.
+
+    Every ordering here is semantically identical input: the same lanes see the
+    same sources and the same pages. Only *when* each worker arrives differs.
+    """
+    p = pool.CandidatePool(RUN)
+    for sid, url in source_order:
+        for lane in lane_order:
+            k = p.request_key(sid, url)
+            if p.acquire_source(k, lane):
+                p.establish_snapshot(k, source_id=sid, normalized_url=url,
+                                     established_by="200", established_at=NOW,
+                                     body_sha256="0" * 64, attempts=1)
+            else:
+                p.reuse_snapshot(k, lane, round_=2)
+            for page in pages:
+                cand, _ = p.add_candidate(page, lane, source_request_key=k)
+                if own:
+                    p.acquire_target_fetch(cand["candidate_key"], lane)
+                    p.acquire_extraction(cand["candidate_key"], lane)
+    return p
+
+
+def all_orderings(lanes=LANES, sources=SOURCES):
+    import itertools
+    for lo in itertools.permutations(lanes):
+        for so in itertools.permutations(sources):
+            yield list(lo), list(so)
+
+
+class TestArtifactDeterminism(unittest.TestCase):
+    """The full document, not a projection, must be byte-identical.
+
+    Both defects this pins were live and invisible to the 38 pre-DV-7
+    assertions: set-like provenance kept encounter order, and four scalars
+    recorded whichever worker won a race. Twelve semantically identical
+    orderings produced twelve distinct documents.
+    """
+
+    def test_twelve_orderings_produce_one_byte_identical_document(self):
+        blobs = {_blob(build_pool(lo, so).to_document(NOW))
+                 for lo, so in all_orderings()}
+        self.assertEqual(len(blobs), 1,
+                         "the complete pool document must not depend on encounter order")
+
+    def test_a_larger_case_is_also_byte_identical(self):
+        lanes = LANES + ["gap__use_case_type__risk-fraud-compliance"]
+        sources = SOURCES + [("nvidia-blog", "https://blogs.nvidia.com/feed/")]
+        pages = ("https://example.com/story/alpha",
+                 "https://example.com/story/beta",
+                 "https://example.com/story/gamma")
+        blobs = {_blob(build_pool(lo, so, pages=pages).to_document(NOW))
+                 for lo, so in all_orderings(lanes, sources)}
+        self.assertEqual(len(blobs), 1)
+
+    def test_document_validates_after_normalization(self):
+        doc = build_pool(LANES, SOURCES).to_document(NOW)
+        self.assertEqual(schema.validate(doc, "candidate_pool.v1.json"), [])
+
+
+class TestSetLikeNormalization(unittest.TestCase):
+    def test_source_contributing_lanes_are_deduplicated_and_lexically_sorted(self):
+        doc = build_pool(LANES, SOURCES).to_document(NOW)
+        for src in doc["sources"]:
+            lanes = src["contributing_lanes"]
+            self.assertEqual(lanes, sorted(set(lanes)))
+            self.assertEqual(len(lanes), len(set(lanes)))
+            self.assertEqual(sorted(lanes), sorted(LANES))
+
+    def test_candidate_contributing_lanes_are_deduplicated_and_lexically_sorted(self):
+        doc = build_pool(LANES, SOURCES).to_document(NOW)
+        for cand in doc["candidates"]:
+            lanes = cand["contributing_lanes"]
+            self.assertEqual(lanes, sorted(set(lanes)))
+            self.assertEqual(len(lanes), len(set(lanes)))
+
+    def test_source_request_keys_are_deduplicated_and_lexically_sorted(self):
+        doc = build_pool(LANES, SOURCES).to_document(NOW)
+        keys = doc["candidates"][0]["source_request_keys"]
+        self.assertEqual(len(keys), 2)
+        self.assertEqual(keys, sorted(set(keys)))
+
+    def test_reused_in_rounds_is_deduplicated_and_sorted_NUMERICALLY(self):
+        # The bug a generic key=str comparator would leave behind: round 10
+        # sorting between 1 and 2. Rounds arrive out of order and repeated.
+        p = pool.CandidatePool(RUN)
+        k = p.request_key("openai-news", FEED)
+        p.acquire_source(k, "lane-a")
+        p.establish_snapshot(k, source_id="openai-news", normalized_url=FEED,
+                             established_by="200", established_at=NOW, attempts=1)
+        for rnd in (10, 2, 1, 10, 2):
+            p.reuse_snapshot(k, "lane-b", round_=rnd)
+        rounds = p.to_document(NOW)["sources"][0]["reused_in_rounds"]
+        self.assertEqual(rounds, [1, 2, 10])
+        self.assertNotEqual(rounds, sorted({10, 2, 1}, key=str))
+
+    def test_meaningful_order_is_not_touched_by_this_module(self):
+        # The pool must not contain any general-purpose sorter that could reach
+        # feed/anchor/JSON item order or repeated query-key values.
+        import inspect
+        text = inspect.getsource(pool)
+        self.assertNotIn("sorted(pairs", text)
+        self.assertNotIn("parse_qsl", text)
+        for needle in ("_LEXICAL_SET_FIELDS", "_NUMERIC_SET_FIELDS"):
+            self.assertIn(needle, text)
+
+
+class TestDesignationIsNotExecution(unittest.TestCase):
+    """Runtime truth stays in memory; the artifact publishes a designation."""
+
+    def test_in_memory_state_keeps_encounter_order_and_the_actual_owner(self):
+        order = list(reversed(LANES))
+        p = build_pool(order, SOURCES)
+        k = p.request_key(*SOURCES[0])
+        # encounter order, not sorted
+        self.assertEqual(p.sources[k]["contributing_lanes"], order)
+        self.assertEqual(p.sources[k]["owner_lane_id"], order[0])
+        cand = list(p.candidates.values())[0]
+        self.assertEqual(cand["contributing_lanes"], order)
+        self.assertEqual(cand["first_seen_lane_id"], order[0])
+        self.assertEqual(cand["target_fetch_owner"], order[0])
+        self.assertEqual(cand["extraction_owner"], order[0])
+
+    def test_actual_runtime_owner_varies_but_the_designation_does_not(self):
+        actual, designated = set(), set()
+        for lo, so in all_orderings():
+            p = build_pool(lo, so)
+            k = p.request_key(*SOURCES[0])
+            actual.add(p.sources[k]["owner_lane_id"])
+            row = [s for s in p.to_document(NOW)["sources"]
+                   if s["source_request_key"] == k][0]
+            designated.add(row["designated_owner_lane_id"])
+        self.assertGreater(len(actual), 1, "the race winner really does vary")
+        self.assertEqual(len(designated), 1)
+        self.assertEqual(designated, {min(LANES)})
+
+    def test_primary_discovery_lane_is_invariant_when_the_first_seen_lane_changes(self):
+        actual, designated = set(), set()
+        for lo, so in all_orderings():
+            p = build_pool(lo, so)
+            actual.add(list(p.candidates.values())[0]["first_seen_lane_id"])
+            designated.add(p.to_document(NOW)["candidates"][0]["primary_discovery_lane_id"])
+        self.assertGreater(len(actual), 1)
+        self.assertEqual(designated, {min(LANES)})
+
+    def test_the_actual_owner_names_never_reach_the_document(self):
+        doc = build_pool(LANES, SOURCES).to_document(NOW)
+        stale = ("owner_lane_id", "first_seen_lane_id",
+                 "target_fetch_owner", "extraction_owner")
+        for src in doc["sources"]:
+            for name in stale:
+                self.assertNotIn(name, src)
+        for cand in doc["candidates"]:
+            for name in stale:
+                self.assertNotIn(name, cand)
+
+    def test_designations_are_null_when_the_operation_did_not_occur(self):
+        doc = build_pool(LANES, SOURCES, own=False).to_document(NOW)
+        cand = doc["candidates"][0]
+        self.assertIsNone(cand["designated_target_fetch_owner_lane_id"])
+        self.assertIsNone(cand["designated_extraction_owner_lane_id"])
+        # null means "has not happened" — it is never a designation
+        self.assertIsNotNone(cand["primary_discovery_lane_id"])
+        self.assertEqual(schema.validate(doc, "candidate_pool.v1.json"), [])
+
+    def test_non_null_designations_are_deterministic_and_belong_to_the_lane_set(self):
+        for lo, so in all_orderings():
+            cand = build_pool(lo, so).to_document(NOW)["candidates"][0]
+            lanes = cand["contributing_lanes"]
+            for field in ("designated_target_fetch_owner_lane_id",
+                          "designated_extraction_owner_lane_id",
+                          "primary_discovery_lane_id"):
+                self.assertIn(cand[field], lanes)
+                self.assertEqual(cand[field], min(lanes))
+
+    def test_the_old_misleading_property_names_are_rejected_by_the_schema(self):
+        doc = build_pool(LANES, SOURCES).to_document(NOW)
+        self.assertEqual(schema.validate(doc, "candidate_pool.v1.json"), [])
+        for row, old, new in (
+                (doc["sources"][0], "owner_lane_id", "designated_owner_lane_id"),
+                (doc["candidates"][0], "first_seen_lane_id", "primary_discovery_lane_id"),
+                (doc["candidates"][0], "target_fetch_owner",
+                 "designated_target_fetch_owner_lane_id"),
+                (doc["candidates"][0], "extraction_owner",
+                 "designated_extraction_owner_lane_id")):
+            with self.subTest(old=old):
+                row[old] = row[new]
+                self.assertNotEqual(schema.validate(doc, "candidate_pool.v1.json"), [],
+                                    "additionalProperties:false must reject %r" % old)
+                del row[old]
+        self.assertEqual(schema.validate(doc, "candidate_pool.v1.json"), [])
+
+
+class TestDV7ChangesNothingElse(unittest.TestCase):
+    """Normalization is serialization-only and must not reach anything else."""
+
+    def test_identity_and_request_keys_are_untouched(self):
+        import inspect
+        text = inspect.getsource(pool)
+        for needle in ("record_id", "content_id", "identity_url", "canonical_url",
+                       "cell_id", "query_order_policy"):
+            self.assertNotIn(needle, text)
+
+    def test_candidate_and_request_keys_are_unchanged_by_ordering(self):
+        keys = set()
+        for lo, so in all_orderings():
+            doc = build_pool(lo, so).to_document(NOW)
+            keys.add((tuple(s["source_request_key"] for s in doc["sources"]),
+                      tuple(c["candidate_key"] for c in doc["candidates"]),
+                      tuple(c["canonical_key"] for c in doc["candidates"])))
+        self.assertEqual(len(keys), 1)
+
+    def test_accounting_and_budget_are_unaffected_by_serialization(self):
+        p = build_pool(LANES, SOURCES)
+        before = (dict(p.accounting()), p.budget_charged())
+        p.to_document(NOW)
+        self.assertEqual((dict(p.accounting()), p.budget_charged()), before)
+        # three lanes still produce ONE logical owner per source
+        self.assertEqual(p.accounting()["source_fetch_owners"], len(SOURCES))
+
+    def test_to_document_does_not_mutate_live_rows(self):
+        p = build_pool(list(reversed(LANES)), SOURCES)
+        k = p.request_key(*SOURCES[0])
+        snap_before = json.dumps(p.sources[k], sort_keys=False)
+        cand_before = json.dumps(list(p.candidates.values())[0], sort_keys=False)
+        p.to_document(NOW)
+        p.to_document(NOW)
+        self.assertEqual(json.dumps(p.sources[k], sort_keys=False), snap_before)
+        self.assertEqual(json.dumps(list(p.candidates.values())[0], sort_keys=False),
+                         cand_before)
 
 
 if __name__ == "__main__":

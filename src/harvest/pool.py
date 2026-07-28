@@ -26,6 +26,37 @@ prove determinism under shuffled worker and round timing without Stage 3.
 from . import request_key as rk
 
 
+# Set-like provenance: the append guards already prevent repeats, so these carry
+# no multiplicity and their encounter order is a pure artefact of which worker
+# happened to run first. Normalized ONLY at serialization — see
+# _source_document / _candidate_document.
+# Order-carrying data (feed item order, Atom entry order, JSON API item order,
+# seed anchor order, repeated query-key value order) is never touched by this
+# module.
+_LEXICAL_SET_FIELDS = ("contributing_lanes", "source_request_keys")
+_NUMERIC_SET_FIELDS = ("reused_in_rounds",)
+
+
+def _sorted_unique_lexical(values):
+    return sorted(set(values or ()), key=str)
+
+
+def _sorted_unique_numeric(values):
+    # Deliberately NOT key=str: round 10 sorts after round 2, not between 1 and 2.
+    return sorted(set(values or ()))
+
+
+def _designate(normalized_lanes):
+    """The deterministic administrative designation for a row.
+
+    The lexical minimum of the row's normalized contributing lanes. This is an
+    assignment of responsibility, not a claim about which lane won a race or
+    performed any I/O — that fact stays in live in-memory state, where control
+    flow and accounting need it, and is never serialized.
+    """
+    return min(normalized_lanes) if normalized_lanes else None
+
+
 class PoolError(Exception):
     """A contract violation the pool refuses to paper over."""
 
@@ -213,16 +244,76 @@ class CandidatePool:
     def budget_charged(self):
         return sum(s["http_attempts"]["budget_charged"] for s in self.sources.values())
 
-    def to_document(self, generated_at):
-        """A candidate_pool.v1.json document.
+    # ------------------------------------------------------- serialization
+    @staticmethod
+    def _source_document(snap):
+        """One source_snapshot row, normalized. Never mutates `snap`."""
+        lanes = _sorted_unique_lexical(snap.get("contributing_lanes"))
+        row = {
+            "source_request_key": snap["source_request_key"],
+            "source_id": snap["source_id"],
+            "normalized_url": snap["normalized_url"],
+            "adapter_mode": snap["adapter_mode"],
+            "established_by": snap["established_by"],
+            "established_at": snap["established_at"],
+            "etag": snap["etag"],
+            "last_modified": snap["last_modified"],
+            "body_sha256": snap["body_sha256"],
+            # The actual owner (snap["owner_lane_id"]) is deliberately absent:
+            # it records who won a race and is therefore not reproducible.
+            "designated_owner_lane_id": _designate(lanes),
+            "contributing_lanes": lanes,
+            "reused_in_rounds": _sorted_unique_numeric(snap.get("reused_in_rounds")),
+            "http_attempts": dict(snap["http_attempts"]),
+        }
+        if "canonicalization_version" in snap:
+            row["canonicalization_version"] = snap["canonicalization_version"]
+        return row
 
-        Sorted by key so the output is byte-identical regardless of the order
-        workers and rounds happened to run in.
+    @staticmethod
+    def _candidate_document(cand):
+        """One candidate row, normalized. Never mutates `cand`."""
+        lanes = _sorted_unique_lexical(cand.get("contributing_lanes"))
+        designation = _designate(lanes)
+        return {
+            "candidate_key": cand["candidate_key"],
+            "target_url": cand["target_url"],
+            "canonical_key": cand["canonical_key"],
+            # Not "first seen": a designation derived from the whole lane set.
+            "primary_discovery_lane_id": designation,
+            "contributing_lanes": lanes,
+            "source_request_keys": _sorted_unique_lexical(cand.get("source_request_keys")),
+            # null keeps its meaning — the operation has not occurred. When it
+            # has, the designation names who is ACCOUNTABLE for it, not who ran it.
+            "designated_target_fetch_owner_lane_id": (
+                designation if cand.get("target_fetch_owner") is not None else None),
+            "designated_extraction_owner_lane_id": (
+                designation if cand.get("extraction_owner") is not None else None),
+            "duplicate_of": cand["duplicate_of"],
+            "dropped_reason": cand["dropped_reason"],
+        }
+
+    def to_document(self, generated_at):
+        """A candidate_pool.v1.json document — byte-identical for equal input.
+
+        Two independent sources of order-dependence are removed here, and only
+        here, so live state keeps the encounter order and the true runtime owner
+        that control flow, accounting and diagnostics rely on:
+
+          * rows are emitted in sorted key order, and set-like provenance inside
+            each row is deduplicated and sorted — lexically for lane IDs and
+            request keys, NUMERICALLY for round numbers;
+          * the race-determined owner scalars are replaced by deterministic
+            administrative designations, because "which worker got there first"
+            is an execution detail, not a finding. That exactly one fetch
+            occurred is still proved by http_attempts.
         """
         return {
             "schema_version": 1,
             "harvest_run_id": self.harvest_run_id,
             "generated_at": generated_at,
-            "sources": [self.sources[k] for k in sorted(self.sources)],
-            "candidates": [self.candidates[k] for k in sorted(self.candidates)],
+            "sources": [self._source_document(self.sources[k])
+                        for k in sorted(self.sources)],
+            "candidates": [self._candidate_document(self.candidates[k])
+                           for k in sorted(self.candidates)],
         }

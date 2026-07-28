@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://cherryinthehaystack.com/schemas/harvest/candidate_pool.v1.json",
   "title": "Shared candidate pool (v1)",
-  "description": "One per run. Sources are fetched ONCE per normalized request and the snapshot is immutable for the whole run; candidates are deduplicated on canonical identity BEFORE extraction, and every contributing lane is preserved. The distinction that runs through this file: logical OWNERSHIP is asserted (one owner per key), while HTTP ATTEMPTS are merely observed (retries and redirect hops are legitimate and counted separately).",
+  "description": "One per run. Sources are fetched ONCE per normalized request and the snapshot is immutable for the whole run; candidates are deduplicated on canonical identity BEFORE extraction, and every contributing lane is preserved. Two distinctions run through this file. (1) Logical OWNERSHIP is asserted (one owner per key), while HTTP ATTEMPTS are merely observed (retries and redirect hops are legitimate and counted separately). (2) DESIGNATION is not EXECUTION: this document is byte-deterministic for semantically identical input, so every '*_lane_id' field below is a reproducible administrative designation derived from the sorted contributing lanes. Which worker actually won a race is not reproducible, stays in live in-memory state, and is never serialized here.",
 
   "type": "object",
   "additionalProperties": false,
@@ -53,17 +53,17 @@
         "etag": { "type": ["string", "null"] },
         "last_modified": { "type": ["string", "null"] },
         "body_sha256": { "oneOf": [{ "type": "string", "pattern": "^[0-9a-f]{64}$" }, { "type": "null" }] },
-        "owner_lane_id": {
-          "type": "string",
-          "description": "The single logical source-fetch owner. Three lanes sharing a feed produce one owner, not three."
+        "designated_owner_lane_id": {
+          "type": ["string", "null"],
+          "description": "DETERMINISTIC DESIGNATION — the lexical minimum of contributing_lanes, assigning administrative responsibility for this source. It does NOT identify the lane that executed the fetch: that is decided by a race and is not reproducible, so it stays in live in-memory state and is never serialized. Exactly one logical fetch occurred regardless; http_attempts is the evidence for that."
         },
         "contributing_lanes": {
           "type": "array", "uniqueItems": true, "items": { "type": "string" },
-          "description": "Every lane that referenced this source. Preserved in full: provenance is never collapsed to the winner."
+          "description": "Every lane that referenced this source, deduplicated and sorted lexically. Preserved in full: provenance is never collapsed to one lane. This is the honest, complete set — read it rather than the designation to learn which lanes were involved."
         },
         "reused_in_rounds": {
-          "type": "array", "items": { "type": "integer", "minimum": 1 },
-          "description": "Rounds that read this snapshot without issuing a request. A second conditional request for the same key within one run is a defect."
+          "type": "array", "uniqueItems": true, "items": { "type": "integer", "minimum": 1 },
+          "description": "Rounds that read this snapshot without issuing a request, deduplicated and sorted NUMERICALLY (1, 2, 10 — never 1, 10, 2). A second conditional request for the same key within one run is a defect."
         },
         "http_attempts": {
           "type": "object",
@@ -85,7 +85,8 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["candidate_key", "target_url", "canonical_key", "contributing_lanes",
-                   "target_fetch_owner", "extraction_owner"],
+                   "designated_target_fetch_owner_lane_id",
+                   "designated_extraction_owner_lane_id"],
       "description": "Deduplicated on canonical identity BEFORE extraction, so a page found by four lanes is fetched once and parsed once.",
       "properties": {
         "candidate_key": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
@@ -94,21 +95,25 @@
           "type": "string",
           "description": "urlkey.canonicalize_string(target_url). The dedup key — NOT an identity_url claim, which is fixed only at acceptance."
         },
-        "first_seen_lane_id": { "type": ["string", "null"] },
+        "primary_discovery_lane_id": {
+          "type": ["string", "null"],
+          "description": "DETERMINISTIC DESIGNATION — the lexical minimum of contributing_lanes. It is NOT a claim that this lane saw the candidate first: arrival order depends on which worker ran first and is not reproducible, so it is not serialized."
+        },
         "contributing_lanes": {
           "type": "array", "uniqueItems": true, "minItems": 1, "items": { "type": "string" },
-          "description": "Provenance only. A record found via gap__function__marketing gets NO marketing label for that reason; the lane's terms may become evidence only when independently found in the fetched document."
+          "description": "Provenance only, deduplicated and sorted lexically. A record found via gap__function__marketing gets NO marketing label for that reason; the lane's terms may become evidence only when independently found in the fetched document."
         },
         "source_request_keys": {
-          "type": "array", "uniqueItems": true, "items": { "type": "string" }
+          "type": "array", "uniqueItems": true, "items": { "type": "string" },
+          "description": "Deduplicated and sorted lexically."
         },
-        "target_fetch_owner": {
+        "designated_target_fetch_owner_lane_id": {
           "type": ["string", "null"],
-          "description": "The one lane that actually fetched the page, or null when it was never fetched."
+          "description": "ADMINISTRATIVE RESPONSIBILITY for the target fetch, derived deterministically from contributing_lanes — there is no dedicated requester set to derive it from. It is not evidence that this lane requested or executed the fetch. Null means the target fetch has not occurred."
         },
-        "extraction_owner": {
+        "designated_extraction_owner_lane_id": {
           "type": ["string", "null"],
-          "description": "The one lane that parsed the accepted response body. No double parsing."
+          "description": "ADMINISTRATIVE RESPONSIBILITY for extraction, derived deterministically from contributing_lanes. It is not evidence that this lane parsed the body. Null means extraction has not occurred. Exactly one extraction still happens per accepted body — no double parsing."
         },
         "duplicate_of": { "type": ["string", "null"] },
         "dropped_reason": {
