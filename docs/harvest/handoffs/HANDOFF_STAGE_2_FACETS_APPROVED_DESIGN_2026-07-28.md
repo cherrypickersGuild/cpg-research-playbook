@@ -1,12 +1,29 @@
 # Handoff — Stage 2 complete, Stage 2.5 design approved, not implemented
 
 **Date:** 2026-07-28
-**Repo:** `C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4`
-**Branch:** `main` · **HEAD:** `8865c54e2cc8d879410576f247baac4aea149f34` (6 ahead of `origin/main`)
-**Implementation-start commit (protected baseline anchor):** the same `8865c54e…`
+**Repo:** `C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4` · **Branch:** `main`
+
+```text
+verified_code_checkpoint:    3b85a8102fb89ae0585ef0fc080f518238e4c1bc  (short: 3b85a81)
+implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34  (short: 8865c54)
+stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e  (short: 0edbf50)
+approved_facet_design:       3b85a8102fb89ae0585ef0fc080f518238e4c1bc  (short: 3b85a81)
+push_state:                  local only — nothing pushed to origin/main
+document_status:             corrected before Stage 2.5 implementation
+```
+
+**Correction note.** This file was first written *before* the work was committed, and said
+"HEAD `8865c54e…`" and "Nothing committed or pushed". Both were true at the moment of writing and
+are now stale: the Stage 0–2 code was committed as `0edbf50`, and the approved facet design as
+`3b85a81`. Nothing has been **pushed**. `implementation_start_anchor` stays `8865c54` — it is the
+protected-baseline anchor, not the current checkpoint.
+
+`verified_code_checkpoint` names the commit whose **code** was verified. Committing documentation
+advances `HEAD` without advancing the code checkpoint.
 
 This is a point-in-time snapshot for a new session. Read `docs/harvest/HANDOFF_CURRENT.md` first;
-this file is the durable copy.
+this file is the durable copy. The next-stage plan is
+`docs/harvest/STAGE_2_5_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -63,7 +80,8 @@ bash scripts/harvest/verify_protected_baseline.sh
 
 ## 4 · Stage 2.5 — approved design, NOT implemented
 
-Full spec: `docs/harvest/DOMAIN_FACETS_PROPOSAL.md` (revision 3).
+Full spec: `docs/harvest/DOMAIN_FACETS_PROPOSAL.md` (**revision 4**, plus its Errata section).
+Implementation plan: `docs/harvest/STAGE_2_5_IMPLEMENTATION_PLAN.md` (proposed, awaiting approval).
 
 **Core idea.** `Cases → Domain Applications` stays the publication category and the 12-cell structure
 is unchanged. Industry / business function / use-case type become three independent, versioned,
@@ -71,7 +89,9 @@ evidence-grounded facets on a `case_facets` record field. Facets are **never** p
 `content_id`, `identity_url`, `cell_id` or the published filename.
 
 **Decided:** three axes · `case_facets` naming · coverage tiers as scheduler *hints* only
-(7/8/3 industries, 10/8/1 functions, 10/10/1 use cases) · `case-studies` enrichment `report_only` ·
+(7/8/3 industries, 10/8/1 functions, **10/11/1** use cases — this line originally read "10/10/1",
+which sums to 21 and cannot describe the 22 approved use-case values; see the proposal's Errata E1) ·
+`case-studies` enrichment `report_only` ·
 **no mid-run revalidation** (run-scoped immutable source snapshot) · `cross-industry` `record_only`
 and it never closes a concrete gap · `technology-software` `record_only`, never inferred from
 publisher/vendor/platform · mandatory smoke stays round 1 only.
@@ -109,7 +129,9 @@ and logical-owner contracts · 6 new test suites · **rerun of the full 199-asse
 - ✗ Any live harvest, refresh, link-check or promotion
 - ✗ `data/harvested/` does not exist; nothing published
 - ✗ `state/taxonomy_harvest/` contains no production run
-- ✗ Nothing committed or pushed
+- ✗ **Nothing pushed.** (Corrected: the work *is* committed locally — `0edbf50` for the Stage 0–2
+  code, `3b85a81` for the approved facet design. The original "nothing committed or pushed" was true
+  only at the moment this file was first written.)
 
 ---
 

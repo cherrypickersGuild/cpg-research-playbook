@@ -3,7 +3,13 @@
 Updated as each item is completed **and tested**. An item is only ticked when its narrowest test
 passes; "written" is not "done".
 
-Implementation-start commit: `8865c54e2cc8d879410576f247baac4aea149f34`
+```text
+verified_code_checkpoint:    3b85a8102fb89ae0585ef0fc080f518238e4c1bc  (short: 3b85a81)
+implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34  (short: 8865c54)
+stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e  (short: 0edbf50)
+approved_facet_design:       3b85a8102fb89ae0585ef0fc080f518238e4c1bc  (short: 3b85a81)
+push_state:                  local only — nothing pushed to origin/main
+```
 
 ---
 
@@ -99,8 +105,10 @@ Implementation-start commit: `8865c54e2cc8d879410576f247baac4aea149f34`
 
 ## Stage 2.5 — case facets and shared discovery ⟵ **NEXT. Design fully approved.**
 
-`docs/harvest/DOMAIN_FACETS_PROPOSAL.md` (revision 4). **Nothing implemented.**
-R1–R4 and V1–V4 are all decided; no design questions remain open.
+Design: `docs/harvest/DOMAIN_FACETS_PROPOSAL.md` (revision 4, plus its §16 Errata).
+Plan: `docs/harvest/STAGE_2_5_IMPLEMENTATION_PLAN.md` — **approved**
+(deviations DV-1 … DV-6 and design corrections D1–D10, including the D7 five-state model).
+**Nothing implemented.** R1–R4 and V1–V4 are all decided; no design questions remain open.
 
 - [ ] `config/harvest/facets/{industries,business-functions,use-case-types}.v1.json`
       — **18 / 19 / 22** entries, tiers 7-8-3 / 10-8-1 / 10-11-1

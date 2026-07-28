@@ -1,7 +1,22 @@
 # Proposal — multi-axis case facets and shared discovery
 
-**Revision 2. Status: PROPOSAL. Nothing implemented.** Stage 0–2 code is untouched and Stage 3
-remains blocked. Awaiting approval.
+**Revision 4. Status: APPROVED DESIGN. Nothing implemented.** Stage 0–2 code is untouched and Stage
+3 remains blocked. R1–R4 and V1–V4 are all decided; no design question remains open.
+
+```text
+revision:                    4
+status:                      approved design — not implemented
+approved_at_commit:          3b85a8102fb89ae0585ef0fc080f518238e4c1bc  (short: 3b85a81)
+implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34  (short: 8865c54)
+implementation_plan:         docs/harvest/STAGE_2_5_IMPLEMENTATION_PLAN.md (proposed)
+errata:                      see §16 — read it with §1.3, §5 and §13
+```
+
+**Revision-number correction.** The header of this file previously read "Revision 2. Status:
+PROPOSAL … Awaiting approval", while the handoff called it revision 3 and `HANDOFF_CURRENT.md` /
+`TODO.md` called it revision 4. The *content* has been consistent with the approved decisions
+throughout; only the header was stale. **Revision 4 is the correct designation**, and the status is
+approved, not awaiting approval.
 
 Renamed from "domain facets": the field is `case_facets`, because it applies across the Cases topic
 rather than to one category.
@@ -362,7 +377,7 @@ coverage and evidence quality from live runs. It is explicitly out of scope for 
 | Term | Industry reading | Function reading | Rule |
 |---|---|---|---|
 | **finance** | `financial-services-insurance` — the org *is* a bank/insurer/fintech | `finance-accounting` — FP&A, budgeting, invoicing, audit, close | Decided by *what the organisation is*, not what the task is. Both when each is independently evidenced. |
-| **legal** | `professional-services` — law firm / legal-services provider | `legal-compliance` — contract review, compliance inside any org | In-house legal at a manufacturer = `manufacturing-industrial` + `legal-compliance`. |
+| **legal** | `professional-services` — law firm / legal-services provider | `legal-risk-compliance` — contract review, compliance inside any org | In-house legal at a manufacturer = `manufacturing-industrial` + `legal-risk-compliance`. *(Errata E2 — this row named the pre-V2 slug `legal-compliance`.)* |
 | **retail** | `retail-cpg` — the org is a retailer/brand | none | Retail-media work = `retail-cpg` + `marketing`. "Retail" never implies a function. |
 | **manufacturing** | `manufacturing-industrial` — the org makes things | `production-operations` — the production function, any industry | Pharma optimising a line = `healthcare-life-sciences` + `production-operations`. |
 | **operations** | — | `supply-chain-operations` / `production-operations` | **Never inferred from generic prose.** "improving business operations" with no concrete workflow assigns nothing; the term goes to `unresolved[]`. |
@@ -595,7 +610,7 @@ pass.**
 | `test_taxonomy_facet_identity.sh` | add/change/remove/null `case_facets` ⇒ `record_id`, `content_id`, `identity_url`, `cell_id`, artifact filename all unchanged · static grep proving `urlkey.py`/`slug.py` never mention facets |
 | `test_taxonomy_facet_states.sh` | the four unresolved states are distinct · `other-unclear` alone fails the domain-applications requirement · unresolved records are withheld from publication eligibility · `unmapped_legacy_value` never becomes evidence |
 | `test_taxonomy_pool.sh` | `source_request_key` stability and sensitivity · one logical owner across 3 lanes · **304 snapshot reused across all rounds** · **no second conditional request within a run** · a new run may revalidate · redirect+retry ⇒ 1 owner / 3 attempts / budget 3 · every contributing `lane_id` preserved · output identical under shuffled round timing |
-| `test_taxonomy_coverage.sh` | tier targets (7/8/3 · 10/8/1 · 10/10/1) · 7-factor gap ranking · `no_credible_source` reported not invented · **thresholds provably constant across rounds** · all stop conditions · **10 `cross-industry` records do not close a healthcare or manufacturing gap** · no `cross-industry` gap lane is ever scheduled · the 5 coverage-reporting states counted separately |
+| `test_taxonomy_coverage.sh` | tier targets (7/8/3 · 10/8/1 · **10/11/1** — Errata E1) · 7-factor gap ranking · `no_credible_source` reported not invented · **thresholds provably constant across rounds** · all stop conditions · **10 `cross-industry` records do not close a healthcare or manufacturing gap** · no `cross-industry` gap lane is ever scheduled · the 5 coverage-reporting states counted separately |
 
 **Docs** — this file · `docs/harvest/FACET_VOCABULARY.md` · TODO/plan updates for Stage 2.5.
 
@@ -673,3 +688,31 @@ independently evidenced. Covered by `test_taxonomy_customer_interaction.sh` (§1
 ### 15.5 Nothing remains open
 
 R1–R4 and V1–V4 are all decided. No question in this proposal awaits a decision.
+
+---
+
+## 16 · Errata — documentation corrections
+
+Found while checking this design against the Stage 0–2 code as written. **None of these changes an
+approved decision**; each corrects an internal inconsistency in this document. The full analysis and
+the corresponding implementation decisions are in `docs/harvest/STAGE_2_5_IMPLEMENTATION_PLAN.md`
+(defects D1–D10).
+
+| # | Where | Was | Is | Why |
+|---|---|---|---|---|
+| **E1** | §13 (`test_taxonomy_coverage.sh` row) and the handoff's §4 summary | use-case tiers "10/10/1" | **10 priority / 11 standard / 1 record_only** | "10/10/1" sums to 21 and cannot describe the 22 approved use-case values. §1.3 and §2.1 already say 10/11/1, and `TODO.md` agrees. The 22-value total is the binding decision |
+| **E2** | §5, the "legal" row (two occurrences) | `legal-compliance` | **`legal-risk-compliance`** | Decision V2 renamed the slug. §1.2 was updated; the ambiguity table was not. Corrected inline below |
+| **E3** | Document header | "Revision 2 · PROPOSAL · Awaiting approval" | **Revision 4 · approved design** | The header lagged behind the handoff and `TODO.md`; the content was already at revision 4 |
+| **E4** | §13, "Modified schemas — `record.v1.json` … one `allOf`" | location unstated | the `allOf` belongs **inside `#/$defs/full_record`** | At the document root it would make every `cases__domain-applications` **cross_reference** row unsatisfiable, since that branch is `additionalProperties:false` and cannot carry `case_facets`. See plan D1 / DV-5 |
+| **E5** | §3, `case_facets.required` | omits `vocabulary_versions` | `vocabulary_versions` is **required** inside `case_facets`, all three sub-keys required | §11 guardrail 5 requires a runtime version match, which is unenforceable when the key may be absent. See plan D5 / DV-6 |
+| **E6** | §13, "pairwise-disjoint slug sets" | stated without exception | disjoint **except for the explicitly shared sentinel `other-unclear`** | `other-unclear` is in all three vocabularies by design (§1.1, §1.2, §1.3), so the rule as written contradicts them. See plan D3 |
+| **E7** | §4 / §4.1, "withheld from normal publication eligibility"; five reporting states listed without precedence | no representation given, and `unmapped_legacy_value` left ambiguous against `unresolved` | a **derived predicate** plus coverage-report output — **no new persisted record field** — over **five mutually exclusive, exhaustive** states with a total precedence order in which `unmapped_legacy_value` ranks **first** and is counted separately; state and predicate are derived from the **complete record** (`record_type`, `topic`, `primary_category`, `case_facets`, legacy provenance), not `case_facets` alone | `publication_eligible` is run-level; `rejection_reason` is the wrong home, because an unresolved record is retained and auditable, not rejected. Without a total order the same record could be counted twice, and an unmapped legacy value could vanish into the generic `unresolved` bucket. Eligibility (Domain Applications: `facet_complete` only) is separate from reporting; Case Studies stay report-only in v1. See plan D7 §8.3 and the six assertions in §10 |
+| **E8** | §14, "Legacy `industry` maps only via the reviewed table" | implies a complete table | a **reviewed seed**; the long tail becomes `unmapped_legacy_value` | Measured: the 231 AX cases carry **173 distinct free-text `industry` values**. A complete one-to-one table is not achievable, and pretending otherwise invites guessing. See plan D10 |
+
+Two further constraints, recorded here because they affect §8 and §2 but were not stated there:
+
+- **`source_request_key` must pin `canonicalization_version`.** It is built on the Stage 1
+  canonicalizer, whose behaviour is driven by `config/harvest/canonicalization.v1.json`; without the
+  version in the key material, a config bump silently changes keys across runs.
+- **A `coverage_targets` override may not raise a `record_only` value above 0.** Allowing it for
+  `cross-industry`, `technology-software` or `other-unclear` would contradict decisions R4 and C6.
