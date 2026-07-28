@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AX 케이스 하베스트 — 파일별 수집 방법</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased;word-break:keep-all}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:52px 0 8px;font-weight:700}
+  .h2sub{font-size:20px;color:var(--ink);letter-spacing:-.015em;margin:0 0 18px;font-weight:700}
+  h3{font-size:15.5px;margin:24px 0 6px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.88em;background:var(--chip);color:var(--chip-ink);padding:1px 5px;border-radius:4px}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 6px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:31px;line-height:1.22;letter-spacing:-.02em;margin:0 0 10px}
+  .lede{font-size:16px;color:var(--muted);max-width:64ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n.bad{color:var(--bad)} .kpi .n.warn{color:var(--warn)} .kpi .n.good{color:var(--good)}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:7px}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+  .card.warn{border-left:3px solid var(--warn)}
+  .card.bad{border-left:3px solid var(--bad)}
+  .card h3{margin-top:0}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11.5px;letter-spacing:.04em;color:var(--muted);font-weight:700;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .dim{color:var(--muted)}
+  .tag{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;background:var(--chip);color:var(--chip-ink);white-space:nowrap}
+  .tag.seed{background:var(--accent-soft);color:var(--accent)}
+  .tag.keep{background:rgba(18,128,92,.12);color:var(--good)}
+  .tag.tmp{background:rgba(165,98,15,.14);color:var(--kpi)}
+  .tag.ext{background:rgba(179,38,30,.10);color:var(--bad)}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:12px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:inherit}
+
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:16px 0;font-size:12.5px}
+  .node{flex:1;min-width:132px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:11px 12px;box-shadow:var(--shadow)}
+  .node .t{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700}
+  .node .d{color:var(--muted);margin-top:4px}
+  .node.seedn{border-left:3px solid var(--accent)}
+  .node.keepn{border-left:3px solid var(--good)}
+  .arrow{align-self:center;color:var(--muted);font-family:var(--mono);font-size:14px}
+
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="head-in">
+  <div class="eyebrow">AX 케이스 하베스트 · 2026-07-28 · axCaseResearch4 · 파일별 수집 방법</div>
+  <h1>AX 케이스 스터디 하베스트가 남긴 파일 전부 — 각각 어떻게 모았는가</h1>
+  <p class="lede">AX(AI 전환) 케이스 하베스트는 <b>후보 소싱 → 추출 → 병합</b> 루프 하나를 반복해 231건의 케이스를 모았습니다. 이 문서는 그 과정에서 생긴 <b>모든 파일을 찾아</b>, 각 파일이 파이프라인의 어느 단계에서 어떻게 만들어졌는지 간략히 설명합니다.</p>
+  <div class="meta">
+    <span><b>실행 스크립트</b> scripts/harvest_ax_cases.sh</span>
+    <span><b>실행일</b> 2026-07-14 ~ 07-15 (4회)</span>
+    <span><b>결과</b> 231 케이스</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n">2</div><div class="l">씨드 소스<br>(awesome-list + 검색hits)</div></div>
+    <div class="kpi"><div class="n">3</div><div class="l">루프 단계<br>소싱·추출·병합</div></div>
+    <div class="kpi"><div class="n">10</div><div class="l">이 하베스트가<br>생성/사용한 파일</div></div>
+    <div class="kpi"><div class="n good">231</div><div class="l">최종 레지스트리<br>케이스</div></div>
+  </div>
+</div></header>
+
+<h2>1 · 파이프라인 한눈에</h2>
+<div class="h2sub">씨드 2개 → 루프 3단계 → 정본 레지스트리 1개</div>
+<p><code>harvest_ax_cases.sh</code>는 토픽 인자 없는 <b>단일 레인</b>입니다. 매 루프마다 <code>claude -p</code>를 두 번 호출(후보 소싱 1회, 추출 1회)하고 병합 스크립트를 돌립니다. 목표치(기본 250) 도달·소스 고갈(무진전 3회 연속)·최대 루프 중 하나까지 반복합니다.</p>
+<div class="flow">
+  <div class="node seedn"><div class="t">SEED (a)</div><div class="d">awesome_ax-cases.md<br>+ 원본 awesome 리스트</div></div>
+  <div class="node seedn"><div class="t">SEED (b)</div><div class="d">search_hits_ax.json<br>(Stage 1B 검색 hits)</div></div>
+  <div class="arrow">▶</div>
+  <div class="node"><div class="t">① 후보 소싱</div><div class="d">claude 호출: 씨드에서 URL 후보 추출 → 실제 사례 페이지로 resolve</div></div>
+  <div class="arrow">▶</div>
+  <div class="node"><div class="t">② 추출</div><div class="d">extractor 스펙으로 각 페이지를 구조화 케이스로 변환</div></div>
+  <div class="arrow">▶</div>
+  <div class="node keepn"><div class="t">③ 병합</div><div class="d">merge 스크립트가 레지스트리에 dedup 저장</div></div>
+</div>
+<p class="dim" style="font-size:12.5px"><b>격리 원칙:</b> 이 스크립트는 <code>entity_registry.json</code>·<code>ax_case_db.json</code>·<code>visited_url_ledger.json</code>을 <b>절대 건드리지 않습니다.</b> 중복 방지는 오직 이번 실행의 <code>attempted</code> 세트 + 레지스트리의 기존 <code>source_url</code>로만 처리합니다(공유 ledger 없음).</p>
+
+<h2>2 · 파일별 수집 방법</h2>
+<div class="h2sub">각 파일이 어느 단계에서, 어떻게 생겼는가</div>
+<div class="scroll"><table>
+<thead><tr><th>파일</th><th class="num">크기·건수</th><th>어떻게 모았는가 (수집 방법)</th><th>구분</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>search_hits_ax.json</code></td>
+  <td class="num">50KB · 14쿼리<br>111 hits</td>
+  <td><b>Stage 1B 검색 단계 산출물.</b> <code>search_strategy_db.json</code>의 14개 쿼리로 Google 검색을 돌려 url·title·snippet만 캡처(페이지 크롤링 X). 2026-06-28 수집. 후보 소싱의 씨드 (b)로 재사용.</td>
+  <td><span class="tag seed">씨드</span></td>
+</tr>
+<tr>
+  <td><code>reports/awesome-lists/<br>awesome_ax-cases.md</code></td>
+  <td class="num">보고서</td>
+  <td><b>awesome-list-crawler 에이전트</b>가 GitHub의 awesome AX-cases 큐레이션 리스트 README를 읽고 각 항목을 방문·정리한 보고서. 후보 소싱의 <b>1순위 씨드 (a)</b>.</td>
+  <td><span class="tag seed">씨드</span></td>
+</tr>
+<tr>
+  <td><code>ax_case_harvest_<br>raw_candidates.json</code></td>
+  <td class="num">2.2KB</td>
+  <td><b>① 후보 소싱 claude 호출의 원본 stdout.</b> 모델이 씨드 (a)+(b)를 읽어 후보 URL을 실제 스토리 페이지로 resolve하고, <code>attempted</code>·기존 <code>source_url</code>을 제외한 뒤 <code>{hits:[{url,title,snippet,domain}]}</code>를 반환. jq 파싱 <b>직전에 무조건 저장</b>(파싱 오류 디버깅용). 매 루프 덮어씀 → 마지막(대개 실패) 호출만 반영.</td>
+  <td><span class="tag tmp">임시</span></td>
+</tr>
+<tr>
+  <td><code>ax_case_harvest_hits.json</code></td>
+  <td class="num">0 건</td>
+  <td><b>①의 정제 결과</b> — raw_candidates에서 <code>.hits</code>만 뽑은 이번 루프의 후보 배치. 현재 <b>비어 있음</b>: 마지막 루프가 후보 0개를 냈다는 뜻(= 소스 고갈 신호).</td>
+  <td><span class="tag tmp">임시</span></td>
+</tr>
+<tr>
+  <td><code>ax_case_harvest_<br>attempted.json</code></td>
+  <td class="num">51 URL</td>
+  <td><b>이번 실행에서 보낸 모든 URL</b>을 추출 판정 <b>전에</b> 기록. 뒤 루프가 이미 버려진 후보를 다시 고르지 않게 하는 <b>이 스크립트 유일의 dedup 장치</b>. (공유 ledger 없음)</td>
+  <td><span class="tag tmp">임시</span></td>
+</tr>
+<tr>
+  <td><code>ax_case_harvest_<br>raw_extract.json</code></td>
+  <td class="num">3.6KB</td>
+  <td><b>② 추출 claude 호출의 원본 stdout.</b> <code>agents/stage1/ax_case_harvest_extractor.md</code> 스펙으로 후보 페이지들을 읽어 구조화 케이스로 변환. 역시 jq 직전 무조건 저장.</td>
+  <td><span class="tag tmp">임시</span></td>
+</tr>
+<tr>
+  <td><code>ax_case_harvest_batch.json</code></td>
+  <td class="num">1 케이스</td>
+  <td><b>②의 정제 결과</b> — extractor가 낸 이번 루프의 구조화 케이스 배치(company·workflow_before/after·kpi·날짜 2종 등). 병합 단계의 입력. 마지막 배치엔 1건.</td>
+  <td><span class="tag tmp">임시</span></td>
+</tr>
+<tr>
+  <td><code>ax_case_harvest_<br>registry.json</code></td>
+  <td class="num">440KB · 231</td>
+  <td><b>③ 병합 산출물이자 정본 코퍼스.</b> <code>merge_ax_case_harvest_registry.sh</code>가 매 루프의 batch를 <code>source_url</code>/<code>case_key</code> 기준 dedup해 누적. <b>직접 쓰지 않고 병합으로만 갱신.</b> 4회 실행에 걸쳐 231건 축적(last_merged 07-15).</td>
+  <td><span class="tag keep">정본</span></td>
+</tr>
+<tr>
+  <td><code>ax_case_harvest.err</code></td>
+  <td class="num">0 B</td>
+  <td>두 <code>claude -p</code> 호출의 <b>stderr</b>. 비어 있음 = 마지막 실행에서 stderr 없음. 매 루프 덮어씀.</td>
+  <td><span class="tag tmp">임시</span></td>
+</tr>
+<tr>
+  <td><code>logs/ax_case_harvest_<br>&lt;run_id&gt;.jsonl</code> ×4</td>
+  <td class="num">19·117·<br>33·34 줄</td>
+  <td><b>실행별 구조화 타이밍 로그(JSONL).</b> <code>script_start·loop_start·claude_call_start/end·merge_start/end·script_end</code> 이벤트. run_id = UTC시각-PID. 파일 4개 = <b>실행 4회</b>(07-14 3회, 07-15 1회).</td>
+  <td><span class="tag tmp">임시</span></td>
+</tr>
+</tbody></table></div>
+<p class="dim" style="font-size:12.5px"><b>구분:</b> <span class="tag seed">씨드</span> 입력 소스 · <span class="tag tmp">임시</span> 매 루프 덮어써지는 작업파일(gitignore, 최근 루프만 반영) · <span class="tag keep">정본</span> 런 간 유지되는 유일한 결과.</p>
+
+<h2>3 · 씨드 소스 우선순위</h2>
+<div class="h2sub">후보 소싱 프롬프트가 실제로 읽는 두 입력</div>
+<div class="card">
+<p style="margin-bottom:8px"><b>(a) 1순위 — awesome 리스트:</b> <code>awesome_ax-cases.md</code> + 그 상단이 인용하는 원본 awesome-list raw 페이지(보고서 자체 cap을 넘는 항목까지). 단, <b>index/listicle 페이지 자체는 후보로 내지 않고</b> 반드시 전환 스토리를 서술하는 실제 페이지(뉴스·케이스 스터디·기업 블로그)로 resolve.</p>
+<p style="margin:0"><b>(b) 2순위 — 검색 hits:</b> <code>search_hits_ax.json</code>. 출처 URL을 특정할 수 없는 항목은 추측하지 않고 <b>버림</b>.</p>
+</div>
+<pre><code># 후보 소싱 호출의 핵심 지시 (요약)
+"Seed sources, in priority order: (a) awesome_ax-cases.md + raw list page(s),
+ (b) search_hits_ax.json. Resolve EVERY candidate to the page that actually
+ describes the transformation story. Never emit an index/awesome-list page.
+ EXCLUDE urls already in attempted_urls[] or an existing case's source_url.
+ Return at most BATCH_SIZE. Output ONLY JSON {hits:[{url,title,snippet,domain}]}."</code></pre>
+
+<h2>4 · 이 하베스트가 아닌 별개 경로</h2>
+<div class="h2sub">이름이 비슷하지만 다른 파일 — 혼동 주의</div>
+<div class="scroll"><table>
+<thead><tr><th>파일</th><th class="num">건수</th><th>정체</th></tr></thead>
+<tbody>
+<tr><td><code>state/ax_case_db.json</code></td><td class="num">0</td><td>기존 <b>리치 파이프라인의 Stage-2 검증기 입력</b>. 이 하베스트는 격리 원칙상 절대 건드리지 않음 — <code>{"cases":[]}</code> 비어 있음. 231건을 여기로 <b>브리지하는 단계가 아직 없음</b>.</td></tr>
+<tr><td><code>news_case_db_20260706…json</code><br><code>news_case_db_with_patch.json</code></td><td class="num">0 / 0</td><td>별개의 <b>뉴스 모니터 경로(Stage 1F)</b> 산출물. 둘 다 케이스 0건(patch 파일은 16개 <code>ledger_patch</code>만 보유).</td></tr>
+</tbody></table></div>
+<div class="card warn">
+<p style="margin:0"><b>요약:</b> 실제 수집·저장된 AX 케이스는 <code>ax_case_harvest_registry.json</code> <b>단 하나(231건)</b>에 있습니다. 나머지 <code>state/ax_case_harvest_*</code>는 마지막 루프 상태만 담은 임시 작업파일이고, <code>search_hits_ax.json</code>·<code>awesome_ax-cases.md</code>는 그 231건을 만든 <b>씨드 입력</b>입니다. <code>ax_case_db.json</code>·<code>news_case_db_*</code>는 이 하베스트의 산출물이 아닙니다.</p>
+</div>
+
+<div class="foot">
+  2026-07-28 생성 · axCaseResearch4 · 모든 크기·건수는 <code>state/</code>에서 실시간 확인 · 수집 방법 근거: <code>docs/ax_case_harvest_workflow.md</code>, <code>scripts/harvest_ax_cases.sh</code>. 코퍼스 내용 분석은 자매 리포트 <code>reports/2026-07-24_ax_case_harvest_inventory.html</code> 참고.
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Summary — 2026-07-28</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:52px 0 8px;font-weight:650}
+  .h2sub{font-size:20px;color:var(--ink);letter-spacing:-.015em;margin:0 0 18px;font-weight:650}
+  h3{font-size:15.5px;margin:24px 0 6px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.9em;background:var(--chip);color:var(--chip-ink);padding:1px 5px;border-radius:4px}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 6px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:32px;line-height:1.13;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:16px;color:var(--muted);max-width:68ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n.bad{color:var(--bad)} .kpi .n.warn{color:var(--warn)} .kpi .n.good{color:var(--good)}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:7px}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+  .card.warn{border-left:3px solid var(--warn)}
+  .card.bad{border-left:3px solid var(--bad)}
+  .card.good{border-left:3px solid var(--good)}
+  .card h3{margin-top:0}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .ok{color:var(--good);font-weight:600}
+  .no{color:var(--bad);font-weight:600}
+  .dim{color:var(--muted)}
+  .tag{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;background:var(--chip);color:var(--chip-ink);white-space:nowrap}
+  .tag.kept{background:var(--accent-soft);color:var(--accent)}
+  .tag.done{background:rgba(18,128,92,.12);color:var(--good)}
+  .tag.open{background:rgba(165,98,15,.14);color:var(--kpi)}
+  .tag.stop{background:rgba(179,38,30,.10);color:var(--bad)}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:12px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:inherit}
+
+  .job{display:grid;grid-template-columns:32px 1fr;gap:14px;margin-bottom:6px}
+  .job .no2{font-family:var(--mono);font-size:12px;color:var(--good);background:rgba(18,128,92,.12);border-radius:8px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:600}
+  .job.todo .no2{color:var(--kpi);background:rgba(165,98,15,.14)}
+  .job .bd{padding-bottom:16px;border-bottom:1px solid var(--hair)}
+  .job:last-child .bd{border-bottom:none}
+  .job .bd h3{margin:0 0 3px}
+  .job .bd p{margin:0;font-size:13.5px;color:var(--muted)}
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="head-in">
+  <div class="eyebrow">SESSION SUMMARY · 2026-07-28 · axCaseResearch4 · main @ 52a8866</div>
+  <h1>What got done, what's on disk uncommitted, and what's still open</h1>
+  <p class="lede">This session did three things: audited whether the pipeline can harvest an arbitrary (category, subcategory) list, translated cherryinthehaystack.com's <em>Newly Discovered</em> section into ready-to-run matrix specs, and inventoried the AX-case harvest. All five deliverables are on disk — <strong>none is committed, and nothing is pushed.</strong></p>
+  <div class="meta">
+    <span><b>Branch</b> main · 5 ahead · 0 behind origin</span>
+    <span><b>New/changed files</b> 7, all uncommitted</span>
+    <span><b>Pushed</b> nothing</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n good">5</div><div class="l">jobs finished<br>this session</div></div>
+    <div class="kpi"><div class="n warn">7</div><div class="l">files on disk,<br>uncommitted</div></div>
+    <div class="kpi"><div class="n warn">9</div><div class="l">open items<br>carried forward</div></div>
+    <div class="kpi"><div class="n bad">0</div><div class="l">commits pushed<br>(5 local, unpushed)</div></div>
+  </div>
+</div></header>
+
+<h2>1 · Finished this session</h2>
+<div class="h2sub">Five jobs, in order</div>
+
+<div class="job"><div class="no2">✓</div><div class="bd">
+  <h3>Matrix-harvest readiness analysis <span class="tag done">verified live</span></h3>
+  <p>Confirmed the pipeline <em>can</em> harvest an arbitrary (category&nbsp;×&nbsp;subcategory) list — that is exactly the matrix harvest (<code>--categories</code> × <code>--topics</code>). Ran an isolated dry-run (3×2 → 6 cells, zero model budget, production untouched); deps present (jq/python/claude). Caveats: <code>state/matrix/</code> does not exist — <b>never run in production</b> (tests mock the model), <code>GITHUB_TOKEN</code> unset, and cost/429 is the real gate. Verdict: <b>first-flight ready</b>, not battle-tested.</p>
+</div></div>
+
+<div class="job"><div class="no2">✓</div><div class="bd">
+  <h3>Captured cherryinthehaystack.com structure</h3>
+  <p>The <b>NEWLY DISCOVERED</b> section has four content buckets — <em>Engineering&nbsp;&amp;&nbsp;Tooling, Research&nbsp;&amp;&nbsp;Models, Cases, Discourse</em> — which line up with the project's own <code>category_enum</code> (dev-tools, frameworks, big-tech-trends, ai_education, case-studies, domain-applications, insights-opinions). Site is a client-rendered SPA, so subpages/sector list weren't extractable.</p>
+</div></div>
+
+<div class="job"><div class="no2">✓</div><div class="bd">
+  <h3>Planned the (category, subcategory) list for Newly Discovered</h3>
+  <p>Grounded in the site IA + <code>category_registry.json</code> candidates (agent-governance-audit, agent-observability-eval, ai-workforce-enablement) + <code>category_enum</code>. Produced four bucket specs and an 8-cell Phase-1 starter; each validated into a manifest: <b>10 / 6 / 32 / 6 / 8 cells</b>. Cases is a true domain×building-block matrix; the other three are 1×N. Full taxonomy = 54 cells (don't run at once — 429 risk).</p>
+</div></div>
+
+<div class="job"><div class="no2">✓</div><div class="bd">
+  <h3>Persisted the specs into the repo</h3>
+  <p>Moved the five spec files from scratchpad to <code>config/newly_discovered_specs/</code> so they survive the session, and re-verified each still parses from its new home. Runnable via <code>run_matrix.sh --spec config/newly_discovered_specs/&lt;file&gt;.json</code>.</p>
+</div></div>
+
+<div class="job"><div class="no2">✓</div><div class="bd">
+  <h3>Inventoried &amp; audited the AX-case harvest → report #11</h3>
+  <p>Found every AX-case harvest file and audited the 231-case corpus: 143 companies, 218 tools, mean confidence 0.565, <b>79% with no transformation date</b>, <b>all single-sourced</b> (corroboration = 1), <b>0 gate-passed</b> (registry never bridged to <code>ax_case_db.json</code>). Wrote <code>reports/2026-07-24_ax_case_harvest_inventory.html</code> and linked it as #11 in the index.</p>
+</div></div>
+
+<h2>2 · On disk, not yet committed</h2>
+<div class="h2sub">This is the immediate risk — good work with no backup</div>
+<div class="scroll"><table>
+<thead><tr><th>Path</th><th>Git state</th><th>From</th></tr></thead>
+<tbody>
+<tr><td><code>config/newly_discovered_specs/</code> (5 files)</td><td><span class="tag open">untracked</span></td><td>this session</td></tr>
+<tr><td><code>reports/2026-07-24_ax_case_harvest_inventory.html</code></td><td><span class="tag open">untracked</span></td><td>this session</td></tr>
+<tr><td><code>reports/2026-07-28_session_summary.html</code> (this file)</td><td><span class="tag open">untracked</span></td><td>this session</td></tr>
+<tr><td><code>reports/index.html</code></td><td><span class="tag open">modified</span></td><td>this session (added #11)</td></tr>
+<tr><td><code>agents/02_validator.md · 03_selector.md · 04_slide_builder.md</code></td><td><span class="tag stop">untracked</span></td><td>open since 2026-07-18</td></tr>
+<tr><td><code>.claude/agents/ax-validator.md</code></td><td><span class="tag stop">untracked</span></td><td>open since 2026-07-18</td></tr>
+</tbody></table></div>
+<p class="dim" style="font-size:12.5px">The four deck-stage specs are declared mandatory by <code>CLAUDE.md</code> yet exist on one machine with no backup — the handoff's #1 recommendation, still open.</p>
+
+<h2>3 · Further to do</h2>
+<div class="h2sub">Prioritized — this session's follow-ups first, then carried-over items</div>
+
+<div class="job todo"><div class="no2">1</div><div class="bd">
+  <h3>Commit this session's deliverables</h3>
+  <p><code>bash scripts/safe_commit.sh -m "…" reports/2026-07-24_ax_case_harvest_inventory.html reports/2026-07-28_session_summary.html reports/index.html config/newly_discovered_specs/*.json</code> — explicit files only, never <code>-A</code>.</p>
+</div></div>
+
+<div class="job todo"><div class="no2">2</div><div class="bd">
+  <h3>Commit the four untracked deck-stage specs</h3>
+  <p>Handoff's top item since 2026-07-18. <code>02_validator.md · 03_selector.md · 04_slide_builder.md · ax-validator.md</code> — mandatory per <code>CLAUDE.md</code>, unbacked.</p>
+</div></div>
+
+<div class="job todo"><div class="no2">3</div><div class="bd">
+  <h3>Gitignore the scratch dirs</h3>
+  <p><code>.scratch_ax/</code> (445 files) and <code>state/_*</code> (56 files) are why the real files hide in <code>git status</code>. Neither is ignored yet.</p>
+</div></div>
+
+<div class="job todo"><div class="no2">4</div><div class="bd">
+  <h3>Run the real Phase-1 matrix smoke test</h3>
+  <p>First live run of the matrix harvest. <code>run_matrix.sh --spec config/newly_discovered_specs/PHASE1_starter.json --dry-run</code> → <code>--expand-only</code> → single-cell harvest at small <code>--target</code>. Watch the session 429 limit; scale bucket-by-bucket (A → B/D → C).</p>
+</div></div>
+
+<div class="job todo"><div class="no2">5</div><div class="bd">
+  <h3>Set <code>GITHUB_TOKEN</code>; backfill stars</h3>
+  <p>308/550 entities lack star counts — an ordering bug (prefetch reads <code>target_url</code> before 1G resolves it), not the rate limit. A standalone pass over resolved URLs fixes it; no re-harvest. Token lifts 60 → 5,000 req/hr.</p>
+</div></div>
+
+<div class="job todo"><div class="no2">6</div><div class="bd">
+  <h3>Bridge harvest → pipeline, then validate</h3>
+  <p>Populate <code>ax_case_db.json</code> from <code>ax_case_harvest_registry.json</code> (231 cases), then run Stage&nbsp;2 (<code>ax-validator</code>). Expect heavy, correct attrition — the corpus is single-sourced and self-published.</p>
+</div></div>
+
+<div class="job todo"><div class="no2">7</div><div class="bd">
+  <h3>Fix AX seeds; rename <code>verification_status</code></h3>
+  <p>Add Tier-A-first sources so corroboration&nbsp;&gt;&nbsp;1 becomes reachable (quality is set upstream). Separately, rename <code>verification_status</code> → <code>fetch_status</code> (<code>fetched</code>/<code>snippet_only</code>) so "verified" stops implying a verdict it doesn't carry.</p>
+</div></div>
+
+<div class="job todo"><div class="no2">8</div><div class="bd">
+  <h3>Push — human-gated</h3>
+  <p>Five commits sit local; nothing pushed. <code>bash scripts/safe_push_main.sh --check</code> then <code>--execute</code> — the execute step always needs explicit human approval.</p>
+</div></div>
+
+<h2>4 · How to resume</h2>
+<div class="h2sub">The commands this session leaned on</div>
+<pre><code># matrix harvest from the persisted specs (dry-run spends nothing)
+bash scripts/run_matrix.sh --spec config/newly_discovered_specs/PHASE1_starter.json --dry-run
+bash scripts/run_matrix.sh --spec config/newly_discovered_specs/A_engineering_tooling.json --expand-only
+
+# AX corpus numbers reproduce with jq over the registry
+jq '.cases | length' state/ax_case_harvest_registry.json          # 231
+
+# commit (explicit files) / push (ask-gated)
+bash scripts/safe_commit.sh -m "…" &lt;files&gt;
+bash scripts/safe_push_main.sh --check</code></pre>
+
+<div class="foot">
+  Generated 2026-07-28 · axCaseResearch4 · main @ 52a8866 (5 ahead, 0 behind origin). Git state read live. Companion documents: <code>docs/HANDOFF_2026-07-22.md</code> · <code>reports/2026-07-24_ax_case_harvest_inventory.html</code> (#11) · <code>reports/index.html</code>. Nothing described here is pushed; the four deck-stage specs remain unbacked.
+</div>
+</div>
+</body>
+</html>

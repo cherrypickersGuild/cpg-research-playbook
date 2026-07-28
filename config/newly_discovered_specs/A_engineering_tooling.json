@@ -1,0 +1,16 @@
+{
+  "_bucket": "Engineering & Tooling  (content types: dev-tools, frameworks)",
+  "categories": ["AI engineering & tooling"],
+  "topics": [
+    "agent frameworks",
+    "mcp servers",
+    "prompt engineering",
+    "agent skills",
+    "rag & retrieval",
+    "agent orchestration",
+    "agent observability & evaluation",
+    "agent governance & audit",
+    "vector databases & memory",
+    "guardrails & safety tooling"
+  ]
+}

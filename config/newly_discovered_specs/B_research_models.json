@@ -1,0 +1,12 @@
+{
+  "_bucket": "Research & Models  (content types: big-tech-trends, ai_education)",
+  "categories": ["AI research & models"],
+  "topics": [
+    "foundation model releases",
+    "benchmarks & evaluation",
+    "agentic reasoning research",
+    "multimodal models",
+    "small & efficient models",
+    "alignment & safety research"
+  ]
+}

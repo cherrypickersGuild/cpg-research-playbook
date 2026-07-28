@@ -1,0 +1,6 @@
+{
+  "_note": "8-cell live smoke test across all four buckets. categories are the 4 buckets; topics is the union; pairs restrict to the 8 chosen (category#i, topic#j) intersections.",
+  "categories": ["AI engineering & tooling", "AI research & models", "cases", "AI industry discourse"],
+  "topics": ["rag & retrieval", "agent orchestration", "foundation model releases", "benchmarks & evaluation", "healthcare agents", "finance RAG", "enterprise adoption & ROI", "AI policy & regulation"],
+  "pairs": [[1,1],[1,2],[2,3],[2,4],[3,5],[3,6],[4,7],[4,8]]
+}

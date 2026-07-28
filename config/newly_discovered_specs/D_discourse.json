@@ -1,0 +1,12 @@
+{
+  "_bucket": "Discourse  (content type: insights-opinions)",
+  "categories": ["AI industry discourse"],
+  "topics": [
+    "enterprise adoption & ROI",
+    "AI policy & regulation",
+    "AI ethics & risk",
+    "developer sentiment",
+    "AI workforce enablement",
+    "hype vs reality"
+  ]
+}

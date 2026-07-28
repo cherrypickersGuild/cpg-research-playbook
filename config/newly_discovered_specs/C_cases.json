@@ -1,0 +1,8 @@
+{
+  "_bucket": "Cases  (content types: case-studies, domain-applications) — TRUE domain x building-block matrix",
+  "categories": [
+    "healthcare", "finance & banking", "retail & e-commerce", "manufacturing",
+    "legal", "customer support", "software engineering", "public sector"
+  ],
+  "topics": ["agent", "rag", "copilot & assistant", "workflow automation"]
+}

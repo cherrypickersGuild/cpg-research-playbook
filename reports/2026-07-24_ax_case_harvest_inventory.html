@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AX Case Harvest — File Inventory & Corpus Report</title>
+<style>
+  :root{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0f1513; --surface:#17221f; --raise:#1c2926; --ink:#e7efec; --muted:#93a49f;
+    --accent:#3bb9a5; --accent-soft:rgba(59,185,165,.14); --accent-line:rgba(59,185,165,.34);
+    --kpi:#e2a24c; --good:#4cc79a; --warn:#e2a24c; --bad:#f2836f;
+    --hair:rgba(231,239,236,.12); --chip:#1e2c29; --chip-ink:#b7c7c2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.28);
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f8f7; --surface:#ffffff; --raise:#fbfcfb; --ink:#14201d; --muted:#5c6b67;
+    --accent:#0e6b5e; --accent-soft:rgba(14,107,94,.10); --accent-line:rgba(14,107,94,.28);
+    --kpi:#a5620f; --good:#12805c; --warn:#a5620f; --bad:#b3261e;
+    --hair:rgba(20,32,29,.10); --chip:#eef2f0; --chip-ink:#3a4b47;
+    --shadow:0 1px 2px rgba(20,32,29,.05),0 3px 14px rgba(20,32,29,.045);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);margin:52px 0 8px;font-weight:650}
+  .h2sub{font-size:20px;color:var(--ink);letter-spacing:-.015em;margin:0 0 18px;font-weight:650}
+  h3{font-size:15.5px;margin:24px 0 6px;letter-spacing:-.01em}
+  code,.mono{font-family:var(--mono)}
+  code{font-size:.9em;background:var(--chip);color:var(--chip-ink);padding:1px 5px;border-radius:4px}
+  .tnum{font-variant-numeric:tabular-nums}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 6px}
+
+  header{border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .head-in{padding:40px 0 26px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  h1{font-size:32px;line-height:1.13;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance}
+  .lede{font-size:16px;color:var(--muted);max-width:68ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .n.bad{color:var(--bad)} .kpi .n.warn{color:var(--warn)} .kpi .n.good{color:var(--good)}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:7px}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+  .card.warn{border-left:3px solid var(--warn)}
+  .card.bad{border-left:3px solid var(--bad)}
+  .card.good{border-left:3px solid var(--good)}
+  .card h3{margin-top:0}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .ok{color:var(--good);font-weight:600}
+  .no{color:var(--bad);font-weight:600}
+  .dim{color:var(--muted)}
+  .tag{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;background:var(--chip);color:var(--chip-ink);white-space:nowrap}
+  .tag.kept{background:var(--accent-soft);color:var(--accent)}
+  .tag.empty{background:rgba(179,38,30,.10);color:var(--bad)}
+
+  pre{background:var(--raise);border:1px solid var(--hair);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:12px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:inherit}
+
+  .bars{display:grid;gap:9px;margin:16px 0}
+  .barrow{display:grid;grid-template-columns:210px 1fr 52px;gap:12px;align-items:center;font-size:13px}
+  @media(max-width:560px){.barrow{grid-template-columns:130px 1fr 44px}}
+  .bar{height:18px;border-radius:5px;background:var(--chip);overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:5px;background:var(--accent)}
+  .bar>i.warnb{background:var(--kpi)}
+  .barval{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;text-align:right}
+  .blab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:16px 0;font-size:12.5px}
+  .node{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:12px 13px;box-shadow:var(--shadow)}
+  .node .t{font-family:var(--mono);font-size:11.5px;color:var(--accent);font-weight:600}
+  .node .d{color:var(--muted);margin-top:4px}
+  .node.stop{border:1px solid var(--bad);border-left:3px solid var(--bad)}
+  .node.stop .t{color:var(--bad)}
+  .arrow{align-self:center;color:var(--muted);font-family:var(--mono)}
+
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:720px){.cols2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="head-in">
+  <div class="eyebrow">AX CASE HARVEST · 2026-07-24 · axCaseResearch4 · file inventory + corpus audit</div>
+  <h1>The AX case harvest: every file it produced, and what the 231 cases actually contain</h1>
+  <p class="lede">A complete inventory of the AX-case harvest artifacts on disk, and a read of the corpus they hold. The harvest ran on 2026-07-14/15 and left 231 named cases in one registry — none of which has passed the pipeline's validation gate, because the registry was never bridged to Stage&nbsp;2. This report separates what was <em>found</em> from what has been <em>verified</em>, which are not the same thing.</p>
+  <div class="meta">
+    <span><b>Source of record</b> state/ax_case_harvest_registry.json</span>
+    <span><b>Last merged</b> 2026-07-15</span>
+    <span><b>Schema</b> v1</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n">231</div><div class="l">cases harvested<br>(named companies)</div></div>
+    <div class="kpi"><div class="n">143</div><div class="l">unique companies<br>218 distinct tools</div></div>
+    <div class="kpi"><div class="n bad">0</div><div class="l">validated / gate-passed<br>(Stage&nbsp;2 never ran)</div></div>
+    <div class="kpi"><div class="n bad">0</div><div class="l">multi-sourced cases<br>all corroboration = 1</div></div>
+  </div>
+</div></header>
+
+<h2>1 · Inventory</h2>
+<div class="h2sub">The harvested-data files, newest write 2026-07-15</div>
+<p>Everything the AX-case harvest writes lives under <code>state/</code>. The registry is the corpus; the rest are the working files of a single harvest loop (candidate sourcing → extraction → merge). Sizes and row counts are read live from disk.</p>
+<div class="scroll"><table>
+<thead><tr><th>File</th><th class="num">Bytes</th><th class="num">Rows</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>state/ax_case_harvest_registry.json</code></td><td class="num">439,959</td><td class="num">231</td><td><b>The corpus.</b> Merged, de-duplicated cases — the source of every number below. <span class="tag kept">authoritative</span></td></tr>
+<tr><td><code>state/ax_case_db.json</code></td><td class="num">80</td><td class="num">0</td><td>Stage-2 validator's declared input. <span class="tag empty">empty — cases: []</span></td></tr>
+<tr><td><code>state/ax_case_harvest_attempted.json</code></td><td class="num">5,242</td><td class="num">51</td><td>Visited-URL ledger (dedup); <code>attempted_urls</code> already fetched.</td></tr>
+<tr><td><code>state/ax_case_harvest_batch.json</code></td><td class="num">1,507</td><td class="num">1</td><td>Last extraction batch handed to the merge step.</td></tr>
+<tr><td><code>state/ax_case_harvest_raw_extract.json</code></td><td class="num">3,586</td><td class="num">1</td><td>Raw <code>claude</code> API envelope from the final extract call.</td></tr>
+<tr><td><code>state/ax_case_harvest_raw_candidates.json</code></td><td class="num">2,240</td><td class="num">1</td><td>Raw <code>claude</code> API envelope from the final candidate-sourcing call.</td></tr>
+<tr><td><code>state/ax_case_harvest_hits.json</code></td><td class="num">20</td><td class="num">0</td><td>Search-hit buffer. <span class="tag empty">empty — hits: []</span></td></tr>
+<tr><td><code>state/ax_case_harvest.err</code></td><td class="num">0</td><td class="num dim">—</td><td>Error log. Empty — the last run recorded no error.</td></tr>
+<tr><td><code>state/search_hits_ax.json</code></td><td class="num">50,150</td><td class="num">14</td><td>Seed search hits for the topic (Stage&nbsp;1 sourcing input).</td></tr>
+<tr><td><code>state/logs/ax_case_harvest_*.jsonl</code></td><td class="num">×4</td><td class="num">19·117·33·34</td><td>Per-run transcripts: 3 runs on 07-14, 1 on 07-15.</td></tr>
+</tbody></table></div>
+<p class="dim" style="font-size:12.5px">Adjacent but distinct: <code>state/news_case_db_20260706T091854Z.json</code> and <code>state/news_case_db_with_patch.json</code> are a separate news-monitor path — both hold <b>0</b> cases (the patch file carries a 16-entry <code>ledger_patch</code> only). The <em>machinery</em> — <code>scripts/harvest_ax_cases.sh</code>, <code>merge_ax_case_harvest_registry.sh</code>, <code>agents/stage1/ax_case_harvest_extractor.md</code>, <code>config/ax_case_output_template.json</code>, <code>docs/ax_case_*.md</code>, <code>tests/test_ax_case_harvest_dates.sh</code> — is code, not harvested data, and is excluded from the table above.</p>
+
+<h2>2 · What one case looks like</h2>
+<div class="h2sub">20 fields per record — a named before/after with a sourced KPI</div>
+<p>Every record carries a company, an industry, an explicit <em>before</em> and <em>after</em> workflow, the AI system used, a measurable KPI with its value, a supporting quote, and full source + date provenance — the shape <code>CLAUDE.md</code> requires. Example (<code>case-2026-0001</code>):</p>
+<pre><code>company            "GitHub"
+industry           "software development tools"
+workflow_before    "Developers manually wrote code in their IDE, context-switching…"
+workflow_after     "Developers receive AI-generated whole-function code suggestions inline…"
+ai_system_or_tool  "GitHub Copilot"
+measurable_kpi     "developer coding speed and satisfaction"
+kpi_value          "up to 55% faster coding; 74% of developers reported less frustration"
+evidence_quote     "…coded up to 55% faster than those who didn't"
+source_url         "https://github.blog/2023-09-06-how-to-build-an-enterprise-llm-application…"
+transformation_date "2022-06"     publication_date "2023-09-06"
+confidence 0.8      verification_status "verified"     corroboration_count 1
+conflicting_evidence_log []        discovery.found_via [{platform:"web"}]</code></pre>
+
+<h2>3 · The corpus at a glance</h2>
+<div class="h2sub">Distributions across all 231 cases</div>
+
+<div class="cols2">
+<div>
+<h3>Fetch status</h3>
+<div class="bars">
+  <div class="barrow"><span class="blab">verified (fetch OK)</span><div class="bar"><i style="width:100%"></i></div><span class="barval">208</span></div>
+  <div class="barrow"><span class="blab">snippet-only</span><div class="bar"><i class="warnb" style="width:11.1%"></i></div><span class="barval">23</span></div>
+</div>
+<p class="dim" style="font-size:12.5px"><b>Read this precisely.</b> <code>verification_status:"verified"</code> means only that the HTTP fetch of the source succeeded — <em>not</em> that the claim was corroborated or the source vetted. See §5.</p>
+</div>
+<div>
+<h3>Corroboration</h3>
+<div class="bars">
+  <div class="barrow"><span class="blab">1 source</span><div class="bar"><i class="warnb" style="width:100%"></i></div><span class="barval">231</span></div>
+  <div class="barrow"><span class="blab">2+ sources</span><div class="bar"><i style="width:0%"></i></div><span class="barval">0</span></div>
+</div>
+<p class="dim" style="font-size:12.5px">Every case rests on a <b>single</b> source. <code>corroboration_count</code> is 1 for all 231; <code>conflicting_evidence_log</code> is empty for all 231.</p>
+</div>
+</div>
+
+<h3>Confidence score (harvester's self-assessed, 0–1)</h3>
+<div class="bars">
+  <div class="barrow"><span class="blab">0.2–0.29</span><div class="bar"><i style="width:2.5%"></i></div><span class="barval">2</span></div>
+  <div class="barrow"><span class="blab">0.3–0.39</span><div class="bar"><i style="width:13.6%"></i></div><span class="barval">11</span></div>
+  <div class="barrow"><span class="blab">0.4–0.49</span><div class="bar"><i style="width:48.1%"></i></div><span class="barval">39</span></div>
+  <div class="barrow"><span class="blab">0.5–0.59</span><div class="bar"><i style="width:69.1%"></i></div><span class="barval">56</span></div>
+  <div class="barrow"><span class="blab">0.6–0.69</span><div class="bar"><i style="width:100%"></i></div><span class="barval">81</span></div>
+  <div class="barrow"><span class="blab">0.7–0.79</span><div class="bar"><i style="width:40.7%"></i></div><span class="barval">33</span></div>
+  <div class="barrow"><span class="blab">0.8–0.85</span><div class="bar"><i style="width:11.1%"></i></div><span class="barval">9</span></div>
+</div>
+<p class="dim" style="font-size:12.5px">Range 0.28–0.85, mean <b>0.565</b>. The mass sits at 0.5–0.6 — the harvester itself was moderately confident at best, and never above 0.85.</p>
+
+<div class="cols2">
+<div>
+<h3>Top source domains (of 99)</h3>
+<div class="bars">
+  <div class="barrow"><span class="blab">medium.com</span><div class="bar"><i style="width:100%"></i></div><span class="barval">36</span></div>
+  <div class="barrow"><span class="blab">microsoft.com</span><div class="bar"><i style="width:69.4%"></i></div><span class="barval">25</span></div>
+  <div class="barrow"><span class="blab">uber.com</span><div class="bar"><i style="width:22.2%"></i></div><span class="barval">8</span></div>
+  <div class="barrow"><span class="blab">linkedin.com</span><div class="bar"><i style="width:19.4%"></i></div><span class="barval">7</span></div>
+  <div class="barrow"><span class="blab">tech.instacart.com</span><div class="bar"><i style="width:16.7%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">openai.com</span><div class="bar"><i style="width:16.7%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">github.blog</span><div class="bar"><i style="width:16.7%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">atspotify.com</span><div class="bar"><i style="width:16.7%"></i></div><span class="barval">6</span></div>
+</div>
+</div>
+<div>
+<h3>Most-cited companies (of 143)</h3>
+<div class="bars">
+  <div class="barrow"><span class="blab">LinkedIn</span><div class="bar"><i style="width:100%"></i></div><span class="barval">12</span></div>
+  <div class="barrow"><span class="blab">Uber</span><div class="bar"><i style="width:66.7%"></i></div><span class="barval">8</span></div>
+  <div class="barrow"><span class="blab">Walmart</span><div class="bar"><i style="width:50%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">Spotify</span><div class="bar"><i style="width:50%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">Instacart</span><div class="bar"><i style="width:50%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">GitHub</span><div class="bar"><i style="width:50%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">Netflix</span><div class="bar"><i style="width:41.7%"></i></div><span class="barval">5</span></div>
+  <div class="barrow"><span class="blab">Mercado Libre</span><div class="bar"><i style="width:41.7%"></i></div><span class="barval">5</span></div>
+</div>
+</div>
+</div>
+<p class="dim" style="font-size:12.5px">The corpus leans on self-published engineering blogs (medium.com, company <code>engineering.*</code> subdomains) and vendor case-study pages (microsoft.com's 25 are Microsoft's own customer stories). That is the source-tier ceiling §5 describes.</p>
+
+<h2>4 · Dates: transformation vs publication</h2>
+<div class="h2sub">The two are kept separate — and one is mostly missing</div>
+<div class="cols2">
+<div>
+<h3>Transformation year</h3>
+<div class="bars">
+  <div class="barrow"><span class="blab no">unknown</span><div class="bar"><i class="warnb" style="width:100%"></i></div><span class="barval">183</span></div>
+  <div class="barrow"><span class="blab">2023</span><div class="bar"><i style="width:10.4%"></i></div><span class="barval">19</span></div>
+  <div class="barrow"><span class="blab">2024</span><div class="bar"><i style="width:4.4%"></i></div><span class="barval">8</span></div>
+  <div class="barrow"><span class="blab">2022</span><div class="bar"><i style="width:3.3%"></i></div><span class="barval">6</span></div>
+  <div class="barrow"><span class="blab">2019–21</span><div class="bar"><i style="width:4.9%"></i></div><span class="barval">9</span></div>
+  <div class="barrow"><span class="blab">≤2018 / 2025 / FY20</span><div class="bar"><i style="width:3.3%"></i></div><span class="barval">6</span></div>
+</div>
+<p class="dim" style="font-size:12.5px"><b>183 of 231 (79%)</b> have no known transformation date — correctly written as <code>"unknown"</code>, not invented.</p>
+</div>
+<div>
+<h3>Publication year</h3>
+<div class="bars">
+  <div class="barrow"><span class="blab">2024</span><div class="bar"><i style="width:100%"></i></div><span class="barval">74</span></div>
+  <div class="barrow"><span class="blab">2023</span><div class="bar"><i style="width:62.2%"></i></div><span class="barval">46</span></div>
+  <div class="barrow"><span class="blab">2025</span><div class="bar"><i style="width:39.2%"></i></div><span class="barval">29</span></div>
+  <div class="barrow"><span class="blab">2022</span><div class="bar"><i style="width:27%"></i></div><span class="barval">20</span></div>
+  <div class="barrow"><span class="blab">2021</span><div class="bar"><i style="width:16.2%"></i></div><span class="barval">12</span></div>
+  <div class="barrow"><span class="blab dim">unknown / other</span><div class="bar"><i class="warnb" style="width:67.6%"></i></div><span class="barval">50</span></div>
+</div>
+<p class="dim" style="font-size:12.5px">Publication skews 2023–2025. When a transformation date is missing, publication date is the only temporal anchor — and it can post-date the actual rollout by years.</p>
+</div>
+</div>
+
+<h2>5 · The integrity gate</h2>
+<div class="h2sub">231 harvested is not 231 verified — and the deck rule is explicit</div>
+<div class="card bad">
+<h3>By the project's own definition, zero cases are deck-ready.</h3>
+<p><code>CLAUDE.md</code>: <em>"Validation is a hard gate: never select or present a case that has not passed validation."</em> A validated case carries a <code>gate_passed</code> flag written by Stage&nbsp;2. <b>No record in the registry has that field</b>, because Stage&nbsp;2 has never seen this data. Three independent facts confirm the corpus is pre-validation:</p>
+<ul>
+<li><b>All 231 are single-sourced.</b> <code>corroboration_count = 1</code> everywhere; <code>01_case_finder.md</code>'s bar is Tier&nbsp;A, Tier&nbsp;B primary financials, or two independent sources. None is met.</li>
+<li><b>"verified" is a fetch status, not a verdict.</b> The 208 "verified" only mean the source URL returned 200. It should be read as <code>fetch_status: fetched | snippet_only</code>.</li>
+<li><b>The bridge is missing.</b> The harvest wrote <code>ax_case_harvest_registry.json</code>; Stage&nbsp;2 reads <code>ax_case_db.json</code>, which is <code>{"cases": []}</code>. The two paths were built separately and never joined.</li>
+</ul>
+</div>
+<div class="flow">
+  <div class="node"><div class="t">harvest</div><div class="d">231 cases → <code>ax_case_harvest_registry.json</code></div></div>
+  <div class="arrow">─ ✕ ─▶</div>
+  <div class="node stop"><div class="t">bridge (missing)</div><div class="d">registry → <code>ax_case_db.json</code> never populated</div></div>
+  <div class="arrow">──▶</div>
+  <div class="node"><div class="t">Stage 2 validate</div><div class="d">reads empty input → adds <code>gate_passed</code></div></div>
+  <div class="arrow">──▶</div>
+  <div class="node"><div class="t">Stage 3/4 select + build</div><div class="d">gate-passed only</div></div>
+</div>
+<p>The attrition when this bridge is built will be heavy and <em>correct</em>: single-sourced, self-published, mostly-undated cases are exactly what the validator exists to filter. The 231 are a strong <b>lead list</b>, not a vetted corpus.</p>
+
+<h2>6 · Representative cases</h2>
+<div class="h2sub">Dated, higher-confidence records — the strongest of the set</div>
+<div class="scroll"><table>
+<thead><tr><th>Company</th><th>AI system</th><th>Headline KPI</th><th class="num">Xform</th><th>Source</th><th class="num">Conf</th></tr></thead>
+<tbody>
+<tr><td>Mass General Brigham</td><td>Ambient documentation (AI notes + virtual scribe)</td><td>−41% after-hours work/day; −66% notes overdue &gt;2 days; +12% clinical productivity</td><td class="num">2023-07</td><td>massgeneralbrigham.org</td><td class="num">0.85</td></tr>
+<tr><td>Publicis Groupe</td><td>CoreAI platform</td><td>margin 20% → 25%</td><td class="num">2023</td><td>digiday.com</td><td class="num">0.85</td></tr>
+<tr><td>GitHub</td><td>GitHub Copilot</td><td>up to 55% faster coding; 74% less frustration</td><td class="num">2022-06</td><td>github.blog</td><td class="num">0.80</td></tr>
+<tr><td>Klarna</td><td>AI Assistant (OpenAI)</td><td>2.3M chats/mo ≈ 700 agents; resolution 11 min → &lt;2 min</td><td class="num">2024-01</td><td>klarna.com</td><td class="num">0.80</td></tr>
+<tr><td>Wendy's</td><td>FreshAI (Google Cloud)</td><td>86% of orders handled without staff intervention (pilot)</td><td class="num">2023-12</td><td>wendys.com</td><td class="num">0.80</td></tr>
+<tr><td>Uber</td><td>Genie (GenAI on-call copilot)</td><td>~13,000 eng hours saved; 70,000+ questions</td><td class="num">2023-09</td><td>uber.com</td><td class="num">0.75</td></tr>
+<tr><td>Stripe</td><td>Radar (DNN fraud)</td><td>blocks 0.1% of legit payments; −85% training time</td><td class="num">2022</td><td>stripe.dev</td><td class="num">0.75</td></tr>
+<tr><td>Telstra</td><td>Ask Telstra (Azure OpenAI)</td><td>90% users more effective; −20% follow-up contact</td><td class="num">2023</td><td>microsoft.com</td><td class="num">0.75</td></tr>
+<tr><td>JPMorganChase</td><td>LLM Suite</td><td>0 → 230,000 users in 8 months</td><td class="num">2024</td><td>jpmorganchase.com</td><td class="num">0.70</td></tr>
+<tr><td>Spotify</td><td>Podcast-preview pipeline (Dataflow/Beam)</td><td>111.7 min → 3.7 min (~30× faster)</td><td class="num">2023-03</td><td>atspotify.com</td><td class="num">0.70</td></tr>
+</tbody></table></div>
+<p class="dim" style="font-size:12.5px">Even these carry <code>corroboration_count 1</code>. Several are single-vendor pages (microsoft.com, klarna.com, wendys.com) reporting their own success — precisely the "vendor-only claim" <code>CLAUDE.md</code> says to label unverified.</p>
+
+<h2>7 · Provenance</h2>
+<div class="h2sub">When and how the corpus was built</div>
+<ul>
+<li><b>Harvested in two days.</b> <code>discovery.first_seen_at</code> is 2026-07-14 for 227 cases and 2026-07-15 for 4. Four run transcripts span 07-14 (three runs) to 07-15 (one).</li>
+<li><b>One channel.</b> <code>found_via.platform</code> is <code>"web"</code> for all 231 — no news-monitor, social, or awesome-list contributions reached the registry.</li>
+<li><b>51 URLs attempted, 231 cases kept.</b> The attempted-URL ledger holds 51 entries; a single source page often yields several company cases, which is how 51 fetches produce 231 records.</li>
+<li><b>Seed exhaustion.</b> Session memory records both AX-case seeds fully consumed as of 2026-07-15; re-running the harvest as-is returns ~0 new. Growth needs new, higher-tier seeds — not another pass.</li>
+</ul>
+
+<h2>8 · What to do with this</h2>
+<div class="h2sub">In priority order</div>
+<ol>
+<li><b>Build the harvest → pipeline bridge.</b> Populate <code>ax_case_db.json</code> from the registry, then run Stage&nbsp;2 (<code>ax-validator</code>). Expect — and accept — heavy attrition.</li>
+<li><b>Rename <code>verification_status</code></b> to <code>fetch_status</code> (<code>fetched</code>/<code>snippet_only</code>) and report source tier separately, so "verified" stops implying a verdict it does not carry.</li>
+<li><b>Fix the seeds before re-harvesting.</b> The single-source, self-published ceiling is set upstream; add Tier-A-first sources so corroboration &gt; 1 becomes reachable.</li>
+<li><b>Treat the 231 as leads.</b> They are a well-structured, named-company lead list with sourced KPIs — the right input to validation, not a substitute for it.</li>
+</ol>
+
+<div class="foot">
+  Generated 2026-07-24 · axCaseResearch4 · all counts read live from <code>state/ax_case_harvest_registry.json</code> (231 cases, schema v1, last merged 2026-07-15) and adjacent harvest files. Figures reproduce with <code>jq</code> over the same files. This report describes a <em>pre-validation</em> corpus; nothing here has passed the Stage&nbsp;2 gate.
+</div>
+</div>
+</body>
+</html>
