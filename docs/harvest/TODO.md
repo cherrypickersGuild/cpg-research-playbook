@@ -149,32 +149,49 @@ value order and multiplicity stay significant under both policies.
 
 **`source_request_key` double-counted the query.** The key material carried the full normalized URL
 *and* a separately-computed `canonical_query`. `canonicalize_string` preserves parameter order, so the
-unsorted copy inside the URL leaked back in and two order-equivalent API requests still hashed
-differently — defeating the whole point of sorting the query for order-insignificant adapters. Fixed
-by splitting the normalized URL and hashing the query exactly once, via `canonical_query`, which is
-now the single authority on query significance. Pinned by
-`test_pool.test_query_order_is_insignificant_only_for_api_adapters`.
+un-normalized copy inside the URL leaked back in and the query policy had no effect at all. Fixed by
+splitting the normalized URL and hashing the query exactly once, via `canonical_query`, which is now
+the single authority on query normalization. Pinned by
+`tests/harvest/test_pool.py::TestQueryOrderPolicy`.
+
+The shipped contract, for the avoidance of doubt: query normalization is **opt-in per logical
+request** (`query_order_policy`, keyword-only, default `preserve` for **every** adapter and every
+source). Adapter class authorizes nothing — `ORDER_INSIGNIFICANT_ADAPTERS` does not exist, and
+`test_pool.py:113` asserts its absence. Repeated-key value order and multiplicity stay significant
+under both policies. Earlier drafts describing adapter-wide sorting for "order-insignificant
+adapters" are superseded; see `STAGE_3_IMPLEMENTATION_PLAN.md` §2 erratum E1.
 
 ---
 
-## Stage 3 — discovery adapters ⟵ **NEXT. NOT STARTED, NOT APPROVED.**
+## Stage 3 — discovery adapters ⟵ **NEXT. PLAN APPROVED; CODE NOT STARTED.**
 
-The Stage 2.5 gate is satisfied (387 assertions green), so Stage 3 is no longer blocked *by that
-gate*. It is still blocked by approval. Entry conditions are §18 of
-`docs/harvest/handoffs/HANDOFF_STAGE_2_5_COMPLETE_2026-07-28.md`: a new session must independently
-verify the handoff, verify `HEAD` and repository cleanliness, rerun or spot-verify the
-trust-establishing checks, review this scope against the actual Stage 2.5 interfaces
-(`pool.CandidatePool`, `request_key.source_request_key`, the `candidate_pool` / `discovery_lane`
-schemas), present a Stage 3 implementation plan, and **receive explicit approval before editing any
-file**.
+Plan: **`docs/harvest/STAGE_3_IMPLEMENTATION_PLAN.md`** — standalone and authoritative. The Stage 2.5
+entry conditions (§18 of `handoffs/HANDOFF_STAGE_2_5_COMPLETE_2026-07-28.md`) were all satisfied: the
+handoff was independently verified, `HEAD` and cleanliness confirmed, the 387 assertions and all four
+gates rerun, and the scope reviewed against the actual Stage 2.5 interfaces.
 
-Two design questions deliberately deferred to that plan: the per-source config field for
-`query_order_policy` (which needs a `taxonomy.v1.json` change and its own deviation request), and how
-the 25 recorded fixtures are captured without performing a live harvest.
+Both deferred design questions are now resolved in that plan: the per-source `query_order_policy`
+config field is **not added** (no configured source needs it, and adding it would edit a Stage 1
+schema and invalidate cache keys), and the 25 fixtures are **synthetic and hand-authored**, never
+captured — so no live harvest is required.
 
-- [ ] `src/harvest/adapters/{base,feed,sitemap,jsonapi,seed,model_search}.py`
-- [ ] Recorded fixtures for all 25 configured sources
-- [ ] `tests/test_taxonomy_adapters.sh` — incl. seed depth hard-fixed at 1, fail-closed allowlist
+Three approved corrections precede adapter code, each its own commit, in this order:
+
+- [ ] **C4** — `ClientError.reason = "http_4xx"`; a 4xx must not be reported as `http_5xx`.
+      `httpclient.py` · `test_http.py` · `IMPLEMENTATION_PLAN.md` §3
+- [ ] **DV-7** — `CandidatePool` byte-determinism and honest ownership vocabulary: type-aware
+      set normalization at serialization, and deterministic **designation** fields that never claim to
+      name the lane that actually performed the work. `pool.py` · `candidate_pool.v1.json` ·
+      `test_pool.py`
+- [ ] Stage 3 proper:
+      - [ ] `src/harvest/sourcecache.py` — one logical fetch per request key for success **and**
+            failure; `claim`/`wait`/`complete`/`fail` store protocol
+      - [ ] `src/harvest/adapters/{base,feed,jsonapi,seed}.py` — three concrete adapters plus a
+            contract layer; `sitemap` and `model_search` raise typed `AdapterNotImplemented`
+      - [ ] Synthetic fixtures: 25 sources + 19 configured-host robots policy fixtures;
+            `scripts/harvest/check_fixtures.py`
+      - [ ] `tests/test_taxonomy_{adapters,source_cache,adapter_concurrency}.sh` — incl. seed depth
+            hard-fixed at 1, fail-closed allowlist, and no child-body fetch in Stage 3
 
 ## Stage 4 — extract, classify, verify, dedupe
 
