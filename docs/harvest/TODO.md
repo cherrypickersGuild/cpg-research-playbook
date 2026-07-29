@@ -11,7 +11,7 @@ stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  567 across 17 suites, all green
+assertions:                  622 across 18 suites, all green (567 prior + 55 from S4-1)
 ```
 
 ---
@@ -209,23 +209,40 @@ modifications; the 508 pre-existing untracked files byte-identical; nothing push
 of any kind was made. Completion handoff:
 `docs/harvest/handoffs/HANDOFF_STAGE_3_COMPLETE_2026-07-29.md`.
 
-## Stage 4 — extract, classify, verify, dedupe ⟵ **PLAN PROPOSED; NOT APPROVED; CODE NOT STARTED.**
+## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1 COMPLETE. S4-2 NOT APPROVED.**
 
 Plan: **`docs/harvest/STAGE_4_IMPLEMENTATION_PLAN.md`** — `Status: PROPOSED — PENDING DEVIATION
-APPROVAL`. It is the design authority for Stage 4 and **authorizes no code**. `DV-11` is open, and
-each of checkpoints S4-1 … S4-5 requires its own separate approval.
+APPROVAL`. It is the design authority for Stage 4. Each of checkpoints S4-1 … S4-5 requires its own
+separate approval, and approval of one grants nothing to the next.
 
 Stage 4 is **metadata-only and entirely in-memory**: it reads no body, issues no request and writes
 no file. **Target-page fetching, target fixtures, target-fetch and extraction ownership, body
 parsing and alias adjudication are deferred to Stage 6.** Stage 4 modifies no schema, no config, no
 adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
 
-- [ ] **S4-1** `src/harvest/dedupe.py` — same-topic dedupe over canonical identity; the DV-11 ingest
-      model. Blocked on DV-11 approval
-- [ ] **S4-2** `src/harvest/extract.py` — metadata normalization (not body extraction)
+- [x] **DV-11 — approved.** `candidate_pool.v1.json` is **not** widened and stays payload-free.
+      Candidate metadata lives in Stage 4's in-memory contracts and, later, under `provenance.raw`,
+      which `record.v1.json` types as an unconstrained object. Forward consequence: the candidate-pool
+      artifact carries no titles, dates, summaries or publishers — read records, never the pool
+- [x] **S4-1** `src/harvest/dedupe.py` — same-topic dedupe over canonical identity plus the DV-11
+      ingest model: `Delivery` · `CandidateObservation` · `CandidateGroup` · `DedupeResult` ·
+      `group()`. One observation per distinct source item even when several lanes receive the same
+      cached result; lane IDs and request keys merge into sorted, deduplicated provenance; ordering
+      is the total content key `(role_rank, source_id, position, target_url)`; every metadata
+      contribution and conflict retained; canonical-equivalence grouping only. **55 assertions**,
+      `tests/test_taxonomy_dedupe.sh`
+- [ ] **S4-2** `src/harvest/extract.py` — metadata normalization (not body extraction).
+      **NOT APPROVED; not started**
 - [ ] **S4-3** `src/harvest/classify.py` + `tests/test_taxonomy_classify.sh` — all 10 precedence rules
 - [ ] **S4-4** `src/harvest/verify.py` — scoring and the accept/reject decision
 - [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction
+
+**S4-1 gate:** 622 assertions across 18 suites, all green (567 prior, unchanged and unmodified, plus
+55 new). `check_fixtures.py`, `verify_protected_baseline.sh`, `check_facets.py`,
+`gen_facet_schema.py --check` and `check_config.py` all exit 0; `check_config.py` byte-unchanged; the
+508 pre-existing untracked files byte-identical; `.gitignore` still exactly `1 insertion(+)` against
+the anchor. No existing assertion was modified. `pool.py`, every schema and every config file remain
+byte-unchanged.
 
 ## Stage 5 — cell worker, orchestration, cross-topic, staging
 
