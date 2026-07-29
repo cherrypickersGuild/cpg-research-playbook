@@ -11,8 +11,9 @@ stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  821 across 21 suites, all green
-                             (567 prior + 55 S4-1 + 58 S4-2 + 78 S4-3/S4-3A + 63 S4-4)
+assertions:                  884 across 22 suites, all green
+                             (567 prior + 55 S4-1 + 58 S4-2 + 78 S4-3/S4-3A
+                              + 63 S4-4 + 63 S4-5A)
 ```
 
 ---
@@ -210,7 +211,7 @@ modifications; the 508 pre-existing untracked files byte-identical; nothing push
 of any kind was made. Completion handoff:
 `docs/harvest/handoffs/HANDOFF_STAGE_3_COMPLETE_2026-07-29.md`.
 
-## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1…S4-4 COMPLETE. S4-5 NOT APPROVED.**
+## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1…S4-5A COMPLETE. S4-5B NOT APPROVED.**
 
 Plan: **`docs/harvest/STAGE_4_IMPLEMENTATION_PLAN.md`** — `Status: PROPOSED — PENDING DEVIATION
 APPROVAL`. It is the design authority for Stage 4. Each of checkpoints S4-1 … S4-5 requires its own
@@ -279,8 +280,52 @@ adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
       `content_hash null`, no invented timestamp. Rejections keep their scores and use only
       `record.v1.json`'s committed enum, with a detail naming the exact rule and number. Nothing is
       written to disk. **63 assertions**, `tests/test_taxonomy_verify.sh`
-- [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction.
+- [x] **S4-4A — scoring calibration conclusion (documentation only, no code).** Measured over the
+      109 fixture-derived candidates: **4 accepted (3.7%)**, rejected by `off_topic` 102 and
+      `min_relevance` 3, every other gate 0; minimum composite among candidates passing relevance and
+      quality **0.7189**, i.e. `+0.3189` over the threshold. Conclusions, recorded in the plan §S4-4A:
+      `min_audience_fit` is **structurally non-binding** under the current binary audience-fit and
+      gate ordering · `accept_composite=0.40` is **slack on this corpus, not proven universally
+      inert** · `min_quality` is **capable of binding** but was pre-empted by relevance on all 5
+      candidates below it · **freshness still contributes** to the composite though it changed no
+      fixture verdict · **synthetic parser fixtures are unsuitable for tuning editorial acceptance
+      thresholds** (102 of 102 `off_topic` candidates would also have missed `require_any` in their
+      *discovery* cell) · **calibration of audience fit, the composite threshold and acceptance rates
+      is deferred to the Stage 9 bounded live corpus** · **`SATURATION=3` and the `0.68/0.32`
+      required-versus-boost split are provisionally approved** until then. Corrective options were
+      evaluated and rejected on evidence: dropping the early exclusion gate changes zero verdicts, and
+      grading audience fit to 0.50 still leaves the minimum composite at 0.6189. **No S4-4 corrective
+      code or config change was required.**
+- [x] **S4-5A** `src/harvest/facetassign.py` — deterministic `case_facets` assignment:
+      `FacetAssignment` · `assign()` · `assign_all()` · `applicability()`. Values come only from the
+      committed vocabularies, matched with **classify's committed token matcher** (S4-3A) — no second
+      vocabulary or matching system. `INDUSTRY_FORBIDDEN_EVIDENCE_FIELDS` keeps `publisher` out of
+      industry evidence and `TECHNOLOGY_SOFTWARE_FORBIDDEN_EVIDENCE_FIELDS` additionally keeps
+      `target_url` out of `technology-software`; `LEXICAL_SUPPORT_REQUIRED` is gated through
+      `facets.evidence_supports`; `classification_state` comes from
+      `facets.decide_classification_state` and is never recomputed. A tie between two equally
+      supported industries resolves to the committed `other-unclear` sentinel with both names
+      recorded — never to a slug sort. Gated, report-only and forbidden cells are distinguished, and
+      a forbidden topic returns an **explicit not-applicable** rather than an empty payload, which
+      `reporting_state` would miscount as `unresolved` instead of `not_enriched`. Payloads validate
+      against `facets.generated.v1.json`. **63 assertions**, `tests/test_taxonomy_facetassign.sh`
+- [ ] **S4-5B** in-memory record construction and schema validation.
       **NOT APPROVED; not started**
+
+**S4-5A gate:** 884 assertions across 22 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 78
+S4-3/S4-3A + 63 S4-4 + 63 S4-5A). All prior assertions unchanged and unmodified. All five checkers
+exit 0; the 508 pre-existing untracked files byte-identical; `.gitignore` still exactly
+`1 insertion(+)`. `config/`, `schemas/`, `verify.py`, `classify.py`, `extract.py`, `dedupe.py`,
+`facets.py` and `records.py` all byte-unchanged.
+
+**CF-11 (secondary industries, → the facet-quality stage).** `industry.secondary` is left empty. The
+committed definition means **deployment context, never corporate portfolio** — a judgement lexical
+evidence cannot make, so filling it with runners-up would manufacture findings.
+
+**CF-12 (short vocabulary terms, → the facet-vocabulary stage, with CF-5 and CF-8).**
+`it-infrastructure` lists the term `IT`, which matches the English pronoun "it" as a whole token.
+Token matching is behaving exactly as S4-3A specifies; the sharp edge is in the committed facet
+lists. Pinned by test rather than papered over.
 
 **S4-4 gate:** 821 assertions across 21 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 78
 S4-3/S4-3A + 63 S4-4). All prior assertions unchanged and unmodified. All five checkers exit 0; the

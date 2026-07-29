@@ -151,6 +151,8 @@ changes meaning.
 | **CF-3** | No target-page fixtures exist. Measured from the shipped corpus: 109 capped candidates across 19 target hosts, one of which (`news.ycombinator.com`) has no robots fixture. `FixtureOpener` raises `FixtureMissing` for anything but the 25 configured source URLs | Stage 6 |
 | **CF-4** | `scripts/validate_task.sh` contains zero taxonomy references, so CLAUDE.md's stated validation entry point exercises none of the 567 assertions | Stage 8 |
 | **CF-5** | Keyword-list tuning under the S4-3A token semantics: plurals of single-token nouns no longer match, `abstract:` also fires on a bare "abstract", and `ci/cd` also matches "ci cd" (§4A) | whichever stage revisits relevance |
+| **CF-11** | `industry.secondary` is left empty by S4-5A. The committed definition means DEPLOYMENT CONTEXT, never corporate portfolio — a judgement lexical evidence cannot make, so filling it with runners-up would manufacture findings | the stage that revisits facet quality |
+| **CF-12** | Short vocabulary terms match unrelated English words as whole tokens: `it-infrastructure` lists `IT`, which fires on the pronoun "it". Token matching is behaving exactly as S4-3A specifies; the sharp edge is in the committed facet lists. Pinned by test rather than papered over | the stage that revisits the facet vocabularies, with CF-5 and CF-8 |
 | **CF-6** | **No checkpoint that edits `config/` can pass the full gate before committing.** 14 of the 20 taxonomy suites assert `git status --porcelain --untracked-files=no -- state/ config/` is empty — 13 as a wrapper epilogue, one as `test_taxonomy_config.sh` section H. The guard exists to catch a *test* mutating production config and compares the working tree to HEAD, so it cannot distinguish that from an authorized checkpoint edit. Measured in S4-3A: 755/756 behavioural assertions green pre-commit, the single failure being the guard itself; all 20 suites fully green immediately after the atomic commit. Fixing it means changing the guard from "config is unmodified" to "config is unchanged **by this test**" (snapshot before, compare after) across 14 existing test files | Stage 8, with the `validate_task.sh` wiring |
 
 ---
@@ -484,7 +486,60 @@ Every checkpoint requires **separate approval**. This document authorizes none o
 - **Commit / stop boundary.** One commit. Stop if a verdict requires fetch evidence.
 - **Carried-forward findings.** CF-2 — the rejection-log vocabulary, when Stage 5 writes that log.
 
-### S4-5 · Facet assignment and record construction
+### S4-4A · Scoring calibration conclusion *(documentation only, no code)*
+
+Measured over the 109 fixture-derived candidates at a fixed clock, through the real
+S4-1 → S4-2 → S4-3 → S4-4 pipeline:
+
+```text
+accepted 4 (3.7%) · rejected 105
+rejection by gate: off_topic 102 · min_relevance 3 · every other gate 0
+min composite among candidates passing relevance AND quality: 0.7189  (+0.3189 over 0.40)
+```
+
+- **`min_audience_fit` is structurally non-binding** under the current binary audience-fit and gate
+  ordering: `audience_fit ∈ {0.0, 1.0}`, and the only failing value is produced solely by an
+  `exclude` match, which the first gate already intercepts. Zero corpus candidates fall below it.
+- **`accept_composite = 0.40` is slack on this corpus, not proven universally inert.** It is
+  functional when raised — a `+0.0001` raise rejects, proved by test — but no candidate passing
+  relevance and quality came within 0.31 of it here.
+- **`min_quality` is capable of binding** — 5 candidates sit below it — but was pre-empted by the
+  relevance gates on every one of them.
+- **Freshness still contributes to the composite** (weight 0.15, renormalized away when null); it
+  changed no verdict on this corpus, where every dated fixture falls in a narrow 0.86–0.89 band.
+- **Synthetic parser fixtures are unsuitable for tuning editorial acceptance thresholds.** They were
+  authored to exercise RSS/Atom/JSON parsing, and 102 of the 102 `off_topic` candidates would also
+  have missed `require_any` in their *discovery* cell — the corpus measures plumbing, not content.
+- **Calibration of audience fit, the composite threshold and acceptance rates is deferred to the
+  Stage 9 bounded live corpus.**
+- **`SATURATION = 3` and the `0.68 / 0.32` required-versus-boost split are provisionally approved**
+  until that calibration. They are the sole determinant of the acceptance rate among candidates that
+  match any vocabulary, and both are recorded as chosen shapes, not committed policy.
+
+Corrective options were evaluated and rejected on evidence: removing the early exclusion gate changes
+zero verdicts (the corpus contains no exclusion match, and `relevance = 0.0` would intercept first
+anyway), and grading audience fit down to 0.50 still leaves the minimum composite at 0.6189 — so
+neither makes `accept_composite` bind. **No S4-4 corrective code or config change is required.**
+
+### S4-5A · Deterministic facet assignment
+
+- **Goal.** Assign `case_facets` from the committed vocabularies, or return an explicit
+  not-applicable result where the schema requires null.
+- **Allowed paths.** `src/harvest/facetassign.py` (A) · `tests/harvest/test_facetassign.py` (A) ·
+  `tests/test_taxonomy_facetassign.sh` (A) · this file (M) · `docs/harvest/TODO.md` (M).
+- **API / data contract.** `assign(extracted, classification, *, facets_dir=None) -> FacetAssignment`
+  · `assign_all(extraction, classifications)` · `applicability(classification)`.
+- **Invariants.** Evidence is quoted from an authorized field ·
+  `INDUSTRY_FORBIDDEN_EVIDENCE_FIELDS` and `TECHNOLOGY_SOFTWARE_FORBIDDEN_EVIDENCE_FIELDS` enforced ·
+  `LEXICAL_SUPPORT_REQUIRED` gated through `facets.evidence_supports` ·
+  `classification_state` from `facets.decide_classification_state`, never recomputed ·
+  a tie resolves to the committed sentinel with competing values recorded, never to a slug sort ·
+  forbidden topics return not-applicable, never an empty payload · one matcher, classify's ·
+  no lane, ownership, fetch, record construction or state mutation.
+- **Risk tier and validation.** L1.
+- **Carried-forward findings.** CF-11 (secondary industries), CF-12 (short vocabulary terms).
+
+### S4-5B · Record construction and schema validation *(NOT APPROVED)*
 
 - **Goal.** Assign `case_facets` from the committed vocabularies, then build schema-valid `full` and
   `cross_reference` records in memory.
