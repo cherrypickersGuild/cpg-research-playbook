@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9309",
+ "authored_at": "2026-07-29",
+ "body": "",
+ "configured_host": true,
+ "headers": {
+  "content-type": "text/plain; charset=utf-8"
+ },
+ "host": "rss.arxiv.org",
+ "policy_intent": "absent robots.txt — RFC 9309 allow-all",
+ "provenance": "synthetic",
+ "status": 404
+}

@@ -529,10 +529,42 @@ class TestCompatibility(Base):
                   if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
         for name in ("urlopen", "request", "fromstring", "feed", "getresponse"):
             self.assertNotIn(name, called, "unexpected %r call in sourcecache" % name)
+        # Stage 4B has since landed, so "these paths must not exist" has served
+        # its purpose. What it was really protecting is permanent and stronger:
+        # the dependency arrow points ONE WAY. Adapters build on the cache; the
+        # cache must never learn about adapters or about fixtures, or the
+        # offline test path would stop being the same code as the live one.
         for path in ("src/harvest/adapters", "tests/fixtures/harvest",
                      "src/harvest/fixtures.py", "scripts/harvest/check_fixtures.py"):
-            self.assertFalse(os.path.exists(os.path.join(ROOT, path)),
-                             "%s belongs to checkpoint 4B" % path)
+            self.assertTrue(os.path.exists(os.path.join(ROOT, path)),
+                            "%s is a Stage 4B deliverable and must exist" % path)
+
+        dotted = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                dotted.update(a.name for a in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                prefix = "." * (node.level or 0) + (node.module or "")
+                dotted.add(prefix)
+                dotted.update("%s.%s" % (prefix, a.name) for a in node.names)
+        for forbidden in ("adapters", "fixtures"):
+            offenders = sorted(d for d in dotted
+                               if forbidden in d.replace(".", " ").split())
+            self.assertEqual(offenders, [],
+                             "sourcecache must not depend on %r (found %r)"
+                             % (forbidden, offenders))
+
+        # …and the arrow really does point the other way, so this is a genuine
+        # one-way boundary rather than two modules that simply never met.
+        adapter_base = os.path.join(ROOT, "src", "harvest", "adapters", "base.py")
+        with open(adapter_base, encoding="utf-8") as f:
+            adapter_tree = ast.parse(f.read())
+        adapter_imports = set()
+        for node in ast.walk(adapter_tree):
+            if isinstance(node, ast.ImportFrom):
+                adapter_imports.update(a.name for a in node.names)
+        self.assertIn("sourcecache", adapter_imports,
+                      "adapters are expected to depend on SourceFetchCache")
 
 
 if __name__ == "__main__":

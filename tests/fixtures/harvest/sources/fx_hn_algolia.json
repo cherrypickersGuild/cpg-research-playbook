@@ -1,0 +1,13 @@
+{
+ "authored_against": "JSON API shape declared by the source's jsonapi config",
+ "authored_at": "2026-07-29",
+ "body_b64": "ewogIm5iSGl0cyI6IDMsCiAiaGl0cyI6IFsKICB7CiAgICJ0aXRsZSI6ICJITiBzdG9yeSAxIGFib3V0IEFJIiwKICAgInVybCI6ICJodHRwczovL25ld3MueWNvbWJpbmF0b3IuY29tL2l0ZW0/aWQ9NDAwMSIsCiAgICJjcmVhdGVkX2F0IjogIjIwMjYtMDctMTFUMDg6MzA6MDAuMDAwWiIsCiAgICJhdXRob3IiOiAicG9zdGVyMSIKICB9LAogIHsKICAgInRpdGxlIjogIkhOIHN0b3J5IDIgYWJvdXQgQUkiLAogICAidXJsIjogImh0dHBzOi8vbmV3cy55Y29tYmluYXRvci5jb20vaXRlbT9pZD00MDAyIiwKICAgImNyZWF0ZWRfYXQiOiAiMjAyNi0wNy0xMlQwODozMDowMC4wMDBaIiwKICAgImF1dGhvciI6ICJwb3N0ZXIyIgogIH0sCiAgewogICAidGl0bGUiOiAiSE4gc3RvcnkgMyBhYm91dCBBSSIsCiAgICJ1cmwiOiAiaHR0cHM6Ly9uZXdzLnljb21iaW5hdG9yLmNvbS9pdGVtP2lkPTQwMDMiLAogICAiY3JlYXRlZF9hdCI6ICIyMDI2LTA3LTEzVDA4OjMwOjAwLjAwMFoiLAogICAiYXV0aG9yIjogInBvc3RlcjMiCiAgfSwKICB7CiAgICJ0aXRsZSI6ICJzZWxmIHBvc3Qgd2l0aCBudWxsIHVybCIsCiAgICJ1cmwiOiBudWxsLAogICAiY3JlYXRlZF9hdCI6ICIyMDI2LTA3LTIwVDAwOjAwOjAwLjAwMFoiLAogICAiYXV0aG9yIjogInBvc3RlcjQiCiAgfQogXQp9Cg==",
+ "fixture_id": "fx_hn_algolia",
+ "headers": {
+  "content-type": "application/json; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "source_id": "hn-algolia",
+ "status": 200,
+ "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&query=AI&hitsPerPage=20"
+}

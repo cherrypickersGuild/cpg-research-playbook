@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML 5 anchor markup",
+ "authored_at": "2026-07-29",
+ "body_b64": "PCFkb2N0eXBlIGh0bWw+CjxodG1sPjxoZWFkPjx0aXRsZT5DdXN0b21lcnM8L3RpdGxlPjwvaGVhZD48Ym9keT4KIDxuYXY+PGEgaHJlZj0iL3ByaWNpbmciPlByaWNpbmc8L2E+PGEgaHJlZj0ic3ViLXBhZ2UiPlJlbGF0aXZlIHNpYmxpbmc8L2E+PC9uYXY+CiA8bWFpbj4KICA8YSBocmVmPSIvY3VzdG9tZXJzL2FjbWUtaW5kdXN0cmlhbCI+QWNtZSBJbmR1c3RyaWFsPC9hPgogIDxhIGhyZWY9Ii9jdXN0b21lcnMvZ2xvYmV4LWhlYWx0aCI+R2xvYmV4IEhlYWx0aDwvYT4KICA8YSBocmVmPSJodHRwczovL3d3dy5hbnRocm9waWMuY29tL2N1c3RvbWVycy9pbml0ZWNoLWZpbmFuY2UiPkluaXRlY2ggRmluYW5jZTwvYT4KICA8YSBocmVmPSIvY3VzdG9tZXJzL2FjbWUtaW5kdXN0cmlhbCI+QWNtZSAoZHVwbGljYXRlIGxpbmspPC9hPgogIDxhIGhyZWY9Imh0dHBzOi8vZXhhbXBsZS5jb20vY3VzdG9tZXJzL29mZi1ob3N0Ij5PZmYtaG9zdDwvYT4KICA8YSBocmVmPSJtYWlsdG86c2FsZXNAZXhhbXBsZS5jb20iPkVtYWlsIHVzPC9hPgogIDxhIGhyZWY9Ii9jdXN0b21lcnMvaW5kZXgtb2YtbW9yZSI+TW9yZSBjdXN0b21lcnMgKGFuIGluZGV4KTwvYT4KICA8YSBocmVmPSIvY3VzdG9tZXJzL3pldGEtbG9naXN0aWNzIj5aZXRhIExvZ2lzdGljczwvYT4KIDwvbWFpbj4KPC9ib2R5PjwvaHRtbD4K",
+ "fixture_id": "fx_anthropic_customers",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "source_id": "anthropic-customers",
+ "status": 200,
+ "url": "https://www.anthropic.com/customers"
+}

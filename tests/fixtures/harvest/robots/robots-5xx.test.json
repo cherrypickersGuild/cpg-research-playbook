@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9309",
+ "authored_at": "2026-07-29",
+ "body": "",
+ "configured_host": false,
+ "headers": {
+  "content-type": "text/plain; charset=utf-8"
+ },
+ "host": "robots-5xx.test",
+ "policy_intent": "5xx robots -> RFC 9309 fail-closed disallow",
+ "provenance": "synthetic",
+ "status": 500
+}

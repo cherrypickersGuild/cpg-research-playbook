@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9309",
+ "authored_at": "2026-07-29",
+ "body": "User-agent: *\nAllow: /\n",
+ "configured_host": true,
+ "headers": {
+  "content-type": "text/plain; charset=utf-8"
+ },
+ "host": "engineering.fb.com",
+ "policy_intent": "permissive allow-all",
+ "provenance": "synthetic",
+ "status": 200
+}

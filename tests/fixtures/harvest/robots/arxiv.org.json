@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9309",
+ "authored_at": "2026-07-29",
+ "body": "User-agent: *\nCrawl-delay: 15\nAllow: /abs\nAllow: /pdf\nDisallow: /find\nDisallow: /src\n",
+ "configured_host": false,
+ "headers": {
+  "content-type": "text/plain; charset=utf-8"
+ },
+ "host": "arxiv.org",
+ "policy_intent": "declared Crawl-delay 15 with an Allow/Disallow mix",
+ "provenance": "synthetic",
+ "status": 200
+}

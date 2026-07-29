@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9309",
+ "authored_at": "2026-07-29",
+ "body": "User-agent: *\nDisallow: /\n",
+ "configured_host": false,
+ "headers": {
+  "content-type": "text/plain; charset=utf-8"
+ },
+ "host": "export.arxiv.org",
+ "policy_intent": "Disallow: / — the whole host is off limits",
+ "provenance": "synthetic",
+ "status": 200
+}
