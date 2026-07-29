@@ -11,7 +11,8 @@ stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  680 across 19 suites, all green (567 prior + 55 S4-1 + 58 S4-2)
+assertions:                  741 across 20 suites, all green
+                             (567 prior + 55 S4-1 + 58 S4-2 + 61 S4-3)
 ```
 
 ---
@@ -209,7 +210,7 @@ modifications; the 508 pre-existing untracked files byte-identical; nothing push
 of any kind was made. Completion handoff:
 `docs/harvest/handoffs/HANDOFF_STAGE_3_COMPLETE_2026-07-29.md`.
 
-## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1, S4-2 COMPLETE. S4-3 NOT APPROVED.**
+## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1…S4-3 COMPLETE. S4-4 NOT APPROVED.**
 
 Plan: **`docs/harvest/STAGE_4_IMPLEMENTATION_PLAN.md`** — `Status: PROPOSED — PENDING DEVIATION
 APPROVAL`. It is the design authority for Stage 4. Each of checkpoints S4-1 … S4-5 requires its own
@@ -240,17 +241,34 @@ adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
       `last_checked_at` and `url_aliases` are structurally **absent**, because each needs a fetch.
       `designated_target_fetch_owner_lane_id` and `designated_extraction_owner_lane_id` stay null.
       **58 assertions**, `tests/test_taxonomy_extract.sh`
-- [ ] **S4-3** `src/harvest/classify.py` + `tests/test_taxonomy_classify.sh` — all 10 precedence
-      rules. **NOT APPROVED; not started**
-- [ ] **S4-4** `src/harvest/verify.py` — scoring and the accept/reject decision
+- [x] **S4-3** `src/harvest/classify.py` — the ten committed precedence rules over fourteen signals,
+      evaluated as **data** read from `precedence.v1.json`: `Classification` · `Evidence` ·
+      `CompetingCategory` · `classify()` · `classify_all()` · `signals_for()` · `load_precedence()`.
+      First rule by committed `order` wins; every other firing rule is retained in
+      `competing_categories`; R10 falls back to the discovery cell and records the remaining
+      contexts. Evidence quotes the text that matched; the rationale is derived from the rule that
+      fired. A lane ID, a request key and an ownership designation are none of them readable from
+      the module. A rule may assign a topic other than the discovery topic — that is **recorded, not
+      resolved**; cross-topic ownership stays Stage 5. **61 assertions**,
+      `tests/test_taxonomy_classify.sh`
+- [ ] **S4-4** `src/harvest/verify.py` — scoring and the accept/reject decision.
+      **NOT APPROVED; not started**
 - [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction
 
-**S4-2 gate:** 680 assertions across 19 suites, all green (567 prior + 55 S4-1 + 58 S4-2). All prior
-assertions unchanged and unmodified. `check_fixtures.py`, `verify_protected_baseline.sh`,
-`check_facets.py`, `gen_facet_schema.py --check` and `check_config.py` all exit 0; `check_config.py`
-byte-unchanged; the 508 pre-existing untracked files byte-identical; `.gitignore` still exactly
-`1 insertion(+)` against the anchor. `pool.py`, `dedupe.py`, every schema and every config file
-remain byte-unchanged.
+**S4-3 gate:** 741 assertions across 20 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 61 S4-3).
+All prior assertions unchanged and unmodified. `check_fixtures.py`,
+`verify_protected_baseline.sh`, `check_facets.py`, `gen_facet_schema.py --check` and
+`check_config.py` all exit 0; the 508 pre-existing untracked files byte-identical; `.gitignore` still
+exactly `1 insertion(+)` against the anchor. `pool.py`, `dedupe.py`, `extract.py`, every schema and
+every config file remain byte-unchanged.
+
+**Recorded for whichever stage revisits relevance (not acted on here):**
+`any_of_keywords` in `precedence.v1.json` is matched as a casefolded **substring**, following the
+shipped precedent in `facets.py::evidence_supports`. The config's own stems require it — `deprecat`
+is written to catch "deprecated" — but short terms therefore also match inside longer words, so
+`product` fires inside "production" and `ide` inside "guide". That is a property of the committed
+keyword lists, not of the evaluator; it is pinned by tests rather than papered over, and tuning the
+lists is out of scope for Stage 4.
 
 ## Stage 5 — cell worker, orchestration, cross-topic, staging
 
