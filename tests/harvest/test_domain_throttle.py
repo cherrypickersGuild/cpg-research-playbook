@@ -6,11 +6,17 @@ each "politely" allow one concurrent request and produce twelve. These tests
 launch real subprocesses against a local recording HTTP server and measure what
 actually arrived.
 
-The server records (arrival, departure, pid) per request, so both properties can
-be measured directly rather than inferred:
-  * max observed CONCURRENCY never exceeds the cap;
-  * every inter-arrival GAP is at least the configured interval.
+Two properties, measured where each is actually controlled:
+  * max observed CONCURRENCY never exceeds the cap — measured at the server,
+    from overlapping (arrival, departure) intervals, which is exactly where
+    concurrency is observable;
+  * every SPACING gap is at least the configured interval — measured at WORKER
+    RELEASE, the moment DomainLease.wait_turn lets a worker go. Server-arrival
+    spacing is release spacing plus a per-request latency difference (socket
+    connect, accept, handler-thread spawn) that the gate does not control, so it
+    proves delivery here, never pacing.
 """
+import collections
 import json
 import os
 import shutil
@@ -21,6 +27,7 @@ import threading
 import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlparse, parse_qs
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
@@ -35,15 +42,18 @@ WORKER = os.path.join(ROOT, "tests", "harvest", "throttle_worker.py")
 
 class Recorder(BaseHTTPRequestHandler):
     events = []
+    pids = []
     lock = threading.Lock()
     hold_sec = 0.05
 
     def do_GET(self):
         t0 = time.time()
+        pid = _pid_from_path(self.path)
         time.sleep(self.hold_sec)          # widen the window so overlap is detectable
         t1 = time.time()
         with Recorder.lock:
             Recorder.events.append((t0, t1))
+            Recorder.pids.append(pid)      # identity, for completeness checks
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
         self.end_headers()
@@ -51,6 +61,46 @@ class Recorder(BaseHTTPRequestHandler):
 
     def log_message(self, *a):
         pass
+
+
+def _pid_from_path(path):
+    """The worker's pid from /ping?pid=N. Identity only — never a timing input."""
+    q = parse_qs(urlparse(path).query)
+    try:
+        return int(q.get("pid", ["-1"])[0])
+    except (TypeError, ValueError):
+        return -1
+
+
+def parse_release_timestamps(stdout_text, expected):
+    """One worker's `releases_monotonic_ns`, or raise.
+
+    Raises rather than returning a partial list on purpose: a silently missing
+    timestamp would shrink the sample, and a shrunken sample makes the pacing
+    assertion pass by having nothing left to compare.
+    """
+    lines = [l.strip() for l in stdout_text.splitlines() if l.strip()]
+    payloads = []
+    for line in lines:
+        try:
+            payloads.append(json.loads(line))
+        except ValueError:
+            raise ValueError("worker emitted a non-JSON line: %r" % line[:200])
+    if len(payloads) != 1:
+        raise ValueError("expected exactly one JSON line from the worker, got %d"
+                         % len(payloads))
+    obj = payloads[0]
+    if "releases_monotonic_ns" not in obj:
+        raise ValueError("worker JSON carries no releases_monotonic_ns key: %r" % obj)
+    rel = obj["releases_monotonic_ns"]
+    if not isinstance(rel, list):
+        raise ValueError("releases_monotonic_ns is not a list: %r" % (rel,))
+    if len(rel) != expected:
+        raise ValueError("expected %d release timestamps, got %d" % (expected, len(rel)))
+    for v in rel:
+        if isinstance(v, bool) or not isinstance(v, int) or v <= 0:
+            raise ValueError("release timestamp is not a positive integer: %r" % (v,))
+    return rel
 
 
 def max_concurrency(events):
@@ -77,6 +127,7 @@ def min_gap(events):
 class ServerCase(unittest.TestCase):
     def setUp(self):
         Recorder.events = []
+        Recorder.pids = []
         self.tmp = tempfile.mkdtemp()
         self.srv = ThreadingHTTPServer(("127.0.0.1", 0), Recorder)
         self.port = self.srv.server_address[1]
@@ -121,16 +172,142 @@ class TestCrossProcessConcurrency(ServerCase):
         self.assertGreaterEqual(peak, 2, "cap of 2 never actually used — not proving much")
 
     def test_minimum_interval_enforced_across_processes(self):
+        """The shared gate spaces processes that never spoke to each other.
+
+        Measured at WORKER RELEASE, which is the event DomainLease.wait_turn
+        actually controls. It previously measured server-arrival spacing, which
+        is `release spacing + (latency of request i+1 - latency of request i)`:
+        socket connect, ThreadingHTTPServer accept and handler-thread spawn all
+        sit between the two, and the gate has no say over any of them. A 50-run
+        diagnostic measured both sides simultaneously — release gaps never fell
+        below the interval (350/350, minimum 0.3120s) while arrival gaps fell
+        below the old 0.255s floor in 49 of 50 runs (minimum 0.1787s), with the
+        latency-delta arithmetic closing to ~0.1ms. The old assertion was
+        therefore reporting first-request connection cost as a pacing failure.
+
+        No tolerance is applied: monotonic_ns is QueryPerformanceCounter here
+        (100ns resolution, ~500ns observed tick), six orders of magnitude below
+        the quantity under test, so there is no granularity to absorb.
+        """
         interval = 0.30
-        outs = self.run_workers(n_workers=4, requests_each=2, max_conc=1,
-                                interval=interval)
+        interval_ns = 300_000_000          # integer ns; no float rounding
+        n_workers, requests_each = 4, 2
+        expected_requests = n_workers * requests_each
+
+        outs = self.run_workers(n_workers=n_workers, requests_each=requests_each,
+                                max_conc=1, interval=interval)
         for rc, _, err in outs:
             self.assertEqual(rc, 0, err)
-        gap = min_gap(Recorder.events)
-        # Small tolerance for clock granularity; the point is that the shared
-        # gate spaced processes that never spoke to each other.
-        self.assertGreaterEqual(gap, interval * 0.85,
-                                "arrivals %.3fs apart, expected >= %.2fs" % (gap, interval))
+
+        # one valid release timestamp per request from every successful worker
+        releases = []
+        for rc, out, err in outs:
+            try:
+                releases.extend(parse_release_timestamps(out, requests_each))
+            except ValueError as exc:
+                self.fail("worker release timestamps unusable: %s (stderr=%s)"
+                          % (exc, err[-400:]))
+        self.assertEqual(len(releases), expected_requests)
+
+        ordered = sorted(releases)
+        gaps = [b - a for a, b in zip(ordered, ordered[1:])]
+        self.assertEqual(len(gaps), expected_requests - 1)
+        worst = min(gaps)
+        self.assertGreaterEqual(
+            worst, interval_ns,
+            "the pacing gate released two requests %.4fs apart, expected >= %.2fs. "
+            "(server-arrival min gap was %.4fs — recorded for diagnosis only; "
+            "arrival spacing is not controlled by the gate and does not decide "
+            "this test)" % (worst / 1e9, interval, min_gap(Recorder.events)))
+
+        # The server side proves DELIVERY, never spacing: every request arrived,
+        # exactly once per worker, none missing and none duplicated.
+        self.assertEqual(len(Recorder.events), expected_requests,
+                         "expected %d requests to arrive" % expected_requests)
+        per_pid = collections.Counter(Recorder.pids)
+        self.assertNotIn(-1, per_pid, "a request arrived without a usable pid")
+        self.assertEqual(len(per_pid), n_workers,
+                         "expected %d distinct workers, saw %r" % (n_workers, per_pid))
+        for pid, count in per_pid.items():
+            self.assertEqual(count, requests_each,
+                             "worker %d sent %d requests, expected %d"
+                             % (pid, count, requests_each))
+
+
+class TestReleaseMeasurement(unittest.TestCase):
+    """The measurement itself, checked without spawning processes.
+
+    These guard the correction: the pacing assertion must read WORKER release
+    timestamps, must not be reachable from server-arrival data, and must fail
+    loudly rather than quietly shrinking its sample.
+    """
+
+    @staticmethod
+    def _line(releases, pid=101, requests=None):
+        return json.dumps({"pid": pid,
+                           "requests": len(releases) if requests is None else requests,
+                           "releases_monotonic_ns": releases})
+
+    def test_release_timestamps_are_emitted_and_parsed_for_every_worker(self):
+        outs = [(0, self._line([1_000_000_000, 1_300_000_000]), ""),
+                (0, self._line([1_150_000_000, 1_450_000_000], pid=102), "")]
+        got = []
+        for _, out, _ in outs:
+            got.extend(parse_release_timestamps(out, 2))
+        self.assertEqual(got, [1_000_000_000, 1_300_000_000,
+                               1_150_000_000, 1_450_000_000])
+
+    def test_the_worker_emits_the_key_the_assertion_reads(self):
+        # Static coupling check: the helper's key must exist in the worker.
+        with open(WORKER, "r", encoding="utf-8") as f:
+            text = f.read()
+        self.assertIn("releases_monotonic_ns", text)
+        self.assertIn("time.monotonic_ns()", text)
+        self.assertNotIn("time.time_ns()", text,
+                         "release stamping must use the monotonic clock")
+
+    def test_release_gaps_are_independent_of_server_arrival_order(self):
+        # Same releases, wildly different arrival data: the computed gaps must
+        # not move. This is what makes the assertion immune to transport jitter.
+        releases = [1_000_000_000, 1_320_000_000, 1_650_000_000]
+        gaps = [b - a for a, b in zip(sorted(releases), sorted(releases)[1:])]
+
+        Recorder.events = [(0.0, 0.1), (0.05, 0.2), (0.06, 0.3)]   # near-simultaneous
+        first = min(gaps)
+        Recorder.events = [(0.0, 0.1), (9.0, 9.1), (99.0, 99.1)]   # far apart
+        second = min(gaps)
+        Recorder.events = []
+        self.assertEqual(first, second)
+        self.assertEqual(first, 320_000_000)
+
+    def test_a_missing_release_key_fails_loudly(self):
+        with self.assertRaises(ValueError):
+            parse_release_timestamps(json.dumps({"pid": 1, "requests": 2}), 2)
+
+    def test_a_short_release_list_fails_loudly(self):
+        with self.assertRaises(ValueError):
+            parse_release_timestamps(self._line([1_000_000_000]), 2)
+
+    def test_a_malformed_release_value_fails_loudly(self):
+        for bad in ("nope", None, 0, -5, 1.5, True):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    parse_release_timestamps(self._line([1_000_000_000, bad]), 2)
+
+    def test_non_json_or_multiple_lines_fail_loudly(self):
+        with self.assertRaises(ValueError):
+            parse_release_timestamps("not json at all", 2)
+        with self.assertRaises(ValueError):
+            parse_release_timestamps(self._line([1, 2]) + "\n" + self._line([3, 4]), 2)
+
+    def test_empty_worker_output_fails_loudly(self):
+        with self.assertRaises(ValueError):
+            parse_release_timestamps("", 2)
+
+    def test_pid_is_recovered_from_the_request_path(self):
+        self.assertEqual(_pid_from_path("/ping?pid=4242"), 4242)
+        self.assertEqual(_pid_from_path("/ping"), -1)
+        self.assertEqual(_pid_from_path("/ping?pid=notanumber"), -1)
 
 
 class TestSharedGate(unittest.TestCase):

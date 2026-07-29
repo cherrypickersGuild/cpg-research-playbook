@@ -35,12 +35,25 @@ def main():
     import urllib.request
 
     done = []
+    releases_monotonic_ns = []
     for _ in range(n):
         lease = DomainLease(lease_root, host, max_concurrency=max_conc,
                             min_interval_sec=interval)
         lease.acquire(wait_max_sec=30)
         try:
             lease.wait_turn(interval_sec=interval)
+            # The moment the pacing gate released this worker. Stamped here,
+            # before the request is initiated, because THIS is the event
+            # DomainLease.wait_turn controls. Everything after it — socket
+            # connect, ThreadingHTTPServer accept, handler-thread spawn — is
+            # transport and scheduling the gate has no say over, and measuring
+            # spacing on the far side of it measures that instead.
+            #
+            # monotonic_ns, not time_ns: immune to wall-clock adjustment, and on
+            # this platform it is QueryPerformanceCounter (100ns resolution,
+            # ~500ns observed tick) counting from boot, so values from separate
+            # processes on one machine are directly comparable.
+            releases_monotonic_ns.append(time.monotonic_ns())
             if die:
                 # Exit hard while still holding the slot: no release, no atexit,
                 # no finally. This is the crash the stale-lease policy exists for.
@@ -52,7 +65,8 @@ def main():
         finally:
             lease.release()
 
-    print(json.dumps({"pid": os.getpid(), "requests": len(done)}))
+    print(json.dumps({"pid": os.getpid(), "requests": len(done),
+                      "releases_monotonic_ns": releases_monotonic_ns}))
 
 
 if __name__ == "__main__":
