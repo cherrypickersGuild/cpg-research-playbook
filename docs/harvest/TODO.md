@@ -11,8 +11,8 @@ stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  741 across 20 suites, all green
-                             (567 prior + 55 S4-1 + 58 S4-2 + 61 S4-3)
+assertions:                  758 across 20 suites, all green
+                             (567 prior + 55 S4-1 + 58 S4-2 + 78 S4-3/S4-3A)
 ```
 
 ---
@@ -251,24 +251,48 @@ adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
       the module. A rule may assign a topic other than the discovery topic — that is **recorded, not
       resolved**; cross-topic ownership stays Stage 5. **61 assertions**,
       `tests/test_taxonomy_classify.sh`
+- [x] **S4-3A — corrective, completed before S4-4.** Precedence keyword matching made **explicit**:
+      whole casefolded **tokens**, never an arbitrary substring, with `*` as the one declared
+      token-prefix stem. `ide` matches `IDE` but not `guide`; `product` matches `product` but not
+      `production`; `deprecat*` matches deprecate/deprecated/deprecation but not `undeprecated`;
+      phrases respect token boundaries at both ends. The evaluator stays generic — a test asserts no
+      configured term and no signal name appears as a string literal in `classify.py`.
+      **Config changes: exactly two terms** — `deprecat` → `deprecat*` (the only configured term that
+      is not a standalone word), and the lone Japanese term **removed** from
+      `is_funding_or_ma_event`, where it had sat since `0edbf50`: token matching needs word
+      separators, so a script without them cannot work absent segmentation this pipeline
+      deliberately does not have, and keeping it would be an inert claim of multilingual coverage.
+      Every other keyword unchanged. Semantics recorded in `STAGE_4_IMPLEMENTATION_PLAN.md` §4A and
+      mirrored into the config's `_matching_about` / `_language_scope_about` keys.
+      **+17 assertions** (61 → 78)
 - [ ] **S4-4** `src/harvest/verify.py` — scoring and the accept/reject decision.
       **NOT APPROVED; not started**
 - [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction
 
-**S4-3 gate:** 741 assertions across 20 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 61 S4-3).
-All prior assertions unchanged and unmodified. `check_fixtures.py`,
+**S4-3A gate:** 758 assertions across 20 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 78
+S4-3/S4-3A). All prior assertions unchanged and unmodified except the two in `test_classify.py` that
+explicitly pinned the superseded substring interpretation. `check_fixtures.py`,
 `verify_protected_baseline.sh`, `check_facets.py`, `gen_facet_schema.py --check` and
 `check_config.py` all exit 0; the 508 pre-existing untracked files byte-identical; `.gitignore` still
-exactly `1 insertion(+)` against the anchor. `pool.py`, `dedupe.py`, `extract.py`, every schema and
-every config file remain byte-unchanged.
+exactly `1 insertion(+)` against the anchor. `pool.py`, `dedupe.py`, `extract.py` and every schema
+remain byte-unchanged; `precedence.v1.json` is the only config file Stage 4 touches.
 
-**Recorded for whichever stage revisits relevance (not acted on here):**
-`any_of_keywords` in `precedence.v1.json` is matched as a casefolded **substring**, following the
-shipped precedent in `facets.py::evidence_supports`. The config's own stems require it — `deprecat`
-is written to catch "deprecated" — but short terms therefore also match inside longer words, so
-`product` fires inside "production" and `ide` inside "guide". That is a property of the committed
-keyword lists, not of the evaluator; it is pinned by tests rather than papered over, and tuning the
-lists is out of scope for Stage 4.
+**Carried forward to Stage 8 (CF-6), recorded not acted on:** no checkpoint that edits `config/` can
+pass the full gate **before** committing. 14 of the 20 taxonomy suites assert
+`git status --porcelain --untracked-files=no -- state/ config/` is empty — 13 as a wrapper epilogue,
+one as `test_taxonomy_config.sh` section H. The guard exists to catch a *test* mutating production
+config and compares the working tree to HEAD, so it cannot distinguish that from an authorized
+checkpoint edit. Measured in S4-3A: **755/756 behavioural assertions green pre-commit**, the single
+failure being the guard itself, and **all 20 suites fully green immediately after the atomic
+commit**. Fixing it means changing the guard from "config is unmodified" to "config is unchanged
+**by this test**" across 14 existing test files, alongside the `validate_task.sh` wiring.
+
+**Carried forward as CF-5, recorded not acted on:** keyword-list tuning under the new token
+semantics. Plurals of single-token nouns no longer match (`benchmark` ≠ "benchmarks"); no `*` was
+added to them, because the config hand-enumerates inflections elsewhere (`raises`/`raised`,
+`acquires`/`acquired`) and blanket stemming would be destructive (`app*` would match "approach").
+`abstract:` loses its trailing punctuation to tokenization and so also fires on a bare "abstract";
+`ci/cd` is a two-token phrase and so also matches "ci cd".
 
 ## Stage 5 — cell worker, orchestration, cross-topic, staging
 

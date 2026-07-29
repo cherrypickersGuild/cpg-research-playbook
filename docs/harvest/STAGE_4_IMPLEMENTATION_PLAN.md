@@ -64,15 +64,16 @@ wiring (Stage 8) · live smoke and `model_search` (Stage 9).
 ### 1.1 What Stage 4 does not modify
 
 `src/harvest/pool.py` and `tests/harvest/test_pool.py` · every file under `schemas/harvest/` · every
-file under `config/harvest/` · `src/harvest/adapters/**` · `src/harvest/sourcecache.py` ·
+file under `config/harvest/` **except the one authorized S4-3A correction to `precedence.v1.json`
+(§4A)** · `src/harvest/adapters/**` · `src/harvest/sourcecache.py` ·
 `src/harvest/httpclient.py`, `domainlease.py`, `budget.py` · `urlkey.py`, `slug.py`,
 `request_key.py`, `records.py`, `facets.py`, `coverage.py`, `scheduler.py`, `schema.py`,
 `fixtures.py` · `scripts/harvest/**` · `tests/fixtures/**` · **any existing test file** ·
 `.gitignore` · the 18 protected files · the 508 pre-existing untracked paths · `state/**` ·
 `data/**` · `scripts/validate_task.sh`.
 
-Stage 4 is **purely additive apart from `docs/harvest/TODO.md`**: five new production modules, their
-new test files and wrappers, and nothing else.
+Stage 4 is **purely additive apart from `docs/harvest/TODO.md` and the one S4-3A correction**: five
+new production modules, their new test files and wrappers, and nothing else.
 
 ### 1.2 Honest field consequences
 
@@ -149,6 +150,8 @@ changes meaning.
 | **CF-2** | `rejection.v1.json` cannot store the five `not_a_case_*` / `keyword_only_match` values that `record.v1.json` admits. Different artifacts, different populations — but the per-cell rejection log will have to decide | Stage 5, when that log is first written |
 | **CF-3** | No target-page fixtures exist. Measured from the shipped corpus: 109 capped candidates across 19 target hosts, one of which (`news.ycombinator.com`) has no robots fixture. `FixtureOpener` raises `FixtureMissing` for anything but the 25 configured source URLs | Stage 6 |
 | **CF-4** | `scripts/validate_task.sh` contains zero taxonomy references, so CLAUDE.md's stated validation entry point exercises none of the 567 assertions | Stage 8 |
+| **CF-5** | Keyword-list tuning under the S4-3A token semantics: plurals of single-token nouns no longer match, `abstract:` also fires on a bare "abstract", and `ci/cd` also matches "ci cd" (§4A) | whichever stage revisits relevance |
+| **CF-6** | **No checkpoint that edits `config/` can pass the full gate before committing.** 14 of the 20 taxonomy suites assert `git status --porcelain --untracked-files=no -- state/ config/` is empty — 13 as a wrapper epilogue, one as `test_taxonomy_config.sh` section H. The guard exists to catch a *test* mutating production config and compares the working tree to HEAD, so it cannot distinguish that from an authorized checkpoint edit. Measured in S4-3A: 755/756 behavioural assertions green pre-commit, the single failure being the guard itself; all 20 suites fully green immediately after the atomic commit. Fixing it means changing the guard from "config is unmodified" to "config is unchanged **by this test**" (snapshot before, compare after) across 14 existing test files | Stage 8, with the `validate_task.sh` wiring |
 
 ---
 
@@ -280,6 +283,53 @@ already shipped behaviour, no loser row is created, and no schema change is impl
 
 ---
 
+## 4A · Precedence keyword matching semantics (S4-3A)
+
+`precedence.v1.json` does not state how `any_of_keywords` is matched. It is stated here, and mirrored
+into the config's own `_matching_about` key, so no execution prompt has to restate it.
+
+**`any_of_keywords` matches WHOLE CASEFOLDED TOKENS. Arbitrary substring matching is forbidden.**
+
+| Rule | Effect |
+|---|---|
+| Term and text are tokenized **identically** — maximal runs of word characters, casefolded | Normalization is deterministic; punctuation and whitespace cannot change the outcome |
+| A plain term matches a **complete token** | `ide` matches `IDE`, **not** `guide`; `product` matches `product`, **not** `production` |
+| A multi-token term matches a **contiguous run of complete tokens**, bounded at both ends | `open source` matches the phrase; it can never be satisfied by fragments of unrelated adjacent tokens |
+| A term ending in `*` is an explicit **token-prefix stem**, constraining only its final token | `deprecat*` matches `deprecate`, `deprecated`, `deprecation`; it still may not begin inside another token, so it does **not** match `undeprecated` |
+| Matching never begins mid-token | No term can fire on a fragment |
+| `any_of_patterns` are regexes matched **case-sensitively** against the raw field | Those patterns use `[A-Z]` to mean a proper noun |
+
+**The evaluator is generic.** It knows only about the `*` suffix — never which signal or which word is
+involved. A test asserts that no configured term and no signal name appears as a string literal in
+`classify.py`, checked on AST literals with docstrings excluded (the prose legitimately quotes
+`guide` and `production` to explain the semantics).
+
+**Stems are declared per term, in the config.** Exactly one term declares one, and a test pins that:
+
+```text
+is_model_or_api_change   deprecat*     the only configured term that is not a standalone word
+```
+
+**Language scope.** Keyword terms are English only, and all 25 configured sources are English-language
+feeds. Token matching needs word separators, so a term in a script without them cannot work here
+absent script-aware segmentation this pipeline deliberately does not have. The lone Japanese term
+carried in `is_funding_or_ma_event` since `0edbf50` was **removed** in S4-3A rather than left as an
+inert claim of multilingual coverage. Adding a non-English term requires a segmentation contract
+first. Two tests pin this: no configured term contains a non-ASCII character, and no segmentation
+library or script name appears in `classify.py`.
+
+**Known coverage narrowing, recorded and deliberately not acted on.** Under the superseded substring
+matching, singular terms also matched their plurals. They no longer do — `benchmark` does not match
+"benchmarks", `dataset` does not match "datasets", and so on for roughly two dozen single-token
+nouns. No `*` was added to them: the config hand-enumerates inflections elsewhere (`raises`/`raised`,
+`acquires`/`acquired`), which is evidence the author intended exact forms, and blanket stemming would
+be destructive (`app*` would match "approach" and "application"). Two further consequences are
+recorded rather than fixed: `abstract:` loses its trailing punctuation to tokenization and so also
+fires on a bare "abstract", and `ci/cd` is a two-token phrase that therefore also matches "ci cd".
+Tuning the keyword lists belongs to whichever stage revisits relevance — see **CF-5**.
+
+---
+
 ## 5 · Permanent checkpoint execution policy
 
 This policy applies to every checkpoint in this plan and to any later plan that adopts it. It exists
@@ -388,6 +438,28 @@ Every checkpoint requires **separate approval**. This document authorizes none o
   signal sources.
 - **Carried-forward findings.** Cross-topic resolution ordering for Stage 5.
 
+### S4-3A · Explicit precedence keyword matching *(corrective, completed)*
+
+- **Goal.** Replace S4-3's substring matching with the whole-token semantics of §4A, so `ide` cannot
+  fire on "guide" and `product` cannot fire on "production".
+- **Allowed paths.** `src/harvest/classify.py` (M) · `tests/harvest/test_classify.py` (M) ·
+  `config/harvest/precedence.v1.json` (M) · this file (M) · `docs/harvest/TODO.md` (M).
+- **API / data contract.** `compile_term(term) -> (tokens, is_stem)` and the `STEM_MARKER` constant
+  are added; `classify()`, `classify_all()` and `signals_for()` are unchanged in signature.
+- **Invariants.** §4A in full · the evaluator stays generic, with no per-signal or per-word exception
+  · exactly one configured term declares a stem · no configured term is non-ASCII · no
+  script-aware segmentation is introduced.
+- **Config changes.** Exactly two terms, plus two documentation keys: `deprecat` → `deprecat*`
+  (the only configured term that is not a standalone word), and the lone Japanese term **removed**
+  from `is_funding_or_ma_event`. Every other term is unchanged.
+- **Risk tier and validation.** L2 — it edits committed config. The full gate cannot be fully green
+  before the commit (**CF-6**); the requirement is that every *behavioural* assertion passes
+  pre-commit and that the complete gate is rerun and fully green from the clean tree immediately
+  after the atomic commit.
+- **Commit / stop boundary.** One atomic commit covering all five paths. Stop and revert if any
+  post-commit suite or checker fails.
+- **Carried-forward findings.** CF-5 (keyword-list tuning), CF-6 (the pre-commit guard limitation).
+
 ### S4-4 · Scoring and verification (`verify.py`)
 
 - **Goal.** The four scores from `policy.v1.json` weights and the category `relevance` blocks, the
@@ -454,6 +526,8 @@ S4-2  A  src/harvest/extract.py          A  tests/harvest/test_extract.py
       A  tests/test_taxonomy_extract.sh
 S4-3  A  src/harvest/classify.py         A  tests/harvest/test_classify.py
       A  tests/test_taxonomy_classify.sh
+S4-3A M  src/harvest/classify.py         M  tests/harvest/test_classify.py
+      M  config/harvest/precedence.v1.json   (the only config edit in Stage 4)
 S4-4  A  src/harvest/verify.py           A  tests/harvest/test_verify.py
       A  tests/test_taxonomy_verify.sh
 S4-5  A  src/harvest/facetassign.py      A  tests/harvest/test_facetassign.py

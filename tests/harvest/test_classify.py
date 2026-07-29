@@ -113,6 +113,8 @@ R4_OVER_R9 = dict(title="The case for our new model, and what this means",
                   summary="A shift.")
 R10 = dict(title="Notes from the field", summary="A short update.",
            url="https://example.com/notes/")
+R1_AND_R3 = dict(title="How Acme Corp cut resolution time by 38% with our app",
+                 summary="Deployed in production.")
 
 
 # ------------------------------------------------------------------ each rule
@@ -229,22 +231,142 @@ class TestEverySignal(unittest.TestCase):
         self.assertFalse(alone["has_named_organization"])
         self.assertFalse(alone["has_measurable_outcome_for_named_org"])
 
-    def test_keyword_matching_is_casefolded_substring_as_facets_does(self):
-        # Pinned, not papered over: the committed lists use stems, so `deprecat`
-        # must catch "deprecated"; the cost is that `product` also fires inside
-        # "production". Both are properties of the config, and both are asserted.
-        stem, _ = cl.signals_for(candidate(title="Atlas 1 is DEPRECATED",
-                                           summary="Migrate soon."))
-        self.assertTrue(stem["is_model_or_api_change"])
-        inside, _ = cl.signals_for(candidate(
-            title="Rolled out in production", summary="Across the fleet."))
-        self.assertTrue(inside["is_end_user_product"])
-
     def test_patterns_are_case_sensitive_so_a_capital_means_a_proper_noun(self):
         upper, _ = cl.signals_for(candidate(title="Rolled out at Acme"))
         lower, _ = cl.signals_for(candidate(title="rolled out at acme"))
         self.assertTrue(upper["has_named_organization"])
         self.assertFalse(lower["has_named_organization"])
+
+
+# --------------------------------------------------------- matching (S4-3A)
+class TestMatchingSemantics(unittest.TestCase):
+    """Whole-token matching, with `*` as the one declared prefix mechanism.
+
+    These replace the S4-3 assertions that pinned arbitrary substring matching,
+    under which `product` fired inside "production" and `ide` inside "guide"."""
+
+    def fires(self, signal, **spec):
+        fired, _ = cl.signals_for(candidate(**spec))
+        return fired[signal]
+
+    def test_ide_matches_ide_but_not_guide(self):
+        self.assertTrue(self.fires("is_developer_tool", title="Our IDE plugin"))
+        self.assertFalse(self.fires("is_developer_tool",
+                                    title="A guide to getting started"))
+
+    def test_product_matches_product_but_not_production(self):
+        self.assertTrue(self.fires("is_end_user_product", title="Our new product"))
+        self.assertFalse(self.fires("is_end_user_product",
+                                    title="Rolled out in production"))
+
+    def test_exact_token_matching_is_case_insensitive(self):
+        for form in ("product", "Product", "PRODUCT", "PrOdUcT"):
+            self.assertTrue(self.fires("is_end_user_product",
+                                       title="Our new %s" % form), form)
+
+    def test_a_term_never_matches_inside_a_longer_token(self):
+        for text in ("apparatus", "application", "appendix"):
+            self.assertFalse(self.fires("is_end_user_product", title=text), text)
+        self.assertTrue(self.fires("is_end_user_product", title="our app"))
+
+    def test_a_phrase_respects_token_boundaries_at_both_ends(self):
+        self.assertTrue(self.fires("has_concrete_implementation",
+                                   title="Now in production"))
+        # a longer token at either end must not satisfy the phrase
+        self.assertFalse(self.fires("has_concrete_implementation",
+                                    title="Bin productionise"))
+        self.assertFalse(self.fires("has_concrete_implementation",
+                                    title="Wein production"))
+
+    def test_a_phrase_is_not_satisfied_by_unrelated_adjacent_fragments(self):
+        # "we built" must be two whole tokens in order, not fragments of others.
+        self.assertTrue(self.fires("has_concrete_implementation",
+                                   title="How we built it"))
+        self.assertFalse(self.fires("has_concrete_implementation",
+                                    title="However builtin helpers"))
+
+    def test_phrase_tokens_must_be_contiguous(self):
+        self.assertTrue(self.fires("is_opinion_or_prediction",
+                                   title="The case for smaller models"))
+        self.assertFalse(self.fires("is_opinion_or_prediction",
+                                    title="The strongest case made for it"))
+
+    def test_punctuation_between_phrase_tokens_is_normalized_away(self):
+        # ci/cd is a two-token phrase; the separator does not have to be a space.
+        for text in ("using ci/cd pipelines", "using ci cd pipelines",
+                     "using CI/CD pipelines"):
+            self.assertTrue(self.fires("is_developer_tool", title=text), text)
+
+    def test_the_declared_stem_matches_its_intended_word_forms(self):
+        for form in ("deprecate", "deprecated", "deprecation", "DEPRECATED",
+                     "deprecating"):
+            self.assertTrue(self.fires("is_model_or_api_change",
+                                       title="Atlas 1 is %s" % form), form)
+
+    def test_a_stem_still_may_not_begin_inside_another_token(self):
+        for text in ("undeprecated flag", "predeprecation notice"):
+            self.assertFalse(self.fires("is_model_or_api_change", title=text), text)
+
+    def test_a_plain_term_does_not_behave_as_a_stem(self):
+        # `benchmark` carries no marker, so it is exact and must not stem.
+        self.assertTrue(self.fires("is_eval_resource", title="A new benchmark"))
+        self.assertFalse(self.fires("is_eval_resource", title="Benchmarking runs"))
+
+    def test_exactly_one_configured_term_declares_a_stem(self):
+        stems = [(name, term)
+                 for name, spec in cl.load_precedence()["signals"].items()
+                 for term in (spec.get("any_of_keywords") or ())
+                 if term.endswith(cl.STEM_MARKER)]
+        self.assertEqual(stems, [("is_model_or_api_change", "deprecat*")])
+
+    def test_every_configured_term_is_english_and_separator_delimited(self):
+        # S4-3A removed a lone Japanese term that had been carried since 0edbf50.
+        # Token matching needs word separators, so a script without them cannot
+        # work here without segmentation this pipeline deliberately does not have;
+        # keeping such a term would be an inert claim of multilingual coverage.
+        offenders = [(name, term)
+                     for name, spec in cl.load_precedence()["signals"].items()
+                     for term in (spec.get("any_of_keywords") or ())
+                     if any(ord(char) > 127 for char in term)]
+        self.assertEqual(offenders, [])
+
+    def test_no_script_aware_segmentation_was_introduced(self):
+        source = inspect.getsource(cl)
+        for forbidden in ("unicodedata", "jieba", "mecab", "janome",
+                          "Hiragana", "Katakana", "CJK", "Han"):
+            self.assertNotIn(forbidden, source, forbidden)
+
+    def test_a_misplaced_stem_marker_is_refused(self):
+        for bad in ("dep*recat", "*deprecat", "*", "   "):
+            with self.assertRaises(cl.ClassifyError, msg=bad):
+                cl.compile_term(bad)
+
+    def test_the_evaluator_holds_no_per_word_or_per_signal_exception(self):
+        # Checked on STRING LITERALS IN CODE, not on raw text: the module's own
+        # docstring legitimately quotes "guide" and "production" to explain the
+        # semantics, and a substring scan would either fail on the prose or have
+        # to be weakened until it proved nothing.
+        tree = ast.parse(inspect.getsource(cl))
+        docstrings = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef,
+                                 ast.AsyncFunctionDef)):
+                doc = ast.get_docstring(node, clean=False)
+                if doc is not None:
+                    docstrings.add(doc)
+        literals = {node.value for node in ast.walk(tree)
+                    if isinstance(node, ast.Constant)
+                    and isinstance(node.value, str)} - docstrings
+        for term in (t for spec in cl.load_precedence()["signals"].values()
+                     for t in (spec.get("any_of_keywords") or ())):
+            self.assertNotIn(term, literals, "%r is hard-coded" % term)
+        for name in cl.load_precedence()["signals"]:
+            self.assertNotIn(name, literals, "signal %r is hard-coded" % name)
+
+    def test_evidence_is_quoted_from_the_original_text(self):
+        _, evidence = cl.signals_for(candidate(title="Our IDE plugin"))
+        matched = [e.matched for e in evidence["is_developer_tool"]]
+        self.assertEqual(matched, ["IDE"])
 
 
 # ------------------------------------------------------------------ ordering
@@ -272,11 +394,20 @@ class TestOrdering(unittest.TestCase):
         self.assertTrue(got.ambiguous)
 
     def test_r1_beats_r3_when_both_fire(self):
-        # "production" contains "product", so R3 legitimately also fires here.
-        got = cl.classify(candidate(**R1))
+        # S4-3A: this used to rely on "production" containing "product". It now
+        # needs a real product token, which is the point of the correction.
+        fired, _ = cl.signals_for(candidate(**R1_AND_R3))
+        self.assertTrue(fired["is_end_user_product"])
+        got = cl.classify(candidate(**R1_AND_R3))
         self.assertEqual(got.rule_id, "R1_org_implementation_with_results")
         self.assertIn("R3_end_user_product",
                       {c.rule_id for c in got.competing_categories})
+
+    def test_r1_alone_no_longer_drags_in_r3_via_a_word_fragment(self):
+        got = cl.classify(candidate(**R1))
+        self.assertEqual(got.rule_id, "R1_org_implementation_with_results")
+        self.assertNotIn("R3_end_user_product",
+                         {c.rule_id for c in got.competing_categories})
 
     def test_reordering_the_rule_list_cannot_change_the_outcome(self):
         document = cl.load_precedence()

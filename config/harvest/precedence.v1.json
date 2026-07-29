@@ -105,6 +105,8 @@
   ],
 
   "_signal_about": "Signals are keyword/structure predicates over the candidate. Deterministic and auditable — no model call. Each fired signal contributes its matched evidence to classification.evidence[].",
+  "_matching_about": "any_of_keywords matches WHOLE CASEFOLDED TOKENS, never an arbitrary substring: term and text are tokenized identically (maximal runs of word characters), so 'ide' matches 'IDE' but not 'guide', and 'product' matches 'product' but not 'production'. A multi-token term must match a contiguous run of complete tokens, respecting boundaries at both ends. A term ending in '*' is an explicit token-prefix stem constraining only its final token — 'deprecat*' matches deprecate/deprecated/deprecation and still cannot begin inside another token. any_of_patterns are regexes matched CASE-SENSITIVELY against the raw field, because they use [A-Z] to mean a proper noun.",
+  "_language_scope_about": "Keyword terms are English only, and every configured source is an English-language feed. Token matching needs word separators, so a term in a script that does not use them (Japanese, Chinese) cannot work here without script-aware segmentation this pipeline deliberately does not have. A lone Japanese term carried in is_funding_or_ma_event since 0edbf50 was removed in S4-3A rather than left as an inert claim of multilingual coverage. Adding a non-English term requires a segmentation contract first.",
   "signals": {
     "has_named_organization": {"any_of_patterns": ["\\b(at|by)\\s+[A-Z][A-Za-z0-9&.\\-]{2,}", "\\b(Inc|Ltd|GmbH|Corp|Corporation|Company)\\b"], "min_matches": 1},
     "has_concrete_implementation": {"any_of_keywords": ["deployed", "in production", "rolled out", "implemented", "migrated to", "we built", "went live"]},
@@ -114,8 +116,8 @@
     "is_generally_applicable": {"any_of_keywords": ["pattern", "approach", "how to", "guide", "reference architecture", "best practice", "playbook", "framework for"]},
     "is_end_user_product": {"any_of_keywords": ["app", "product", "launch", "now available for", "sign up", "free trial", "pricing"]},
     "is_developer_tool": {"any_of_keywords": ["sdk", "api client", "cli", "developer tool", "ide", "code editor", "framework", "library", "compiler", "devops", "ci/cd", "kubernetes", "npm", "pypi", "docker image", "for developers"]},
-    "is_model_or_api_change": {"any_of_keywords": ["model release", "new model", "now available", "api update", "deprecat", "version", "context window", "pricing", "per million tokens", "protocol", "endpoint", "model card", "checkpoint"]},
-    "is_funding_or_ma_event": {"any_of_keywords": ["funding", "raises", "raised", "series a", "series b", "series c", "series d", "seed round", "acquisition", "acquires", "acquired", "valuation", "ipo", "merger", "投資"]},
+    "is_model_or_api_change": {"any_of_keywords": ["model release", "new model", "now available", "api update", "deprecat*", "version", "context window", "pricing", "per million tokens", "protocol", "endpoint", "model card", "checkpoint"]},
+    "is_funding_or_ma_event": {"any_of_keywords": ["funding", "raises", "raised", "series a", "series b", "series c", "series d", "seed round", "acquisition", "acquires", "acquired", "valuation", "ipo", "merger"]},
     "is_eval_resource": {"any_of_keywords": ["benchmark", "dataset", "leaderboard", "evaluation harness", "eval suite", "test set", "we release a dataset", "evaluation framework"]},
     "is_academic_primary": {"any_of_keywords": ["we propose", "we present", "we introduce", "abstract:", "arxiv", "preprint", "our method", "experiments show"]},
     "is_engineering_analysis": {"any_of_keywords": ["architecture", "how we built", "under the hood", "latency", "throughput", "performance", "scaling", "internals", "postmortem", "system design"]},

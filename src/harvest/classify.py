@@ -24,17 +24,29 @@ Four properties this has to keep true:
     target_url, exactly as `precedence.v1.json` `_signal_about` states. No body,
     no fetch, no model call.
 
-MATCHING SEMANTICS, stated because the config does not state them. `any_of_keywords`
-is matched as a CASEFOLDED SUBSTRING, following the shipped precedent in
-`facets.py::evidence_supports`, which does exactly `t in haystack` over a
-configured term list. Substring is what the config's own stems require:
-`deprecat` is written to catch "deprecated" and "deprecation", and a
-word-boundary match would make it inert. The cost is that short terms also match
-inside longer words — `product` fires inside "production", `ide` inside "guide".
-That is a property of the committed keyword lists, not of this evaluator; it is
-pinned by tests rather than papered over, and tuning the lists belongs to
-whichever stage revisits relevance. `any_of_patterns` is matched CASE-SENSITIVELY,
-because those patterns use `[A-Z]` to mean a proper noun.
+MATCHING SEMANTICS (S4-3A). `any_of_keywords` is matched on WHOLE CASEFOLDED
+TOKENS, never as an arbitrary substring:
+
+  * both the term and the text are tokenized identically — maximal runs of word
+    characters, casefolded — so normalization is deterministic and punctuation
+    and whitespace cannot change the result;
+  * a plain term matches a complete token, or, for a multi-token term, a
+    contiguous run of complete tokens: `ide` matches "IDE" and not "guide";
+    `product` matches "product" and not "production";
+  * a term ending in `*` is an explicit TOKEN-PREFIX STEM, matching only on its
+    final token: `deprecat*` matches "deprecate", "deprecated" and "deprecation",
+    and still cannot begin inside another token, so it does not match "undeprecated";
+  * a phrase respects token boundaries at BOTH ends, so it can never be satisfied
+    by fragments of unrelated adjacent tokens.
+
+The stem marker is the one mechanism for prefix matching and it is declared in
+the config, per term. Nothing here special-cases a signal or a word: the
+evaluator has no knowledge of which terms are stems, only of the `*` suffix.
+This replaces the substring matching S4-3 shipped, under which `product` fired
+inside "production" and `ide` inside "guide".
+
+`any_of_patterns` is matched CASE-SENSITIVELY against the raw field, because
+those patterns use `[A-Z]` to mean a proper noun.
 
 Cross-topic note: a rule may assign a topic different from the cell a candidate
 was discovered in. That is recorded and stops there. Deciding which topic OWNS
@@ -54,7 +66,18 @@ PRECEDENCE_PATH = os.path.join(ROOT, "config", "harvest", "precedence.v1.json")
 
 FALLBACK_RULE_ID = "R10_default_by_category"
 
+# A token is a maximal run of word characters, Unicode-aware. The same definition
+# is applied to the configured term and to the text, which is what makes "whole
+# token" mean the same thing on both sides.
+_TOKEN = re.compile(r"\w+", re.UNICODE)
+
+# The one declared mechanism for prefix matching. Config data, not code: the
+# evaluator does not know WHICH terms are stems, only that a trailing marker
+# makes one.
+STEM_MARKER = "*"
+
 _CACHE = {}
+_TERM_CACHE = {}
 
 
 class ClassifyError(Exception):
@@ -86,6 +109,7 @@ def load_precedence(path=None):
 
 def clear_caches():
     _CACHE.clear()
+    _TERM_CACHE.clear()
 
 
 # ------------------------------------------------------------------- outputs
@@ -182,19 +206,68 @@ def _match_patterns(spec, fields):
     return hits
 
 
+def _tokenize(text):
+    """(casefolded token, start, end) for every token. One definition, used for
+    the term and the text alike, so a term can never match a fragment."""
+    return [(m.group(0).casefold(), m.start(), m.end())
+            for m in _TOKEN.finditer(text or "")]
+
+
+def compile_term(term):
+    """A configured term -> (tokens, is_stem). Cached; a bad term raises loudly."""
+    if term not in _TERM_CACHE:
+        if not isinstance(term, str):
+            raise ClassifyError("a keyword term must be a string, got %r" % (term,))
+        stem = term.endswith(STEM_MARKER)
+        body = term[:-len(STEM_MARKER)] if stem else term
+        if STEM_MARKER in body:
+            raise ClassifyError(
+                "%r: %r is only meaningful as a trailing token-prefix marker"
+                % (term, STEM_MARKER))
+        tokens = tuple(t for t, _, _ in _tokenize(body))
+        if not tokens:
+            raise ClassifyError("term %r contains no matchable token" % (term,))
+        _TERM_CACHE[term] = (tokens, stem)
+    return _TERM_CACHE[term]
+
+
+def _find_term(term, tokens):
+    """Index span of `term` in `tokens`, or None. Whole tokens at both ends."""
+    needle, stem = compile_term(term)
+    width = len(needle)
+    if width > len(tokens):
+        return None
+    head, last = needle[:-1], needle[-1]
+    for start in range(len(tokens) - width + 1):
+        window = tokens[start:start + width]
+        if tuple(t for t, _, _ in window[:-1]) != head:
+            continue
+        final = window[-1][0]
+        # A stem constrains only its FINAL token, and still starts at a token
+        # boundary — so it can never begin in the middle of a longer word.
+        if final.startswith(last) if stem else final == last:
+            return start, start + width - 1
+    return None
+
+
 def _match_keywords(spec, fields):
-    """Keyword signals. Case-insensitive: the config lists them in lower case."""
+    """Keyword signals, matched on whole tokens. See the module docstring."""
     hits = []
     for keyword in spec.get("any_of_keywords") or ():
-        needle = keyword.casefold()
         for field, text in fields:
             if not text:
                 continue
-            index = text.casefold().find(needle)
-            if index >= 0:
-                hits.append(Evidence(signal="", matched=text[index:index + len(keyword)],
-                                     field=field))
-                break
+            tokens = _tokenize(text)
+            span = _find_term(keyword, tokens)
+            if span is None:
+                continue
+            first, last = span
+            # Quoted from the ORIGINAL text, so the evidence keeps its own case
+            # and any punctuation that sat between the matched tokens.
+            hits.append(Evidence(signal="",
+                                 matched=text[tokens[first][1]:tokens[last][2]],
+                                 field=field))
+            break
     return hits
 
 
