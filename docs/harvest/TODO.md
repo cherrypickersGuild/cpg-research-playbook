@@ -21,8 +21,54 @@ assertions:                  940 across 23 suites, all green
 **STAGE 4 IS CLOSED** as of 2026-07-30 — see
 `docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md` for the commit chain, closure
 validation, repository state and successor constraints. `STAGE_4_IMPLEMENTATION_PLAN.md` reads
-`COMPLETED — STAGE 4 CLOSED`; its §12 records the documentation-only closeout. **Stage 5 is not
-open**: §11 condition 10 (explicit approval) is not met, and green tests alone do not open it.
+`COMPLETED — STAGE 4 CLOSED`; its §12 records the documentation-only closeout.
+
+---
+
+## Stage 5 — artifact persistence
+
+**Plan of record:** `docs/harvest/STAGE_5_IMPLEMENTATION_PLAN.md` —
+**`PROPOSED — PLANNING APPROVED, IMPLEMENTATION NOT APPROVED`** (2026-07-30).
+
+**The plan is approved; no checkpoint is.** Approving the plan authorized documentation only. Each
+of S5-1 … S5-C requires separate approval **by name** before any file outside `docs/` changes — a
+completed predecessor and a green gate do not together authorize the next checkpoint. See §12 of
+that plan.
+
+Stage 5 turns the completed in-memory Stage 4 pipeline into a deterministic, atomic, idempotent
+artifact tree under `state/taxonomy_harvest/`. It adds no new judgement: no classification, scoring,
+faceting or identity is re-derived. **Non-goals:** live requests and target fetching (Stage 6),
+migration (Stage 7), promotion into `data/harvested/`, `validate_task.sh` wiring (Stage 8),
+threshold calibration (Stage 9), and concurrent cell execution.
+
+- [ ] **S5-1** deterministic atomic artifact writer — `artifacts.py`. **NOT APPROVED; not started**
+- [ ] **S5-2** cell and topic artifacts. **NOT APPROVED; not started**
+- [ ] **S5-3** rejection log and ledger — `ledger.py`. **NOT APPROVED; not started**
+- [ ] **S5-4** coverage report — wires `coverage.py` unmodified; discharges the carried-forward
+      coverage wiring item. **NOT APPROVED; not started**
+- [ ] **S5-5** run manifest and `LATEST_RUN_ID`. **NOT APPROVED; not started**
+- [ ] **S5-6** the cell driver — `run_cells.py`, sequential over cells. **NOT APPROVED; not started**
+- [ ] **S5-7** recovery and re-run semantics. **NOT APPROVED; not started**
+- [ ] **S5-C** Stage 5 closeout, documentation only. Its three allowed paths — including
+      `docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_<date>.md` — are **declared up front**, so the
+      authorization gap hit at Stage 4 closeout cannot recur. **NOT APPROVED; not started**
+
+**Carried-forward findings reconciled during Stage 5 planning** (detail in §9 of that plan):
+
+- **CF-1 stays deferred.** It was recorded against "Stage 5"; Stage 5 runs cells **sequentially**, so
+  the unlocked pool paths keep zero concurrent callers. Any later change that runs cells
+  concurrently must fix CF-1 **first**, in its own checkpoint.
+- **CF-2 / CF-7 are measured and non-blocking.** `verify.decide` can emit exactly six rejection
+  reasons and **all six are already storable** in `rejection.v1.json`; the five record-only
+  `not_a_case_*` / `keyword_only_match` values are unreachable from Stage 5's automated gate. No
+  schema change is required. Both remain carried forward as fidelity questions.
+- **CF-11 unchanged and protected.** S5-4 must prove an empty `industry.secondary` is not reported
+  as a coverage gap, so the report cannot create pressure to manufacture the findings CF-11 exists
+  to prevent.
+- **S4-4 calibration untouched.** No threshold or weight is revisited; the run manifest merely
+  records the thresholds used so Stage 9 can compare. Calibration stays Stage 9.
+- **D2 gets one home.** The `{signal, matched}` projection is implemented once in S5-2 rather than
+  re-derived per call site.
 
 ---
 
