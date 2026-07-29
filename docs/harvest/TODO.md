@@ -50,7 +50,19 @@ threshold calibration (Stage 9), and concurrent cell execution.
       so an interrupt leaks no temp file. `write_document` validates against the committed schema
       **before** serializing: an invalid document writes nothing at all. No locking, no concurrency,
       no network, no artifact semantics. **34 assertions**, `tests/test_taxonomy_artifacts.sh`
-- [ ] **S5-2** cell and topic artifacts. **NOT APPROVED; not started**
+- [x] **S5-2** cell and topic artifacts — `build_cell_artifact()` · `build_topic_artifact()` ·
+      `write_cell_artifact()` · `write_topic_artifact()` · `cell_artifact_path()` ·
+      `topic_artifact_path()` · `project_classification_evidence()`, all in `artifacts.py` on top of
+      the S5-1 writer. Records sorted by the committed `records.sort_key`; five shuffles give one
+      hash. **Counts are derived and a caller may not supply one** — `metadata` carries only
+      `sources` and the optional `rejected`, so a count can never disagree with the records beside
+      it. A `cross_reference` is counted separately and never enters `by_category`, which counts
+      **full records only** and therefore sums to `full_records`. Records are validated against
+      `record.v1.json` **before** assembly, so a bad record is refused by `record_id` rather than
+      swallowed. The topic artifact merges its cells, sorts, **then** deduplicates by `record_id`
+      (that order matters: deduplicating first made the survivor depend on cell order — found and
+      fixed by its own test). D2 has one home in `project_classification_evidence`.
+      **45 assertions**, `tests/test_taxonomy_cell_artifact.sh`
 - [ ] **S5-3** rejection log and ledger — `ledger.py`. **NOT APPROVED; not started**
 - [ ] **S5-4** coverage report — wires `coverage.py` unmodified; discharges the carried-forward
       coverage wiring item. **NOT APPROVED; not started**

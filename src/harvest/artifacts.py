@@ -25,15 +25,21 @@ same three guarantees rather than each writer inventing its own:
 A temp file never outlives its write: failure and interruption both clean up, so
 an interrupted run leaves the previous artifact intact and no debris behind.
 
-Not here: what any artifact MEANS. No cell, topic, ledger, rejection, coverage or
-manifest semantics (S5-2 … S5-5), no cell execution (S5-6), no locking, no
-concurrency, no network. This module knows about paths, bytes and schemas.
+S5-2 adds the first two artifact shapes — cell and topic — on top of that base.
+They derive every count from the records they were handed, so a metadata block
+can never disagree with the records beside it, and they refuse a record the
+record schema rejects rather than burying it in an artifact.
+
+Not here: ledger, rejection, coverage or manifest semantics (S5-3 … S5-5), cell
+execution (S5-6), locking, concurrency, or the network.
 """
+import copy
 import datetime
 import json
 import os
 import uuid
 
+from . import records as records_mod
 from . import schema
 
 # `YYYYMMDDTHHMMSSZ-<pid>`, the run identifier format fixed by
@@ -147,3 +153,157 @@ def run_dir(root, run_id_value):
     if not run_id_value:
         raise ArtifactError("run_dir needs a run_id")
     return os.path.join(root, "runs", run_id_value)
+
+
+def cell_artifact_path(root, run_id_value, cell_id):
+    """`<root>/runs/<run_id>/cells/<cell_id>.json` — the committed layout."""
+    return os.path.join(run_dir(root, run_id_value), "cells", "%s.json" % cell_id)
+
+
+def topic_artifact_path(root, run_id_value, topic_slug):
+    """`<root>/runs/<run_id>/topics/<topic_slug>.json` — the committed layout."""
+    return os.path.join(run_dir(root, run_id_value), "topics", "%s.json" % topic_slug)
+
+
+# ------------------------------------------------------------------- records
+# The two schema-admitted keys of a record's classification evidence. This is
+# D2: `classify.Evidence` also carries `field`, but `record.v1.json` closes
+# `classification.evidence` items to {signal, matched}. The projection lives
+# HERE, once, so no caller re-derives it and drifts.
+CLASSIFICATION_EVIDENCE_KEYS = ("signal", "matched")
+
+
+def project_classification_evidence(evidence):
+    """Narrow classify's evidence to what a record may carry (D2).
+
+    Accepts `classify.Evidence` objects or plain dicts and returns plain dicts.
+    Forwarding the dataclass wholesale is refused by the schema, which is the
+    point: the narrowing is a contract, not a formatting preference.
+    """
+    projected = []
+    for item in evidence or ():
+        if isinstance(item, dict):
+            get = item.get
+        else:
+            get = lambda key, _item=item: getattr(_item, key, None)  # noqa: E731
+        projected.append({key: get(key) for key in CLASSIFICATION_EVIDENCE_KEYS})
+    return projected
+
+
+def _validated_records(records):
+    """Sort by the committed key, refusing anything the record schema rejects.
+
+    Validation happens before assembly so a bad record surfaces as itself rather
+    than as an opaque failure of the artifact that swallowed it.
+    """
+    ordered = records_mod.sort_records(list(records))
+    for record in ordered:
+        errors = schema.validate(record, "record.v1.json")
+        if errors:
+            raise ArtifactError(
+                "record %r does not validate against record.v1.json: %s"
+                % (record.get("record_id"), "; ".join(errors[:2])))
+    return ordered
+
+
+def _counts(ordered):
+    """total = full + cross_reference. A pointer is not independent content."""
+    full = sum(1 for r in ordered if r.get("record_type") == "full")
+    cross = sum(1 for r in ordered if r.get("record_type") == "cross_reference")
+    return {"total_records": len(ordered), "full_records": full,
+            "cross_references": cross}
+
+
+def _metadata(base, derived):
+    """Merge caller metadata with derived counts, refusing a second source of truth."""
+    merged = dict(base or {})
+    clash = sorted(set(merged) & set(derived))
+    if clash:
+        raise ArtifactError(
+            "metadata may not set derived count(s) %s — they are computed from "
+            "the records so the two can never disagree" % ", ".join(clash))
+    merged.update(derived)
+    return merged
+
+
+# --------------------------------------------------------- cell/topic artifacts
+def build_cell_artifact(records, *, topic, topic_slug, category, category_slug,
+                        cell_id, harvest_run_id, generated_at, metadata=None):
+    """One cell's artifact. Records sorted by the committed key, counts derived.
+
+    `metadata` carries only what cannot be derived from the records — `sources`
+    (per-source outcome, which lives on the AdapterResults) and an optional
+    `rejected` count. The three record counts are computed here.
+    """
+    ordered = _validated_records(records)
+    return {
+        "schema_version": records_mod.SCHEMA_VERSION,
+        "artifact_type": "cell",
+        "topic": topic,
+        "topic_slug": topic_slug,
+        "category": category,
+        "category_slug": category_slug,
+        "cell_id": cell_id,
+        "generated_at": generated_at,
+        "harvest_run_id": harvest_run_id,
+        "metadata": _metadata(metadata or {"sources": []}, _counts(ordered)),
+        "records": copy.deepcopy(ordered),
+    }
+
+
+def build_topic_artifact(cell_artifacts, *, topic, topic_slug, harvest_run_id,
+                         generated_at, metadata=None):
+    """The deterministic fold of one topic's cells.
+
+    At most one record per `record_id` survives: `record_id` is derived from
+    (topic, identity_url), so within a topic a duplicate `record_id` IS the same
+    URL appearing in two categories. The winner is the first in committed sort
+    order, which makes the choice a function of content rather than of the order
+    cells happened to finish in.
+    """
+    merged = []
+    for artifact in cell_artifacts:
+        merged.extend(artifact.get("records", ()))
+
+    # Sort BEFORE deduplicating. Deduplicating first would keep whichever copy
+    # the cell iteration happened to reach first, making the survivor a function
+    # of cell order; sorting first makes it a function of content.
+    ordered, seen = [], set()
+    for record in _validated_records(merged):
+        key = record.get("record_id")
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(record)
+
+    by_category = {}
+    for record in ordered:
+        # Full records only: a cross_reference is a pointer, not coverage.
+        if record.get("record_type") == "full":
+            slug = record.get("primary_category")
+            by_category[slug] = by_category.get(slug, 0) + 1
+
+    cells = [{"cell_id": a.get("cell_id"), "present": True,
+              "records": len(a.get("records", ()))}
+             for a in cell_artifacts]
+    cells.sort(key=lambda row: row["cell_id"] or "")
+
+    derived = dict(_counts(ordered), by_category=by_category, cells=cells)
+    return {
+        "schema_version": records_mod.SCHEMA_VERSION,
+        "artifact_type": "topic",
+        "topic": topic,
+        "topic_slug": topic_slug,
+        "generated_at": generated_at,
+        "harvest_run_id": harvest_run_id,
+        "metadata": _metadata(metadata, derived),
+        "records": copy.deepcopy(ordered),
+    }
+
+
+def write_cell_artifact(path, artifact):
+    return write_document(path, artifact, "cell_artifact.v1.json")
+
+
+def write_topic_artifact(path, artifact):
+    return write_document(path, artifact, "topic_artifact.v1.json")

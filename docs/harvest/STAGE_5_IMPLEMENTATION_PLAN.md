@@ -1,12 +1,12 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: IN PROGRESS — S5-1 COMPLETE; S5-2 … S5-C NOT APPROVED
+Status: IN PROGRESS — S5-1, S5-2 COMPLETE; S5-3 … S5-C NOT APPROVED
 ```
 
 **Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
-own separate approval, named explicitly, before any file outside `docs/` changes. **S5-1 and
-sequential cell execution were approved on 2026-07-30**; S5-1 shipped and is marked completed below.
+own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution, S5-1 and
+S5-2 were approved on 2026-07-30**; both checkpoints shipped and are marked completed below.
 Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
 together authorize the next one. This rule is restated at every checkpoint and in §12.
 
@@ -292,7 +292,28 @@ contract below.**
   target filesystem — that is a platform finding, not something to work around in code.
 - **Depends on.** Nothing. This is the base of the stage.
 
-### S5-2 · Cell and topic artifacts
+### S5-2 · Cell and topic artifacts *(completed)*
+
+**Approved and shipped 2026-07-30. 45 assertions, `tests/test_taxonomy_cell_artifact.sh`.** As built:
+`build_cell_artifact` / `build_topic_artifact` plus `write_cell_artifact` / `write_topic_artifact`
+and the two `*_artifact_path` helpers encoding §2.1. Five shuffles of the same records produced one
+hash (`71f92b39…`). Counts are **derived**, and a caller that supplies one is refused — two sources
+of truth for "how many records are here" is how an artifact starts describing a set it does not
+contain; `metadata` carries only `sources` and the optional `rejected`. A `cross_reference` is
+counted separately and never contributes to `by_category`. Records are validated against
+`record.v1.json` **before** assembly, so a `cases__domain-applications` record missing its facets is
+refused by `record_id`. D2 lives in `project_classification_evidence`, and a test proves an
+unprojected record cannot reach an artifact.
+
+**One defect found and fixed during the checkpoint, by the test written for it:** the topic merge
+originally deduplicated in cell-iteration order and sorted afterwards, so which duplicate survived
+depended on cell order. Sorting **before** deduplicating makes the survivor a function of content —
+`topic([a, b])` and `topic([b, a])` are now byte-identical.
+
+**Contract clarified while building** (no deviation, the schema is silent): `by_category` counts
+**full records only**, so it sums to `full_records` and a pointer never inflates a category's
+coverage. `test_taxonomy_artifacts.sh`'s boundary test was narrowed from "no cell/topic semantics"
+to "no S5-3 … S5-5 semantics" — the exclusion list shrinks by one entry per approved checkpoint.
 
 - **Goal.** Turn a sorted record set into `cell_artifact.v1.json` and `topic_artifact.v1.json`.
 - **Allowed paths.** `src/harvest/artifacts.py` (M) · `tests/harvest/test_artifacts.py` (M) ·
