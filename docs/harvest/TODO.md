@@ -11,8 +11,8 @@ stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  758 across 20 suites, all green
-                             (567 prior + 55 S4-1 + 58 S4-2 + 78 S4-3/S4-3A)
+assertions:                  821 across 21 suites, all green
+                             (567 prior + 55 S4-1 + 58 S4-2 + 78 S4-3/S4-3A + 63 S4-4)
 ```
 
 ---
@@ -210,7 +210,7 @@ modifications; the 508 pre-existing untracked files byte-identical; nothing push
 of any kind was made. Completion handoff:
 `docs/harvest/handoffs/HANDOFF_STAGE_3_COMPLETE_2026-07-29.md`.
 
-## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1…S4-3 COMPLETE. S4-4 NOT APPROVED.**
+## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1…S4-4 COMPLETE. S4-5 NOT APPROVED.**
 
 Plan: **`docs/harvest/STAGE_4_IMPLEMENTATION_PLAN.md`** — `Status: PROPOSED — PENDING DEVIATION
 APPROVAL`. It is the design authority for Stage 4. Each of checkpoints S4-1 … S4-5 requires its own
@@ -265,9 +265,59 @@ adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
       Every other keyword unchanged. Semantics recorded in `STAGE_4_IMPLEMENTATION_PLAN.md` §4A and
       mirrored into the config's `_matching_about` / `_language_scope_about` keys.
       **+17 assertions** (61 → 78)
-- [ ] **S4-4** `src/harvest/verify.py` — scoring and the accept/reject decision.
+- [x] **S4-4** `src/harvest/verify.py` — the four committed scores and the accept/reject gate:
+      `Scores` · `Verdict` · `ScoreEvidence` · `score()` · `decide()` · `verify()` · `verify_all()` ·
+      `thresholds_for()`. Every weight, threshold and the 90-day half-life are read from
+      `policy.v1.json` — a test asserts **no policy number appears as a numeric literal** in the
+      module, checked on AST constants. Threshold selection is by the **classified** cell, honouring
+      an optional `scoring.thresholds_by_cell` override if one is ever added. Relevance uses the
+      classified category's own `require_any`/`boost`/`exclude` vocabulary through **classify's
+      committed token matcher** (S4-3A) — no second matching semantics. An unknown publication date
+      gives `freshness: null` and a composite **renormalized over the scored dimensions**, never 0.0,
+      which would assert the item is old. Every verdict carries the honest no-enrichment values:
+      `access_status "not_checked"`, `http_status null`, `verification_status "unverified"`,
+      `content_hash null`, no invented timestamp. Rejections keep their scores and use only
+      `record.v1.json`'s committed enum, with a detail naming the exact rule and number. Nothing is
+      written to disk. **63 assertions**, `tests/test_taxonomy_verify.sh`
+- [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction.
       **NOT APPROVED; not started**
-- [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction
+
+**S4-4 gate:** 821 assertions across 21 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 78
+S4-3/S4-3A + 63 S4-4). All prior assertions unchanged and unmodified. All five checkers exit 0; the
+508 pre-existing untracked files byte-identical; `.gitignore` still exactly `1 insertion(+)`.
+`config/`, `schemas/`, `classify.py`, `extract.py`, `dedupe.py` and `pool.py` all byte-unchanged.
+
+**S4-4 design decisions, recorded because the committed config does not fix them.** `policy.v1.json`
+supplies the weights, the four thresholds and the half-life, but **no formula shape** for any score.
+The shapes are defined in `verify.py`, with every constant named, bounded and documented, and
+deliberately chosen not to equal any policy number so the two can never be confused:
+
+- **relevance** — the classified category's vocabulary: `exclude` match ⇒ 0.0; a non-empty
+  `require_any` with no hit ⇒ 0.0; otherwise a saturating blend of required and boost hits.
+- **quality** — observable evidence completeness (title, summary, publisher, date; a stub summary
+  counts half) plus a capped corroboration bonus per additional independent source. `source_tiers`
+  is **unused**: no configured source declares a tier, so `provenance.source_tier` stays null rather
+  than being guessed from `role` — see **CF-9**.
+- **audience_fit** — 1.0 unless the classified category's own `exclude` list fires, in which case
+  0.0 and `developer_only_audience` when classify's `is_developer_tool` signal also fires.
+- **freshness** — exponential decay over the committed 90-day half-life against an injected clock;
+  null when no usable date exists.
+
+**CF-7 (rejection vocabulary, → Stage 5).** `record.v1.json` has no `below_composite_threshold` and
+no audience-fit-specific value, so a composite or audience_fit failure is reported as the closest
+honest reason with the detail naming the actual rule and number. Sits with **CF-2**.
+
+**CF-8 (unmatchable configured terms, → the relevance-tuning stage).** Two of the 214 category
+relevance terms — `%` in `cases__case-studies` boost and `$` in `discourse__market-and-investment`
+boost — contain no word character and so cannot participate in token matching. They are skipped
+deterministically and **reported** on `Scores.unusable_terms` rather than dropped silently or
+allowed to abort a batch. Both are already covered by regex patterns in `precedence.v1.json`, so
+nothing is actually lost.
+
+**CF-9 (source tiers, → the relevance-tuning stage).** `policy.v1.json` defines four tier weights,
+but no configured source declares a tier and `taxonomy.v1.json`'s source object is
+`additionalProperties: false`. Quality therefore uses observable evidence rather than authority.
+Wiring tiers needs a schema change and its own deviation.
 
 **S4-3A gate:** 758 assertions across 20 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 78
 S4-3/S4-3A). All prior assertions unchanged and unmodified except the two in `test_classify.py` that
