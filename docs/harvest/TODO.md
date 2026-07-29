@@ -4,13 +4,14 @@ Updated as each item is completed **and tested**. An item is only ticked when it
 passes; "written" is not "done".
 
 ```text
-verified_code_checkpoint:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7   Stage 2.5 implementation
+verified_code_checkpoint:    68b6c2628aca36187aab37a4b8c08e401820d261   Stage 3 implementation
 documentation_approval:      79389e1460a13492fcdc42ab8c96af5313ad9bca   approved plan
 approved_facet_design:       3b85a8102fb89ae0585ef0fc080f518238e4c1bc
 stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
+stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  387 across 14 suites (199 Stage 0–2 + 188 Stage 2.5), all green
+assertions:                  567 across 17 suites, all green
 ```
 
 ---
@@ -163,7 +164,7 @@ adapters" are superseded; see `STAGE_3_IMPLEMENTATION_PLAN.md` §2 erratum E1.
 
 ---
 
-## Stage 3 — discovery adapters ⟵ **NEXT. PLAN APPROVED; CODE NOT STARTED.**
+## Stage 3 — discovery adapters ⟵ **COMPLETE.**
 
 Plan: **`docs/harvest/STAGE_3_IMPLEMENTATION_PLAN.md`** — standalone and authoritative. The Stage 2.5
 entry conditions (§18 of `handoffs/HANDOFF_STAGE_2_5_COMPLETE_2026-07-28.md`) were all satisfied: the
@@ -175,29 +176,56 @@ config field is **not added** (no configured source needs it, and adding it woul
 schema and invalidate cache keys), and the 25 fixtures are **synthetic and hand-authored**, never
 captured — so no live harvest is required.
 
-Three approved corrections precede adapter code, each its own commit, in this order:
+Three approved corrections preceded adapter code, each its own commit, in this order:
 
-- [ ] **C4** — `ClientError.reason = "http_4xx"`; a 4xx must not be reported as `http_5xx`.
-      `httpclient.py` · `test_http.py` · `IMPLEMENTATION_PLAN.md` §3
-- [ ] **DV-7** — `CandidatePool` byte-determinism and honest ownership vocabulary: type-aware
+- [x] **C4** — `ClientError.reason = "http_4xx"`; a 4xx must not be reported as `http_5xx`.
+      `httpclient.py` · `test_http.py` · `IMPLEMENTATION_PLAN.md` §3 — **`e271206`**
+- [x] **DV-7** — `CandidatePool` byte-determinism and honest ownership vocabulary: type-aware
       set normalization at serialization, and deterministic **designation** fields that never claim to
       name the lane that actually performed the work. `pool.py` · `candidate_pool.v1.json` ·
-      `test_pool.py`
-- [ ] Stage 3 proper:
-      - [ ] `src/harvest/sourcecache.py` — one logical fetch per request key for success **and**
-            failure; `claim`/`wait`/`complete`/`fail` store protocol
-      - [ ] `src/harvest/adapters/{base,feed,jsonapi,seed}.py` — three concrete adapters plus a
-            contract layer; `sitemap` and `model_search` raise typed `AdapterNotImplemented`
-      - [ ] Synthetic fixtures: 25 sources + 19 configured-host robots policy fixtures;
-            `scripts/harvest/check_fixtures.py`
-      - [ ] `tests/test_taxonomy_{adapters,source_cache,adapter_concurrency}.sh` — incl. seed depth
-            hard-fixed at 1, fail-closed allowlist, and no child-body fetch in Stage 3
+      `test_pool.py` — **`0a03fdd`**
+- [x] **DV-8** — per-logical-fetch HTTP accounting: `FetchAccounting` frozen onto every `Response`
+      and every typed failure, never diffed from the shared `client.stats`. `httpclient.py` ·
+      `test_http.py` — **`2841578`**
+- [x] Stage 3 proper:
+      - [x] **4A** `src/harvest/sourcecache.py` — one logical fetch per request key for success
+            **and** failure; `claim`/`wait`/`complete`/`fail` store protocol; the atomic
+            `pool.record_established_source()` — **`3957fac`**
+      - [x] **4A′** throttle-test measurement correction — pacing asserted at worker release, not
+            server arrival. `throttle_worker.py` · `test_domain_throttle.py` — **`e3a8663`**
+      - [x] **DV-9** pace lock fails closed; the caller translates it to a typed `lease_timeout`.
+            `domainlease.py` · `httpclient.py` — **`bfde922`**
+      - [x] **4B** `src/harvest/adapters/{base,feed,jsonapi,seed}.py` — three concrete adapters plus
+            a contract layer; `sitemap` and `model_search` raise typed `AdapterNotImplemented`;
+            synthetic fixtures (25 sources + 19 configured-host robots policy fixtures);
+            `scripts/harvest/check_fixtures.py`;
+            `tests/test_taxonomy_{adapters,source_cache,adapter_concurrency}.sh` — incl. seed depth
+            hard-fixed at 1, fail-closed allowlist, and no child-body fetch — **`68b6c26`**
 
-## Stage 4 — extract, classify, verify, dedupe
+**Stage 3 status: complete**, closing at `68b6c26`. **567 assertions across 17 suites**, all green;
+protected baseline 18/18; `check_fixtures.py` 25/25 sources · 19/19 hosts · 47 manifest entries;
+`check_facets.py`, `gen_facet_schema.py --check` and `check_config.py` all exit 0. Zero tracked
+modifications; the 508 pre-existing untracked files byte-identical; nothing pushed. No live request
+of any kind was made. Completion handoff:
+`docs/harvest/handoffs/HANDOFF_STAGE_3_COMPLETE_2026-07-29.md`.
 
-- [ ] `src/harvest/{extract,classify,verify,dedupe}.py`
-- [ ] `tests/test_taxonomy_classify.sh` — all 10 precedence rules
-- [ ] `tests/test_taxonomy_dedupe.sh`
+## Stage 4 — extract, classify, verify, dedupe ⟵ **PLAN PROPOSED; NOT APPROVED; CODE NOT STARTED.**
+
+Plan: **`docs/harvest/STAGE_4_IMPLEMENTATION_PLAN.md`** — `Status: PROPOSED — PENDING DEVIATION
+APPROVAL`. It is the design authority for Stage 4 and **authorizes no code**. `DV-11` is open, and
+each of checkpoints S4-1 … S4-5 requires its own separate approval.
+
+Stage 4 is **metadata-only and entirely in-memory**: it reads no body, issues no request and writes
+no file. **Target-page fetching, target fixtures, target-fetch and extraction ownership, body
+parsing and alias adjudication are deferred to Stage 6.** Stage 4 modifies no schema, no config, no
+adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
+
+- [ ] **S4-1** `src/harvest/dedupe.py` — same-topic dedupe over canonical identity; the DV-11 ingest
+      model. Blocked on DV-11 approval
+- [ ] **S4-2** `src/harvest/extract.py` — metadata normalization (not body extraction)
+- [ ] **S4-3** `src/harvest/classify.py` + `tests/test_taxonomy_classify.sh` — all 10 precedence rules
+- [ ] **S4-4** `src/harvest/verify.py` — scoring and the accept/reject decision
+- [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction
 
 ## Stage 5 — cell worker, orchestration, cross-topic, staging
 
@@ -209,6 +237,12 @@ Three approved corrections precede adapter code, each its own commit, in this or
 - [ ] `tests/test_taxonomy_staging_isolation.sh`
 
 ## Stage 6 — refresh, link-check, diff, promote
+
+**Target-page fetching lands here**, deferred from Stage 4: the target-fetch coordinator, target-page
+fixtures and the robots fixtures their hosts need, `adapter_mode="record"`, per-child robots, body
+parsing and `content_hash`, and alias adjudication (301/308 aliases, `rel=canonical` trust tiers,
+alias conflicts). Until then `designated_target_fetch_owner_lane_id` and
+`designated_extraction_owner_lane_id` stay null, which is their committed meaning.
 
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
