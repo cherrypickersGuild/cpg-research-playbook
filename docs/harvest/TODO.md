@@ -41,7 +41,15 @@ faceting or identity is re-derived. **Non-goals:** live requests and target fetc
 migration (Stage 7), promotion into `data/harvested/`, `validate_task.sh` wiring (Stage 8),
 threshold calibration (Stage 9), and concurrent cell execution.
 
-- [ ] **S5-1** deterministic atomic artifact writer — `artifacts.py`. **NOT APPROVED; not started**
+- [x] **S5-1** deterministic atomic artifact writer — `src/harvest/artifacts.py`: `serialize()` ·
+      `write_atomic()` · `write_document()` · `run_id()` · `run_dir()` · `ArtifactError`. One
+      serialization (`sort_keys`, UTF-8, LF, one trailing newline) so bytes follow content, not dict
+      insertion order. Writes go to `.tmp_<uuid4hex>_<basename>` **beside the destination** —
+      `os.replace` is only atomic within one filesystem — then fsync and rename, so a reader sees
+      the old complete artifact or the new one, never a partial. Cleanup catches `BaseException`,
+      so an interrupt leaks no temp file. `write_document` validates against the committed schema
+      **before** serializing: an invalid document writes nothing at all. No locking, no concurrency,
+      no network, no artifact semantics. **34 assertions**, `tests/test_taxonomy_artifacts.sh`
 - [ ] **S5-2** cell and topic artifacts. **NOT APPROVED; not started**
 - [ ] **S5-3** rejection log and ledger — `ledger.py`. **NOT APPROVED; not started**
 - [ ] **S5-4** coverage report — wires `coverage.py` unmodified; discharges the carried-forward

@@ -1,12 +1,14 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: PROPOSED — PLANNING APPROVED, IMPLEMENTATION NOT APPROVED
+Status: IN PROGRESS — S5-1 COMPLETE; S5-2 … S5-C NOT APPROVED
 ```
 
-**No code may be written under this document.** Approving this plan approves the *plan*. It
-authorizes no checkpoint. Each of S5-1 … S5-C requires its own separate approval, named explicitly,
-before any file outside `docs/` changes. This rule is restated at every checkpoint and in §12.
+**Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
+own separate approval, named explicitly, before any file outside `docs/` changes. **S5-1 and
+sequential cell execution were approved on 2026-07-30**; S5-1 shipped and is marked completed below.
+Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
+together authorize the next one. This rule is restated at every checkpoint and in §12.
 
 **Date:** 2026-07-30 · **Branch:** `main`
 
@@ -259,7 +261,17 @@ gate green from the committed tree.
 
 Every checkpoint requires **separate approval**. This document authorizes none of them.
 
-### S5-1 · Deterministic atomic artifact writer
+### S5-1 · Deterministic atomic artifact writer *(completed)*
+
+**Approved and shipped 2026-07-30. 34 assertions, `tests/test_taxonomy_artifacts.sh`.** As built:
+`serialize` is content-addressed — a document and the same document with reversed insertion order
+hash identically (`ba65e645…`), LF, one trailing newline. `write_atomic` writes to
+`.tmp_<uuid4hex>_<basename>` beside the destination, fsyncs, then `os.replace`s; a simulated crash
+between write and rename left the previous 126-byte artifact byte-identical and valid, with no temp
+debris. Cleanup catches `BaseException`, so `KeyboardInterrupt` leaks nothing. `write_document`
+validates first: an invalid document raised and created no file. Parent directories are created by
+`write_atomic` so nested layouts do not push that duty onto every caller. **No deviation from the
+contract below.**
 
 - **Goal.** One serializer, one atomic writer, one run-directory resolver. No artifact semantics.
 - **Allowed paths.** `src/harvest/artifacts.py` (A) · `tests/harvest/test_artifacts.py` (A) ·
