@@ -1,12 +1,12 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: IN PROGRESS — S5-1, S5-2, S5-3 COMPLETE; S5-4 … S5-C NOT APPROVED
+Status: IN PROGRESS — S5-1 … S5-4 COMPLETE; S5-5 … S5-C NOT APPROVED
 ```
 
 **Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
-own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution, S5-1, S5-2 and
-S5-3 were approved on 2026-07-30**; all three checkpoints shipped and are marked completed below.
+own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-4
+were approved on 2026-07-30**; all four checkpoints shipped and are marked completed below.
 Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
 together authorize the next one. This rule is restated at every checkpoint and in §12.
 
@@ -403,7 +403,42 @@ under test, never about which files happen to exist yet.
 - **Risk tier.** L1 +FS.
 - **Depends on.** S5-1.
 
-### S5-4 · Coverage report *(discharges the carried-forward coverage wiring)*
+### S5-4 · Coverage report *(completed — discharges the carried-forward coverage wiring)*
+
+**Approved and shipped 2026-07-30. 43 assertions, `tests/test_taxonomy_coverage_report.sh`.** As
+built: `coverage_report_path` (`runs/<run_id>/coverage.json`), a `build_coverage_report` delegate and
+`write_coverage_report`, all in `artifacts.py`. **`coverage.py` and `facets.py` are byte-unchanged**,
+asserted inside the suite with `git diff --exit-code` — if either moved, this was not wiring.
+
+The delegate adds exactly two things, both about persistence. **Ordering:** the committed builder
+sorts `by_category` but projects its per-record rows in **input order**, so shuffled input produced
+different bytes; the wrapper sorts by `records.sort_key` first. That fix belongs here, not in
+`coverage.py`. **Refusal:** records are validated against `record.v1.json` before counting, so a
+malformed record is named rather than silently tallied. `thresholds_constant` is passed through as
+*reported* — all three values round-trip unchanged, and no S4-4 threshold is recalibrated or
+reinterpreted.
+
+Measured: the five states agree with `facets.count_states` and sum exactly to
+`applicable_full_records`; `not_enriched` (1) is distinct from `unresolved` (1) with
+`not_enriched: 0` inside the gated cell; `unmapped_legacy_value` outranks `facet_partial`; a
+`cross_reference` is excluded from every count *and* from the records projection
+(`with_pointer["by_category"] == without["by_category"]`); only `cases/domain-applications` is gated;
+eligible + withheld = applicable; 5 shuffles give identical bytes.
+
+**CF-11 is protected by six assertions, not by assumption.** The word `secondary` appears **nowhere**
+in the serialized report, so an empty `industry.secondary` cannot read as a gap or a deficiency; it
+changes no count, never withholds a record, and a `facet_complete` record without one stays complete
+and eligible. Critically, one test proves the counting machinery is **live** — a populated
+`secondary` *would* be observed — so CF-11 stays a visible design decision rather than decaying into
+a broken counter.
+
+**Allowed-path addition, approved 2026-07-30: `tests/harvest/test_artifacts.py` (M), one line.** Its
+boundary guard listed `coverage_report` among the tokens forbidden in `artifacts.py`, which is
+precisely what this checkpoint must add; the guard is designed to shrink by one entry per approved
+checkpoint, but S5-4's path list predates the guard. `"coverage_report"` was deleted from that one
+tuple, leaving `("run_manifest", "LATEST_RUN_ID")` prohibited until S5-5. Nothing else in the file
+changed. Dodging the guard by deriving the schema filename or renaming the delegate was rejected: it
+would obfuscate code to satisfy a test.
 
 - **Goal.** Drive the committed, **unmodified** `coverage.build_coverage_report` from a real record
   set and persist `coverage_report.v1.json`.

@@ -324,7 +324,7 @@ class TestBoundary(unittest.TestCase):
         # S5-5 and must not leak in early. This list shrinks as each of those
         # checkpoints is approved.
         tokens = self.code_tokens()
-        for later in ("coverage_report", "run_manifest", "LATEST_RUN_ID"):
+        for later in ("run_manifest", "LATEST_RUN_ID"):
             self.assertNoTokenContains(later, tokens)
 
     def test_it_adds_no_locking_or_concurrency(self):

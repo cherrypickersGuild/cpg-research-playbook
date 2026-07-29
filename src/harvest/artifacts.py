@@ -43,6 +43,7 @@ import json
 import os
 import uuid
 
+from . import coverage as coverage_mod
 from . import records as records_mod
 from . import schema
 
@@ -182,6 +183,11 @@ def rejection_log_path(root, cell_id):
     return os.path.join(root, "rejections", "%s.json" % cell_id)
 
 
+def coverage_report_path(root, run_id_value):
+    """`<root>/runs/<run_id>/coverage.json` — per-run, like the artifacts."""
+    return os.path.join(run_dir(root, run_id_value), "coverage.json")
+
+
 # ------------------------------------------------------------------- records
 # The two schema-admitted keys of a record's classification evidence. This is
 # D2: `classify.Evidence` also carries `field`, but `record.v1.json` closes
@@ -316,6 +322,37 @@ def build_topic_artifact(cell_artifacts, *, topic, topic_slug, harvest_run_id,
         "metadata": _metadata(metadata, derived),
         "records": copy.deepcopy(ordered),
     }
+
+
+# ------------------------------------------------------------ coverage report
+def build_coverage_report(records, *, harvest_run_id, generated_at,
+                          thresholds_constant=None, facets_dir=None,
+                          config_dir=None, include_records=True):
+    """Wiring, not new coverage logic.
+
+    The committed `coverage.build_coverage_report` does all the counting and stays
+    byte-unchanged. Two things are added here, both about persistence:
+
+      * ORDER. The delegate sorts `by_category`, but builds its per-record
+        projection in INPUT order — so the record set is sorted by the committed
+        `records.sort_key` first. That is what makes two runs over the same set
+        byte-identical, and it belongs here rather than in `coverage.py`.
+      * REFUSAL. Records are validated against `record.v1.json` before they are
+        counted, so a malformed record is named rather than silently tallied.
+
+    Nothing is recalibrated: `thresholds_constant` is *reported* from the caller's
+    observation of the run, never derived or reinterpreted here.
+    """
+    ordered = _validated_records(records)
+    return coverage_mod.build_coverage_report(
+        ordered, harvest_run_id, generated_at,
+        thresholds_constant=thresholds_constant,
+        facets_dir=facets_dir, config_dir=config_dir,
+        include_records=include_records)
+
+
+def write_coverage_report(path, report):
+    return write_document(path, report, "coverage_report.v1.json")
 
 
 def write_cell_artifact(path, artifact):

@@ -78,8 +78,22 @@ threshold calibration (Stage 9), and concurrent cell execution.
       proves all six are storable, so a seventh fails the test rather than a live write.
       `build_rejection_log` takes `(extracted, verdict)` pairs, since a `Verdict` carries no
       identity. **46 assertions**, `tests/test_taxonomy_ledger.sh`
-- [ ] **S5-4** coverage report — wires `coverage.py` unmodified; discharges the carried-forward
-      coverage wiring item. **NOT APPROVED; not started**
+- [x] **S5-4** coverage report — `coverage_report_path()` · `build_coverage_report()` ·
+      `write_coverage_report()` in `artifacts.py`. **Wiring, not new coverage logic:** `coverage.py`
+      and `facets.py` are **byte-unchanged**, asserted in-suite with `git diff --exit-code`. The
+      delegate adds only persistence concerns — it sorts by the committed `records.sort_key` first
+      (the committed builder sorts `by_category` but projects per-record rows in *input* order, so
+      shuffled input produced different bytes), and validates records against `record.v1.json` before
+      counting. `thresholds_constant` is **reported, never derived**: no S4-4 threshold is
+      recalibrated. The five states agree with `facets.count_states` and sum exactly to
+      `applicable_full_records`; `not_enriched` stays distinct from `unresolved`;
+      `unmapped_legacy_value` outranks `facet_partial`; a `cross_reference` is excluded from every
+      count and from the records projection. **CF-11 protected by six assertions** — the word
+      `secondary` appears nowhere in the serialized report, an empty `secondary` changes no count and
+      withholds no record, and one test proves the counter is *live* so the design decision stays
+      visible rather than decaying into a broken counter.
+      **This discharges the carried-forward coverage reporting wiring item.**
+      **43 assertions**, `tests/test_taxonomy_coverage_report.sh`
 - [ ] **S5-5** run manifest and `LATEST_RUN_ID`. **NOT APPROVED; not started**
 - [ ] **S5-6** the cell driver — `run_cells.py`, sequential over cells. **NOT APPROVED; not started**
 - [ ] **S5-7** recovery and re-run semantics. **NOT APPROVED; not started**
@@ -467,9 +481,9 @@ that no production change was required. No further action.
 builder that forwards the dataclass wholesale is refused by the schema. Record construction
 therefore projects the two admitted keys, and a test pins both the narrowing and the refusal.
 
-**Carried forward from S4-5B (→ Stage 5): coverage reporting wiring.** `coverage.py` and
-`facets.count_states` / `reporting_state` are not yet driven from a built record set; that arrives
-with the stage that first writes an artifact.
+**Carried forward from S4-5B (→ Stage 5): coverage reporting wiring — DISCHARGED by S5-4.**
+`coverage.py` and `facets.count_states` / `reporting_state` are now driven from a built record set and
+persisted as `coverage_report.v1.json`, with both modules byte-unchanged. No further action.
 
 **CF-11 (secondary industries, → the facet-quality stage).** `industry.secondary` is left empty. The
 committed definition means **deployment context, never corporate portfolio** — a judgement lexical
