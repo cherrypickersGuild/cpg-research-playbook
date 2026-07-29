@@ -11,7 +11,7 @@ stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  622 across 18 suites, all green (567 prior + 55 from S4-1)
+assertions:                  680 across 19 suites, all green (567 prior + 55 S4-1 + 58 S4-2)
 ```
 
 ---
@@ -209,7 +209,7 @@ modifications; the 508 pre-existing untracked files byte-identical; nothing push
 of any kind was made. Completion handoff:
 `docs/harvest/handoffs/HANDOFF_STAGE_3_COMPLETE_2026-07-29.md`.
 
-## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1 COMPLETE. S4-2 NOT APPROVED.**
+## Stage 4 — extract, classify, verify, dedupe ⟵ **S4-1, S4-2 COMPLETE. S4-3 NOT APPROVED.**
 
 Plan: **`docs/harvest/STAGE_4_IMPLEMENTATION_PLAN.md`** — `Status: PROPOSED — PENDING DEVIATION
 APPROVAL`. It is the design authority for Stage 4. Each of checkpoints S4-1 … S4-5 requires its own
@@ -231,18 +231,26 @@ adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
       is the total content key `(role_rank, source_id, position, target_url)`; every metadata
       contribution and conflict retained; canonical-equivalence grouping only. **55 assertions**,
       `tests/test_taxonomy_dedupe.sh`
-- [ ] **S4-2** `src/harvest/extract.py` — metadata normalization (not body extraction).
-      **NOT APPROVED; not started**
-- [ ] **S4-3** `src/harvest/classify.py` + `tests/test_taxonomy_classify.sh` — all 10 precedence rules
+- [x] **S4-2** `src/harvest/extract.py` — metadata **normalization**, deliberately not body
+      extraction: `ExtractedCandidate` · `ExtractionResult` · `NormalizationIssue` · `normalize()` ·
+      `normalize_all()`. Display values follow S4-1's authority-then-content order; dates go through
+      the committed `records.to_iso8601_utc` and an unparseable one becomes null **and is reported**;
+      `identity_url` is consumed from S4-1, never recomputed; `canonical_url == identity_url`; no
+      alias is produced; `access_status`, `http_status`, `content_hash`, `updated_at`,
+      `last_checked_at` and `url_aliases` are structurally **absent**, because each needs a fetch.
+      `designated_target_fetch_owner_lane_id` and `designated_extraction_owner_lane_id` stay null.
+      **58 assertions**, `tests/test_taxonomy_extract.sh`
+- [ ] **S4-3** `src/harvest/classify.py` + `tests/test_taxonomy_classify.sh` — all 10 precedence
+      rules. **NOT APPROVED; not started**
 - [ ] **S4-4** `src/harvest/verify.py` — scoring and the accept/reject decision
 - [ ] **S4-5** `src/harvest/facetassign.py` + in-memory record construction
 
-**S4-1 gate:** 622 assertions across 18 suites, all green (567 prior, unchanged and unmodified, plus
-55 new). `check_fixtures.py`, `verify_protected_baseline.sh`, `check_facets.py`,
-`gen_facet_schema.py --check` and `check_config.py` all exit 0; `check_config.py` byte-unchanged; the
-508 pre-existing untracked files byte-identical; `.gitignore` still exactly `1 insertion(+)` against
-the anchor. No existing assertion was modified. `pool.py`, every schema and every config file remain
-byte-unchanged.
+**S4-2 gate:** 680 assertions across 19 suites, all green (567 prior + 55 S4-1 + 58 S4-2). All prior
+assertions unchanged and unmodified. `check_fixtures.py`, `verify_protected_baseline.sh`,
+`check_facets.py`, `gen_facet_schema.py --check` and `check_config.py` all exit 0; `check_config.py`
+byte-unchanged; the 508 pre-existing untracked files byte-identical; `.gitignore` still exactly
+`1 insertion(+)` against the anchor. `pool.py`, `dedupe.py`, every schema and every config file
+remain byte-unchanged.
 
 ## Stage 5 — cell worker, orchestration, cross-topic, staging
 
