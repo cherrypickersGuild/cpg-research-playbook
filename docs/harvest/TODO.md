@@ -322,8 +322,21 @@ adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
       contract (the schema pins the vocabulary's SHA-256), so both are in the same commit.
       **68 assertions** (was 63; the CF-12 pin is replaced by six regression tests),
       `tests/test_taxonomy_facetassign.sh`
-- [ ] **S4-5B** in-memory record construction and schema validation.
-      **NOT APPROVED; not started**
+- [x] **S4-5B** in-memory record construction and schema validation. The pipeline's output
+      (dedupe → extract → classify → verify → facetassign) is handed to the **unmodified**
+      `records.make_full_record` / `make_cross_reference` and validated against `record.v1.json`
+      in memory. **No production module was added** — `records.py` already accepts `case_facets`,
+      so S4-5B is test-only. Both schema conditionals are proved from the schema's own behaviour:
+      a `cases__domain-applications` full record without facets is **refused**, and a
+      `research-and-models` / `discourse` full record **with** them is refused (absent or explicit
+      null both accepted). A `cases__domain-applications` **cross_reference** row stays satisfiable
+      — the conditionals sit inside the full-record branch precisely so one of the twelve cells is
+      not made impossible. `cross_reference` refuses `title`, `summary`, `relevance_score`,
+      `classification` and `case_facets`. Facets are inert for identity: `record_id`, `content_id`,
+      `identity_url`, `cell_id` and `canonical_url` are byte-identical with and without a payload,
+      and `urlkey.py` contains no facet reference. Order is `(topic, primary_category, record_id)`;
+      shuffled input yields a byte-identical artifact over 5 shuffles. Nothing is written.
+      **51 assertions**, `tests/test_taxonomy_records.sh`
 
 **S4-5A gate:** 884 assertions across 22 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 78
 S4-3/S4-3A + 63 S4-4 + 63 S4-5A). All prior assertions unchanged and unmodified. All five checkers
@@ -343,6 +356,31 @@ pre-existing untracked files byte-identical; `.gitignore` still exactly `1 inser
 `facetassign.py`, `facets.py`, `records.py`, `verify.py`, `classify.py`, `extract.py`, `dedupe.py`
 and `pool.py` all byte-unchanged — the correction is entirely in the vocabulary and its generated
 schema.
+
+**S4-5B gate:** 940 assertions across 23 suites, all green (889 prior + 51 S4-5B). All prior
+assertions unchanged and unmodified — S4-5B is purely additive, touching no existing test. All five
+checkers exit 0; the 508 pre-existing untracked files byte-identical; `.gitignore` still exactly
+`1 insertion(+)`. `records.py`, `facetassign.py`, `facets.py`, `verify.py`, `classify.py`,
+`extract.py`, `dedupe.py`, `pool.py`, every schema and every config file are byte-unchanged.
+
+**S4-5B divergence D1 — the plan's S4-5B API line is stale, and was not followed.** It states
+`facetassign.assign(extracted, *, facets_dir=None) -> case_facets | None`. The **committed** S4-5A
+contract is `assign(extracted, classification, *, facets_dir=None) -> FacetAssignment`, which
+shipped and is covered by 68 assertions. S4-5B used the committed signature and left
+`facetassign.py` byte-unchanged; changing it would have broken S4-5A for a line written before
+S4-5A was carved out of S4-5B. `STAGE_4_IMPLEMENTATION_PLAN.md` is not in S4-5B's allowed paths, so
+this is recorded here rather than corrected there — **the plan's §6 S4-5B API line should be struck
+by whichever checkpoint next has that file in scope.**
+
+**S4-5B finding D2 — the record schema deliberately narrows classification evidence.**
+`classify.Evidence` carries `{signal, matched, field}`, but `record.v1.json`'s
+`classification.evidence` items are `{signal, matched}` with `additionalProperties: false`. A
+builder that forwards the dataclass wholesale is refused by the schema. Record construction
+therefore projects the two admitted keys, and a test pins both the narrowing and the refusal.
+
+**Carried forward from S4-5B (→ Stage 5): coverage reporting wiring.** `coverage.py` and
+`facets.count_states` / `reporting_state` are not yet driven from a built record set; that arrives
+with the stage that first writes an artifact.
 
 **CF-11 (secondary industries, → the facet-quality stage).** `industry.secondary` is left empty. The
 committed definition means **deployment context, never corporate portfolio** — a judgement lexical
