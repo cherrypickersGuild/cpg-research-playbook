@@ -9,12 +9,20 @@ documentation_approval:      79389e1460a13492fcdc42ab8c96af5313ad9bca   approved
 approved_facet_design:       3b85a8102fb89ae0585ef0fc080f518238e4c1bc
 stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
+stage_4_closing_commit:      b303d9db1e7433a740960bfbaaf83e82acfd8433   S4-5B
+stage_4_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
 push_state:                  local only — nothing pushed to origin/main
-assertions:                  884 across 22 suites, all green
+assertions:                  940 across 23 suites, all green
                              (567 prior + 55 S4-1 + 58 S4-2 + 78 S4-3/S4-3A
-                              + 63 S4-4 + 63 S4-5A)
+                              + 63 S4-4 + 68 S4-5A/S4-5A-C + 51 S4-5B)
 ```
+
+**STAGE 4 IS CLOSED** as of 2026-07-30 — see
+`docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md` for the commit chain, closure
+validation, repository state and successor constraints. `STAGE_4_IMPLEMENTATION_PLAN.md` reads
+`COMPLETED — STAGE 4 CLOSED`; its §12 records the documentation-only closeout. **Stage 5 is not
+open**: §11 condition 10 (explicit approval) is not met, and green tests alone do not open it.
 
 ---
 
@@ -363,14 +371,15 @@ checkers exit 0; the 508 pre-existing untracked files byte-identical; `.gitignor
 `1 insertion(+)`. `records.py`, `facetassign.py`, `facets.py`, `verify.py`, `classify.py`,
 `extract.py`, `dedupe.py`, `pool.py`, every schema and every config file are byte-unchanged.
 
-**S4-5B divergence D1 — the plan's S4-5B API line is stale, and was not followed.** It states
-`facetassign.assign(extracted, *, facets_dir=None) -> case_facets | None`. The **committed** S4-5A
-contract is `assign(extracted, classification, *, facets_dir=None) -> FacetAssignment`, which
-shipped and is covered by 68 assertions. S4-5B used the committed signature and left
-`facetassign.py` byte-unchanged; changing it would have broken S4-5A for a line written before
-S4-5A was carved out of S4-5B. `STAGE_4_IMPLEMENTATION_PLAN.md` is not in S4-5B's allowed paths, so
-this is recorded here rather than corrected there — **the plan's §6 S4-5B API line should be struck
-by whichever checkpoint next has that file in scope.**
+**S4-5B divergence D1 — DISCHARGED by the Stage 4 closeout.** The plan's S4-5B API line was stale:
+it stated `facetassign.assign(extracted, *, facets_dir=None) -> case_facets | None`, whereas the
+**committed** S4-5A contract is `assign(extracted, classification, *, facets_dir=None) ->
+FacetAssignment`. S4-5B used the committed signature and left `facetassign.py` byte-unchanged;
+following the stale line would have broken S4-5A for wording written before S4-5A was carved out of
+S4-5B. `STAGE_4_IMPLEMENTATION_PLAN.md` was not in S4-5B's allowed paths, so the correction waited
+for the closeout, which had it in scope. **The plan now carries the committed contract**, records
+that record construction passes `FacetAssignment.case_facets` to the existing builder, and records
+that no production change was required. No further action.
 
 **S4-5B finding D2 — the record schema deliberately narrows classification evidence.**
 `classify.Evidence` carries `{signal, matched, field}`, but `record.v1.json`'s

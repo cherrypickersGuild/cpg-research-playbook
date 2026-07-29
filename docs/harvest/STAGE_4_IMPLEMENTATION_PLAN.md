@@ -1,21 +1,26 @@
 # Stage 4 — extract, classify, verify, dedupe: implementation plan
 
 ```text
-Status: PROPOSED — PENDING DEVIATION APPROVAL
+Status: COMPLETED — STAGE 4 CLOSED
 ```
 
-**No code may be written under this document.** It is the design authority for Stage 4 and authorizes
-nothing. `DV-11` is open; checkpoint **S4-1 is not authorized by the commit that adds this file**.
-Each of S4-1 … S4-5 requires its own separate approval.
+**Historical framing, retained.** When this document was written it read `PROPOSED — PENDING
+DEVIATION APPROVAL` and authorized nothing: `DV-11` was open, **S4-1 was not authorized by the commit
+that added this file**, and each of S4-1 … S4-5 required its own separate approval. Every checkpoint
+was subsequently approved and committed individually. The status above is now the operative one —
+Stage 4 is closed and this document authorizes no further code. See §12 for the closeout record.
 
-**Date:** 2026-07-29 · **Branch:** `main`
+**Date:** 2026-07-29 · **Closed:** 2026-07-30 · **Branch:** `main`
 
 ```text
 stage_3_closing_commit:      68b6c2628aca36187aab37a4b8c08e401820d261
 stage_3_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_3_COMPLETE_2026-07-29.md
+stage_4_closing_commit:      b303d9db1e7433a740960bfbaaf83e82acfd8433
+stage_4_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34
 push_state:                  local only — nothing pushed to origin/main
 assertions_at_plan_time:     567 across 17 suites, all green
+assertions_at_closure:       940 across 23 suites, all green
 ```
 
 Predecessors, still valid: `IMPLEMENTATION_PLAN.md` (§2 URL contract, §3 sources and vocabulary, §4
@@ -592,15 +597,34 @@ neither makes `accept_composite` bind. **No S4-4 corrective code or config chang
   from the committed tree.
 - **Commit / stop boundary.** One commit, no push. Revert if the post-commit gate fails.
 
-### S4-5B · Record construction and schema validation *(NOT APPROVED)*
+### S4-5B · Record construction and schema validation *(completed)*
+
+Shipped as `b303d9db1e7433a740960bfbaaf83e82acfd8433`. The description below is reconciled with what
+that commit actually contains.
 
 - **Goal.** Assign `case_facets` from the committed vocabularies, then build schema-valid `full` and
   `cross_reference` records in memory.
-- **Allowed paths.** `src/harvest/facetassign.py` (A) · `tests/harvest/test_facetassign.py` (A) ·
-  `tests/harvest/test_records_build.py` (A) · `tests/test_taxonomy_facetassign.sh` (A) ·
-  `tests/test_taxonomy_records.sh` (A) · `docs/harvest/TODO.md` (M).
-- **API / data contract.** `facetassign.assign(extracted, *, facets_dir=None) -> case_facets | None`;
-  record construction calls the **unmodified** `records.make_full_record` / `make_cross_reference`.
+- **Allowed paths as authorized.** `src/harvest/facetassign.py` (A) ·
+  `tests/harvest/test_facetassign.py` (A) · `tests/harvest/test_records_build.py` (A) ·
+  `tests/test_taxonomy_facetassign.sh` (A) · `tests/test_taxonomy_records.sh` (A) ·
+  `docs/harvest/TODO.md` (M).
+- **Paths actually changed — three of the six.** `tests/harvest/test_records_build.py` (A, 594
+  lines) · `tests/test_taxonomy_records.sh` (A) · `docs/harvest/TODO.md` (M). `facetassign.py`,
+  `test_facetassign.py` and `test_taxonomy_facetassign.sh` were **not touched** and did not need to
+  be: they had already shipped complete at S4-5A / S4-5A-C.
+- **API / data contract.** `facetassign.assign(extracted, classification, *, facets_dir=None) ->
+  FacetAssignment` — the contract committed at S4-5A. Record construction passes
+  **`FacetAssignment.case_facets`** to the **unmodified** `records.make_full_record(...,
+  case_facets=...)`, and builds pointers with the unmodified `records.make_cross_reference`.
+- **No production change was required.** `records.make_full_record` already accepted `case_facets`
+  and already omitted the key entirely when falsy — the behaviour that keeps "never enriched"
+  (`not_enriched`) distinct from "looked, found nothing". S4-5B is therefore **test-only**: it adds
+  no production module and modifies none.
+- **Classification evidence is projected, not forwarded.** `classify.Evidence` carries
+  `{signal, matched, field}`, but `record.v1.json`'s `classification.evidence` items admit
+  `{signal, matched}` only, under `additionalProperties: false`. Record construction projects the
+  two schema-admitted fields and drops the internal `field` property; a builder that forwards the
+  dataclass wholesale is refused by the schema. Pinned by test in both directions.
 - **Invariants.** Evidence is quoted from the document, per `facet_evidence{field, matched_term,
   quote, offset}` · `INDUSTRY_FORBIDDEN_EVIDENCE_FIELDS` and
   `TECHNOLOGY_SOFTWARE_FORBIDDEN_EVIDENCE_FIELDS` are enforced — a vendor-published customer case
@@ -618,10 +642,14 @@ neither makes `accept_composite` bind. **No S4-4 corrective code or config chang
   full-record field · deterministic sort by `(topic, primary_category, record_id)` · shuffled input
   yields identical output · static: `facetassign` and `classify` share no evidence constructor.
 - **Risk tier and validation.** L1, with the full gate before commit — five suites are new by this
-  point.
+  point. **As run:** the focused suite `tests/test_taxonomy_records.sh` (51 assertions) first, then
+  the full gate once — **940 assertions across 23 suites, all green**, all five checkers exit 0. No
+  CF-6 failure arose: S4-5B touches no `config/` path.
 - **Commit / stop boundary.** One commit. Stop if a `cases__domain-applications` record cannot
-  satisfy the `case_facets` conditional from committed vocabularies alone.
-- **Carried-forward findings.** Coverage reporting wiring for Stage 5.
+  satisfy the `case_facets` conditional from committed vocabularies alone. **The stop condition never
+  triggered** — the conditional is satisfied from the committed vocabularies alone.
+- **Carried-forward findings.** Coverage reporting wiring for Stage 5 — `coverage.py` and
+  `facets.count_states` / `reporting_state` are not yet driven from a built record set.
 
 ---
 
@@ -713,3 +741,45 @@ Stage 5 planning may begin only when all of the following hold **in one final ru
 9. every deviation applied is recorded here with its approval, and a Stage 4 completion handoff is
    committed **in-repo**;
 10. **explicit approval is given.** Green tests alone do not open Stage 5.
+
+**Status of these conditions at closure:** 1–9 are met at `b303d9d` and evidenced in
+`docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md`. **Condition 10 is NOT met — no
+approval to open Stage 5 has been given, and Stage 5 has not been begun.**
+
+---
+
+## 12 · Stage 4 closeout record *(documentation only)*
+
+**Approved:** 2026-07-30, as a documentation-only closeout. **Closing commit of the implementation
+work:** `b303d9db1e7433a740960bfbaaf83e82acfd8433` (S4-5B). This section exists because §11
+condition 9 requires a committed in-repo handoff but no checkpoint in §6 declared an allowed path
+set for writing one — the gap was reported and the three paths below were then explicitly approved.
+
+**Allowed paths — exactly three, all documentation:**
+
+```text
+A  docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md
+M  docs/harvest/STAGE_4_IMPLEMENTATION_PLAN.md   (this file)
+M  docs/harvest/TODO.md
+```
+
+**Scope.** Documentation reconciliation only. No production code, test, config, schema, script,
+`state/`, `data/` or run artifact may change, and no prior commit is rewritten. Stage 5, target
+fetching and record mode are **not** begun.
+
+**What this closeout records.** The overall status moves from `PROPOSED — PENDING DEVIATION
+APPROVAL` to `COMPLETED — STAGE 4 CLOSED` · S4-5B is marked completed and reconciled with `b303d9d`,
+including that only three of its six authorized paths were used · the stale S4-5B API line is
+replaced by the committed S4-5A contract `facetassign.assign(extracted, classification, *,
+facets_dir=None) -> FacetAssignment` · record construction passes `FacetAssignment.case_facets` to
+the existing record builder · classification evidence is projected to the schema-admitted
+`{signal, matched}` rather than forwarding the internal `field` property · **no production change
+was required**, because `records.make_full_record` already supported the contract.
+
+This discharges **D1**, the stale-API-line divergence recorded in `TODO.md` under S4-5B.
+
+**Validation — L0, documentation only, per §5.** Confirm exactly the three approved paths changed ·
+`git diff --check` · confirm no production code, test, config, schema, script, `state/`, `data/` or
+run artifact changed · protected baseline and the 508-file untracked baseline unchanged. The focused
+suite and the full taxonomy gate are **deliberately not rerun** for a documentation-only change; the
+940/23 result stands from `b303d9d`.
