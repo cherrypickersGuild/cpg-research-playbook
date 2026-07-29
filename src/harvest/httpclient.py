@@ -138,6 +138,19 @@ class EmptyResponse(HttpError):
     reason = "empty_response"
 
 
+class LeaseUnavailable(HttpError):
+    """Domain coordination could not be obtained — no slot, or no pace lock.
+
+    Its own reason because it is not a server failure at all: nothing was sent.
+    Translating it to the generic `http_5xx` bucket, as the acquire path did
+    before, points an operator at a remote outage when the truth is local
+    contention. `lease_timeout` is already the manifest's enumerated reason for
+    exactly this, so no new vocabulary is introduced. `status` stays null: there
+    was no response to have one.
+    """
+    reason = "lease_timeout"
+
+
 class ClientError(HttpError):
     """4xx that is not worth retrying (404, 410, 401, 403 …).
 
@@ -592,10 +605,19 @@ class HttpClient:
             try:
                 lease.acquire(wait_max_sec=self.lease_wait_max, budget=budget)
             except LeaseTimeout as exc:
-                raise HttpError(str(exc), url=current) from exc
+                raise LeaseUnavailable(str(exc), url=current) from exc
 
             try:
-                paced = lease.wait_turn(interval_sec=interval, budget=budget)
+                # Scoped tightly around wait_turn. _attempt is deliberately
+                # OUTSIDE this handler: it is not the operation being
+                # translated, and a future LeaseTimeout arising in there would
+                # mean something else entirely and must not be silently
+                # reclassified as a pacing failure.
+                try:
+                    paced = lease.wait_turn(interval_sec=interval, budget=budget)
+                except LeaseTimeout as exc:
+                    raise LeaseUnavailable(str(exc), url=current) from exc
+
                 self.stats["paced_sec"] += paced
 
                 status, headers, body = self._attempt(current, lease, budget,

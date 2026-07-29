@@ -532,6 +532,52 @@ this document. No budget, throttle, pool, cache, adapter, fixture, taxonomy or s
 
 ---
 
+## 7B · DV-9 — fail closed when the pace lock is unavailable (approved, before 4B)
+
+**Root cause.** `DomainLease.wait_turn` acquired the pace lock into a local `got`, but `got` gated
+only the **release**. When `_pace_lock_acquire()` returned `False` — bounded deadline exhausted, or
+any `OSError` — the read of `next_allowed_at`, the pacing sleep and the write back all proceeded
+**unsynchronized**. Two workers in that state read the same gate and both go early, which is the one
+outcome the gate exists to prevent. Verified from the committed code: `_pace_lock_acquire` never
+raises, returning `True` on success and `False` on both deadline exhaustion and `OSError`.
+
+This is unrelated to the measurement artifact corrected in `e3a8663`; it never fired in the 50-run
+diagnostic or in any gate, and no release gap has ever undershot. It was a latent fail-open, closed
+before 4B adds concurrency pressure.
+
+**Why the caller had to change too.** `domainlease.py` cannot import `httpclient` (that import runs
+the other way, `httpclient.py:41`), so a failure raised from `wait_turn` can only be a `LeaseTimeout`
+and must be translated by its caller. Measured before editing: a `LeaseTimeout` from `wait_turn`
+**escaped `HttpClient.get()` untranslated** — it is neither `HttpError` nor `BudgetExhausted`, so
+DV-8's wrapper attached no accounting — and **broke `preflight()`'s documented "Never raises"
+contract**. The existing `lease.acquire` translation additionally **lost the reason**, raising a bare
+`HttpError` whose `reason` is `http_5xx`: local contention reported as a remote server outage.
+
+**Correction.**
+
+- `wait_turn` raises `LeaseTimeout` immediately when acquisition fails. Nothing else runs on that
+  path — no `_clock()`, no `_read_next_allowed()`, no `_sleep()`, no `_write_next_allowed()`, and no
+  `_pace_lock_release()` for a lock never held. The `finally` release is now unconditional because it
+  is reachable only after a successful acquisition.
+- New narrow subtype `httpclient.LeaseUnavailable(HttpError)` with `reason = "lease_timeout"` —
+  already an enumerated value in `run_manifest.v1.json`, so **no schema or vocabulary change**.
+- Both lease translations use it, so `acquire` and `wait_turn` are consistent. The `wait_turn`
+  handler is scoped tightly around that one call: `_attempt` is deliberately outside it, so a future
+  unrelated `LeaseTimeout` there cannot be silently reclassified as a pacing failure.
+- Result: `get()` raises a typed `HttpError` with `reason == "lease_timeout"`, `status is None`, the
+  original `LeaseTimeout` chained as `__cause__`, and DV-8 accounting of exactly
+  `attempts=0, retries=0, redirect_hops=0, request_charges=0` because `_attempt` was never entered.
+  `preflight()` returns `infrastructure_error` / `lease_timeout` and does not raise.
+
+Stale-lock behaviour is untouched: the pace lock's own 30 s break and `_try_break_stale`'s pid/age
+slot reclamation are separate mechanisms, both covered by tests.
+
+**Files:** `src/harvest/domainlease.py` · `src/harvest/httpclient.py` ·
+`tests/harvest/test_domain_throttle.py` (+10) · `tests/harvest/test_http.py` (+9) · this document.
+No adapter, fixture, pool, source-cache, schema or config file changed; checkpoint 4B not started.
+
+---
+
 ## 8 · Ordered checkpoints
 
 Each ends with its own commit. **C4 and DV-7 are never combined.**
@@ -543,6 +589,8 @@ Each ends with its own commit. **C4 and DV-7 are never combined.**
 | **3** | **DV-7 — pool determinism and ownership semantics** | `pool.py`, `candidate_pool.v1.json`, `test_pool.py` | previous total + 10 new green; `test_taxonomy_schema.sh` run **first** after the schema edit |
 | **3A** | **DV-8 — per-logical-fetch HTTP accounting** (§7A) | `httpclient.py`, `test_http.py`, this document | previous total + new HTTP assertions green; concurrency probe shows isolated per-call counters |
 | **4A** | **Stage 3 — `SourceFetchCache` + `pool.record_established_source()`** | `sourcecache.py`, `pool.py`, `test_source_cache.py`, `tests/test_taxonomy_source_cache.sh` | one logical fetch on success and failure; no pool row after any failure path |
+| **4A′** | **Throttle-test measurement correction** | `throttle_worker.py`, `test_domain_throttle.py` | pacing asserted at worker release, not server arrival |
+| **4A″** | **DV-9 — pace lock fails closed** (§7B) | `domainlease.py`, `httpclient.py`, both their test files, this document | no unsynchronized gate update; typed `lease_timeout` at the caller |
 | **4B** | **Stage 3 — adapters and fixtures** | the remainder of §9 | full gate of §11 |
 
 Checkpoint 4 is itself built in order, each step gated by its narrowest test before the next begins:

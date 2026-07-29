@@ -332,11 +332,30 @@ class DomainLease:
 
         Returns the number of seconds actually slept, so callers can record how
         much of a budget went to politeness rather than work.
+
+        FAILS CLOSED. `next_allowed_at` is a read-modify-write across processes,
+        so it is only ever touched while holding the pace lock. This previously
+        gated the *release* on acquisition but not the critical section: when
+        `_pace_lock_acquire()` returned False — deadline exhausted, or any OS
+        error — the read, the sleep and the write all went ahead unsynchronized,
+        and two workers could read the same gate and both proceed early. That is
+        the one thing this gate exists to prevent, so failing to acquire is now
+        an error rather than a licence to continue.
         """
         self._ensure_dirs()
         interval = self.min_interval_sec if interval_sec is None else float(interval_sec)
 
-        got = self._pace_lock_acquire()
+        # Nothing below this line runs on the failure path: no clock read, no
+        # gate read, no sleep, no gate write, and no release of a lock we never
+        # took. `_pace_lock_acquire` is bounded and never raises; it returns
+        # False on deadline exhaustion and on any OSError.
+        if not self._pace_lock_acquire():
+            raise LeaseTimeout(
+                "pace lock for %s unavailable; the shared pacing gate was NOT "
+                "updated. Refusing to read-modify-write next_allowed_at without "
+                "the lock, because two workers doing that concurrently would "
+                "both read the same gate and both proceed early." % self.host)
+
         try:
             now = self._clock()
             nxt = self._read_next_allowed()
@@ -352,8 +371,9 @@ class DomainLease:
                 self._sleep(wait)
             self._write_next_allowed(max(self._clock(), nxt) + interval)
         finally:
-            if got:
-                self._pace_lock_release()
+            # Unconditional: this point is reachable only after a successful
+            # acquisition, so there is no longer a lock-we-do-not-hold to guard.
+            self._pace_lock_release()
         return wait
 
     def penalize(self, seconds):

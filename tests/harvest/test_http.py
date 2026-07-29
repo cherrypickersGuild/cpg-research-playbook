@@ -17,6 +17,7 @@ sys.path.insert(0, ROOT)
 
 from src.harvest import httpclient as hc  # noqa: E402
 from src.harvest.budget import RequestBudget, BudgetExhausted  # noqa: E402
+from src.harvest.domainlease import LeaseTimeout  # noqa: E402
 
 
 class Scripted:
@@ -827,6 +828,124 @@ class TestPerFetchAccounting(Base):
                                  "%s must not diff shared counters" % mod.__name__)
         # and the accumulator is per-call, never an attribute of the client
         self.assertFalse(hasattr(self.client({}), "_acct"))
+
+
+class TestLeaseTranslation(Base):
+    """A domain-coordination failure is a typed HttpError, not a raw LeaseTimeout.
+
+    Two things were wrong before. `wait_turn` could not fail at all — it silently
+    proceeded without the pace lock — and the one place a LeaseTimeout did
+    surface, `lease.acquire`, was translated into the generic `http_5xx` bucket,
+    reporting local contention as a remote server outage.
+
+    A raw LeaseTimeout escaping `get()` would also miss DV-8 accounting (it is
+    neither HttpError nor BudgetExhausted) and would break `preflight()`'s
+    documented "never raises" contract.
+    """
+
+    def _client_whose_pacing_fails(self, at="wait_turn"):
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (200, {}, b"ok"),
+        })
+        real_lease_for = c._lease_for
+
+        def failing(host, crawl_delay=None):
+            lease, interval = real_lease_for(host, crawl_delay)
+
+            def boom(*a, **k):
+                raise LeaseTimeout("pace lock for %s unavailable" % host)
+
+            setattr(lease, at, boom)
+            return lease, interval
+
+        c._lease_for = failing
+        return c
+
+    def test_1_pace_lock_failure_becomes_a_typed_http_error(self):
+        c = self._client_whose_pacing_fails()
+        with self.assertRaises(hc.HttpError) as cm:
+            c.get("https://x.test/a")
+        self.assertIsInstance(cm.exception, hc.LeaseUnavailable)
+        self.assertNotIsInstance(cm.exception, LeaseTimeout)
+
+    def test_2_the_reason_is_lease_timeout_not_http_5xx(self):
+        c = self._client_whose_pacing_fails()
+        with self.assertRaises(hc.HttpError) as cm:
+            c.get("https://x.test/a")
+        self.assertEqual(cm.exception.reason, "lease_timeout")
+        self.assertNotEqual(cm.exception.reason, "http_5xx")
+        self.assertIsNone(cm.exception.status, "nothing was sent, so no status")
+
+    def test_3_the_original_lease_timeout_is_chained_as_cause(self):
+        c = self._client_whose_pacing_fails()
+        with self.assertRaises(hc.HttpError) as cm:
+            c.get("https://x.test/a")
+        self.assertIsInstance(cm.exception.__cause__, LeaseTimeout)
+        self.assertIn("pace lock", str(cm.exception.__cause__))
+
+    def test_4_accounting_is_all_zero_because_no_attempt_was_made(self):
+        c = self._client_whose_pacing_fails()
+        budget = RequestBudget().push("cell", max_requests=10)
+        with self.assertRaises(hc.HttpError) as cm:
+            c.get("https://x.test/a", budget=budget)
+        acct = cm.exception.accounting
+        self.assertEqual((acct.attempts, acct.retries, acct.redirect_hops,
+                          acct.request_charges), (0, 0, 0, 0))
+        self.assertEqual(budget.usage()[0]["requests"], 0)
+
+    def test_5_no_target_request_is_issued(self):
+        c = self._client_whose_pacing_fails()
+        with self.assertRaises(hc.HttpError):
+            c.get("https://x.test/a")
+        self.assertNotIn("https://x.test/a", self.opener.calls)
+
+    def test_6_preflight_classifies_it_and_never_raises(self):
+        c = self._client_whose_pacing_fails()
+        out = c.preflight("https://x.test/a")          # must not raise
+        self.assertEqual(out["result"], "infrastructure_error")
+        self.assertEqual(out["reason"], "lease_timeout")
+        self.assertIsNone(out["http_status"])
+
+    def test_7_the_acquire_translation_uses_the_same_semantics(self):
+        c = self._client_whose_pacing_fails(at="acquire")
+        with self.assertRaises(hc.HttpError) as cm:
+            c.get("https://x.test/a")
+        self.assertIsInstance(cm.exception, hc.LeaseUnavailable)
+        self.assertEqual(cm.exception.reason, "lease_timeout")
+        self.assertIsInstance(cm.exception.__cause__, LeaseTimeout)
+        out = c.preflight("https://x.test/a")
+        self.assertEqual((out["result"], out["reason"]),
+                         ("infrastructure_error", "lease_timeout"))
+
+    def test_8_lease_unavailable_is_not_confused_with_other_reasons(self):
+        for cls in (hc.RobotsDenied, hc.HttpTimeout, hc.DnsFailure, hc.ServerError,
+                    hc.ClientError, hc.ResponseTooLarge, hc.UnexpectedContentType,
+                    hc.EmptyResponse):
+            with self.subTest(cls=cls.__name__):
+                self.assertNotEqual(cls.reason, "lease_timeout")
+        self.assertEqual(hc.LeaseUnavailable.reason, "lease_timeout")
+        # base HttpError keeps the server bucket; only the lease subtype moved
+        self.assertEqual(hc.HttpError.reason, "http_5xx")
+
+    def test_9_a_lease_timeout_from_attempt_is_not_reclassified(self):
+        # The handler is scoped to wait_turn only. Something raising LeaseTimeout
+        # from inside _attempt means something else entirely and must surface as
+        # itself rather than being relabelled a pacing failure.
+        c = self.client({
+            "https://x.test/robots.txt": self.robots(),
+            "https://x.test/a": (200, {}, b"ok"),
+        })
+        real_attempt = c._attempt
+
+        def boom(*a, **k):
+            raise LeaseTimeout("something else entirely")
+
+        c._attempt = boom
+        with self.assertRaises(LeaseTimeout) as cm:
+            c.get("https://x.test/a")
+        self.assertNotIsInstance(cm.exception, hc.LeaseUnavailable)
+        self.assertEqual(str(cm.exception), "something else entirely")
 
 
 if __name__ == "__main__":

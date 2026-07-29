@@ -234,6 +234,161 @@ class TestCrossProcessConcurrency(ServerCase):
                              % (pid, count, requests_each))
 
 
+class TestPaceLockFailsClosed(unittest.TestCase):
+    """The shared gate is never read-modify-written without its lock.
+
+    `_pace_lock_acquire` is bounded and never raises: it returns False on
+    deadline exhaustion and on any OSError. The old code gated only the
+    *release* on that result, so on failure the read, the sleep and the write
+    all proceeded unsynchronized — two workers could read the same gate and both
+    go early, which is precisely what the gate exists to prevent.
+
+    Deterministic throughout: the failure is injected at the narrowest seam
+    rather than by waiting out a ten-second deadline.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.calls = []
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _lease(self, acquire_result, interval=0.30):
+        """A lease whose pace-lock acquisition result is injected, and whose
+        every pacing-state touch is recorded."""
+        calls = self.calls
+
+        class Instrumented(DomainLease):
+            def _pace_lock_acquire(self, timeout=10.0):
+                calls.append("acquire")
+                return acquire_result
+
+            def _pace_lock_release(self):
+                calls.append("release")
+                return super()._pace_lock_release()
+
+            def _read_next_allowed(self):
+                calls.append("read")
+                return super()._read_next_allowed()
+
+            def _write_next_allowed(self, value):
+                calls.append("write")
+                return super()._write_next_allowed(value)
+
+        return Instrumented(self.tmp, "x.test", min_interval_sec=interval,
+                            sleep=lambda s: calls.append("sleep"))
+
+    @staticmethod
+    def _gate_bytes(lease):
+        try:
+            with open(lease.next_allowed_path, "rb") as f:
+                return f.read()
+        except OSError:
+            return None
+
+    def test_deadline_exhaustion_raises_lease_timeout(self):
+        lease = self._lease(acquire_result=False)
+        lease._ensure_dirs()
+        before = self._gate_bytes(lease)
+        with self.assertRaises(LeaseTimeout) as cm:
+            lease.wait_turn(interval_sec=0.30)
+        self.assertIn("x.test", str(cm.exception))
+        self.assertIn("NOT", str(cm.exception))
+        self.assertEqual(cm.exception.reason, "lease_timeout")
+        self.assertEqual(self._gate_bytes(lease), before, "gate file must be untouched")
+
+    def test_an_os_error_during_acquisition_raises_lease_timeout(self):
+        # The real acquire swallows OSError and returns False; prove the caller
+        # now refuses rather than proceeding.
+        real = DomainLease(os.path.join(self.tmp, "missing", "deeper"), "y.test",
+                           min_interval_sec=0.30)
+        self.assertIs(real._pace_lock_acquire(timeout=0.01), False)
+
+        lease = self._lease(acquire_result=False)
+        lease._ensure_dirs()
+        with self.assertRaises(LeaseTimeout):
+            lease.wait_turn(interval_sec=0.30)
+
+    def test_no_pacing_state_is_touched_on_either_failure(self):
+        lease = self._lease(acquire_result=False)
+        lease._ensure_dirs()
+        with self.assertRaises(LeaseTimeout):
+            lease.wait_turn(interval_sec=0.30)
+        self.assertEqual(self.calls, ["acquire"],
+                         "no read, no write, no sleep, no release may occur")
+        self.assertNotIn("read", self.calls)
+        self.assertNotIn("write", self.calls)
+        self.assertNotIn("sleep", self.calls)
+
+    def test_release_is_not_called_after_a_failed_acquisition(self):
+        lease = self._lease(acquire_result=False)
+        lease._ensure_dirs()
+        with self.assertRaises(LeaseTimeout):
+            lease.wait_turn(interval_sec=0.30)
+        self.assertNotIn("release", self.calls,
+                         "releasing a lock we never took would free another "
+                         "worker's lock")
+
+    def test_a_failed_acquisition_leaves_no_stray_lock_directory(self):
+        lease = self._lease(acquire_result=False)
+        lease._ensure_dirs()
+        with self.assertRaises(LeaseTimeout):
+            lease.wait_turn(interval_sec=0.30)
+        self.assertFalse(os.path.exists(lease.pace_lock))
+
+    def test_successful_acquisition_retains_gate_advancement(self):
+        lease = self._lease(acquire_result=True)
+        lease._ensure_dirs()
+        os.mkdir(lease.pace_lock)          # the injected acquire did not make it
+        wait = lease.wait_turn(interval_sec=0.30)
+        self.assertEqual(wait, 0.0)
+        self.assertEqual(self.calls, ["acquire", "read", "write", "release"])
+        advanced = float(open(lease.next_allowed_path).read().strip())
+        self.assertGreater(advanced, 0.0)
+
+        # a second turn must now wait for the gate the first one pushed forward
+        self.calls.clear()
+        second = self._lease(acquire_result=True)
+        os.mkdir(second.pace_lock)
+        slept = second.wait_turn(interval_sec=0.30)
+        self.assertGreater(slept, 0.0, "the gate advanced by the first turn")
+        self.assertLessEqual(slept, 0.30)
+
+    def test_the_real_acquire_still_succeeds_and_releases_normally(self):
+        lease = DomainLease(self.tmp, "real.test", min_interval_sec=0.0)
+        lease._ensure_dirs()
+        self.assertEqual(lease.wait_turn(interval_sec=0.0), 0.0)
+        self.assertFalse(os.path.exists(lease.pace_lock), "lock must be released")
+
+    def test_pace_lock_stale_recovery_still_works(self):
+        lease = DomainLease(self.tmp, "stale.test", min_interval_sec=0.0)
+        lease._ensure_dirs()
+        os.mkdir(lease.pace_lock)
+        old = time.time() - 120.0                       # older than the 30s break
+        os.utime(lease.pace_lock, (old, old))
+        self.assertIs(lease._pace_lock_acquire(timeout=1.0), True,
+                      "a lock abandoned long ago must be reclaimable")
+        lease._pace_lock_release()
+
+    def test_a_freshly_held_pace_lock_is_not_stolen(self):
+        lease = DomainLease(self.tmp, "held.test", min_interval_sec=0.0)
+        lease._ensure_dirs()
+        os.mkdir(lease.pace_lock)                       # fresh mtime
+        self.assertIs(lease._pace_lock_acquire(timeout=0.05), False)
+        self.assertTrue(os.path.exists(lease.pace_lock))
+        os.rmdir(lease.pace_lock)
+
+    def test_concurrency_slot_stale_recovery_is_unchanged(self):
+        # The slot lease and its pid/age reclamation are a separate mechanism
+        # from the pace lock and must not be disturbed by this correction.
+        lease = DomainLease(self.tmp, "slot.test", max_concurrency=1)
+        slot = lease.acquire(wait_max_sec=1.0)
+        self.assertTrue(os.path.isdir(slot))
+        lease.release()
+        self.assertFalse(os.path.isdir(slot))
+
+
 class TestReleaseMeasurement(unittest.TestCase):
     """The measurement itself, checked without spawning processes.
 
