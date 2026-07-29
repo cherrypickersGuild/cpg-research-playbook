@@ -179,7 +179,7 @@
       "display_name": "IT & Infrastructure",
       "definition": "The function that runs the technology estate: infrastructure, cloud operations, networks, endpoints, service management, internal IT support.",
       "positive_terms": ["cloud operations", "incident ticket", "server fleet", "endpoint management", "ITSM", "network operations", "capacity planning", "internal IT"],
-      "synonyms": ["IT", "infrastructure", "IT operations", "platform operations"],
+      "synonyms": ["infrastructure", "IT operations", "platform operations"],
       "exclusions": ["writing product software (that is software-engineering)", "security operations (that is information-security)"],
       "disambiguation": "",
       "parent_group": "Build",

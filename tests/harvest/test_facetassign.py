@@ -287,18 +287,68 @@ class TestStates(unittest.TestCase):
         if not payload["business_functions"] and not payload["use_case_types"]:
             self.assertEqual(a.classification_state, "unresolved")
 
-    def test_a_short_vocabulary_term_can_match_an_unrelated_english_word(self):
-        # Pinned, not papered over: `it-infrastructure` lists the term "IT",
-        # which is a whole token in "ran it". Token matching is working exactly
-        # as S4-3A specifies; the sharp edge is in the committed vocabulary, and
-        # tuning it belongs to the stage that revisits the facet lists (CF-12).
+    def test_the_pronoun_it_does_not_assign_it_infrastructure(self):
+        # CF-12, corrected. `it-infrastructure` used to list the standalone
+        # synonym "IT", which the committed matcher — case-insensitive and
+        # token-based by design — could not tell apart from the English
+        # pronoun. The term is gone from the vocabulary, so ordinary prose
+        # grounds nothing here. The fix is in the config, not the matcher:
+        # tokenization is unchanged and no term is special-cased.
         _, _, a = assigned(title="A hospital network",
-                           summary="The hospital team ran it.")
-        self.assertIn("it-infrastructure", slugs(a.case_facets,
-                                                 "business_functions"))
-        _, _, without = assigned(title="A hospital network",
-                                 summary="A hospital.")
-        self.assertEqual(slugs(without.case_facets, "business_functions"), [])
+                           summary="It improves deployment reliability.")
+        self.assertNotIn("it-infrastructure",
+                         slugs(a.case_facets, "business_functions"))
+
+    def test_the_ambiguous_term_is_gone_from_the_committed_vocabulary(self):
+        entry = facets.entry("business_function", "it-infrastructure")
+        terms = (list(entry.get("positive_terms") or [])
+                 + list(entry.get("synonyms") or []))
+        self.assertNotIn("IT", terms)
+
+    def test_no_vocabulary_term_is_a_bare_english_pronoun(self):
+        # The class of defect, not just the one instance: a term this short
+        # matches as a whole token and cannot carry evidential weight.
+        pronouns = {"it", "he", "she", "they", "we", "us", "them", "you", "i"}
+        for axis in facets.AXES:
+            for entry in facets.entries(axis):
+                terms = (list(entry.get("positive_terms") or [])
+                         + list(entry.get("synonyms") or []))
+                for term in terms:
+                    self.assertNotIn(term.strip().lower(), pronouns,
+                                     "%s/%s lists %r" % (axis, entry["slug"], term))
+
+    def test_every_remaining_infrastructure_term_still_assigns_the_facet(self):
+        entry = facets.entry("business_function", "it-infrastructure")
+        remaining = list(entry.get("synonyms") or [])
+        self.assertTrue(remaining)
+        for term in remaining:
+            _, _, a = assigned(title="A case study",
+                               summary="The team runs %s in production." % term)
+            self.assertIn("it-infrastructure",
+                          slugs(a.case_facets, "business_functions"), term)
+
+    def test_every_business_function_remains_reachable(self):
+        # Removing a term must not strand `it-infrastructure` — nor cost any
+        # other value its own evidence path.
+        for slug in sorted(facets.active_slugs("business_function")):
+            if (slug == facets.SENTINEL
+                    or ("business_function", slug) in facets.LEXICAL_SUPPORT_REQUIRED):
+                continue
+            term = first_term("business_function", slug)
+            _, _, a = assigned(title="A case study",
+                               summary="This work involves %s in production." % term)
+            self.assertIn(slug, slugs(a.case_facets, "business_functions"),
+                          "%s via %r" % (slug, term))
+
+    def test_the_pronoun_case_stays_deterministic_and_schema_valid(self):
+        runs = [assigned(title="A hospital network",
+                         summary="It improves deployment reliability.")[2]
+                for _ in range(3)]
+        payloads = {json.dumps(a.case_facets, sort_keys=True) for a in runs}
+        self.assertEqual(len(payloads), 1)
+        self.assertEqual(
+            schema.validate({"case_facets": runs[0].case_facets},
+                            "facets.generated.v1.json"), [])
 
     def test_unresolved_entries_are_deterministically_ordered(self):
         _, _, a = assigned(title="Notes", summary="A short update.")

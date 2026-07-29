@@ -63,17 +63,20 @@ wiring (Stage 8) · live smoke and `model_search` (Stage 9).
 
 ### 1.1 What Stage 4 does not modify
 
-`src/harvest/pool.py` and `tests/harvest/test_pool.py` · every file under `schemas/harvest/` · every
+`src/harvest/pool.py` and `tests/harvest/test_pool.py` · every file under `schemas/harvest/`
+**except the mechanical regeneration of `facets.generated.v1.json` in S4-5A-C (§4C)** · every
 file under `config/harvest/` **except the one authorized S4-3A correction to `precedence.v1.json`
-(§4A)** · `src/harvest/adapters/**` · `src/harvest/sourcecache.py` ·
+(§4A) and the one authorized S4-5A-C correction to `facets/business-functions.v1.json` (§4C)** ·
+`src/harvest/adapters/**` · `src/harvest/sourcecache.py` ·
 `src/harvest/httpclient.py`, `domainlease.py`, `budget.py` · `urlkey.py`, `slug.py`,
 `request_key.py`, `records.py`, `facets.py`, `coverage.py`, `scheduler.py`, `schema.py`,
 `fixtures.py` · `scripts/harvest/**` · `tests/fixtures/**` · **any existing test file** ·
 `.gitignore` · the 18 protected files · the 508 pre-existing untracked paths · `state/**` ·
 `data/**` · `scripts/validate_task.sh`.
 
-Stage 4 is **purely additive apart from `docs/harvest/TODO.md` and the one S4-3A correction**: five
-new production modules, their new test files and wrappers, and nothing else.
+Stage 4 is **purely additive apart from `docs/harvest/TODO.md`, the one S4-3A correction and the one
+S4-5A-C correction**: five new production modules, their new test files and wrappers, and nothing
+else.
 
 ### 1.2 Honest field consequences
 
@@ -152,7 +155,7 @@ changes meaning.
 | **CF-4** | `scripts/validate_task.sh` contains zero taxonomy references, so CLAUDE.md's stated validation entry point exercises none of the 567 assertions | Stage 8 |
 | **CF-5** | Keyword-list tuning under the S4-3A token semantics: plurals of single-token nouns no longer match, `abstract:` also fires on a bare "abstract", and `ci/cd` also matches "ci cd" (§4A) | whichever stage revisits relevance |
 | **CF-11** | `industry.secondary` is left empty by S4-5A. The committed definition means DEPLOYMENT CONTEXT, never corporate portfolio — a judgement lexical evidence cannot make, so filling it with runners-up would manufacture findings | the stage that revisits facet quality |
-| **CF-12** | Short vocabulary terms match unrelated English words as whole tokens: `it-infrastructure` lists `IT`, which fires on the pronoun "it". Token matching is behaving exactly as S4-3A specifies; the sharp edge is in the committed facet lists. Pinned by test rather than papered over | the stage that revisits the facet vocabularies, with CF-5 and CF-8 |
+| ~~CF-12~~ | Short vocabulary terms match unrelated English words as whole tokens: `it-infrastructure` listed `IT`, which fired on the pronoun "it". **CLOSED by the S4-5A-C corrective checkpoint (§4C)** — the term was removed from the vocabulary and the generated schema regenerated. The residual class of finding (other short or otherwise weak terms) stays with CF-5 and CF-8 | ~~the stage that revisits the facet vocabularies~~ — **done** |
 | **CF-6** | **No checkpoint that edits `config/` can pass the full gate before committing.** 14 of the 20 taxonomy suites assert `git status --porcelain --untracked-files=no -- state/ config/` is empty — 13 as a wrapper epilogue, one as `test_taxonomy_config.sh` section H. The guard exists to catch a *test* mutating production config and compares the working tree to HEAD, so it cannot distinguish that from an authorized checkpoint edit. Measured in S4-3A: 755/756 behavioural assertions green pre-commit, the single failure being the guard itself; all 20 suites fully green immediately after the atomic commit. Fixing it means changing the guard from "config is unmodified" to "config is unchanged **by this test**" (snapshot before, compare after) across 14 existing test files | Stage 8, with the `validate_task.sh` wiring |
 
 ---
@@ -329,6 +332,35 @@ be destructive (`app*` would match "approach" and "application"). Two further co
 recorded rather than fixed: `abstract:` loses its trailing punctuation to tokenization and so also
 fires on a bare "abstract", and `ci/cd` is a two-token phrase that therefore also matches "ci cd".
 Tuning the keyword lists belongs to whichever stage revisits relevance — see **CF-5**.
+
+---
+
+## 4C · The ambiguous `IT` facet term (S4-5A-C)
+
+`config/harvest/facets/business-functions.v1.json` listed `IT` among the `it-infrastructure`
+synonyms. Facet matching is the committed S4-3A matcher — deliberately case-insensitive and
+token-based — so `IT` and the English pronoun `it` are the same token. Any document containing an
+ordinary "It …" was assigned `it-infrastructure` with the pronoun quoted as its evidence. That is a
+systematic false-positive path, and it was corrected **before** S4-5B could serialize facet results
+into records, where the bad evidence would have become durable.
+
+**The fix is in the vocabulary, not the matcher.** The standalone term `IT` was deleted. Nothing
+else changed: no case-sensitive exception, no special case in `facetassign.py`, no change to
+tokenization, no replacement acronym invented. The more specific committed terms — the synonyms
+`infrastructure`, `IT operations`, `platform operations` and the eight `positive_terms` including
+`ITSM`, `internal IT` and `cloud operations` — remain the supported evidence path, and a test
+proves each still assigns the value.
+
+**Why the generated schema is in the same commit.** `schemas/harvest/facets.generated.v1.json`
+pins a SHA-256 of each vocabulary file in its `_generated.sources[]` header. The vocabulary and its
+generated schema are therefore **one atomic contract**: editing one without regenerating the other
+leaves `gen_facet_schema.py --check` and `check_facets.py` failing on a drift that no commit
+boundary can clear. The schema was regenerated mechanically by running the committed generator, never
+hand-edited, and its entire diff is the one changed hash — no enum, slug or structural change.
+
+This closes **CF-12**. The residual finding — that other terms may still be too weak to carry
+evidential weight — stays with CF-5 and CF-8. A test now pins the class of defect, asserting that no
+term on any axis is a bare English pronoun.
 
 ---
 
@@ -537,7 +569,28 @@ neither makes `accept_composite` bind. **No S4-4 corrective code or config chang
   forbidden topics return not-applicable, never an empty payload · one matcher, classify's ·
   no lane, ownership, fetch, record construction or state mutation.
 - **Risk tier and validation.** L1.
-- **Carried-forward findings.** CF-11 (secondary industries), CF-12 (short vocabulary terms).
+- **Carried-forward findings.** CF-11 (secondary industries), CF-12 (short vocabulary terms) —
+  CF-12 subsequently closed by S4-5A-C.
+
+### S4-5A-C · The ambiguous `IT` facet term *(corrective, completed)*
+
+- **Goal.** Remove the standalone `IT` synonym from `it-infrastructure`, closing the pronoun
+  false-positive path before any record carries a facet — see §4C.
+- **Allowed paths.** `config/harvest/facets/business-functions.v1.json` (M) ·
+  `schemas/harvest/facets.generated.v1.json` (M, **generated — regenerated, never hand-edited**) ·
+  `tests/harvest/test_facetassign.py` (M) · this file (M) · `docs/harvest/TODO.md` (M).
+- **Scope discipline.** One vocabulary term deleted, nothing else. No matcher change, no
+  case-sensitive exception, no `facetassign.py` edit, no tokenization change, no invented acronym,
+  no other facet term or value touched. CF-11 behaviour unchanged. S4-5B not begun.
+- **Invariants.** The vocabulary diff is exactly one term deletion · the generated schema diff is
+  exactly the one recomputed `sha256`, produced by running the committed generator · `it-infrastructure`
+  stays reachable from its remaining committed terms · every other business function stays reachable ·
+  no term on any axis is a bare English pronoun · output stays deterministic and schema-valid.
+- **Risk tier and validation.** L1, under the **CF-6** procedure: the config edit makes the
+  dirty-config epilogue fail before the commit, so the requirement is that every *behavioural*
+  assertion passes pre-commit, all five paths commit atomically, and the full gate is then green
+  from the committed tree.
+- **Commit / stop boundary.** One commit, no push. Revert if the post-commit gate fails.
 
 ### S4-5B · Record construction and schema validation *(NOT APPROVED)*
 
@@ -589,6 +642,9 @@ S4-5  A  src/harvest/facetassign.py      A  tests/harvest/test_facetassign.py
       A  tests/harvest/test_records_build.py
       A  tests/test_taxonomy_facetassign.sh
       A  tests/test_taxonomy_records.sh
+S4-5A-C M config/harvest/facets/business-functions.v1.json   (one term deleted)
+      M  schemas/harvest/facets.generated.v1.json            (regenerated, not hand-edited)
+      M  tests/harvest/test_facetassign.py
 every M  docs/harvest/TODO.md
 ```
 
@@ -651,7 +707,9 @@ Stage 5 planning may begin only when all of the following hold **in one final ru
 6. determinism is proved at every stage under shuffled source, candidate and lane orderings;
 7. `state/taxonomy_harvest/`, `data/harvested/` and `runs/` are still **absent**; no artifact,
    manifest, ledger or rejection file was written; no live request was made;
-8. `pool.py` and every schema and config file are byte-unchanged since `68b6c26`;
+8. `pool.py` is byte-unchanged since `68b6c26`, and every schema and config file is too **except the
+   two authorized corrections**: `precedence.v1.json` (S4-3A, §4A) and the
+   `business-functions.v1.json` / `facets.generated.v1.json` pair (S4-5A-C, §4C);
 9. every deviation applied is recorded here with its approval, and a Stage 4 completion handoff is
    committed **in-repo**;
 10. **explicit approval is given.** Green tests alone do not open Stage 5.

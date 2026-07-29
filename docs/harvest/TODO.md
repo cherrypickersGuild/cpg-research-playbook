@@ -309,6 +309,19 @@ adapter, `pool.py`, `sourcecache.py`, the HTTP code, or any existing test.
       a forbidden topic returns an **explicit not-applicable** rather than an empty payload, which
       `reporting_state` would miscount as `unresolved` instead of `not_enriched`. Payloads validate
       against `facets.generated.v1.json`. **63 assertions**, `tests/test_taxonomy_facetassign.sh`
+- [x] **S4-5A-C** *(corrective)* removed the standalone synonym `IT` from `it-infrastructure` in
+      `config/harvest/facets/business-functions.v1.json` and regenerated
+      `schemas/harvest/facets.generated.v1.json` with the committed generator. Facet matching is
+      case-insensitive and token-based by design, so `IT` was indistinguishable from the English
+      pronoun and assigned `it-infrastructure` to any document containing an ordinary "It …",
+      quoting the pronoun as evidence. Corrected in the **vocabulary, not the matcher**: no
+      case-sensitive exception, no `facetassign.py` change, no tokenization change, no invented
+      replacement acronym, no other term touched. The specific committed terms — `infrastructure`,
+      `IT operations`, `platform operations`, `ITSM`, `internal IT`, `cloud operations` and the rest
+      — remain the supported evidence path. The vocabulary and its generated schema are one atomic
+      contract (the schema pins the vocabulary's SHA-256), so both are in the same commit.
+      **68 assertions** (was 63; the CF-12 pin is replaced by six regression tests),
+      `tests/test_taxonomy_facetassign.sh`
 - [ ] **S4-5B** in-memory record construction and schema validation.
       **NOT APPROVED; not started**
 
@@ -318,14 +331,29 @@ exit 0; the 508 pre-existing untracked files byte-identical; `.gitignore` still 
 `1 insertion(+)`. `config/`, `schemas/`, `verify.py`, `classify.py`, `extract.py`, `dedupe.py`,
 `facets.py` and `records.py` all byte-unchanged.
 
+**S4-5A-C gate:** 889 assertions across the same 22 suites, all green (884 − 1 removed CF-12 pin
++ 6 new regression tests). Only `tests/harvest/test_facetassign.py` changed among tests; no other
+suite was touched and no prior assertion was weakened. Under **CF-6** the pre-commit run showed 16
+suites failing on the dirty-config epilogue alone — 15 wrapper epilogues plus `test_taxonomy_config.sh`
+section H — every one naming only `config/harvest/facets/business-functions.v1.json`, with all
+behavioural assertions green; all 22 suites are green from the committed tree. (CF-6 recorded 14
+suites when measured at S4-3A with 20 suites; the count grew with the two suites added since.) All
+five checkers exit 0 including `gen_facet_schema.py --check` and `check_facets.py`; the 508
+pre-existing untracked files byte-identical; `.gitignore` still exactly `1 insertion(+)`.
+`facetassign.py`, `facets.py`, `records.py`, `verify.py`, `classify.py`, `extract.py`, `dedupe.py`
+and `pool.py` all byte-unchanged — the correction is entirely in the vocabulary and its generated
+schema.
+
 **CF-11 (secondary industries, → the facet-quality stage).** `industry.secondary` is left empty. The
 committed definition means **deployment context, never corporate portfolio** — a judgement lexical
 evidence cannot make, so filling it with runners-up would manufacture findings.
 
-**CF-12 (short vocabulary terms, → the facet-vocabulary stage, with CF-5 and CF-8).**
-`it-infrastructure` lists the term `IT`, which matches the English pronoun "it" as a whole token.
-Token matching is behaving exactly as S4-3A specifies; the sharp edge is in the committed facet
-lists. Pinned by test rather than papered over.
+**CF-12 (short vocabulary terms) — CLOSED by S4-5A-C.** `it-infrastructure` listed the term `IT`,
+which matched the English pronoun "it" as a whole token. Token matching was behaving exactly as
+S4-3A specifies; the sharp edge was in the committed facet list, and that is where it was fixed —
+the term is gone and the generated schema regenerated. The residual class of finding, that other
+terms may still be too weak to carry evidential weight, stays with **CF-5** and **CF-8**. A test now
+pins the class: no term on any axis is a bare English pronoun.
 
 **S4-4 gate:** 821 assertions across 21 suites, all green (567 prior + 55 S4-1 + 58 S4-2 + 78
 S4-3/S4-3A + 63 S4-4). All prior assertions unchanged and unmodified. All five checkers exit 0; the
