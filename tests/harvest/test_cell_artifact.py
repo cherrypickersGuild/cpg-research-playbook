@@ -402,11 +402,6 @@ class TestBoundary(unittest.TestCase):
         for path in ("state/taxonomy_harvest", "data/harvested", "runs"):
             self.assertFalse(os.path.exists(os.path.join(ROOT, path)), path)
 
-    def test_s5_2_adds_no_later_checkpoint_module(self):
-        for later in ("ledger.py", "run_cells.py"):
-            self.assertFalse(os.path.exists(os.path.join(ROOT, "src", "harvest", later)),
-                             later)
-
     def test_it_reuses_the_committed_sort_key(self):
         art = cell([full_record("https://example.com/%d/" % i) for i in range(5)])
         self.assertEqual(art["records"],

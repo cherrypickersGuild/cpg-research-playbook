@@ -319,12 +319,12 @@ class TestBoundary(unittest.TestCase):
 
     def test_it_knows_nothing_about_later_checkpoint_semantics(self):
         # The base (S5-1) is paths, bytes and schemas; S5-2 added the cell and
-        # topic shapes on top. Ledger, rejection, coverage and manifest meaning
-        # belong to S5-3 ... S5-5 and must not leak in early. This list shrinks
-        # by exactly one entry as each of those checkpoints is approved.
+        # topic shapes, and S5-3 the ledger and rejection PATHS (their semantics
+        # live in ledger.py). Coverage and manifest meaning belong to S5-4 and
+        # S5-5 and must not leak in early. This list shrinks as each of those
+        # checkpoints is approved.
         tokens = self.code_tokens()
-        for later in ("ledger", "rejection", "coverage_report", "run_manifest",
-                      "LATEST_RUN_ID"):
+        for later in ("coverage_report", "run_manifest", "LATEST_RUN_ID"):
             self.assertNoTokenContains(later, tokens)
 
     def test_it_adds_no_locking_or_concurrency(self):

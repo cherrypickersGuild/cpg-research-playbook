@@ -63,7 +63,21 @@ threshold calibration (Stage 9), and concurrent cell execution.
       (that order matters: deduplicating first made the survivor depend on cell order — found and
       fixed by its own test). D2 has one home in `project_classification_evidence`.
       **45 assertions**, `tests/test_taxonomy_cell_artifact.sh`
-- [ ] **S5-3** rejection log and ledger — `ledger.py`. **NOT APPROVED; not started**
+- [x] **S5-3** rejection log and ledger — `src/harvest/ledger.py`: `build_rejection_log()` ·
+      `write_rejection_log()` · `empty_ledger()` · `load_ledger()` · `merge_ledger()` ·
+      `write_ledger()` · `LedgerError`. `artifacts.py` gained only the two **cross-run, cell-owned**
+      paths (`ledgers/<cell_id>.json`, `rejections/<cell_id>.json` — deliberately *not* under
+      `runs/<run_id>/`, since the ledger is what one run knows that the next should not have to
+      rediscover). Bytes reach disk only through the S5-1 writer.
+      **`first_seen_at` is written once**: a re-merge advances `last_seen_at`/`seen_count` and
+      nothing else. A terminal outcome is **final** — a contradictory terminal→terminal change
+      raises, and a later `pending` sighting never un-decides a decided URL. A `rejected` entry is
+      retained on purpose, or every run re-fetches and re-rejects it. A corrupt, invalid or foreign
+      ledger **raises**: treating it as empty would silently re-harvest the whole cell.
+      **CF-2 is pinned** — the test enumerates reasons from `verify.decide`'s AST (exactly six) and
+      proves all six are storable, so a seventh fails the test rather than a live write.
+      `build_rejection_log` takes `(extracted, verdict)` pairs, since a `Verdict` carries no
+      identity. **46 assertions**, `tests/test_taxonomy_ledger.sh`
 - [ ] **S5-4** coverage report — wires `coverage.py` unmodified; discharges the carried-forward
       coverage wiring item. **NOT APPROVED; not started**
 - [ ] **S5-5** run manifest and `LATEST_RUN_ID`. **NOT APPROVED; not started**

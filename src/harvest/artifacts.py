@@ -30,8 +30,12 @@ They derive every count from the records they were handed, so a metadata block
 can never disagree with the records beside it, and they refuse a record the
 record schema rejects rather than burying it in an artifact.
 
-Not here: ledger, rejection, coverage or manifest semantics (S5-3 … S5-5), cell
-execution (S5-6), locking, concurrency, or the network.
+S5-3 added the ledger and rejection-log PATHS here, beside the other two, so the
+committed layout has one home. Their MEANING — merge semantics, outcome
+transitions, what counts as a rejection — lives in `ledger.py`.
+
+Not here: coverage or manifest semantics (S5-4, S5-5), cell execution (S5-6),
+locking, concurrency, or the network.
 """
 import copy
 import datetime
@@ -163,6 +167,19 @@ def cell_artifact_path(root, run_id_value, cell_id):
 def topic_artifact_path(root, run_id_value, topic_slug):
     """`<root>/runs/<run_id>/topics/<topic_slug>.json` — the committed layout."""
     return os.path.join(run_dir(root, run_id_value), "topics", "%s.json" % topic_slug)
+
+
+# The next two are NOT under `runs/<run_id>/`: a cell's ledger and rejection log
+# are cross-run and cell-owned, per §2.1. That is the whole point of the ledger —
+# it is what one run knows that the next one should not have to rediscover.
+def ledger_path(root, cell_id):
+    """`<root>/ledgers/<cell_id>.json` — cross-run, cell-owned."""
+    return os.path.join(root, "ledgers", "%s.json" % cell_id)
+
+
+def rejection_log_path(root, cell_id):
+    """`<root>/rejections/<cell_id>.json` — cross-run, cell-owned."""
+    return os.path.join(root, "rejections", "%s.json" % cell_id)
 
 
 # ------------------------------------------------------------------- records

@@ -1,12 +1,12 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: IN PROGRESS — S5-1, S5-2 COMPLETE; S5-3 … S5-C NOT APPROVED
+Status: IN PROGRESS — S5-1, S5-2, S5-3 COMPLETE; S5-4 … S5-C NOT APPROVED
 ```
 
 **Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
-own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution, S5-1 and
-S5-2 were approved on 2026-07-30**; both checkpoints shipped and are marked completed below.
+own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution, S5-1, S5-2 and
+S5-3 were approved on 2026-07-30**; all three checkpoints shipped and are marked completed below.
 Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
 together authorize the next one. This rule is restated at every checkpoint and in §12.
 
@@ -335,7 +335,47 @@ to "no S5-3 … S5-5 semantics" — the exclusion list shrinks by one entry per 
 - **Risk tier.** L1 +FS.
 - **Depends on.** S5-1.
 
-### S5-3 · Rejection log and ledger
+### S5-3 · Rejection log and ledger *(completed)*
+
+**Approved and shipped 2026-07-30. 46 assertions, `tests/test_taxonomy_ledger.sh`.** As built:
+`src/harvest/ledger.py` holds the semantics — `build_rejection_log`, `write_rejection_log`,
+`empty_ledger`, `load_ledger`, `merge_ledger`, `write_ledger`, `LedgerError` — and `artifacts.py`
+gained only the two **cross-run, cell-owned** paths (`ledgers/<cell_id>.json`,
+`rejections/<cell_id>.json`, deliberately *not* under `runs/<run_id>/`). Bytes reach disk only
+through the S5-1 writer.
+
+Measured: `first_seen_at` survives a re-merge while `last_seen_at`/`seen_count` advance (run 1
+`first=…07-30 seen=1 rejected` → run 2 `first=…07-30 last=…07-31 seen=2 rejected`); a terminal
+outcome is final, and a later `pending` sighting does not un-decide it; a corrupt ledger raises
+naming re-harvest rather than resetting to empty; 5 shuffles of the same observations give one hash.
+
+**CF-2 is now pinned, not merely believed.** The test enumerates rejection reasons from
+`verify.decide`'s **AST** rather than typing them in: verify emits exactly six
+(`below_quality_threshold`, `below_relevance_threshold`, `category_exclusion_applied`,
+`developer_only_audience`, `insufficient_evidence`, `off_topic`) and all six are storable. The day a
+seventh is added, this test fails instead of a live artifact write.
+
+**Contract clarified while building** (no deviation; recorded because the plan's API line is
+narrower than the data requires): **`build_rejection_log` takes `(extracted, verdict)` pairs**, not
+bare verdicts. A `Verdict` names the reason, detail and scores but carries no `identity_url`,
+`target_url`, `title` or `source_id` — those live on the `ExtractedCandidate` — so the candidate has
+to travel with its verdict. `source_id` is the first of `source_ids` in committed dedupe order: a
+candidate offered by several sources is still one rejection. Rejections sort by
+`(rejection_reason, identity_url)` per §3.3.
+
+Two refusals were added because the alternative is silent data loss, not as speculative guardrails:
+an observation may not set `first_seen_at`/`last_seen_at`/`seen_count` (the merge owns them), and a
+contradictory terminal→terminal outcome change raises rather than being quietly dropped.
+`test_taxonomy_artifacts.sh`'s boundary list shrank to `coverage_report`, `run_manifest`,
+`LATEST_RUN_ID`.
+
+**Allowed-path addition, approved 2026-07-30: `tests/harvest/test_cell_artifact.py` (M).** S5-2 left
+behind an assertion that `src/harvest/ledger.py` and `run_cells.py` **do not exist** — a guard that
+measures checkpoint progress rather than a contract, and that therefore cannot survive the approval
+of the checkpoint it names. It was **deleted**, not narrowed, and not replaced with another
+future-file absence assertion. The same landmine in `test_ledger.py` was removed in the same pass.
+**Rule for the remaining checkpoints:** a boundary test asserts facts about the surface of the module
+under test, never about which files happen to exist yet.
 
 - **Goal.** Persist what was rejected and why, and the cross-run URL ledger.
 - **Allowed paths.** `src/harvest/ledger.py` (A) · `tests/harvest/test_ledger.py` (A) ·
