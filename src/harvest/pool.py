@@ -23,6 +23,8 @@ observed, and charged to the same Stage 2 RequestBudget as before.
 No network, no adapters. Results are INJECTED, which is what lets the suite
 prove determinism under shuffled worker and round timing without Stage 3.
 """
+import threading
+
 from . import request_key as rk
 
 
@@ -72,6 +74,10 @@ class CandidatePool:
         self.harvest_run_id = harvest_run_id
         self._tracking_params = tracking_params
         self._domain_rules = domain_rules
+        # Guards the check-and-insert in record_established_source only, so two
+        # threads racing one request key cannot both publish a row. The rest of
+        # the pool stays single-writer, owned by the cell worker.
+        self._lock = threading.RLock()
         self.sources = {}          # source_request_key -> snapshot dict
         self.candidates = {}       # candidate_key -> candidate dict
         self.lanes = {}            # lane_id -> lane dict
@@ -160,6 +166,85 @@ class CandidatePool:
             "budget_charged": attempts if budget_charged is None else budget_charged,
         }
         return snap
+
+    def record_established_source(self, key, *, source_id, normalized_url,
+                                  established_by, owner_lane_id,
+                                  established_at=None, etag=None, last_modified=None,
+                                  body_sha256=None, adapter_mode="index",
+                                  canonicalization_version=None,
+                                  attempts=1, retries=0, redirect_hops=0,
+                                  conditional_revalidations=0, budget_charged=None):
+        """Claim ownership and establish the snapshot as ONE atomic step.
+
+        The two-step acquire_source() -> establish_snapshot() is retained for
+        callers that already use it, but it has a gap this closes: if the second
+        call raises, an incomplete row is left behind whose source_id,
+        normalized_url and established_by are all null — five schema errors on
+        serialization. Here the complete row is built and validated off to the
+        side, and only a fully valid row is ever published.
+
+        The ACTUAL owner lane is stored, because control flow, accounting and
+        diagnostics need to know who really fetched. The deterministic
+        designation published in the artifact is a serialization concern and
+        stays in to_document() (DV-7).
+        """
+        def _require(cond, msg):
+            if not cond:
+                raise PoolError("record_established_source: %s" % msg)
+
+        _require(isinstance(key, str) and len(key) == 16 and
+                 all(c in "0123456789abcdef" for c in key),
+                 "key must be a 16-char hex source_request_key, got %r" % (key,))
+        _require(isinstance(source_id, str) and source_id, "source_id must be a non-empty string")
+        _require(isinstance(normalized_url, str) and
+                 normalized_url.startswith(("http://", "https://")),
+                 "normalized_url must be absolute http(s), got %r" % (normalized_url,))
+        _require(established_by in ("200", "304"),
+                 "a snapshot is established by 200 or 304, not %r" % (established_by,))
+        _require(isinstance(owner_lane_id, str) and owner_lane_id,
+                 "owner_lane_id must be a non-empty string")
+        _require(isinstance(adapter_mode, str) and adapter_mode,
+                 "adapter_mode must be a non-empty string")
+        _require(body_sha256 is None or
+                 (isinstance(body_sha256, str) and len(body_sha256) == 64 and
+                  all(c in "0123456789abcdef" for c in body_sha256)),
+                 "body_sha256 must be 64-char hex or None")
+        counters = {"attempts": attempts, "retries": retries,
+                    "redirect_hops": redirect_hops,
+                    "conditional_revalidations": conditional_revalidations}
+        for name, value in counters.items():
+            _require(isinstance(value, int) and not isinstance(value, bool) and value >= 0,
+                     "%s must be a non-negative int, got %r" % (name, value))
+        charged = attempts if budget_charged is None else budget_charged
+        _require(isinstance(charged, int) and not isinstance(charged, bool) and charged >= 0,
+                 "budget_charged must be a non-negative int, got %r" % (budget_charged,))
+
+        row = {
+            "source_request_key": key,
+            "source_id": source_id,
+            "normalized_url": normalized_url,
+            "adapter_mode": adapter_mode,
+            "established_by": established_by,
+            "established_at": established_at,
+            "etag": etag,
+            "last_modified": last_modified,
+            "body_sha256": body_sha256,
+            "owner_lane_id": owner_lane_id,
+            "contributing_lanes": [owner_lane_id],
+            "reused_in_rounds": [],
+            "http_attempts": dict(counters, budget_charged=charged),
+        }
+        if canonicalization_version is not None:
+            row["canonicalization_version"] = canonicalization_version
+
+        with self._lock:
+            if key in self.sources:
+                raise SnapshotExists(
+                    "request key %s already has an immutable run-scoped snapshot. "
+                    "No later round may revalidate or replace it; a changed source "
+                    "needs a new run, or an explicit refresh/linkcheck." % key)
+            self.sources[key] = row       # the first observable state is complete
+        return row
 
     def reuse_snapshot(self, key, lane_id, round_):
         """Read an established snapshot without issuing any request."""
