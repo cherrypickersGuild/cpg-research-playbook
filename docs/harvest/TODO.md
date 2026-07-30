@@ -15,9 +15,11 @@ stage_5_closing_commit:      bc920b5b8b57907165b7a5f8d47239383b974212   S5-7
 stage_5_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026-07-30.md
 stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
 stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
+stage_6_closeout_commit:     0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   S6-C, PUSHED
+stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   APPROVED plan of record
+                             (S7-0 complete; no implementation checkpoint approved)
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
-push_state:                  origin/main at 6bf7f51 (Stage 5 closeout); 14 Stage 6 commits
-                             local-only and unpushed before S6-C
+push_state:                  local main, HEAD and origin/main all at 0d2da64; 0 behind / 0 ahead
 assertions:                  38/38 suites green — 1,773 unittest + 42 shell = 1,815 total
                              (1,773 across 36 unittest suites; 42 across 2 shell suites,
                               config 18 + protected baseline 24. Basis stated because it
@@ -43,8 +45,21 @@ twice, once as a checkpoint and once immediately before execution, and neither w
 network access was never authorized and no Stage 6 request of any kind was made.** It is not marked
 complete, passed, failed or waived anywhere in this file.
 
-**A completed stage authorizes nothing in the next one.** **Stage 7 is not open** and has no planning
-document; green tests alone do not open it.
+**A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** and is
+synchronized at `0d2da64` — local `main`, `HEAD` and `origin/main` all agree, 0 behind / 0 ahead.
+
+**STAGE 7 IS OPEN AT `S7-0` ONLY, AND `S7-0` IS COMPLETE.**
+`docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` is the **approved plan of record**; S7-0 (writing it,
+and this section) is the only approved Stage 7 checkpoint. **`S7-1` … `S7-C` are unapproved and
+Stage 7 implementation has not begun**: each needs its own approval by name, is limited to the exact
+path set declared in that plan's §9, and a path appearing there is not an approval to write it. No
+implementation checkpoint is authorized, no live request, no promotion and no real runtime
+migration. Green tests alone open nothing.
+
+**Baseline at Stage 7 opening**, carried from the Stage 6 closure and re-verified before S7-0 edited
+a line: **38/38 suites · 1,815 counted assertions · protected 18/18 · untracked 508/508 with drift 0,
+missing 0, extra 0 · no runtime path (`state/taxonomy_harvest`, `data/harvested`, `runs` all absent)
+· no live request ever made by this pipeline.**
 
 ---
 
@@ -1073,12 +1088,63 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
 - [ ] `tests/test_taxonomy_linkcheck.sh`
 - [ ] `tests/test_taxonomy_promote_txn.sh` — 4 fault-injection points + add/remove/partial modes
 
-## Stage 7 — migration
+## Stage 7 — AX corpus migration ⟵ **S7-0 COMPLETE. NO IMPLEMENTATION CHECKPOINT APPROVED.**
 
-- [ ] `src/harvest/migrate/{base,ax_cases,entity_assess}.py` + `scripts/harvest/migrate.sh`
-- [ ] Suspicious-URL guard (`ambiguous_legacy_url`, never rewrites)
-- [ ] `tests/test_taxonomy_migration.sh` — apply twice, 231 stable, protected data unchanged
-- [ ] `docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md` (read-only)
+**Plan of record:** `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` — **`APPROVED — PLAN OF RECORD;
+S7-0 COMPLETE; NO IMPLEMENTATION CHECKPOINT APPROVED`**. It reconciles and **supersedes**
+`IMPLEMENTATION_PLAN.md` §11, which
+is pre-Stage-3 design input; the seven differences are recorded there as errata **E22 … E28**.
+`IMPLEMENTATION_PLAN.md` is not edited by Stage 7.
+
+Stage 7 converts the **protected** AX case registry into committed `record.v1.json` records —
+offline, copy-on-write, non-destructive, regenerable, schema-v1 preserving, and separate from
+promotion — and produces a **read-only** assessment of the entity registry that is deliberately not
+migrated. Decisions **D7-A … D7-K** are settled in the plan, not left as options. **Non-goals:**
+promotion into `data/harvested/`, `refresh`/`linkcheck`/`diff`/`compare-runs`, `validate_task.sh`
+wiring (Stage 8), calibration (Stage 9), the live smoke, entity migration proper, and concurrency.
+
+- [x] **S7-0** plan of record, documentation only (`docs(harvest): plan stage 7 migration`) —
+      `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md`
+      plus this section and the header block. Exactly the two paths **declared up front**, so the
+      authorization gap hit at the Stage 4 closeout does not recur for the third stage running.
+      Records D7-A migration character and read-only protected inputs · D7-B the exact three-file
+      bundle `<state-root>/migrations/<run_id>__ax_cases/` · D7-C staging-then-one-rename atomicity,
+      repeat refusal and **no resume** · D7-D honest evidence (`snippet_only`/`unverified`, never
+      `fetched`) · D7-E the fixed `cases__case-studies` cell and the `migration.` classification
+      rule · D7-F facet representation with the committed vocabularies and no inference ·
+      D7-G null scores and honest unknowns · D7-H the four committed guard rule ids, matched
+      structurally · D7-I a one-row `mode: migration` manifest with derived
+      `publication_eligible: false` · D7-J the entity-registry boundary · D7-K the dry-run/apply CLI.
+      L0 validation only — exact two-path diff, `git diff --check`, nothing touched under `src/`,
+      `tests/`, `scripts/`, `config/`, `schemas/`, `state/`, `data/`, protected baseline 18/18, the
+      508-file untracked baseline unchanged, no runtime path created. Per its own risk tier the
+      focused suites and the full gate were **not** rerun for a documentation-only change.
+      **Six plan-vs-code contradictions were found while writing it and resolved without reopening
+      Stage 6** (E22, E23, E24, E25, E26, E27); a seventh (E28) corrects §14's "apply twice".
+
+**S7-1 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
+path set in plan §9. A path appearing in the plan is not an approval to write it; a checkpoint that
+finds it needs another path **stops and requests a plan correction** rather than widening its scope.
+
+- [ ] **S7-1** entity assessment — read-only, migrates zero entities
+- [ ] **S7-2** migration base and the suspicious-URL guard (`ambiguous_legacy_url`, never rewrites);
+      no config edit
+- [ ] **S7-3** in-memory AX mapping, schema-validated, no filesystem output
+- [ ] **S7-4** `scripts/harvest/migrate.sh` and the dry-run report
+- [ ] **S7-5** atomic apply and repeated-run semantics, injected temp root only
+- [ ] **S7-6** integration — apply twice with stable normalized records, exact bundle path set,
+      interruption with no partial publication, protected-source byte identity, no runtime leak,
+      full gate (**39 suites** once `tests/test_taxonomy_migration.sh` joins it)
+- [ ] **S7-C** closeout — documentation only; its exact path set requires **its own read-only
+      closeout preflight**, and no handoff filename is pre-authorized or guessed
+
+**Measured against the corpus at `0d2da64`, asserted by the checkpoints rather than assumed:** 231
+cases · 231 unique `source_url` → **231 distinct `identity_url`, zero collisions** · `case_key`
+unique but **`case_id` is not** (126 distinct — E26) · 173 distinct industry values, 113 records
+mapped / 118 unmapped, 1 mapped value refused by the lexical-support gate (E27) · 33
+`publication_date: "unknown"` → null · all 231 carry an `evidence_quote`, so all 231 become
+`snippet_only` · **0 of 231 trip the suspicious-URL guard** under D7-H's structural predicates,
+where a substring reading of §11 would wrongly reject 5 (E24).
 
 ## Stage 8 — harness wiring and full offline regression
 
