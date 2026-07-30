@@ -34,8 +34,14 @@ stage_7_apply:               works, and is exercised ONLY under injected tempora
                              roots. NO migration runtime bundle is retained:
                              state/taxonomy_harvest/ does not exist. An operational
                              default-root apply needs separate human approval.
-stage_8_state:               NOT OPENED and NOT APPROVED. validate_task.sh is unwired
-                             (CF-4); Stage 7 closure opens no successor stage.
+stage_8_plan_of_record:      docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md   S8-0 COMPLETE
+stage_8_state:               PLANNED, NOT IMPLEMENTED. S8-0 (plan of record) is the only
+                             approved and completed checkpoint. S8-1 (harness wiring),
+                             S8-2 (full offline regression) and S8-C (closeout) are each
+                             NOT APPROVED and each need approval by name with the exact
+                             allowed-path set restated. scripts/validate_task.sh is
+                             UNCHANGED and CF-4 remains open. Committing the plan approves
+                             no implementation; Stage 7 closure opened no successor stage.
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
@@ -1378,8 +1384,35 @@ where a substring reading of §11 would wrongly reject 5 (E24).
 
 ## Stage 8 — harness wiring and full offline regression
 
-- [ ] `scripts/validate_task.sh` — new tests in the case table and `ISOLATED[]`
-- [ ] `bash scripts/validate_task.sh --all` green, including the 64 unchanged matrix assertions
+**Plan of record: `docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md`.** Read it before any Stage 8 work;
+it settles the wiring pattern, the exact `ISOLATED[]` additions, the exact case-table mapping, the
+definition of full offline regression, and what is explicitly not Stage 8.
+
+- [x] **S8-0 — plan of record.** Documentation only, own commit, L0 validation only. Settled: all
+      39 taxonomy wrappers wired individually (no aggregate gate, no wrapper modified); `ISOLATED[]`
+      goes 19 → 58 entries; the case table is extended by ownership, not import fan-out, with no
+      blanket fallback; "full offline regression" means `--all` exits 0 with all 58 wrappers run
+      exactly once and **zero skips**; matrix 64 is read from captured output rather than parsed by
+      the harness; the four runtime paths get a harness-level pre/post `[ -e ]` check; `--all`
+      becomes the closing gate and contains the taxonomy gate, so the standalone taxonomy loop is
+      not rerun. Excluded by decision: harness self-test, aggregate wrapper, baseline change,
+      `CLAUDE.md` change, version gate, timeout, summary counter, argument-parser change,
+      concurrency, network, real migration apply, promotion.
+- [ ] **S8-1 — harness wiring. NOT APPROVED.** `scripts/validate_task.sh` — the 39 basenames into
+      `ISOLATED[]`, the plan's case-table arms, canonical `tests/<name>.sh` spelling, and the
+      four-path runtime absence check. Sequential execution and sticky `FAIL=1` preserved.
+- [ ] **S8-2 — full offline regression. NOT APPROVED.** Verification-only, no write paths, no
+      commit: one unfiltered `bash scripts/validate_task.sh --all`, output redirected outside the
+      repository, exit 0, zero `WARN - skipping`, 58 wrappers each once, the captured matrix summary
+      showing **64 passed, 0 failed**, `tests/test_parallel_harvest.sh` green, protected 18/18,
+      untracked 508/508, all four runtime paths absent.
+- [ ] **S8-C — closeout. NOT APPROVED.** Documentation only: this file, the plan, and one new
+      handoff. `CLAUDE.md` is deliberately not in the set. `--all` is not rerun.
+
+**Stage 8 implementation remains unapproved.** S8-0 produced a specification, not an authorization:
+`scripts/validate_task.sh` is unchanged, CF-4 is still open, and S8-1, S8-2 and S8-C each require
+separate approval by name. A push remains a separate approval after closeout. Stage 8 contains no
+network access, no operational migration apply, no promotion, and no retained runtime output.
 
 ## Stage 9 — bounded deterministic live smoke
 
