@@ -14,6 +14,12 @@ approval, named explicitly, before any file outside `docs/` changes (§13, §15)
 Resolving a decision authorizes the *shape* of a future change, never the change itself: the
 checkpoint each one unblocks (S6-5, S6-6) remains unapproved and unimplemented.
 
+**Corrected on 2026-07-30 — S6-1 fixture scope.** An S6-1 preflight stopped without editing a file
+because this plan's own corpus wording determined no literal, implementable fixture set. The correction
+is recorded as erratum **E15** (§14) and applied in place: two cases relocated to S6-4, three transport
+cases removed from Stage 6 outright, and the corpus replaced by two literal tables (§11, S6-1). Every
+other previously approved Stage 6 decision — including D6-A and D6-B — is unchanged.
+
 **Date:** 2026-07-30 · **Branch:** `main`
 
 ```text
@@ -171,7 +177,12 @@ Guarantees Stage 6 must assert:
 - **Once across topics.** `candidate_key` is derived from the canonical URL alone, so the same URL
   accepted under two topics is **one fetch** whose evidence is written onto **both** records
   (`record_id` is per-topic, `content_id` and the fetch are not). This is the one place Stage 6 makes
-  cross-topic behaviour observable, and it must be proved with a fixture.
+  cross-topic behaviour observable. It is proved at **S6-4 with test-local synthetic candidate and
+  pool inputs** — not with a fixture, and not by editing a source fixture or a topic config: a shared
+  identity is a property of what the feeds surfaced, which no target-page fixture can create (§11,
+  S6-1 and S6-4). The committed Stage 4 dedupe contract is not reopened or re-proved; what S6-4 adds
+  is only the Stage 6 fact that **one identity means one fetch, and one outcome reaches every record
+  owning it.**
 - **Tracking-parameter and default-port variants collapse** before the fetch, because canonicalization
   already ran. `?ref=` and `?source=` variants stay distinct and are therefore two fetches — the
   committed conservative direction (§14, `canonicalization.v1.json`).
@@ -238,6 +249,36 @@ Notes that are decisions, not details:
 Every contract here is **already implemented and tested** in `httpclient.py`, `domainlease.py` and
 `budget.py`. Stage 6's obligation is to *use* them on a new class of URL and to map their outcomes
 honestly — not to reimplement or relax one.
+
+### 5.0 · Transport ownership — the line Stage 6 does not cross
+
+Stated first because it decides what the fixture corpus may contain, and a corpus that simulated
+transport would quietly become a second HTTP implementation.
+
+- **Retry behaviour is owned by the committed `HttpClient`** (`retry.max_attempts`, backoff, jitter,
+  `Retry-After`, `retry_on_status`), and is already covered by 80 assertions in
+  `tests/test_taxonomy_http.sh`. Stage 6 adds no retry logic and **duplicates no retry test.**
+- **Timeout and response-size enforcement are owned by the committed `HttpClient`**
+  (`connect/read/request_timeout_sec`, `max_response_bytes`, `_read_capped`). Stage 6 adds no timeout
+  or size logic and duplicates neither test.
+- **`targetfetch.py` consumes only the injected client's final response or its typed error.** It sees
+  one `Response` or one `HttpError`; it never observes an attempt, a hop count, a retry or a partial
+  body, and it has no opinion about how many requests produced what it was handed.
+- **S6-2's tests raise the existing typed errors from a stub or injected client** to verify the
+  `access_status` mapping. That is the whole of Stage 6's failure-mode surface, and it needs no
+  fixture, no socket and no transport simulation.
+- **Stage 6 adds no fixture directive DSL.** No `raise`, no `responses` sequence, no `delay`, no
+  generated oversized body, and nothing equivalent. A fixture is **static bytes with a status and
+  headers** — the committed `FixtureOpener` contract — and S6-1's checker refuses a target fixture
+  carrying any transport-simulation key (§11, S6-1). A fixture that could time out or answer
+  differently on the second call is a transport simulator, and building one would mean Stage 6 owned
+  retry and timeout semantics after all.
+
+The consequence for the corpus is concrete: a **terminal** 5xx is expressible as static bytes and is
+kept, because what it proves is the `ServerError → server_error` mapping end to end. A
+**`500 → 200`** sequence is not expressible, is **not relocated to another checkpoint**, and is
+**removed from Stage 6 entirely** — the committed retry loop already proves it, and asserting it again
+here would duplicate a passing test with a mechanism this stage refuses to build.
 
 - **Robots, per target origin.** A target page is frequently on a host no configured source uses, so
   its origin's `robots.txt` is fetched and cached (`robots.cache_ttl_sec` 3600) exactly as for a
@@ -522,32 +563,127 @@ documentation** (Stage 5 §4, L0). Commit: `docs(harvest): plan stage 6`. **No p
 
 ### S6-1 · Target-page fixtures, the loader, and the checker — L2
 
-Discharges **CF-3**. No fetching logic, no records, no writes.
+Discharges **CF-3**. **Corrected on 2026-07-30** after a preflight found the original corpus wording
+neither literal nor implementable within S6-1's path set (§14, E15). S6-1 is now exactly four things:
+static repository-local target and robots fixtures · target fixture loading · manifest and provenance
+checking · permanent fixture-infrastructure tests.
+
+S6-1 contains **no** fetching implementation, **no** transport simulation, **no** source-overlap
+construction, **no** candidate or pool ownership logic, **no** record construction, **no** artifact
+writing, **no** publication logic and **no** live request.
+
+#### S6-1 allowed paths — the literal set, and the whole of it
 
 ```text
-A  tests/fixtures/harvest/targets/*.json         synthetic target pages, authored_at/authored_against
-A  tests/fixtures/harvest/robots/*.json          one per NEW target host; existing files untouched
+A  <the 24 target fixtures in the table below>   tests/fixtures/harvest/targets/
+A  tests/fixtures/harvest/robots/tgt.harvest.test.json
+A  tests/fixtures/harvest/robots/tgt-robots-denied.harvest.test.json
 M  tests/fixtures/harvest/MANIFEST.json          bytes + SHA-256 per new file
 M  src/harvest/fixtures.py                       load_target_fixtures(); FixtureOpener(targets=…)
-M  scripts/harvest/check_fixtures.py             target-tree completeness and provenance
+M  scripts/harvest/check_fixtures.py             target-tree completeness, provenance, no-DSL refusal
 A  tests/harvest/test_target_fixtures.py
 A  tests/test_taxonomy_target_fixtures.sh
 ```
 
+**Only the two literal tables below authorize the creation of a fixture file.** The
+`targets/` and `robots/` directory names and the `tgt_<case>_<hop>.json` convention are explanatory —
+a directory glob is **not** permission to add a file. No other path may change; in particular no
+existing target or robots fixture is modified, no source fixture is touched, `check_config.py` stays
+byte-unchanged (DV-1), and no config or schema is edited.
+
+#### The 24 target fixtures
+
+All are synthetic, repository-local, deterministic bytes with `provenance: "synthetic"`,
+`authored_at`, `authored_against` and a `contract_intent` line naming the permanent purpose. A target
+fixture carries **no `source_id`** — it maps to no configured source — and **no transport-simulation
+key** (§5.0).
+
+**Group A — client-level contract cases.** Driven through the real `HttpClient` over
+`FixtureOpener` at an explicit URL, so robots, redirect classification, status mapping and
+content-type handling are exercised by the committed client rather than by a mock.
+
+| # | filename | URL | status | permanent contract purpose | robots host |
+|---|---|---|---|---|---|
+| 1 | `tgt_ok_plain.json` | `https://tgt.harvest.test/ok-plain` | 200 `text/html` | §4 row 1: a clean fetch with **no** canonical tag — `canonical_url` stays `identity_url`, `access_status: ok`, `verification_status: fetched`. The baseline every other row is compared against | `tgt.harvest.test` † |
+| 2 | `tgt_canonical_same_host.json` | `https://tgt.harvest.test/canonical-same-host` | 200 `text/html` | same-host `rel=canonical`, absolute and non-circular → auto-accepted, alias `kind: canonical_tag` | `tgt.harvest.test` |
+| 3 | `tgt_canonical_cross_host.json` | `https://tgt.harvest.test/canonical-cross-host` | 200 `text/html` | canonical names `tgt-alt.harvest.test` with no `domain_migrations` rule → **alias conflict, no alias**, identity unmoved (CF-15) | `tgt.harvest.test` |
+| 4 | `tgt_canonical_conflicting.json` | `https://tgt.harvest.test/canonical-conflicting` | 200 `text/html` | two conflicting `<link rel=canonical>` on one page → conflict, no alias | `tgt.harvest.test` |
+| 5 | `tgt_canonical_circular_1.json` | `https://tgt.harvest.test/canonical-circular` | 301 → #6 | hop 1 of the circular case | `tgt.harvest.test` |
+| 6 | `tgt_canonical_circular_2.json` | `https://tgt.harvest.test/canonical-circular-b` | 200 `text/html` | its canonical names #5's URL — already in **this fetch's own redirect chain** → conflict, no alias. This is the only circular form Stage 6 can observe, because §1.2 forbids following a canonical to check it | `tgt.harvest.test` |
+| 7 | `tgt_redirect_permanent_1.json` | `https://tgt.harvest.test/redirect-permanent` | 301 → #8 | hop 1, permanent-only chain | `tgt.harvest.test` |
+| 8 | `tgt_redirect_permanent_2.json` | `https://tgt.harvest.test/redirect-permanent-b` | 301 → #9 | hop 2 | `tgt.harvest.test` |
+| 9 | `tgt_redirect_permanent_3.json` | `https://tgt.harvest.test/redirect-permanent-c` | 200 `text/html` | terminus of `301 → 301 → 200`: every hop permanent → `canonical_url = final_url`, alias `kind: permanent_redirect`, `access_status: redirected`, **identity unchanged** | `tgt.harvest.test` |
+| 10 | `tgt_redirect_temporary_1.json` | `https://tgt.harvest.test/redirect-temporary` | 301 → #11 | hop 1 | `tgt.harvest.test` |
+| 11 | `tgt_redirect_temporary_2.json` | `https://tgt.harvest.test/redirect-temporary-b` | 302 → #12 | hop 2 — **the temporary hop** | `tgt.harvest.test` |
+| 12 | `tgt_redirect_temporary_3.json` | `https://tgt.harvest.test/redirect-temporary-c` | 200 `text/html` | terminus of `301 → 302 → 200`: **this is the fixture that proves any 302 in the chain prevents permanent alias adoption** — `permanent_redirect` false → no alias, `canonical_url` unchanged, `access_status: ok` | `tgt.harvest.test` |
+| 13 | `tgt_not_found.json` | `https://tgt.harvest.test/not-found` | 404 | `ClientError 404 → not_found`; the record is still complete and schema-valid (§7.1) | `tgt.harvest.test` |
+| 14 | `tgt_gone.json` | `https://tgt.harvest.test/gone` | 410 | `410 → gone` | `tgt.harvest.test` |
+| 15 | `tgt_forbidden.json` | `https://tgt.harvest.test/forbidden` | 403 | `403 → auth_required` | `tgt.harvest.test` |
+| 16 | `tgt_server_error.json` | `https://tgt.harvest.test/server-error` | 500 | a **terminal** 5xx → `ServerError → server_error`. **Not a retry test** (§5.0): what the committed client does between the first 500 and the raise is its own tested contract | `tgt.harvest.test` |
+| 17 | `tgt_non_html_pdf.json` | `https://tgt.harvest.test/paper.pdf` | 200 `application/pdf` | non-HTML: `content_hash` computed, **no** canonical scan attempted | `tgt.harvest.test` |
+| 18 | `tgt_non_html_json.json` | `https://tgt.harvest.test/item.json` | 200 `application/json` | non-HTML: same contract on a second content type | `tgt.harvest.test` |
+| 19 | `tgt_empty_body.json` | `https://tgt.harvest.test/empty` | 200, zero-length body | `EmptyResponse → unreachable`, with the exact class surviving in `verification_evidence` (CF-16) | `tgt.harvest.test` |
+| 20 | `tgt_robots_denied.json` | `https://tgt-robots-denied.harvest.test/denied` | 200 (**never served**) | robots disallows the host, so `RobotsDenied → robots_denied` is decided **before any request**. The fixture exists precisely so a test can assert it was **never opened** — proving the denial preceded the fetch rather than followed it | `tgt-robots-denied.harvest.test` † |
+
+**Group B — end-to-end enrichment cases.** The four accepted candidates the committed corpus actually
+produces, so a run can enrich real records. Their URLs are not invented here: they are what
+`dedupe → extract → classify → verify` yields today from `fx_lm_eval_harness_releases`, all in
+`research-and-models__benchmark-and-datasets`, all on `github.com`, whose robots fixture **already
+exists** and allows `/posts/…` with no crawl-delay. All four are plain 200s on purpose: a fully
+checked run is what §8 needs in order to prove `publication_eligible` can honestly become `true`.
+
+| # | filename | URL | status | permanent contract purpose | robots host |
+|---|---|---|---|---|---|
+| 21 | `tgt_accepted_1.json` | `https://github.com/posts/lm-eval-harness-releases-1` | 200 `text/html` | end-to-end enrichment of accepted record 1 | `github.com` ‡ |
+| 22 | `tgt_accepted_2.json` | `https://github.com/posts/lm-eval-harness-releases-2` | 200 `text/html` | accepted record 2 | `github.com` ‡ |
+| 23 | `tgt_accepted_3.json` | `https://github.com/posts/lm-eval-harness-releases-3` | 200 `text/html` | accepted record 3 | `github.com` ‡ |
+| 24 | `tgt_accepted_4.json` | `https://github.com/posts/lm-eval-harness-releases-4` | 200 `text/html` | accepted record 4 — with all four, every accepted record is checked and the run is eligible | `github.com` ‡ |
+
+The numeric suffix in `tgt_accepted_<n>` indexes the four accepted candidates; it is **not** a
+redirect hop. Only `tgt_canonical_circular_*`, `tgt_redirect_permanent_*` and
+`tgt_redirect_temporary_*` use the `_<hop>` suffix in its hop sense.
+
+#### The 2 robots fixtures
+
+Hosts are reused wherever robots behaviour is identical; a distinct host is allocated **only** when a
+different robots response is itself the contract.
+
+| filename | host | robots response | why this host exists |
+|---|---|---|---|
+| `tgt.harvest.test.json` | `tgt.harvest.test` | 200, `User-agent: *` / `Allow: /`, no crawl-delay | † the single allow-all host for all 19 Group A cases whose contract is the **HTTP** outcome, not the robots outcome |
+| `tgt-robots-denied.harvest.test.json` | `tgt-robots-denied.harvest.test` | 200, `User-agent: *` / `Disallow: /` | † the one case where the **robots response is the contract** |
+
+‡ `github.com` needs no new robots fixture — `tests/fixtures/harvest/robots/github.com.json` is
+committed, allows `/posts/…` and declares no crawl-delay. It is **not modified.**
+`tgt-alt.harvest.test` (the cross-host canonical target in fixture #3) gets **no** robots fixture and
+**no** target fixture: a cross-host canonical is refused on domain policy **before** any robots check
+or fetch (§4), so a fixture for it would be inert. `.test` is RFC 2606-reserved and can never resolve,
+which is why the synthetic hosts use it — the existing `robots-5xx.test` control set the precedent.
+
+**S6-7 composes this corpus; it does not extend it.** To put several §5 failure modes into one run,
+S6-7 builds a **temp** fixture tree from the committed corpus — copying Group B and substituting a
+Group A body — rather than S6-1 shipping failure-variant duplicates of the accepted URLs. No
+additional committed fixture is required for that, and none is authorized.
+
+#### Loader and checker
+
 `FixtureOpener` gains **one** URL index, not a second one: targets merge into the existing `_by_url`
 map with the same duplicate refusal, so nothing above the opener can tell a target from a source —
-which is the property that makes the corpus a real test of `HttpClient`. `check_config.py` stays
-byte-unchanged (DV-1).
+which is the property that makes the corpus a real test of `HttpClient`. All committed source-fixture
+behaviour and every existing caller are preserved unchanged. The loader **fails explicitly** — never
+silently skips, resets or invents — for a malformed fixture, a duplicate `fixture_id`, a duplicate
+URL, a fixture claiming a foreign shape, or data inconsistent with the manifest.
 
-The corpus must cover, at minimum: 200 HTML with a same-host `rel=canonical` · 200 with a
-cross-host canonical · 200 with two conflicting canonicals · 200 with a circular canonical · a
-301→301→200 chain · a 302 chain · 404 · 410 · 403 · 500-then-200 (retry) · 500-always · a
-timeout · a robots-denied host · an over-cap body · a non-HTML body (PDF and JSON) · an empty
-body · one URL reachable from **two topics** (§3) · one URL surfaced by **two sources in one
-cell**.
+`check_fixtures.py` is extended for exactly three target-tree contracts: completeness against the
+literal table, the same synthetic/recorded provenance rules the corpus already enforces, and refusal
+of any transport-simulation key (§5.0).
 
-Focused suite: `tests/test_taxonomy_target_fixtures.sh` + `check_fixtures.py`. Full gate before
-commit.
+Focused suite: `tests/test_taxonomy_target_fixtures.sh` + `check_fixtures.py`, run repeatedly during
+work. **Full gate once** before commit. Its tests assert deterministic loading, exact URL
+ownership and indexing, manifest integrity, target-tree completeness, provenance requirements,
+malformed and duplicate rejection, preservation of existing source-fixture behaviour, and zero network
+access. They assert nothing about which later file exists, nothing about the working tree versus HEAD,
+and no checkpoint-progress invariant (§13).
 
 ### S6-2 · `src/harvest/targetfetch.py` — the fetch and the status mapping — L1
 
@@ -587,11 +723,29 @@ A  tests/test_taxonomy_target_ownership.sh
 ```
 
 No record field changes yet — this checkpoint proves **who fetches what, how often, and within which
-bounds**: once per canonical identity, once across topics, `MAX_TARGET_FETCHES_PER_CELL` respected and
-reported, target fetching nested inside the committed `cell:` budget scope, `target_fetch_owners` and
+bounds**: once per canonical identity, `MAX_TARGET_FETCHES_PER_CELL` respected and reported, target
+fetching nested inside the committed `cell:` budget scope, `target_fetch_owners` and
 `extraction_owners` flowing through `pool.accounting()`, `source_fetch_owners` **unchanged** by target
 fetching, and the CF-1 static scan extended to the two new modules. Also proves a target page yields
 no candidate and no adapter is invoked on one.
+
+**S6-4 also owns the shared-identity ownership contract relocated here from S6-1** (§3, and §14 E15).
+It is proved with **test-local synthetic candidate and pool inputs** — two accepted rows constructed in
+the test that share one canonical identity — because a shared identity is a property of what the feeds
+surfaced, and no target-page fixture can create one. Exactly two facts are asserted:
+
+1. **one canonical target identity is fetched exactly once**, whether the two owners sit in one cell or
+   in two topics; and
+2. **every accepted record owning that identity receives the same target-fetch outcome** — one
+   observation, not two, and not a re-fetch per record.
+
+**No source fixture and no topic config is read, added or modified**, and neither is authorized here.
+The committed Stage 4 dedupe contract — 55 assertions on how identities group — is **not reopened, not
+duplicated and not re-proved**; S6-4 asserts only the Stage 6 fact that one identity buys one fetch
+whose outcome reaches every record owning it.
+
+**No allowed-path change is required for this relocation**: `tests/harvest/test_target_ownership.py`
+is already S6-4's declared focused test and is the owning path for both assertions.
 
 ### S6-5 · Target evidence on records — L2
 
@@ -642,10 +796,17 @@ A  tests/test_taxonomy_target_determinism.sh
 ```
 
 The five-leaf difference set enumerated by recursive JSON diff (§10) · byte-determinism under
-shuffled source, candidate and cell orderings · every §5 failure mode present in one run, every
-record validating · an interruption during the fetch phase writing **nothing at all** · a repeated
-finished `run_id` refused **before the first request** · `verify_latest_run_id` still a checkable
-predicate · a run that never fetched still honestly ineligible.
+shuffled source, candidate and cell orderings · every §5 failure mode **the committed corpus can
+express** present in one run, every record validating · an interruption during the fetch phase writing
+**nothing at all** · a repeated finished `run_id` refused **before the first request** ·
+`verify_latest_run_id` still a checkable predicate · a run that never fetched still honestly
+ineligible.
+
+The failure modes in one run come from **composing the committed corpus in a temp fixture tree**
+(§11, S6-1) — copying Group B and substituting a Group A body — not from new committed fixtures, of
+which S6-7 authorizes none. The transport modes Stage 6 does not own are **not asserted here**: no
+timeout, no `500 → 200` retry sequence and no over-cap body, each of which belongs to the committed
+`HttpClient` and its own tested contract (§5.0).
 
 ### S6-L · Bounded live smoke — **separately approved, and approved again at the moment of running**
 
@@ -864,6 +1025,32 @@ the existing `runs/<run_id>/` (§12.2 D6-B). `logs/`, `tmp/`, `candidate_output/
 
 **E14 — the Stage 5 handoff's `push_state` line is a pre-push snapshot.** Recorded in the header
 above: the authoritative state is `main` synchronized with `origin/main` at `6bf7f51`.
+
+**E15 — this plan's own first S6-1 corpus wording was neither literal nor implementable, and is
+corrected in place.** Found by an S6-1 preflight on 2026-07-30, which **stopped without editing a
+single file** rather than resolving the gap by improvising fixtures. Three distinct defects, all in
+this document and none in shipped code:
+
+1. **Two corpus items were not properties of a target-page fixture at all.** "One URL surfaced by two
+   sources in one cell" and "one URL reachable from two topics" describe what the *feeds* surfaced. The
+   preflight measured the committed corpus through the committed adapters and `dedupe.group`: **109
+   candidates, 109 distinct identities, 0 surfaced by ≥2 sources, 0 appearing in ≥2 topics.** Satisfying
+   either item would have required editing a source fixture body or adding a source to a topic config —
+   neither in S6-1's path set, and the config edit would also have triggered CF-6. **Relocated to S6-4**
+   as a synthetic-input ownership test (§3, S6-4); **not** fixed by widening S6-1.
+2. **Three items required transport behaviour a static fixture cannot express.** A timeout needs the
+   opener to raise `HttpTimeout`; `500 → 200` needs per-URL response sequencing; an over-cap body needs
+   >8 MiB of committed bytes or a generator. Each would have meant inventing a fixture directive DSL and
+   thereby owning retry, timeout and body-cap semantics that the committed `HttpClient` already owns and
+   tests. **All three removed from Stage 6** — §5.0 now states the ownership boundary outright, and the
+   `500 → 200` assertion is removed rather than relocated.
+3. **The corpus was declared as directory globs and prose, so no exact filename set followed from it.**
+   Chain lengths, host allocation and naming were all underdetermined. **Replaced by the two literal
+   tables in S6-1**, which are now the only authorization to create a fixture file.
+
+The rule this leaves behind, which is why the preflight was right to stop: **a checkpoint's fixture
+authorization is a literal file list, never a directory glob.** A glob cannot be reviewed, and a
+corpus that has to be improvised at implementation time was never specified.
 
 ---
 

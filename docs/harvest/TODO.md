@@ -715,8 +715,33 @@ approval twice — once as a checkpoint and once immediately before it runs.
         vocabulary hash** and needs no generator run. Authorizes the schema and its owning focused
         tests in the S6-6 allowed-path set — and no unrelated path. **Blocks S6-6 no longer; S6-6
         remains unapproved.**
-- [ ] **S6-1 … S6-7, S6-L, S6-C** — **not approved, not implemented.** See the plan for each
-      checkpoint's exact allowed paths, risk tier and focused suite.
+- [x] **S6-0-C** Stage 6 fixture-scope correction, documentation only
+      (`docs(harvest): correct stage 6 fixture scope`). **An S6-1 preflight stopped without editing a
+      single file**: plan §11's corpus wording determined no literal, implementable fixture set. The
+      mismatch was **corrected in the plan, not by widening S6-1** — the preflight authorized no fixture,
+      no path and no improvisation. Recorded as plan erratum **E15** (§14):
+      - **Two cases relocated to S6-4.** "One URL surfaced by two sources in one cell" and "one URL
+        reachable from two topics" are not properties of a target-page fixture. Measured through the
+        committed adapters and `dedupe.group`: **109 candidates, 109 distinct identities, 0 shared across
+        sources, 0 shared across topics** — so either case would have needed a source-fixture or
+        topic-config edit, neither authorized. S6-4 now proves the Stage 6 ownership fact (one identity →
+        one fetch → one outcome on every record owning it) from **test-local synthetic candidate and pool
+        inputs**, with **no allowed-path change** and **no reopening of the committed Stage 4 dedupe
+        contract**.
+      - **Three transport cases removed from Stage 6 outright** — timeout, `500 → 200` retry sequencing,
+        and over-cap body generation. Retry, timeout and response-size enforcement stay owned by the
+        committed `HttpClient`; `targetfetch.py` consumes only the injected client's final response or
+        typed error; S6-2 raises existing typed errors from a stub client. **No fixture directive DSL**
+        (`raise`, `responses`, generated oversized bodies or equivalent) may be added, and no existing
+        retry or body-cap test is duplicated. The `500 → 200` assertion is **removed, not relocated**.
+      - **The corpus is now two literal tables** — 24 target fixtures and 2 new robots fixtures, each
+        with its exact URL, status, contract purpose and robots host. **Only the tables authorize a
+        fixture file; the directory globs no longer do.**
+      - **D6-A and D6-B remain RESOLVED and unchanged**, as does every other approved Stage 6 decision.
+- [ ] **S6-1 … S6-7, S6-L, S6-C** — **not approved, not implemented.** No Stage 6 production module,
+      test, schema, script, config or fixture exists. **Live network access remains unauthorized** and
+      no Stage 6 request has been made. See the plan for each checkpoint's exact allowed paths, risk
+      tier and focused suite.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing
