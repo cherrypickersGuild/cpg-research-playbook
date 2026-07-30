@@ -807,12 +807,22 @@ M  src/harvest/run_cells.py         _full_record consumes the outcome instead of
                                     honest no-enrichment defaults; passes adjudicated aliases
 M  src/harvest/records.py           one keyword-only `url_aliases=None` and its validation,
                                     normalization and projection — §12.1 D6-A, RESOLVED
+M  tests/harvest/test_run_cells.py  retire `test_no_target_page_was_fetched` — and nothing
+                                    else in that file (predeclared, see below)
 A  tests/harvest/test_target_evidence.py
 A  tests/test_taxonomy_target_evidence.sh
 ```
 
-Exactly four paths. `src/harvest/records.py` is authorized here by §12.1 and nowhere else, for that one
+Exactly five paths. `src/harvest/records.py` is authorized here by §12.1 and nowhere else, for that one
 additive parameter and nothing more.
+
+**`tests/harvest/test_run_cells.py` is predeclared for exactly one deletion.**
+`test_no_target_page_was_fetched` asserts every full record carries
+`access_status: "not_checked"`. That is true of Stage 5 and remains true of S6-4 — and S6-5 exists
+precisely to make it false, by writing observed target evidence onto full records. It is therefore a
+spent Stage 5 progress guard from the moment S6-5 is approved, and it is retired **then, not before**:
+S6-4 leaves it passing and untouched. Declaring it here rather than discovering it mid-checkpoint is
+the lesson of §14.2 — guards of exactly this class stopped S6-4 twice.
 
 Proves §6 exactly: the six evidence fields set from observation; `verification_status` is `"fetched"`
 and never `"verified"`; `updated_at` stays null; all four scores, every facet payload, `record_id`,
@@ -1207,6 +1217,67 @@ The one-time gate-failure exception granted for S6-3 was exactly that — one ti
 checkpoint. Whichever checkpoint next sees a `LeaseTimeout` should read the payload rather
 than reason about the mechanism, and only then decide between a production defect and test
 orchestration. **S6-4 remains unapproved.**
+
+## 14.2 · S6-4 — the eligibility ordering defect, and two spent Stage 5 guards
+
+S6-4 was approved for ownership, deduplication and bounds. Implementing it surfaced an ordering
+defect in this plan and two Stage 5 guards that had outlived their purpose. All three are recorded
+here because each is a lesson about sequencing, not about the code.
+
+**The ordering defect.** `derive_publication_eligibility` treated `target_fetch_owners > 0` as
+sufficient. S6-4 is what first makes that count non-zero — so the moment ownership landed, a run
+claimed `publication_eligible: true` while all four of its records still said
+`access_status: "not_checked"`. §8 had already identified the weakness and assigned the fix to
+**S6-6**, two checkpoints after the symptom. Measured on the committed corpus:
+
+```text
+before the guard   target_fetch_owners 4 · publication_eligible TRUE  · records all not_checked
+after the guard    target_fetch_owners 4 · publication_eligible FALSE
+                   reason "4 of 4 accepted records carry no target evidence (access_status not_checked)"
+```
+
+**The missing-target-evidence guard was therefore brought forward from S6-6 into S6-4**, and only that
+guard: a run is ineligible whenever any **full** accepted record lacks target evidence;
+`target_fetch_owners > 0` is necessary but never sufficient; a budget-skipped `not_checked` record keeps
+the run ineligible; `cross_reference` rows are excluded from both sides of the count, since a pointer
+carries no `access_status` and counting one would invent a finding out of the cross-topic policy. The
+condition and its reason stay **derived** — `publication_eligible` remains absent from
+`build_run_manifest`'s signature, and a test asserts it.
+
+**S6-6 keeps everything else**: alias-conflict artifact writing and its schema, `alias_conflicts_count`
+manifest reporting, target HTTP-attempt reporting (`pool.accounting` still sums `http_attempts` from
+source snapshots only, so target fetches are absent from that total), `config.enrich` / `config.bounds`,
+and the **positive** eligibility completion proof, which belongs with the evidence wiring that can make
+a run eligible at all.
+
+**Two spent Stage 5 progress guards were retired**, each having prohibited exactly the semantics S6-4
+legitimately introduced:
+
+```text
+tests/harvest/test_recovery.py    test_no_target_fetching_was_introduced — DELETED entirely.
+                                  A token scan forbidding `acquire_target_fetch` in run_cells.py,
+                                  commented "Stage 6 territory". Deleted rather than narrowed, and
+                                  NOT replaced with a guard against S6-5 — the S5-5/S5-7 precedent.
+tests/harvest/test_run_cells.py   one assertion deleted from
+                                  test_a_stage_5_run_is_honestly_ineligible_for_publication:
+                                  `target_fetch_owners == 0`. Its two substantive assertions —
+                                  that the run is ineligible, and that the reason concerns target
+                                  evidence — are unchanged and now pass for the RIGHT reason.
+```
+
+Renaming `acquire_target_fetch` to slip past the scan was rejected on the S5-4 precedent: it would
+obfuscate code to satisfy a test. **The rule this reinforces, for the third time in this repository:** a
+guard that says "the next checkpoint has not happened yet" is spent the moment that checkpoint is
+approved, and belongs in the *approving* checkpoint's declared path set. S6-5's own such guard is
+predeclared in §11 (S6-5) rather than left to be discovered.
+
+**Robots evidence stays unwired in S6-4.** `adjudicate` receives
+`canonical_robots_allowed=None`, so no `canonical_tag` alias is adopted and a
+`canonical_robots_not_verified` conflict is recorded instead — truthful, because the driver genuinely
+did not verify it. **S6-5 must preflight** whether an existing API can supply *cached* robots evidence
+without a new network request: a same-host canonical is a robots cache hit, since the client already
+fetched that origin's `robots.txt` during the target fetch, whereas a different-host canonical in the
+same registrable domain is a new origin and therefore a real probe.
 
 ## 15 · Approval status, and what this approval does not do
 

@@ -826,13 +826,6 @@ class TestBoundary(unittest.TestCase):
         for token in ("socket", "urllib", "HttpClient", "FixtureOpener"):
             self.assertNotIn(token, src, token)
 
-    def test_no_target_fetching_was_introduced(self):
-        # Stage 6 territory, and untouched by recovery work.
-        src = self.code(run_cells)
-        for token in ("acquire_target_fetch", "adapter_mode=\"record\"",
-                      "linkcheck", "data/harvested"):
-            self.assertNotIn(token, src, token)
-
     def test_the_modules_expose_the_committed_recovery_contract(self):
         for name in ("WriteJournal", "write_journal", "run_is_finished",
                      "verify_latest_run_id"):

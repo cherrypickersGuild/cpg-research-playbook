@@ -804,10 +804,41 @@ approval twice — once as a checkpoint and once immediately before it runs.
       the only slot from the test process and uses a test-only `--wait-max-sec` whose **default stays
       30s**, so it neither waits 30 seconds nor depends on scheduler luck. **The three signatures remain
       unexplained; none is an accepted permanent exception.**
-- [ ] **S6-4 … S6-7, S6-L, S6-C** — **not approved, not implemented.**
-      **Live network access remains unauthorized** and no Stage 6 request has been made. **D6-A and D6-B
-      remain resolved and unchanged.** See the plan for each checkpoint's exact allowed paths, risk tier
-      and focused suite.
+- [x] **S6-4** target-fetch ownership, deduplication and bounds
+      (`feat(harvest): add target fetch ownership`). `run_cells.py` gained the fetch phase:
+      accepted candidates only, in committed `candidate_key` order; `pool.add_candidate` →
+      `pool.acquire_target_fetch` as the ownership gate; one `fetch_target()` per canonical identity with
+      the **same outcome object** reused by every owner; a **run-scoped** pool and outcome map, so one
+      identity is one fetch across cells *and* topics; per-owner `adjudicate()`;
+      `MAX_TARGET_FETCHES_PER_CELL = 25` on top of the committed `cell:` budget, which the whole pipeline
+      now shares so fetches charge the same `cell_max_requests` as discovery; budget-skipped targets
+      recorded as `not_checked` through the committed S6-2 dataclass with **no client call**. Sequential
+      throughout — no thread, process, lock or async — so CF-1 stays untriggered with exactly one caller
+      of the unlocked gate. `run()`'s public signature is unchanged. **32 assertions.**
+      - **Ordering defect surfaced and corrected.** Ownership alone flipped a run to
+        `publication_eligible: true` while every record still said `not_checked`, because
+        `target_fetch_owners > 0` was treated as sufficient. **The missing-target-evidence guard was
+        brought forward from S6-6 to S6-4** — and only that guard: a run is ineligible whenever any
+        **full** accepted record lacks target evidence, a budget-skipped record keeps it ineligible, and
+        `cross_reference` rows are excluded from both sides of the count. Still derived, never
+        caller-supplied. **S6-6 retains** alias-conflict artifacts and their schema,
+        `alias_conflicts_count` reporting, target HTTP-attempt reporting, and the positive
+        eligibility-completion proof.
+      - **Two temporary Stage 5 progress guards retired**, each having prohibited exactly the semantics
+        S6-4 legitimately introduced: `test_recovery.py::test_no_target_fetching_was_introduced` deleted
+        entirely (not narrowed, and **not** replaced with a guard against S6-5 — the S5-5/S5-7
+        precedent), and the single `target_fetch_owners == 0` assertion removed from
+        `test_run_cells.py::test_a_stage_5_run_is_honestly_ineligible_for_publication`, whose
+        substantive ineligibility assertions are unchanged and now pass for the right reason. Renaming
+        the pool method to dodge the token scan was rejected on the S5-4 precedent.
+      - **Robots evidence stays unwired**: `canonical_robots_allowed=None`, so no `canonical_tag` alias
+        is adopted and a `canonical_robots_not_verified` conflict is recorded instead. **S6-5 must
+        preflight** whether cached robots evidence is available without a new request.
+- [ ] **S6-5 … S6-7, S6-L, S6-C** — **not approved, not implemented.** S6-5's path set is now five paths:
+      it predeclares `tests/harvest/test_run_cells.py` for exactly one deletion — retiring
+      `test_no_target_page_was_fetched` when S6-5 actually writes target evidence to full records. That
+      test **passes and is untouched** in S6-4. **Live network access remains unauthorized** and no
+      Stage 6 request has been made. **D6-A and D6-B remain resolved and unchanged.**
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing

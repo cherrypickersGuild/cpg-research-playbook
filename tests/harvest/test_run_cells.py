@@ -323,7 +323,6 @@ class TestFullRun(unittest.TestCase):
         manifest = load(self.root, "runs/%s/manifest.json" % self.result.run_id)
         self.assertFalse(manifest["publication_eligible"])
         self.assertIn("target", manifest["publication_ineligible_reason"])
-        self.assertEqual(manifest["request_accounting"]["target_fetch_owners"], 0)
 
     def test_no_target_page_was_fetched(self):
         for rel in listing(self.root):

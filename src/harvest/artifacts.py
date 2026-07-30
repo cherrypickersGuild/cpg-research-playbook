@@ -77,6 +77,11 @@ MODE_HARVEST = "harvest"
 STATUS_NOT_RUN = "not_run"
 CELL_ERROR_STATUSES = ("adapter_error", "infrastructure_error")
 
+# The committed `record.v1.json` access_status value meaning "no check occurred".
+# Named from the schema's own vocabulary rather than imported from a Stage 6
+# module, so this Stage 5 file gains no dependency on a later stage for one string.
+NOT_CHECKED = "not_checked"
+
 
 class ArtifactError(Exception):
     """A contract violation this module refuses to paper over."""
@@ -526,13 +531,43 @@ def environment_block():
     return dict(schema.check_environment())
 
 
-def derive_publication_eligibility(mode, cells, *, target_fetch_owners=0):
+def unchecked_full_records(records):
+    """(unchecked, total) over FULL accepted records only.
+
+    A `cross_reference` is a pointer at a full record in another cell; it carries
+    no `access_status` because it was never a page anyone could fetch. Counting one
+    as unchecked would invent a missing-evidence finding out of the cross-topic
+    policy, so only full records are counted — on both sides of the ratio.
+    """
+    total = unchecked = 0
+    for record in records or ():
+        if record.get("record_type") != "full":
+            continue
+        total += 1
+        if record.get("access_status") == NOT_CHECKED:
+            unchecked += 1
+    return unchecked, total
+
+
+def derive_publication_eligibility(mode, cells, *, target_fetch_owners=0,
+                                   records=()):
     """Derived from facts the manifest already records — never asserted.
 
-    Stage 5 fetches no target page, so every record carries access_status
-    "not_checked" and verification_status "unverified". A run that verified
-    nothing is honestly ineligible, and `promote` refuses an ineligible run. That
-    is a true statement about Stage 5, not a limitation to paper over.
+    Stage 5 fetched no target page, so every record carried access_status
+    "not_checked" and verification_status "unverified", and a run that verified
+    nothing is honestly ineligible.
+
+    `target_fetch_owners > 0` is NECESSARY BUT NEVER SUFFICIENT. The guard below
+    was brought forward from S6-6 to S6-4, because S6-4 is what first makes the
+    owner count non-zero: without it, acquiring one target-fetch owner would flip a
+    run to eligible while every record still said nobody had checked it. A run is
+    eligible when, and only when, it is a `harvest` run, no cell failed, at least
+    one target fetch was owned, AND every full accepted record was actually
+    checked. A budget-skipped target is `not_checked`, so it keeps the run
+    ineligible — which is the point: partial enrichment is not publishable.
+
+    Every input is a fact about the run. The condition and its reason are computed
+    here; a caller cannot supply either.
     """
     if mode != MODE_HARVEST:
         return False, "%s runs are infrastructure tests, not publishable output" % mode
@@ -543,6 +578,10 @@ def derive_publication_eligibility(mode, cells, *, target_fetch_owners=0):
                     if c.get("status") in CELL_ERROR_STATUSES)
     if broken:
         return False, "cell(s) failed: %s" % ", ".join(broken)
+    unchecked, total = unchecked_full_records(records)
+    if unchecked:
+        return False, ("%d of %d accepted records carry no target evidence "
+                       "(access_status not_checked)" % (unchecked, total))
     return True, None
 
 
@@ -550,7 +589,7 @@ def build_run_manifest(*, harvest_run_id, started_at, finished_at, cells=(),
                        mode=MODE_HARVEST, config=None, source_preflight=(),
                        classification_decisions=(), coverage=None, rounds=None,
                        request_accounting=None, target_fetch_owners=0,
-                       environment=None, policy=None):
+                       records=(), environment=None, policy=None):
     """One manifest per run. Counts and eligibility are derived, not asserted.
 
     `cells` supplies outcomes for the cells that ran; every other configured cell
@@ -570,8 +609,12 @@ def build_run_manifest(*, harvest_run_id, started_at, finished_at, cells=(),
         rows[cell_id] = row
     ordered_cells = [rows[key] for key in sorted(rows)]
 
+    # `records` is read ONLY to derive eligibility; it is not persisted here and
+    # does not enter the manifest. The records themselves live in the cell
+    # artifacts, which remain their single home.
     eligible, ineligible_reason = derive_publication_eligibility(
-        mode, ordered_cells, target_fetch_owners=target_fetch_owners)
+        mode, ordered_cells, target_fetch_owners=target_fetch_owners,
+        records=records)
 
     doc = {
         "schema_version": 1,

@@ -52,6 +52,7 @@ import shutil
 import tempfile
 
 from . import adapters
+from . import aliases as aliases_mod
 from . import artifacts
 from . import classify as classify_mod
 from . import dedupe as dedupe_mod
@@ -65,6 +66,7 @@ from . import records as records_mod
 from . import request_key as request_key_mod
 from . import scheduler
 from . import sourcecache as sourcecache_mod
+from . import targetfetch as targetfetch_mod
 from . import urlkey
 from . import verify as verify_mod
 from .adapters import base as adapter_base
@@ -80,6 +82,13 @@ PRECEDENCE_PATH = os.path.join(ROOT, "config", "harvest", "precedence.v1.json")
 # that is configured and not one cell more". Cells beyond the cap are recorded as
 # `not_run` rather than dropped — a bound that hides work is not a bound.
 MAX_CELLS = 12
+
+# A second, visible bound on the target-fetch phase, on top of the committed
+# `cell:` request budget it nests inside. The accepted count per cell is small by
+# construction (4 on the committed fixture corpus), so this is generous headroom
+# rather than a throttle — its job is to make a runaway enrichment phase fail
+# loudly instead of quietly spending a cell's whole request budget.
+MAX_TARGET_FETCHES_PER_CELL = 25
 
 # The artifact timestamp format the cell and topic schemas pin with a pattern.
 STAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -231,7 +240,7 @@ class CellRun:
     """One cell's raw outcome, before anything is routed or written."""
 
     __slots__ = ("cell", "sources", "extracted", "classifications", "verdicts",
-                 "assignments", "failures")
+                 "assignments", "failures", "fetch_outcomes", "adjudications")
 
     def __init__(self, cell):
         self.cell = cell
@@ -241,6 +250,11 @@ class CellRun:
         self.verdicts = {}         # candidate_key -> Verdict
         self.assignments = {}      # candidate_key -> FacetAssignment
         self.failures = []         # (source_id, result, reason) for failed sources
+        # S6-4. Keyed by the candidate's own key, but the OUTCOME behind a shared
+        # target identity is one object reused by every owner — that identity is
+        # fetched once per run, not once per owner.
+        self.fetch_outcomes = {}   # candidate_key -> TargetFetchOutcome
+        self.adjudications = {}    # candidate_key -> (canonical_url, aliases, conflicts)
 
     @property
     def cell_id(self):
@@ -315,12 +329,106 @@ def _source_row(result, candidates_by_source, accepted_by_source):
     return row
 
 
-def _run_one_cell(cell, *, cache, client, budget, policy, clock):
-    """Discover, dedupe, extract, classify, verify, assign — all committed calls."""
+def _budget_skipped_outcome(url, stamp):
+    """The honest outcome for a target the budget stopped us from checking.
+
+    Built through the committed S6-2 dataclass rather than a new type: a skipped
+    target is `not_checked` — the absence of a check, never a failed one — and no
+    client call is made for it at all.
+    """
+    return targetfetch_mod.TargetFetchOutcome(
+        requested_url=url,
+        access_status=targetfetch_mod.NOT_CHECKED,
+        verification_status=targetfetch_mod.UNVERIFIED,
+        verification_evidence="budget exhausted before this target was fetched; "
+                              "no request was made",
+        last_checked_at=stamp,
+    )
+
+
+def _fetch_targets(run, *, client, budget, pool, outcomes, clock, canon_policy):
+    """Fetch each accepted candidate's own page — once per canonical identity.
+
+    Three properties, and they are the whole of this checkpoint:
+
+      * ONLY ACCEPTED CANDIDATES. A rejected candidate was rejected on metadata by
+        the committed gate; fetching it would be work whose result can change
+        nothing, and re-deciding afterwards is the re-judging Stage 6 forbids.
+      * ONCE PER CANONICAL IDENTITY, ACROSS THE WHOLE RUN. Ownership is the
+        committed `pool.acquire_target_fetch` gate over `pool.add_candidate`'s
+        canonical key, and `pool` is run-scoped — so the same URL accepted in two
+        cells, or under two topics, is ONE fetch whose outcome reaches every owner.
+        `acquire_target_fetch` returning False is the normal second-sighting path,
+        not an error.
+      * BOUNDED, AND IT STOPS. Nested inside the caller's committed `cell:` budget
+        scope, plus MAX_TARGET_FETCHES_PER_CELL. Once the budget is exhausted no
+        further client call is attempted: the remaining targets are recorded as
+        `not_checked`, which is true, rather than each one re-charging a spent
+        budget to discover the same thing.
+
+    Sequential by construction — one candidate at a time, in the committed sort
+    order — so `acquire_target_fetch`'s unlocked check-then-set keeps exactly one
+    caller and CF-1 stays untriggered. There is no thread, process or lock here.
+    """
+    stamp = clock() if callable(clock) else clock
+    lane_id = "cell__" + run.cell_id
+    exhausted = False
+    fetched_here = 0
+
+    # The committed order, so which identity wins the fetch is a function of
+    # content rather than of iteration accident.
+    for candidate in sorted(run.accepted, key=lambda c: c.candidate_key):
+        target_url = candidate.target_url or candidate.identity_url
+        cand, _is_new = pool.add_candidate(target_url, lane_id)
+        key = cand["candidate_key"]
+
+        if pool.acquire_target_fetch(key, lane_id):
+            if exhausted or fetched_here >= MAX_TARGET_FETCHES_PER_CELL:
+                outcomes[key] = _budget_skipped_outcome(target_url, stamp)
+            else:
+                outcome = targetfetch_mod.fetch_target(
+                    target_url, client=client, budget=budget, clock=clock)
+                fetched_here += 1
+                # A budget stop is terminal for this cell's fetch phase: the next
+                # call would charge a spent budget and learn nothing new.
+                if outcome.access_status == targetfetch_mod.NOT_CHECKED:
+                    exhausted = True
+                outcomes[key] = outcome
+        # else: another owner already fetched this identity; reuse its outcome.
+
+        outcome = outcomes[key]
+        run.fetch_outcomes[candidate.candidate_key] = outcome
+
+        # Per owner, because identity_url and canonical_url are the owner's own.
+        # `canonical_robots_allowed` is left UNKNOWN on purpose: S6-4 must not
+        # robots-probe a discovered canonical URL, and aliases.adjudicate treats
+        # unknown as "decline to alias" — the conservative direction. Wiring a
+        # real robots verdict is a later, separately authorized step.
+        run.adjudications[candidate.candidate_key] = aliases_mod.adjudicate(
+            candidate.identity_url, candidate.canonical_url, outcome, canon_policy,
+            canonical_robots_allowed=None, observed_at=stamp)
+    return run
+
+
+def _run_one_cell(cell, *, cache, client, budget, policy, clock, pool=None,
+                  outcomes=None, canon_policy=None):
+    """Discover, dedupe, extract, classify, verify, assign — all committed calls.
+
+    `pool`, `outcomes` and `canon_policy` enable the S6-4 target-fetch phase. They
+    default to None so every existing caller — and every Stage 5 test — keeps the
+    metadata-only behaviour it was written against: without a pool there is no
+    ownership gate to acquire, so no target is fetched.
+    """
     run = CellRun(cell)
     source_map = {source["source_id"]: source for source in cell["sources"]}
 
     results = []
+    fetch_phase = pool is not None and outcomes is not None
+    # ONE committed `cell:` scope around everything this cell does, so the target
+    # fetches are charged against the same cell_max_requests / cell_budget_sec as
+    # discovery was. The in-memory stages between them issue no request; they sit
+    # inside the scope only so the fetch phase can share it rather than opening a
+    # second scope of the same name, which would hand the cell a fresh budget.
     with budget.scope("cell:" + cell["cell_id"],
                       policy["budgets"].get("cell_max_requests"),
                       policy["budgets"].get("cell_budget_sec")):
@@ -331,25 +439,33 @@ def _run_one_cell(cell, *, cache, client, budget, policy, clock):
                 results.append(_discover(cell, source, cache=cache, client=client,
                                          budget=budget, clock=clock))
 
-    for result in results:
-        if result.failed:
-            run.failures.append((result.source_id, result.result, result.reason))
+        for result in results:
+            if result.failed:
+                run.failures.append((result.source_id, result.result, result.reason))
 
-    # Only sources that actually produced items reach dedupe; a zero-result or a
-    # failed source carries no candidates and is recorded, not grouped.
-    deliveries = [dedupe_mod.delivery("cell__" + cell["cell_id"], result)
-                  for result in results]
-    grouped = dedupe_mod.group(deliveries, sources=source_map)
-    extraction = extract_mod.normalize_all(grouped)
+        # Only sources that actually produced items reach dedupe; a zero-result or
+        # a failed source carries no candidates and is recorded, not grouped.
+        deliveries = [dedupe_mod.delivery("cell__" + cell["cell_id"], result)
+                      for result in results]
+        grouped = dedupe_mod.group(deliveries, sources=source_map)
+        extraction = extract_mod.normalize_all(grouped)
 
-    classifications = classify_mod.classify_all(extraction)
-    verdicts = verify_mod.verify_all(extraction, classifications, clock=clock)
-    assignments = facetassign_mod.assign_all(extraction, classifications)
+        classifications = classify_mod.classify_all(extraction)
+        verdicts = verify_mod.verify_all(extraction, classifications, clock=clock)
+        assignments = facetassign_mod.assign_all(extraction, classifications)
 
-    run.extracted = extraction.candidates
-    run.classifications = {c.candidate_key: c for c in classifications}
-    run.verdicts = {v.candidate_key: v for v in verdicts}
-    run.assignments = {a.candidate_key: a for a in assignments}
+        run.extracted = extraction.candidates
+        run.classifications = {c.candidate_key: c for c in classifications}
+        run.verdicts = {v.candidate_key: v for v in verdicts}
+        run.assignments = {a.candidate_key: a for a in assignments}
+
+        # S6-4: accepted candidates only, after every committed decision is made.
+        if fetch_phase:
+            _fetch_targets(run, client=client, budget=budget, pool=pool,
+                           outcomes=outcomes, clock=clock,
+                           canon_policy=canon_policy
+                           if canon_policy is not None
+                           else aliases_mod.load_canonicalization())
 
     candidates_by_source, accepted_by_source = {}, {}
     for candidate in run.extracted:
@@ -637,10 +753,19 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
 
         # ---------------------------------------------------- sequential drive
         runs = []
+        # RUN-scoped, not cell-scoped: this is what makes one canonical target
+        # identity a single fetch across every cell and every topic in the run.
+        # The pool already owns the ownership gate; this map holds the one outcome
+        # each owned identity produced, so a second owner reuses it rather than
+        # re-fetching the same page.
+        target_outcomes = {}
+        canon_policy = aliases_mod.load_canonicalization()
         for cell in selected:                       # one cell at a time. See §9.1.
             runs.append(_run_one_cell(cell, cache=cache, client=client,
                                       budget=budget, policy=policy,
-                                      clock=verify_clock))
+                                      clock=verify_clock, pool=pool,
+                                      outcomes=target_outcomes,
+                                      canon_policy=canon_policy))
     finally:
         shutil.rmtree(lease_root, ignore_errors=True)
 
@@ -786,7 +911,11 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
             source_preflight=(),
             classification_decisions=decisions,
             request_accounting=accounting,
-            target_fetch_owners=accounting.get("target_fetch_owners", 0))
+            target_fetch_owners=accounting.get("target_fetch_owners", 0),
+            # Passed so eligibility is derived from what the records actually say,
+            # not from the owner count alone: acquiring one target-fetch owner must
+            # not make a run publishable while its records still say not_checked.
+            records=all_records)
 
         # Manifest first, pointer second — S5-5's one promise.
         paths.append(artifacts.publish_run(root, harvest_run_id, manifest))
