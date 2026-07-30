@@ -824,3 +824,46 @@ def build(registry_path_=None):
     registry = load_registry(registry_path_)
     assessment = assess(registry)
     return assessment, render(assessment)
+
+
+# =========================================================== S7-4 · CLI layer
+# Orchestration only. The three layers above stay callable without argparse, and
+# nothing here migrates an entity, selects a destination or writes anywhere but
+# the `--output` path the caller names.
+def build_parser():
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="migrate.sh entity-assess",
+        description="Assess the protected entity registry. Migrates nothing.")
+    parser.add_argument("--registry", default=None,
+                        help="defaults to the committed %s" % SOURCE_PATH)
+    parser.add_argument("--output", default=None,
+                        help="write the document here; without it, stdout only")
+    return parser
+
+
+def main(argv=None, stdout=None, stderr=None):
+    """Render to stdout, or to an explicit `--output`. Returns an exit status.
+
+    `stdout` is a BINARY stream: the document's bytes are the contract, and a
+    text stream on Windows would rewrite every LF into CRLF on the way out.
+    """
+    import sys
+    out = stdout if stdout is not None else sys.stdout.buffer
+    err = stderr if stderr is not None else sys.stderr
+    args = build_parser().parse_args(sys.argv[1:] if argv is None else argv)
+    try:
+        _assessment, text = build(args.registry)
+    except AssessmentError as exc:
+        err.write("migrate.sh entity-assess: %s\n" % exc)
+        return 1
+    if args.output:
+        write_assessment(args.output, text)
+        return 0
+    out.write(text.encode("utf-8"))
+    return 0
+
+
+if __name__ == "__main__":                                  # pragma: no cover
+    import sys
+    sys.exit(main())

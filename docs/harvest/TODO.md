@@ -17,12 +17,16 @@ stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
 stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
 stage_6_closeout_commit:     0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   S6-C, PUSHED
 stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   APPROVED plan of record
-                             (S7-0 … S7-3 complete; S7-4 … S7-C unapproved)
-stage_7_gate:                39/39 suites green — 1,906 unittest + 42 shell = 1,948 total
-                             (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2 · +62 S7-3)
+                             (S7-0 … S7-4 complete; S7-5 … S7-C unapproved)
+stage_7_gate:                39/39 suites green — 1,948 unittest + 42 shell = 1,990 total
+                             (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2 · +62 S7-3
+                              · +42 S7-4)
 stage_7_ax_mapping:          231 accepted / 0 rejected, in memory only — nothing written.
                              Facet states 112 facet_partial · 118 unmapped_legacy_value
                              · 1 unresolved
+stage_7_cli:                 scripts/harvest/migrate.sh — ax-cases (dry-run only) and
+                             entity-assess. NO migration bundle, manifest or runtime
+                             output exists; --apply is refused (S7-5, unapproved).
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
@@ -55,15 +59,16 @@ complete, passed, failed or waived anywhere in this file.
 **A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** and is
 synchronized at `0d2da64` — local `main`, `HEAD` and `origin/main` all agree, 0 behind / 0 ahead.
 
-**STAGE 7 IS OPEN. `S7-0` … `S7-3` ARE COMPLETE.**
+**STAGE 7 IS OPEN. `S7-0` … `S7-4` ARE COMPLETE.**
 `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` is the **approved plan of record**; S7-1, the read-only
 entity assessment, **migrated 0 of 1,161 entities**, which is what it was for; S7-2, the
 suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites nothing; S7-3
-maps **231 accepted / 0 rejected in memory and writes nothing at all**.
-**`S7-4` … `S7-C` are unapproved**: each needs its own approval by name, is limited to the exact path
-set declared in that plan's §9, and a path appearing there is not an approval to write it. **No CLI,
-no dry-run report, no bundle and no apply path exists.** No live request, no promotion and no real
-runtime migration is authorized. Green tests alone open nothing.
+maps **231 accepted / 0 rejected in memory and writes nothing at all**; S7-4 adds `migrate.sh` with a
+**dry-run-only** `ax-cases` and `entity-assess`.
+**`S7-5` … `S7-C` are unapproved**: each needs its own approval by name, is limited to the exact path
+set declared in that plan's §9, and a path appearing there is not an approval to write it. **No
+migration bundle, manifest, staging directory or apply path exists — `--apply` is refused.** No live
+request, no promotion and no real runtime migration is authorized. Green tests alone open nothing.
 
 **Baseline at Stage 7 opening**, carried from the Stage 6 closure and re-verified before S7-0 edited
 a line: **38/38 suites · 1,815 counted assertions · protected 18/18 · untracked 508/508 with drift 0,
@@ -1097,7 +1102,7 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
 - [ ] `tests/test_taxonomy_linkcheck.sh`
 - [ ] `tests/test_taxonomy_promote_txn.sh` — 4 fault-injection points + add/remove/partial modes
 
-## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-3 COMPLETE. S7-4 … S7-C NOT APPROVED.**
+## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-4 COMPLETE. S7-5 … S7-C NOT APPROVED.**
 
 **Plan of record:** `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` — **`APPROVED — PLAN OF RECORD;
 S7-0 COMPLETE; NO IMPLEMENTATION CHECKPOINT APPROVED`**. It reconciles and **supersedes**
@@ -1214,11 +1219,41 @@ wiring (Stage 8), calibration (Stage 9), the live smoke, entity migration proper
       checkers exit 0; both protected registries byte-identical; the S7-1 assessment still regenerates
       byte-identically; no runtime path; no request of any kind.
 
-**S7-4 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
+- [x] **S7-4** the migration CLI and dry-run (`feat(harvest): add migration dry-run CLI`) —
+      `scripts/harvest/migrate.sh`, `src/harvest/migrate/{base,ax_cases,entity_assess}.py`,
+      `tests/harvest/test_migration.py`, `tests/test_taxonomy_migration.sh`, plus the plan and this
+      file. Exactly the eight paths declared in plan §9 — and `base.py` was left **byte-unchanged**,
+      so the S7-2 guard purity assertions stand as committed. **No migration bundle, manifest,
+      staging directory, rename or runtime output exists**; the CLI writes nothing anywhere except an
+      explicit `entity-assess --output` path. Surface: `migrate.sh ax-cases` (dry-run by default,
+      `--registry` · `--overrides` · `--facets-dir` · `--expect-count` (default **231**) ·
+      `--allow-unmappable` · `--run-id` · `--migrated-at`), `migrate.sh entity-assess`
+      (`--registry` · `--output`), `migrate.sh --help`; unknown or absent commands exit 2 with usage.
+      The wrapper is dispatch only — `set -euo pipefail`, `"$@"` forwarded verbatim (a path with
+      spaces is asserted to survive), no `eval`, no temp file, no network, no Git.
+      **`--apply` is recognised and REFUSED** with a message naming S7-5: nothing is read or written,
+      no staging or final path appears, and a before/after hash snapshot of a controlled temp tree
+      proves it. **The dry-run report** is one deterministic 16-field JSON document on **binary**
+      stdout, rendered by the committed `artifacts.serialize` — no second serializer, no
+      accepted-record dump, no path, no environment, no publication eligibility. On the protected
+      corpus: **231 source / 231 accepted / 0 rejected / 0 unresolved, exit 0**, byte-identical
+      across runs and unchanged by reordering source or review rows. **Unresolved suspicious URLs
+      still print the COMPLETE report** — every rejection — and only then exit 1; a reviewed `reject`
+      is an acknowledged decision, not unresolved; `--allow-unmappable` completes with every
+      rejection intact and admits nothing. Override parsing validates the committed shape completely
+      and additionally refuses a review whose declared `matched_rule` is not the rule the guard
+      actually fires, or that names a case the guard does not refuse at all; the committed file
+      (zero reviews) parses and is never modified. `entity-assess` stdout equals the committed
+      assessment byte-for-byte and `--output` writes exactly those bytes. Focused: migration
+      **175 (43 + 28 + 62 + 42)**, records 51, schema 35, identity 42, facets 34, eligibility 48;
+      full gate **39/39 suites, 1,990 assertions (1,948 unittest + 42 shell)**; five checkers exit 0;
+      both protected registries byte-identical; the S7-1 assessment still regenerates
+      byte-identically; no runtime path; no request of any kind.
+
+**S7-5 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
 path set in plan §9. A path appearing in the plan is not an approval to write it; a checkpoint that
 finds it needs another path **stops and requests a plan correction** rather than widening its scope.
 
-- [ ] **S7-4** `scripts/harvest/migrate.sh` and the dry-run report
 - [ ] **S7-5** atomic apply and repeated-run semantics, injected temp root only
 - [ ] **S7-6** integration — apply twice with stable normalized records, exact bundle path set,
       interruption with no partial publication, protected-source byte identity, no runtime leak,

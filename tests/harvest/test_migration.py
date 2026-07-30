@@ -60,9 +60,11 @@ import ast
 import copy
 import dataclasses
 import hashlib
+import io
 import json
 import os
 import random
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -942,19 +944,56 @@ class TestMapperSurfaceIsPure(unittest.TestCase):
                 names.add(".".join(reversed(parts)))
         return names
 
-    def test_no_clock_no_cli_no_network_no_subprocess_no_environment(self):
-        called = self.called_names()
-        for forbidden in ("records_mod.utcnow", "datetime.now", "datetime.datetime.now",
-                          "time.time", "argparse.ArgumentParser", "subprocess.run",
+    MAPPING_FUNCTIONS = ("map_registry", "map_case", "build_case_facets",
+                         "validate_registry", "_validate_reviews", "_compose",
+                         "_tags", "_classification", "_assumptions", "_rejection")
+
+    def mapping_calls(self):
+        """Dotted names called from inside the MAPPING functions only.
+
+        S7-4 added a CLI layer to this module, so purity is asserted where it is
+        the contract — the mapping — rather than over the whole file. The CLI may
+        read a file and consult a clock; the mapping may do neither.
+        """
+        tree = ast.parse(self.source())
+        names = set()
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef) or \
+                    node.name not in self.MAPPING_FUNCTIONS:
+                continue
+            for inner in ast.walk(node):
+                if not isinstance(inner, ast.Call):
+                    continue
+                target, parts = inner.func, []
+                while isinstance(target, ast.Attribute):
+                    parts.append(target.attr)
+                    target = target.value
+                if isinstance(target, ast.Name):
+                    parts.append(target.id)
+                if parts:
+                    names.add(".".join(reversed(parts)))
+        return names
+
+    def test_the_mapping_reads_no_clock_no_file_and_no_environment(self):
+        called = self.mapping_calls()
+        self.assertIn("records_mod.make_full_record", called,
+                      "the scan must actually be looking at the mapping")
+        for forbidden in ("records_mod.utcnow", "artifacts_mod.run_id",
+                          "datetime.now", "datetime.datetime.now", "time.time",
+                          "argparse.ArgumentParser", "subprocess.run",
                           "socket.socket", "os.environ.get", "open", "input",
-                          "print", "os.makedirs", "os.replace"):
-            self.assertNotIn(forbidden, called, "ax_cases must not call %r" % forbidden)
+                          "print", "os.makedirs", "os.replace", "json.load",
+                          "load_json_document", "parse_overrides"):
+            self.assertNotIn(forbidden, called,
+                             "the AX mapping must not call %r" % forbidden)
+
+    def test_the_module_imports_no_network_clock_or_subprocess_module(self):
         imported = set()
         for node in ast.walk(ast.parse(self.source())):
             if isinstance(node, ast.Import):
                 imported.update(alias.name for alias in node.names)
-        for forbidden in ("os", "sys", "time", "datetime", "argparse", "socket",
-                          "subprocess", "json", "urllib.request"):
+        for forbidden in ("time", "datetime", "socket", "subprocess",
+                          "urllib.request", "http.client"):
             self.assertNotIn(forbidden, imported)
 
     def test_it_neither_classifies_nor_scores(self):
@@ -967,10 +1006,23 @@ class TestMapperSurfaceIsPure(unittest.TestCase):
         self.assertNotIn("facetassign", imported)
 
     def test_it_writes_no_file_and_builds_no_artifact(self):
-        source = self.source()
-        for forbidden in ("write_atomic", "write_document", "publish_run",
-                          "serialize(", "os.replace", "makedirs", "mkdir"):
-            self.assertNotIn(forbidden, source)
+        """`artifacts.serialize` is reused for the report; nothing else is.
+
+        The report is rendered by the committed serializer rather than by a
+        second one — but no writer, no path builder and no publication call
+        appears anywhere in the module, so no bundle can be produced here.
+        """
+        called = self.called_names()
+        for forbidden in ("artifacts_mod.write_atomic", "artifacts_mod.write_document",
+                          "artifacts_mod.publish_run", "artifacts_mod.run_dir",
+                          "artifacts_mod.cell_artifact_path",
+                          "artifacts_mod.write_run_manifest",
+                          "artifacts_mod.build_run_manifest",
+                          "os.replace", "os.makedirs", "os.mkdir", "os.rename",
+                          "shutil.move"):
+            self.assertNotIn(forbidden, called)
+        self.assertIn("artifacts_mod.serialize", called,
+                      "the report must reuse the committed rendering primitive")
 
     def test_the_result_boundary_is_immutable_and_exactly_two_fields(self):
         result = mapped([a_case()])
@@ -1563,6 +1615,495 @@ class TestS71AssessmentStillIntact(unittest.TestCase):
         _assessment, text = ea.build()
         with open(DOCUMENT, "rb") as handle:
             self.assertEqual(handle.read(), text.encode("utf-8"))
+
+
+# ================================================ S7-4 · the CLI and the dry-run
+MIGRATE_SH = os.path.join(ROOT, "scripts", "harvest", "migrate.sh")
+OVERRIDES = os.path.join(ROOT, "config", "harvest", "migration_overrides.v1.json")
+FIXED_RUN = ["--run-id", RUN_A, "--migrated-at", AT_A]
+
+
+def run_cli(argv, module=ax_cases):
+    """Call a module's main() with captured binary stdout and text stderr."""
+    out, err = io.BytesIO(), io.StringIO()
+    status = module.main(argv, stdout=out, stderr=err)
+    return status, out.getvalue(), err.getvalue()
+
+
+def run_wrapper(args, cwd=None):
+    """The real shell wrapper, as a user would run it."""
+    completed = subprocess.run(["bash", MIGRATE_SH] + args, capture_output=True,
+                               cwd=cwd or ROOT)
+    return completed.returncode, completed.stdout, completed.stderr
+
+
+def tree_snapshot(root):
+    """Every path under `root` with its bytes — the before/after no-write proof."""
+    snapshot = {}
+    for base_dir, dirs, files in os.walk(root):
+        dirs.sort()
+        for name in sorted(files):
+            path = os.path.join(base_dir, name)
+            with open(path, "rb") as handle:
+                snapshot[os.path.relpath(path, root)] = hashlib.sha256(
+                    handle.read()).hexdigest()
+    return snapshot
+
+
+def write_json(path, document):
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(document, handle)
+    return path
+
+
+def an_overrides_document(rows=()):
+    return {"config_version": 1, "ax_cases": {"reviewed_unmappable": list(rows)}}
+
+
+def a_review_row(**over):
+    row = {"case_id": "case-2026-9500",
+           "legacy_source_url": "https://example.test/tag/ai",
+           "matched_rule": "index_page",
+           "reviewer": "sj",
+           "reviewed_at": "2026-07-31T00:00:00Z",
+           "decision": "admit",
+           "note": "confirmed this is the case's own page"}
+    row.update(over)
+    return row
+
+
+class TestWrapperDispatch(unittest.TestCase):
+
+    def test_help_lists_both_commands_and_exits_zero(self):
+        status, out, err = run_wrapper(["--help"])
+        self.assertEqual(status, 0)
+        text = (out + err).decode("utf-8")
+        self.assertIn("ax-cases", text)
+        self.assertIn("entity-assess", text)
+        self.assertIn("--apply", text)
+
+    def test_no_command_and_unknown_command_are_refused_with_usage(self):
+        for args in ([], ["bogus"], ["ax_cases"]):
+            with self.subTest(args=args):
+                status, out, err = run_wrapper(args)
+                self.assertNotEqual(status, 0)
+                self.assertIn(b"usage: migrate.sh", err)
+                self.assertEqual(out, b"")
+
+    def test_a_malformed_option_is_refused_by_the_python_layer(self):
+        status, _out, err = run_wrapper(["ax-cases", "--nonsense"])
+        self.assertNotEqual(status, 0)
+        self.assertIn(b"unrecognized arguments", err)
+
+    def test_the_wrapper_forwards_paths_containing_spaces(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = os.path.join(tmp, "a directory with spaces")
+            os.makedirs(directory)
+            registry = write_json(os.path.join(directory, "registry.json"),
+                                  a_ax_registry([a_case()]))
+            overrides = write_json(os.path.join(directory, "overrides.json"),
+                                   an_overrides_document())
+            status, out, err = run_wrapper(
+                ["ax-cases", "--registry", registry, "--overrides", overrides,
+                 "--expect-count", "1"] + FIXED_RUN)
+            self.assertEqual(status, 0, err.decode("utf-8"))
+            self.assertEqual(json.loads(out)["source_count"], 1)
+
+    def test_the_wrapper_uses_no_eval_and_no_network_command(self):
+        with open(MIGRATE_SH, "rb") as handle:
+            source = handle.read()
+        self.assertEqual(source.count(b"\r\n"), 0, "the wrapper must stay LF")
+        text = source.decode("utf-8")
+        for forbidden in ("eval ", "curl ", "wget ", "git ", "mktemp", "> /tmp"):
+            self.assertNotIn(forbidden, text)
+        self.assertIn("set -euo pipefail", text)
+        self.assertIn('exec python -m src.harvest.migrate.ax_cases "$@"', text)
+
+
+class TestAxDryRunOverTheProtectedCorpus(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.digest_before = sha256_file(AX_REGISTRY)
+        cls.status, cls.out, cls.err = run_cli(list(FIXED_RUN))
+        cls.report = json.loads(cls.out.decode("utf-8"))
+
+    def test_it_succeeds_and_prints_one_deterministic_json_document(self):
+        self.assertEqual(self.status, 0, self.err)
+        self.assertEqual(self.err, "")
+        self.assertTrue(self.out.endswith(b"\n"))
+        self.assertFalse(self.out.endswith(b"\n\n"))
+        self.assertNotIn(b"\r\n", self.out)
+
+    def test_the_counts_are_231_accepted_and_zero_rejected(self):
+        self.assertEqual(self.report["source_count"], EXPECTED_AX_CASES)
+        self.assertEqual(self.report["expected_count"], EXPECTED_AX_CASES)
+        self.assertEqual(self.report["accepted_count"], EXPECTED_AX_CASES)
+        self.assertEqual(self.report["rejected_count"], 0)
+        self.assertEqual(self.report["unresolved_rejection_count"], 0)
+        self.assertEqual(self.report["rejections"], [])
+        self.assertTrue(self.report["dry_run"])
+
+    def test_the_report_has_exactly_the_approved_field_set(self):
+        self.assertEqual(sorted(self.report), [
+            "accepted_count", "allow_unmappable", "dry_run", "expected_count",
+            "harvest_run_id", "migrated_at", "operation", "rejected_count",
+            "rejections", "report_type", "report_version", "reviewed_admit_count",
+            "reviewed_reject_count", "source_count", "unresolved_case_ids",
+            "unresolved_rejection_count"])
+        self.assertEqual(self.report["report_type"], "ax_cases_dry_run")
+        self.assertEqual(self.report["operation"], "ax-cases")
+
+    def test_it_dumps_no_accepted_records_and_no_machine_path(self):
+        text = self.out.decode("utf-8")
+        for forbidden in ("record_id", "content_id", "case_facets", "provenance",
+                          "domain_fields", "C:/", "C:\\", "/Users/", ROOT,
+                          "publication_eligible", "state/taxonomy_harvest"):
+            self.assertNotIn(forbidden, text)
+
+    def test_the_default_expected_count_is_231(self):
+        self.assertEqual(ax_cases.DEFAULT_EXPECT_COUNT, EXPECTED_AX_CASES)
+        status, out, _err = run_cli(list(FIXED_RUN))
+        self.assertEqual(status, 0)
+        self.assertEqual(json.loads(out)["expected_count"], EXPECTED_AX_CASES)
+
+    def test_identical_run_context_gives_byte_identical_stdout(self):
+        _status, again, _err = run_cli(list(FIXED_RUN))
+        self.assertEqual(again, self.out)
+
+    def test_the_protected_registry_is_untouched(self):
+        self.assertEqual(sha256_file(AX_REGISTRY), self.digest_before)
+
+    def test_no_runtime_path_was_created(self):
+        for leak in ("state/taxonomy_harvest", "data/harvested", "runs", "LATEST_RUN_ID"):
+            self.assertFalse(os.path.exists(os.path.join(ROOT, leak)), leak)
+
+
+class TestDryRunWritesNothing(unittest.TestCase):
+
+    def test_a_controlled_tree_is_byte_identical_before_and_after(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            registry = write_json(os.path.join(tmp, "registry.json"),
+                                  a_ax_registry([a_case()]))
+            overrides = write_json(os.path.join(tmp, "overrides.json"),
+                                   an_overrides_document())
+            before = tree_snapshot(tmp)
+            status, out, _err = run_cli(["--registry", registry,
+                                         "--overrides", overrides,
+                                         "--expect-count", "1"] + FIXED_RUN)
+            after = tree_snapshot(tmp)
+            self.assertEqual(status, 0)
+            self.assertEqual(before, after, "the dry-run wrote into the input tree")
+            self.assertEqual(sorted(after), ["overrides.json", "registry.json"])
+            self.assertEqual(json.loads(out)["accepted_count"], 1)
+
+
+class TestDryRunInputHandling(unittest.TestCase):
+
+    def test_the_committed_empty_override_file_parses(self):
+        with open(OVERRIDES, encoding="utf-8") as handle:
+            document = json.load(handle)
+        reviews, declared = ax_cases.parse_overrides(document)
+        self.assertEqual(reviews, ())
+        self.assertEqual(declared, ())
+
+    def test_the_committed_override_file_is_not_modified_by_parsing(self):
+        digest = sha256_file(OVERRIDES)
+        run_cli(list(FIXED_RUN))
+        self.assertEqual(sha256_file(OVERRIDES), digest)
+
+    def test_a_missing_or_malformed_registry_fails_loudly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = os.path.join(tmp, "nope.json")
+            status, out, err = run_cli(["--registry", missing] + FIXED_RUN)
+            self.assertEqual(status, 1)
+            self.assertEqual(out, b"")
+            self.assertIn("AX case registry", err)
+            broken = os.path.join(tmp, "broken.json")
+            with open(broken, "w", encoding="utf-8") as handle:
+                handle.write("{not json")
+            status, _out, err = run_cli(["--registry", broken] + FIXED_RUN)
+            self.assertEqual(status, 1)
+            self.assertIn("not valid JSON", err)
+
+    def test_a_missing_or_malformed_override_document_fails_loudly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, _out, err = run_cli(["--overrides", os.path.join(tmp, "nope.json")]
+                                        + FIXED_RUN)
+            self.assertEqual(status, 1)
+            self.assertIn("reviewed-overrides document", err)
+            bad = write_json(os.path.join(tmp, "bad.json"), {"config_version": 9})
+            status, _out, err = run_cli(["--overrides", bad] + FIXED_RUN)
+            self.assertEqual(status, 1)
+            self.assertIn("config_version", err)
+
+    def test_every_malformed_review_shape_is_refused(self):
+        bad_rows = (
+            ("must be an object", "not-a-row"),
+            ("is missing", {k: v for k, v in a_review_row().items() if k != "note"}),
+            ("unrecognised key", a_review_row(surprise=1)),
+            ("is not one of", a_review_row(decision="maybe")),
+            ("committed guard rule ids", a_review_row(matched_rule="whatever")),
+            ("must be a non-empty string", a_review_row(reviewer="  ")),
+            ("reviewed_at must be UTC", a_review_row(reviewed_at="2026-07-31")),
+        )
+        for needle, row in bad_rows:
+            with self.subTest(needle=needle):
+                with self.assertRaises(ax_cases.AxMigrationError) as caught:
+                    ax_cases.parse_overrides(an_overrides_document([row]))
+                self.assertIn(needle, str(caught.exception))
+
+    def test_a_duplicate_review_row_is_refused(self):
+        with self.assertRaises(ax_cases.AxMigrationError) as caught:
+            ax_cases.parse_overrides(an_overrides_document([a_review_row(),
+                                                            a_review_row()]))
+        self.assertIn("one case, one decision", str(caught.exception))
+
+    def test_a_count_mismatch_fails_with_both_numbers(self):
+        status, out, err = run_cli(["--expect-count", "230"] + FIXED_RUN)
+        self.assertEqual(status, 1)
+        self.assertEqual(out, b"")
+        self.assertIn("231", err)
+        self.assertIn("230", err)
+
+    def test_a_negative_or_non_numeric_count_is_refused(self):
+        for bad in ("-1", "many"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(SystemExit):
+                    run_cli(["--expect-count", bad] + FIXED_RUN)
+
+    def test_expect_count_asserts_the_input_and_does_not_truncate_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [a_case(case_id="c%d" % i, case_key="k|%d" % i,
+                            source_url="https://example.test/case/%d" % i)
+                     for i in range(4)]
+            registry = write_json(os.path.join(tmp, "r.json"), a_ax_registry(cases))
+            overrides = write_json(os.path.join(tmp, "o.json"),
+                                   an_overrides_document())
+            status, out, err = run_cli(["--registry", registry, "--overrides", overrides,
+                                        "--expect-count", "4"] + FIXED_RUN)
+            self.assertEqual(status, 0, err)
+            report = json.loads(out)
+            self.assertEqual(report["source_count"], 4)
+            self.assertEqual(report["accepted_count"], 4)
+
+    def test_an_invalid_run_context_is_refused(self):
+        status, out, err = run_cli(["--migrated-at", "2026-07-31"] + ["--run-id", RUN_A])
+        self.assertEqual(status, 1)
+        self.assertEqual(out, b"")
+        self.assertIn("migrated_at", err)
+
+
+class TestDryRunWithSuspiciousCases(unittest.TestCase):
+
+    SUSPICIOUS = "https://example.test/tag/ai"
+
+    def corpus(self, tmp, rows=()):
+        cases = [a_case(case_id="case-2026-9500", case_key="sus|1",
+                        source_url=self.SUSPICIOUS),
+                 a_case(case_id="case-2026-9501", case_key="ok|1",
+                        source_url="https://example.test/cases/ok")]
+        registry = write_json(os.path.join(tmp, "r.json"), a_ax_registry(cases))
+        overrides = write_json(os.path.join(tmp, "o.json"),
+                               an_overrides_document(rows))
+        return ["--registry", registry, "--overrides", overrides,
+                "--expect-count", "2"] + FIXED_RUN
+
+    def test_unresolved_reports_completely_then_exits_nonzero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err = run_cli(self.corpus(tmp))
+            self.assertEqual(status, 1)
+            report = json.loads(out)
+            self.assertEqual(report["rejected_count"], 1)
+            self.assertEqual(report["unresolved_rejection_count"], 1)
+            self.assertEqual(report["unresolved_case_ids"], ["case-2026-9500"])
+            self.assertEqual(report["accepted_count"], 1)
+            self.assertEqual(len(report["rejections"]), 1)
+            self.assertEqual(report["rejections"][0]["target_url"], self.SUSPICIOUS)
+            self.assertIn("--allow-unmappable", err)
+            self.assertIn("case-2026-9500", err)
+
+    def test_allow_unmappable_succeeds_and_keeps_every_rejection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err = run_cli(self.corpus(tmp) + ["--allow-unmappable"])
+            self.assertEqual(status, 0, err)
+            report = json.loads(out)
+            self.assertTrue(report["allow_unmappable"])
+            self.assertEqual(report["rejected_count"], 1)
+            self.assertEqual(report["unresolved_rejection_count"], 1)
+            self.assertEqual(report["accepted_count"], 1)
+            self.assertEqual(report["rejections"][0]["rejection_reason"],
+                             "ambiguous_legacy_url")
+
+    def test_a_reviewed_admit_is_counted_and_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err = run_cli(self.corpus(tmp, [a_review_row()]))
+            self.assertEqual(status, 0, err)
+            report = json.loads(out)
+            self.assertEqual(report["reviewed_admit_count"], 1)
+            self.assertEqual(report["reviewed_reject_count"], 0)
+            self.assertEqual(report["unresolved_rejection_count"], 0)
+            self.assertEqual(report["accepted_count"], 2)
+            self.assertEqual(report["rejections"], [])
+
+    def test_a_reviewed_reject_is_counted_and_stays_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err = run_cli(
+                self.corpus(tmp, [a_review_row(decision="reject",
+                                               note="an index page, not the case")]))
+            self.assertEqual(status, 0, err)
+            report = json.loads(out)
+            self.assertEqual(report["reviewed_reject_count"], 1)
+            self.assertEqual(report["unresolved_rejection_count"], 0)
+            self.assertEqual(report["accepted_count"], 1)
+            self.assertEqual(report["rejected_count"], 1)
+            self.assertIn("a reviewer confirmed the rejection",
+                          report["rejections"][0]["detail"])
+
+    def test_a_review_naming_the_wrong_rule_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, _out, err = run_cli(
+                self.corpus(tmp, [a_review_row(matched_rule="feed_path")]))
+            self.assertEqual(status, 1)
+            self.assertIn("declares matched_rule", err)
+
+    def test_a_review_of_an_unsuspicious_case_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            row = a_review_row(case_id="case-2026-9501",
+                               legacy_source_url="https://example.test/cases/ok")
+            status, _out, err = run_cli(self.corpus(tmp, [row]))
+            self.assertEqual(status, 1)
+            self.assertIn("does not refuse at all", err)
+
+    def test_rejections_are_ordered_and_row_order_changes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [a_case(case_id="c%d" % i, case_key="k|%d" % i,
+                            source_url=url)
+                     for i, url in enumerate(("https://example.test/tag/z",
+                                              "https://example.test/tag/a",
+                                              "https://example.test/blog/feed"))]
+            overrides = write_json(os.path.join(tmp, "o.json"),
+                                   an_overrides_document())
+            first = write_json(os.path.join(tmp, "r1.json"), a_ax_registry(cases))
+            second = write_json(os.path.join(tmp, "r2.json"),
+                                a_ax_registry(list(reversed(cases))))
+            args = ["--overrides", overrides, "--expect-count", "3",
+                    "--allow-unmappable"] + FIXED_RUN
+            status_one, out_one, _e1 = run_cli(["--registry", first] + args)
+            status_two, out_two, _e2 = run_cli(["--registry", second] + args)
+            self.assertEqual((status_one, status_two), (0, 0))
+            self.assertEqual(out_one, out_two,
+                             "source row order changed the report bytes")
+            rows = json.loads(out_one)["rejections"]
+            self.assertEqual([r["identity_url"] for r in rows],
+                             sorted(r["identity_url"] for r in rows))
+            self.assertEqual(len(rows), 3)
+
+    def test_review_row_order_changes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [a_case(case_id="case-2026-9500", case_key="s|1",
+                            source_url=self.SUSPICIOUS),
+                     a_case(case_id="case-2026-9502", case_key="s|2",
+                            source_url="https://example.test/blog/feed")]
+            registry = write_json(os.path.join(tmp, "r.json"), a_ax_registry(cases))
+            rows = [a_review_row(decision="reject", note="index"),
+                    a_review_row(case_id="case-2026-9502",
+                                 legacy_source_url="https://example.test/blog/feed",
+                                 matched_rule="feed_path", decision="reject",
+                                 note="a feed")]
+            one = write_json(os.path.join(tmp, "o1.json"), an_overrides_document(rows))
+            two = write_json(os.path.join(tmp, "o2.json"),
+                             an_overrides_document(list(reversed(rows))))
+            args = ["--registry", registry, "--expect-count", "2"] + FIXED_RUN
+            _s1, out_one, _e1 = run_cli(args + ["--overrides", one])
+            _s2, out_two, _e2 = run_cli(args + ["--overrides", two])
+            self.assertEqual(out_one, out_two)
+
+
+class TestApplyIsRefused(unittest.TestCase):
+
+    def test_apply_is_refused_before_anything_is_read_or_written(self):
+        status, out, err = run_cli(["--apply"] + FIXED_RUN)
+        self.assertEqual(status, 1)
+        self.assertEqual(out, b"")
+        self.assertIn("--apply is not implemented", err)
+        self.assertIn("S7-5", err)
+        self.assertIn("nothing was written", err)
+
+    def test_apply_does_not_fall_back_to_a_dry_run(self):
+        status, out, _err = run_cli(["--apply"] + FIXED_RUN)
+        self.assertEqual(status, 1)
+        self.assertEqual(out, b"")
+
+    def test_apply_creates_no_staging_or_final_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            registry = write_json(os.path.join(tmp, "r.json"),
+                                  a_ax_registry([a_case()]))
+            overrides = write_json(os.path.join(tmp, "o.json"),
+                                   an_overrides_document())
+            before = tree_snapshot(tmp)
+            status, _out, _err = run_cli(["--apply", "--registry", registry,
+                                          "--overrides", overrides,
+                                          "--expect-count", "1"] + FIXED_RUN)
+            self.assertEqual(status, 1)
+            self.assertEqual(tree_snapshot(tmp), before)
+        for leak in ("state/taxonomy_harvest", "data/harvested", "runs", "LATEST_RUN_ID"):
+            self.assertFalse(os.path.exists(os.path.join(ROOT, leak)), leak)
+
+    def test_the_refusal_is_reachable_through_the_wrapper(self):
+        status, out, err = run_wrapper(["ax-cases", "--apply"])
+        self.assertNotEqual(status, 0)
+        self.assertEqual(out, b"")
+        self.assertIn(b"S7-5", err)
+
+
+class TestEntityAssessCli(unittest.TestCase):
+
+    def test_stdout_equals_the_renderer_and_the_committed_document(self):
+        status, out, err = run_cli([], module=ea)
+        self.assertEqual(status, 0, err)
+        _assessment, text = ea.build()
+        self.assertEqual(out, text.encode("utf-8"))
+        with open(DOCUMENT, "rb") as handle:
+            self.assertEqual(out, handle.read())
+
+    def test_an_explicit_output_path_receives_exactly_those_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = os.path.join(tmp, "assessment.md")
+            status, out, err = run_cli(["--output", target], module=ea)
+            self.assertEqual(status, 0, err)
+            self.assertEqual(out, b"", "with --output nothing goes to stdout")
+            with open(target, "rb") as handle:
+                written = handle.read()
+            _status, stdout_bytes, _err = run_cli([], module=ea)
+            self.assertEqual(written, stdout_bytes)
+            self.assertEqual(sorted(os.listdir(tmp)), ["assessment.md"])
+
+    def test_an_injected_registry_path_is_honoured(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            registry = write_json(os.path.join(tmp, "entities.json"),
+                                  a_registry([a_row()]))
+            status, out, err = run_cli(["--registry", registry], module=ea)
+            self.assertEqual(status, 0, err)
+            self.assertIn(b"migrates 0 entities", out)
+
+    def test_a_malformed_registry_fails_loudly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            broken = os.path.join(tmp, "broken.json")
+            with open(broken, "w", encoding="utf-8") as handle:
+                handle.write("{")
+            status, out, err = run_cli(["--registry", broken], module=ea)
+            self.assertEqual(status, 1)
+            self.assertEqual(out, b"")
+            self.assertIn("entity-assess", err)
+
+    def test_it_creates_no_taxonomy_record_or_bundle(self):
+        status, out, _err = run_cli([], module=ea)
+        self.assertEqual(status, 0)
+        text = out.decode("utf-8")
+        self.assertIn("migrates 0 entities", text)
+        for leak in ("state/taxonomy_harvest/", "data/harvested/", "runs/"):
+            self.assertFalse(os.path.exists(os.path.join(ROOT, leak.rstrip("/"))))
 
 
 if __name__ == "__main__":

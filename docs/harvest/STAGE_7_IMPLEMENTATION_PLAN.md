@@ -1,6 +1,6 @@
 # Stage 7 implementation plan — AX corpus migration
 
-**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-3 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
+**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-4 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
 
 ```text
 plan opened at        0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   Stage 6 closeout
@@ -20,11 +20,12 @@ section of `docs/harvest/TODO.md` — is complete. **`S7-1`, the read-only entit
 complete**; it migrated **zero** entities, which is what it was for. **`S7-2`, the suspicious-URL
 guard, is complete**; it refuses URLs and nothing else, and refuses **0 of the 231** protected AX
 case pages. **`S7-3`, the in-memory AX mapping, is complete**; it maps **231 accepted / 0 rejected**
-and writes nothing at all.
+and writes nothing at all. **`S7-4`, the CLI and dry-run, is complete**; `migrate.sh ax-cases`
+reports and writes nothing, and **`--apply` is refused**.
 
-**`S7-4` … `S7-C` remain unapproved**, and nothing in this document approves them: no CLI, no
-dry-run report, no bundle and no apply path exists, and none may be written until the checkpoint that
-owns it is approved by name.
+**`S7-5` … `S7-C` remain unapproved**, and nothing in this document approves them: **no migration
+bundle, no manifest, no staging directory, no rename and no apply path exists**, and none may be
+written until the checkpoint that owns it is approved by name.
 
 - **Approving this plan approves no implementation checkpoint.** Not S7-1, not any later one.
 - **Listing a checkpoint's path set here does not authorize that checkpoint.** §9 exists so a
@@ -671,8 +672,8 @@ suspicious-URL hits            0       under the D7-H structural predicates (5 u
 
 ## 9 · Checkpoint decomposition
 
-**S7-1, S7-2 and S7-3 are complete. None of the remaining checkpoints is approved.** Each requires
-separate approval by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
+**S7-1 … S7-4 are complete. None of the remaining checkpoints is approved.** Each requires separate
+approval by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
 plan and to `docs/harvest/TODO.md`.
 
 ### S7-1 · Entity assessment — **COMPLETE**
@@ -891,7 +892,7 @@ regenerates byte-identically; then the full gate once — **39/39 suites, 1,948 
 unittest + 42 shell)**; then all five checkers exit 0. Both protected registries are byte-identical
 under the EOL-aware baseline, no runtime path was created, and no request of any kind was made.
 
-### S7-4 · CLI and dry-run
+### S7-4 · CLI and dry-run — **COMPLETE**
 
 ```text
 scripts/harvest/migrate.sh
@@ -903,6 +904,84 @@ tests/test_taxonomy_migration.sh
 docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md
 docs/harvest/TODO.md
 ```
+
+**As shipped — the command surface.** `scripts/harvest/migrate.sh` is environment and dispatch only:
+`set -euo pipefail`, root resolved from `BASH_SOURCE`, `"$@"` forwarded verbatim (a path with spaces
+survives, asserted), `exec python -m src.harvest.migrate.<module>`. No `eval`, no temp file, no
+network, no Git, no string re-parsing. It is stored `100644` like every other shell script in this
+repository, which invokes them as `bash …`. Unknown or absent commands print usage on stderr and exit
+2.
+
+```text
+migrate.sh ax-cases [--registry PATH] [--overrides PATH] [--facets-dir PATH]
+                    [--expect-count N] [--allow-unmappable]
+                    [--run-id ID] [--migrated-at YYYY-MM-DDTHH:MM:SSZ] [--apply]
+migrate.sh entity-assess [--registry PATH] [--output PATH]
+migrate.sh --help
+```
+
+Defaults: registry `state/ax_case_harvest_registry.json`, overrides
+`config/harvest/migration_overrides.v1.json`, committed facets directory, `--expect-count 231`. The
+run context is derived through the **committed owners only** — `artifacts.run_id()` and
+`records.utcnow()` — and `--run-id` / `--migrated-at` inject it for tests. No second timestamp format
+was created and no Git state is read.
+
+**`--apply` is recognised and REFUSED.** It exits 1 with a message naming S7-5, writes nothing to
+stdout, does not fall back to a dry-run, and creates no staging or final path — proved by hashing a
+controlled temporary tree either side of the attempt, and reachable through the wrapper. The refusal
+is test-pinned and is S7-5's to replace.
+
+**The dry-run report** is one deterministic JSON document on **binary** stdout (a Windows text stream
+would rewrite its LFs), rendered by the committed `artifacts.serialize` — no second serializer —
+with exactly these sixteen fields:
+
+```text
+report_type ("ax_cases_dry_run") · report_version (1) · operation ("ax-cases") · dry_run (true)
+harvest_run_id · migrated_at · expected_count · source_count
+accepted_count · rejected_count · reviewed_admit_count · reviewed_reject_count
+unresolved_rejection_count · unresolved_case_ids[] · allow_unmappable
+rejections[]  — the S7-3 rows verbatim, in their committed order
+```
+
+It carries **no accepted-record payload, no path, no Git or environment fact, no bundle path and no
+publication eligibility** — asserted by name. **On the protected corpus: `source_count` 231,
+`accepted_count` 231, `rejected_count` 0, `unresolved_rejection_count` 0, exit status 0**, 444 bytes,
+byte-identical across runs with the same explicit run context and unchanged by reordering source rows
+or review rows.
+
+**Completeness before failure.** The mapping always runs with unmappable cases retained, so the
+report is whole; success is decided **separately**, from the unresolved count. Unresolved suspicious
+URLs still print the complete report — every rejection, not the first — and only then exit 1, with
+stderr naming each case and the two ways forward. A reviewed `reject` is an acknowledged decision,
+not an unresolved one. `--allow-unmappable` completes with every rejection intact and **admits,
+repairs and rewrites nothing**.
+
+**Override parsing** validates the committed shape completely: `config_version`,
+`ax_cases.reviewed_unmappable` as a list, all seven row fields present, no unrecognised key, decision
+in `admit`/`reject`, `matched_rule` one of the four S7-2 ids, non-empty reviewer and note,
+UTC-second-precision `reviewed_at`, no duplicate row — and then, against the registry, that the
+declared `matched_rule` is the rule the guard **actually** fires and that the case is one the guard
+refuses at all. The committed file (zero reviews) parses, and is never modified.
+
+**A dry-run writes nothing**, proved by hashing every file under an injected root before and after
+rather than by trusting `git status`, and no repository runtime path is created.
+
+**`entity-assess`** exposes S7-1 unchanged: without `--output` the deterministic Markdown goes to
+stdout and equals the committed document byte-for-byte; with `--output` exactly those bytes go to
+that path and nothing to stdout. It migrates nothing and selects no destination.
+
+**Validation:** focused `tests/test_taxonomy_migration.sh` **175 assertions (43 + 28 + 62 + 42)**,
+plus `records` 51, `schema` 35, `identity` 42, `facets` 34, `eligibility` 48; the S7-1 assessment
+regenerates byte-identically; then the full gate once — **39/39 suites, 1,990 assertions (1,948
+unittest + 42 shell)**; then all five checkers exit 0. Both protected registries are byte-identical
+under the EOL-aware baseline, no runtime path exists, and no request of any kind was made.
+
+**One test narrowing, recorded rather than buried.** S7-3's purity assertions covered the whole
+`ax_cases.py` file; S7-4 adds a CLI layer there by approval, so those two assertions were **scoped to
+the mapping functions** — the mapping still calls no clock, no `open`, no `print` and no loader, and
+the module still imports no clock, socket or subprocess module. Nothing about the mapping's
+guarantees was weakened; `base.py` was left **byte-unchanged**, so the S7-2 guard purity assertions
+stand exactly as committed.
 
 ### S7-5 · Atomic apply and repeated-run semantics
 

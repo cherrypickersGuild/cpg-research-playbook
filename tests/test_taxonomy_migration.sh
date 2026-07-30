@@ -1,7 +1,34 @@
 #!/usr/bin/env bash
 # test_taxonomy_migration.sh — Stage 7 migration: the entity assessment (S7-1),
-# the suspicious-URL guard (S7-2) and the in-memory AX mapping (S7-3).
-# 133 assertions, 43 + 28 + 62.
+# the suspicious-URL guard (S7-2), the in-memory AX mapping (S7-3) and the
+# dry-run CLI (S7-4). 175 assertions, 43 + 28 + 62 + 42.
+#
+# --- S7-4, the CLI and the dry-run -------------------------------------------
+# The dry-run is the command a person will actually read before deciding whether
+# to migrate, so the failures worth pinning are the ones that would mislead them:
+#   * a report that is not complete. Unresolved suspicious URLs still render the
+#     WHOLE report — every rejection, not the first — and only then exit
+#     nonzero, so nobody reviews a truncated list;
+#   * a rejected case quietly counted as accepted. The mapping always runs with
+#     unmappable cases retained, and success is decided separately from the
+#     unresolved count; `--allow-unmappable` completes with every rejection
+#     intact and admits nothing;
+#   * `--apply` doing something. It is refused before anything is read or
+#     written, proved by a before/after hash snapshot of a controlled temp tree,
+#     and by the wrapper reaching the same refusal;
+#   * a write. The dry-run is proved to change no byte anywhere under an
+#     injected root — not by `git status`, but by hashing the tree either side —
+#     and no repository runtime path is created;
+#   * bytes that move. stdout is written as BINARY, so a Windows text stream
+#     cannot turn the report's LFs into CRLFs; identical inputs and an explicit
+#     `--run-id`/`--migrated-at` give byte-identical stdout, and neither source
+#     row order nor review row order changes it;
+#   * a review that means something other than it says. Every field of the
+#     committed override shape is validated, an unrecognised key is refused, and
+#     a review whose declared `matched_rule` is not the rule the guard actually
+#     fires — or that names a case the guard does not refuse at all — is refused.
+# `entity-assess` is exposed unchanged: stdout equals the committed document
+# byte-for-byte, `--output` writes exactly those bytes and nothing to stdout.
 #
 # --- S7-3, the AX mapping ----------------------------------------------------
 # This is where a legacy row becomes a record a later stage may publish, so the

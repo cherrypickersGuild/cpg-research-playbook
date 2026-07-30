@@ -34,10 +34,15 @@ one fixed template — labelled parts joined by `" | "`, a part omitted entirely
 when its source is blank or `"unknown"`, no conditional punctuation, and `None`
 when every part is missing.
 """
+import argparse
 import copy
 import dataclasses
+import json
+import os
 import re
+import sys
 
+from .. import artifacts as artifacts_mod
 from .. import records as records_mod
 from .. import schema as schema_mod
 from .. import urlkey
@@ -497,3 +502,262 @@ def map_registry(document, *, harvest_run_id, migrated_at, reviewed=None,
         rejected=tuple(sorted(rejected, key=lambda row: (row["identity_url"],
                                                          row["detail"]))),
     )
+
+
+# =========================================================== S7-4 · CLI layer
+# Everything below is orchestration: loading files, parsing the reviewed
+# overrides, deriving the dry-run report and dispatching argv. The mapping above
+# stays callable without any of it, and none of it can write a migration bundle
+# — `--apply` is refused, because apply is S7-5 and is neither implemented nor
+# authorized here.
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__)))))
+
+DEFAULT_REGISTRY = "state/ax_case_harvest_registry.json"
+DEFAULT_OVERRIDES = "config/harvest/migration_overrides.v1.json"
+DEFAULT_EXPECT_COUNT = 231
+
+# The dry-run report's own contract, versioned separately from any artifact
+# schema: this document is written to stdout and never to disk, so it is
+# deliberately NOT a committed artifact type.
+REPORT_TYPE = "ax_cases_dry_run"
+REPORT_VERSION = 1
+
+# The committed override row shape (`_reviewed_unmappable_shape` in
+# migration_overrides.v1.json). Every key is required, and an unrecognised key
+# is refused rather than ignored: a key that changes what a review MEANS must
+# not slip past unread.
+REVIEW_ROW_FIELDS = ("case_id", "legacy_source_url", "matched_rule", "reviewer",
+                     "reviewed_at", "decision", "note")
+
+
+def _repo_path(path):
+    """Resolve a possibly relative path against the repository root."""
+    return path if os.path.isabs(path) else os.path.join(ROOT, path)
+
+
+def load_json_document(path, label):
+    """Read one UTF-8 JSON document, or fail loudly naming the LOGICAL input."""
+    try:
+        with open(_repo_path(path), "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except OSError as exc:
+        raise AxMigrationError("cannot read the %s: %s" % (label, exc.strerror))
+    except ValueError as exc:
+        raise AxMigrationError("the %s is not valid JSON: %s" % (label, exc))
+
+
+def parse_overrides(document):
+    """The committed override document -> the in-memory review form S7-3 takes.
+
+    The committed file is never modified, normalized or written. An empty
+    `reviewed_unmappable` is valid and is what the current corpus carries.
+    """
+    _require(isinstance(document, dict),
+             "the reviewed-overrides document must be a JSON object")
+    _require(document.get("config_version") == 1,
+             "the reviewed-overrides document declares config_version %r; this "
+             "checkpoint reads version 1" % (document.get("config_version"),))
+    block = document.get("ax_cases")
+    _require(isinstance(block, dict),
+             "the reviewed-overrides document has no `ax_cases` object")
+    rows = block.get("reviewed_unmappable")
+    _require(isinstance(rows, list),
+             "`ax_cases.reviewed_unmappable` must be an array, got %s"
+             % type(rows).__name__)
+
+    reviews = []
+    seen = set()
+    for index, row in enumerate(rows):
+        where = "ax_cases.reviewed_unmappable[%d]" % index
+        _require(isinstance(row, dict), "%s must be an object" % where)
+        missing = [f for f in REVIEW_ROW_FIELDS if f not in row]
+        _require(not missing,
+                 "%s is missing %s" % (where, ", ".join(repr(f) for f in missing)))
+        extra = sorted(set(row) - set(REVIEW_ROW_FIELDS))
+        _require(not extra,
+                 "%s carries unrecognised key(s) %s; a key that changes what a "
+                 "review means may not pass unread"
+                 % (where, ", ".join(repr(k) for k in extra)))
+        _require(row["decision"] in REVIEW_DECISIONS,
+                 "%s decision %r is not one of %s"
+                 % (where, row["decision"], ", ".join(REVIEW_DECISIONS)))
+        _require(row["matched_rule"] in base.SUSPICIOUS_RULE_IDS,
+                 "%s matched_rule %r is not one of the four committed guard rule "
+                 "ids" % (where, row["matched_rule"]))
+        for field in ("case_id", "legacy_source_url", "reviewer", "note"):
+            _require(isinstance(row[field], str) and row[field].strip(),
+                     "%s.%s must be a non-empty string" % (where, field))
+        _require(isinstance(row["reviewed_at"], str)
+                 and _UTC_SECOND.match(row["reviewed_at"]),
+                 "%s.reviewed_at must be UTC ISO-8601 at second precision, got %r"
+                 % (where, row["reviewed_at"]))
+        key = (row["case_id"], row["legacy_source_url"])
+        _require(key not in seen,
+                 "%s repeats the review of %r; one case, one decision"
+                 % (where, row["case_id"]))
+        seen.add(key)
+        reviews.append({"case_id": row["case_id"],
+                        "legacy_source_url": row["legacy_source_url"],
+                        "decision": row["decision"],
+                        "note": row["note"]})
+    return tuple(reviews), tuple(rows)
+
+
+def _check_matched_rules(declared_rows, cases):
+    """A review must name the rule that actually fires on that case's URL."""
+    by_id = {case["case_id"]: case for case in cases}
+    for index, row in enumerate(declared_rows):
+        case = by_id.get(row["case_id"])
+        if case is None:
+            continue                    # the mapper refuses an unknown case by name
+        match = base.suspicious_url_match(case["source_url"])
+        _require(match is not None,
+                 "ax_cases.reviewed_unmappable[%d] reviews %r, whose URL the guard "
+                 "does not refuse at all" % (index, row["case_id"]))
+        _require(match.rule_id == row["matched_rule"],
+                 "ax_cases.reviewed_unmappable[%d] declares matched_rule %r but the "
+                 "guard refuses %r under %r"
+                 % (index, row["matched_rule"], row["case_id"], match.rule_id))
+
+
+def build_dry_run_report(document, reviews, result, *, expected_count,
+                         allow_unmappable, harvest_run_id, migrated_at):
+    """The complete dry-run facts. No paths, no environment, no accepted payloads."""
+    decisions = {row["case_id"]: row["decision"] for row in reviews}
+    suspicious = [case["case_id"] for case in document["cases"]
+                  if base.suspicious_url_match(case["source_url"]) is not None]
+    admitted = sorted(c for c in suspicious if decisions.get(c) == "admit")
+    rejected_reviewed = sorted(c for c in suspicious if decisions.get(c) == "reject")
+    unresolved = sorted(c for c in suspicious if c not in decisions)
+    return {
+        "report_type": REPORT_TYPE,
+        "report_version": REPORT_VERSION,
+        "operation": "ax-cases",
+        "dry_run": True,
+        "harvest_run_id": harvest_run_id,
+        "migrated_at": migrated_at,
+        "expected_count": expected_count,
+        "source_count": len(document["cases"]),
+        "accepted_count": len(result.accepted),
+        "rejected_count": len(result.rejected),
+        "reviewed_admit_count": len(admitted),
+        "reviewed_reject_count": len(rejected_reviewed),
+        "unresolved_rejection_count": len(unresolved),
+        "unresolved_case_ids": unresolved,
+        "allow_unmappable": bool(allow_unmappable),
+        "rejections": list(result.rejected),
+    }
+
+
+def render_report(report):
+    """One rendering, the committed one: sorted keys, UTF-8, LF, one newline."""
+    return artifacts_mod.serialize(report).decode("utf-8")
+
+
+def dry_run(*, registry_path=DEFAULT_REGISTRY, overrides_path=DEFAULT_OVERRIDES,
+            facets_dir=None, expected_count=DEFAULT_EXPECT_COUNT,
+            allow_unmappable=False, harvest_run_id, migrated_at):
+    """Map the whole registry in memory and derive the report. Writes nothing.
+
+    The mapping always runs with `allow_unmappable=True` so the report is
+    COMPLETE; whether the command succeeded is decided separately, from the
+    unresolved count. A rejected case is never reinterpreted as accepted.
+    """
+    document = load_json_document(registry_path, "AX case registry")
+    overrides = load_json_document(overrides_path, "reviewed-overrides document")
+    reviews, declared = parse_overrides(overrides)
+
+    _require(isinstance(document, dict) and isinstance(document.get("cases"), list),
+             "the AX case registry has no `cases` array")
+    actual = len(document["cases"])
+    _require(actual == expected_count,
+             "the AX case registry holds %d cases; --expect-count is %d. The count "
+             "is asserted, never assumed: rerun with --expect-count %d if the corpus "
+             "really changed." % (actual, expected_count, actual))
+    _check_matched_rules(declared, document["cases"])
+
+    result = map_registry(document, harvest_run_id=harvest_run_id,
+                          migrated_at=migrated_at, reviewed=list(reviews),
+                          allow_unmappable=True, facets_dir=facets_dir)
+    report = build_dry_run_report(document, reviews, result,
+                                  expected_count=expected_count,
+                                  allow_unmappable=allow_unmappable,
+                                  harvest_run_id=harvest_run_id,
+                                  migrated_at=migrated_at)
+    return report
+
+
+def _positive_int(value):
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        raise argparse.ArgumentTypeError("%r is not an integer" % (value,))
+    if number < 0:
+        raise argparse.ArgumentTypeError("%r must not be negative" % (value,))
+    return number
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="migrate.sh ax-cases",
+        description="Map the protected AX case registry in memory and report. "
+                    "Dry-run only: this command writes nothing.")
+    parser.add_argument("--registry", default=DEFAULT_REGISTRY)
+    parser.add_argument("--overrides", default=DEFAULT_OVERRIDES)
+    parser.add_argument("--facets-dir", default=None)
+    parser.add_argument("--expect-count", type=_positive_int,
+                        default=DEFAULT_EXPECT_COUNT)
+    parser.add_argument("--allow-unmappable", action="store_true")
+    parser.add_argument("--run-id", default=None)
+    parser.add_argument("--migrated-at", default=None)
+    parser.add_argument("--apply", action="store_true",
+                        help="not implemented: apply is S7-5")
+    return parser
+
+
+def main(argv=None, stdout=None, stderr=None):
+    """Dry-run entry point. Returns an exit status; never writes a file.
+
+    `stdout` is a BINARY stream. The report's bytes are its contract, and a text
+    stream on Windows would rewrite every LF into CRLF on the way out.
+    """
+    out = stdout if stdout is not None else sys.stdout.buffer
+    err = stderr if stderr is not None else sys.stderr
+    args = build_parser().parse_args(sys.argv[1:] if argv is None else argv)
+
+    if args.apply:
+        err.write("migrate.sh ax-cases: --apply is not implemented and not "
+                  "authorized. Applying a migration bundle is checkpoint S7-5, "
+                  "which has not been approved; nothing was written.\n")
+        return 1
+
+    harvest_run_id = args.run_id or artifacts_mod.run_id()
+    migrated_at = args.migrated_at or records_mod.utcnow()
+    try:
+        report = dry_run(registry_path=args.registry,
+                         overrides_path=args.overrides,
+                         facets_dir=args.facets_dir,
+                         expected_count=args.expect_count,
+                         allow_unmappable=args.allow_unmappable,
+                         harvest_run_id=harvest_run_id,
+                         migrated_at=migrated_at)
+    except (AxMigrationError, base.MigrationInputError,
+            schema_mod.SchemaError) as exc:
+        err.write("migrate.sh ax-cases: %s\n" % exc)
+        return 1
+
+    out.write(render_report(report).encode("utf-8"))
+    if report["unresolved_rejection_count"] and not args.allow_unmappable:
+        err.write("migrate.sh ax-cases: %d legacy URL(s) tripped the suspicious-URL "
+                  "guard with no reviewed decision: %s. Review each one in "
+                  "%s, or rerun with --allow-unmappable to complete with the "
+                  "rejections intact. Nothing was written.\n"
+                  % (report["unresolved_rejection_count"],
+                     ", ".join(report["unresolved_case_ids"]), DEFAULT_OVERRIDES))
+        return 1
+    return 0
+
+
+if __name__ == "__main__":                                  # pragma: no cover
+    sys.exit(main())
