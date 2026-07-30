@@ -317,16 +317,6 @@ class TestBoundary(unittest.TestCase):
         for forbidden in ("socket", "requests", "urllib", "httpclient", "http.client"):
             self.assertNoTokenContains(forbidden, tokens)
 
-    def test_it_knows_nothing_about_later_checkpoint_semantics(self):
-        # The base (S5-1) is paths, bytes and schemas; S5-2 added the cell and
-        # topic shapes, and S5-3 the ledger and rejection PATHS (their semantics
-        # live in ledger.py). Coverage and manifest meaning belong to S5-4 and
-        # S5-5 and must not leak in early. This list shrinks as each of those
-        # checkpoints is approved.
-        tokens = self.code_tokens()
-        for later in ("run_manifest", "LATEST_RUN_ID"):
-            self.assertNoTokenContains(later, tokens)
-
     def test_it_adds_no_locking_or_concurrency(self):
         tokens = self.code_tokens()
         for deferred in ("threading", "multiprocessing", "Lock", "lockdir", "flock"):

@@ -1,12 +1,12 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: IN PROGRESS — S5-1 … S5-4 COMPLETE; S5-5 … S5-C NOT APPROVED
+Status: IN PROGRESS — S5-1 … S5-5 COMPLETE; S5-6, S5-7, S5-C NOT APPROVED
 ```
 
 **Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
-own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-4
-were approved on 2026-07-30**; all four checkpoints shipped and are marked completed below.
+own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-5
+were approved on 2026-07-30**; all five checkpoints shipped and are marked completed below.
 Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
 together authorize the next one. This rule is restated at every checkpoint and in §12.
 
@@ -455,7 +455,57 @@ would obfuscate code to satisfy a test.
 - **Risk tier.** L1 +FS.
 - **Depends on.** S5-2.
 
-### S5-5 · Run manifest and `LATEST_RUN_ID`
+### S5-5 · Run manifest and `LATEST_RUN_ID` *(completed)*
+
+**Approved and shipped 2026-07-30. 52 assertions, `tests/test_taxonomy_manifest.sh`.** As built:
+`run_manifest_path`, `latest_run_id_path`, `configured_cell_rows`, `policy_thresholds`,
+`environment_block`, `derive_publication_eligibility`, `build_run_manifest`, `write_run_manifest`,
+`read_latest_run_id`, `write_latest_run_id`, `publish_run`.
+
+Measured: 12 configured cells → 12 unique rows, sorted by `cell_id`, with a status tally of
+`{zero_result: 1, ok: 1, not_run: 10}` — an unreached cell is **recorded**, never omitted, so a
+silently skipped cell cannot hide behind a shorter list. `topic_slug`/`category_slug` are stamped
+from the configuration, so a caller cannot relabel a cell. Input cell order does not change the
+bytes over 5 shuffles; preflight and classification-decision rows sort by their own keys.
+
+**`publication_eligible` is derived from facts, never asserted** — it is not a parameter of
+`build_run_manifest`, and a test asserts that. Stage 5 fetches no target page, so every Stage 5 run
+is honestly ineligible: `"no target page was fetched, so every record is unverified (target fetching
+arrives in Stage 6)"`. The derivation is proved **live** rather than hard-coded: a run with
+`target_fetch_owners=5` and healthy cells is eligible with a null reason, a failed cell makes it
+ineligible naming the cell, and a non-`harvest` mode is ineligible naming the mode.
+
+**Thresholds are recorded, never recalibrated** (§9.3). `policy_thresholds()` reads
+`policy.v1.json` — `{min_relevance: 0.35, min_quality: 0.3, accept_composite: 0.4}` — so what the
+manifest records is what verify applied; a test asserts no threshold literal appears in that
+function.
+
+**The pointer moves last, or not at all.** `publish_run` persists the manifest, *then* advances
+`LATEST_RUN_ID`, and a test asserts that order on the source itself. Three refusals protect the
+pointer's one promise — that it names a run whose manifest exists and validates: an unfinished run
+(`finished_at` null), a manifest whose `harvest_run_id` disagrees with the path, and a run that
+already has a manifest. Failure preservation was measured against a previously published run: an
+invalid manifest, an unfinished run, a crashed `os.replace` and a `KeyboardInterrupt` each left
+`LATEST_RUN_ID` naming the older run, with no `RUN` manifest and no temp debris. The pointer is a
+single line with exactly one trailing newline and no CRLF.
+
+**Allowed-path addition, approved 2026-07-30: `tests/harvest/test_artifacts.py` (M), one deletion.**
+The S5-1 boundary guard still prohibited the tokens `run_manifest` and `LATEST_RUN_ID` — precisely
+this checkpoint's semantics. Per approval the **entire** `test_it_knows_nothing_about_later_checkpoint_semantics`
+method was deleted rather than emptied, and **not** replaced with a guard against S5-6 or any later
+checkpoint. That was the last downstream-semantic prohibition, so no such reconciliation remains for
+S5-6 or S5-7. The surviving boundary tests in that file assert properties of the module itself: no
+network, no locking or concurrency, no reimplemented schema validation, the committed contract
+surface, and the runtime-path leak check.
+
+**One in-scope simplification, worth recording.** The surviving
+`test_it_does_not_reimplement_schema_validation` guard scans for the substring `jsonschema`, and
+`environment_block` initially re-listed the schema's five `environment` keys — including
+`jsonschema_version`, a *field name* the schema requires, not library use. Rather than edit a guard
+outside this checkpoint's approval, `environment_block` now passes
+`schema.check_environment()` through wholesale: its keys already match the schema's `environment`
+block exactly, so the copy could only have drifted from it. Simpler code, and no obfuscation of an
+approved API.
 
 - **Goal.** One manifest per run, and the pointer that names the newest **complete** run.
 - **Allowed paths.** `src/harvest/artifacts.py` (M) · `tests/harvest/test_manifest.py` (A) ·

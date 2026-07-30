@@ -46,6 +46,8 @@ import uuid
 from . import coverage as coverage_mod
 from . import records as records_mod
 from . import schema
+from . import scheduler
+from . import verify as verify_mod
 
 # `YYYYMMDDTHHMMSSZ-<pid>`, the run identifier format fixed by
 # IMPLEMENTATION_PLAN.md §10.
@@ -55,6 +57,18 @@ RUN_ID_FORMAT = "%Y%m%dT%H%M%SZ"
 # matched by the committed `state/.tmp_*` ignore rule and is what a sweeper
 # looks for; no code path ever READS a file with this prefix.
 TEMP_PREFIX = ".tmp_"
+
+# The pointer file. Written LAST, after a manifest is safely on disk, so it can
+# never name a run that did not finish.
+LATEST_RUN_ID_NAME = "LATEST_RUN_ID"
+
+# Stage 5's only mode. The other five values in the schema's enum belong to the
+# stages that introduce them: smoke, smoke_model, refresh, linkcheck, migration.
+MODE_HARVEST = "harvest"
+
+# A configured cell that was never reached is `not_run` — recorded, never omitted.
+STATUS_NOT_RUN = "not_run"
+CELL_ERROR_STATUSES = ("adapter_error", "infrastructure_error")
 
 
 class ArtifactError(Exception):
@@ -186,6 +200,16 @@ def rejection_log_path(root, cell_id):
 def coverage_report_path(root, run_id_value):
     """`<root>/runs/<run_id>/coverage.json` — per-run, like the artifacts."""
     return os.path.join(run_dir(root, run_id_value), "coverage.json")
+
+
+def run_manifest_path(root, run_id_value):
+    """`<root>/runs/<run_id>/manifest.json` — per-run."""
+    return os.path.join(run_dir(root, run_id_value), "manifest.json")
+
+
+def latest_run_id_path(root):
+    """`<root>/LATEST_RUN_ID` — the pointer to the newest COMPLETE run."""
+    return os.path.join(root, LATEST_RUN_ID_NAME)
 
 
 # ------------------------------------------------------------------- records
@@ -353,6 +377,173 @@ def build_coverage_report(records, *, harvest_run_id, generated_at,
 
 def write_coverage_report(path, report):
     return write_document(path, report, "coverage_report.v1.json")
+
+
+# ------------------------------------------------------------- run manifest
+def configured_cell_rows():
+    """One `not_run` row per configured cell, keyed by `cell_id`.
+
+    The baseline the manifest starts from: a cell that was never reached is
+    reported as `not_run` rather than omitted, so "12 configured cells" and "12
+    rows" always agree and a silently skipped cell cannot hide.
+    """
+    rows = {}
+    for lane in scheduler.configured_cells():
+        cell_id = lane[len("cell__"):] if lane.startswith("cell__") else lane
+        topic_slug, _, category_slug = cell_id.partition("__")
+        rows[cell_id] = {"cell_id": cell_id, "topic_slug": topic_slug,
+                         "category_slug": category_slug, "status": STATUS_NOT_RUN}
+    return rows
+
+
+def policy_thresholds(policy=None):
+    """The three acceptance thresholds as committed policy states them.
+
+    Read from `policy.v1.json` rather than typed here, so the manifest records
+    what verify actually applied. Recorded for Stage 9 to compare against; this
+    function neither changes nor reinterprets the provisional S4-4 numbers.
+    """
+    scoring = (policy or verify_mod.load_policy()).get("scoring") or {}
+    limits = scoring.get("thresholds") or {}
+    return {key: limits[key] for key in
+            ("min_relevance", "min_quality", "accept_composite") if key in limits}
+
+
+def environment_block():
+    """The interpreter and validator this run actually used.
+
+    Passed through from `schema.check_environment()` rather than re-listed key by
+    key: that function is the single source of truth for what was checked, its
+    keys already match the schema's `environment` block exactly, and a copy here
+    could only drift from it.
+    """
+    return dict(schema.check_environment())
+
+
+def derive_publication_eligibility(mode, cells, *, target_fetch_owners=0):
+    """Derived from facts the manifest already records — never asserted.
+
+    Stage 5 fetches no target page, so every record carries access_status
+    "not_checked" and verification_status "unverified". A run that verified
+    nothing is honestly ineligible, and `promote` refuses an ineligible run. That
+    is a true statement about Stage 5, not a limitation to paper over.
+    """
+    if mode != MODE_HARVEST:
+        return False, "%s runs are infrastructure tests, not publishable output" % mode
+    if not target_fetch_owners:
+        return False, ("no target page was fetched, so every record is unverified "
+                       "(target fetching arrives in Stage 6)")
+    broken = sorted(c.get("cell_id") for c in cells
+                    if c.get("status") in CELL_ERROR_STATUSES)
+    if broken:
+        return False, "cell(s) failed: %s" % ", ".join(broken)
+    return True, None
+
+
+def build_run_manifest(*, harvest_run_id, started_at, finished_at, cells=(),
+                       mode=MODE_HARVEST, config=None, source_preflight=(),
+                       classification_decisions=(), coverage=None, rounds=None,
+                       request_accounting=None, target_fetch_owners=0,
+                       environment=None, policy=None):
+    """One manifest per run. Counts and eligibility are derived, not asserted.
+
+    `cells` supplies outcomes for the cells that ran; every other configured cell
+    appears as `not_run`. Rows are keyed and sorted by `cell_id`, so a cell can
+    appear exactly once and artifact order never depends on completion order.
+    """
+    rows = configured_cell_rows()
+    for outcome in cells:
+        cell_id = outcome.get("cell_id")
+        if cell_id not in rows:
+            raise ArtifactError("cell %r is not one of the %d configured cells"
+                                % (cell_id, len(rows)))
+        row = dict(rows[cell_id])
+        row.update(outcome)
+        row["topic_slug"] = rows[cell_id]["topic_slug"]
+        row["category_slug"] = rows[cell_id]["category_slug"]
+        rows[cell_id] = row
+    ordered_cells = [rows[key] for key in sorted(rows)]
+
+    eligible, ineligible_reason = derive_publication_eligibility(
+        mode, ordered_cells, target_fetch_owners=target_fetch_owners)
+
+    doc = {
+        "schema_version": 1,
+        "harvest_run_id": harvest_run_id,
+        "mode": mode,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "environment": environment or environment_block(),
+        "config": dict(config or {}),
+        "cells": ordered_cells,
+        "source_preflight": sorted(source_preflight,
+                                   key=lambda s: s.get("source_id") or ""),
+        "classification_decisions": sorted(classification_decisions,
+                                           key=lambda d: d.get("content_id") or ""),
+        "publication_eligible": eligible,
+        "publication_ineligible_reason": ineligible_reason,
+    }
+    if coverage is not None:
+        doc["coverage"] = coverage
+    if request_accounting is not None:
+        doc["request_accounting"] = request_accounting
+    # A run that never scheduled a second round omits `rounds` rather than
+    # writing an empty claim; when present, round 1 records the thresholds in
+    # force so it is provable they never moved.
+    if rounds is not None:
+        doc["rounds"] = list(rounds)
+    return doc
+
+
+def write_run_manifest(path, manifest):
+    return write_document(path, manifest, "run_manifest.v1.json")
+
+
+# ------------------------------------------------------------ LATEST_RUN_ID
+def read_latest_run_id(root):
+    """The newest complete run, or None when no run has finished here."""
+    path = latest_run_id_path(root)
+    if not os.path.exists(path):
+        return None
+    with open(path, "rb") as handle:
+        return handle.read().decode("utf-8").strip() or None
+
+
+def write_latest_run_id(root, run_id_value):
+    """A single line with a trailing newline, written atomically."""
+    if not run_id_value:
+        raise ArtifactError("refusing to write an empty LATEST_RUN_ID")
+    return write_atomic(latest_run_id_path(root),
+                        ("%s\n" % run_id_value).encode("utf-8"))
+
+
+def publish_run(root, run_id_value, manifest):
+    """Persist the manifest, then advance the pointer — in that order only.
+
+    Three refusals, each protecting the pointer's one promise (it names a run
+    whose manifest exists and validates):
+
+      * an unfinished run (`finished_at` is null) is never published;
+      * a manifest whose `harvest_run_id` disagrees with the path is refused;
+      * a run that already has a manifest is refused rather than overwritten.
+
+    If the manifest write fails — invalid document, full disk, interruption —
+    `write_document` raises before any byte lands and the pointer is never
+    touched, so the previous complete run stays the newest one.
+    """
+    if manifest.get("finished_at") is None:
+        raise ArtifactError("refusing to publish run %s: finished_at is null, so "
+                            "the run did not finish" % run_id_value)
+    if manifest.get("harvest_run_id") != run_id_value:
+        raise ArtifactError("manifest names run %r but is being published as %r"
+                            % (manifest.get("harvest_run_id"), run_id_value))
+    path = run_manifest_path(root, run_id_value)
+    if os.path.exists(path):
+        raise ArtifactError("run %s already has a manifest; refusing to overwrite "
+                            "a finished run" % run_id_value)
+    write_run_manifest(path, manifest)
+    write_latest_run_id(root, run_id_value)      # LAST, and only now
+    return path
 
 
 def write_cell_artifact(path, artifact):

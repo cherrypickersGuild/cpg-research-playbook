@@ -94,7 +94,24 @@ threshold calibration (Stage 9), and concurrent cell execution.
       visible rather than decaying into a broken counter.
       **This discharges the carried-forward coverage reporting wiring item.**
       **43 assertions**, `tests/test_taxonomy_coverage_report.sh`
-- [ ] **S5-5** run manifest and `LATEST_RUN_ID`. **NOT APPROVED; not started**
+- [x] **S5-5** run manifest and `LATEST_RUN_ID` — `run_manifest_path()` · `latest_run_id_path()` ·
+      `configured_cell_rows()` · `policy_thresholds()` · `environment_block()` ·
+      `derive_publication_eligibility()` · `build_run_manifest()` · `write_run_manifest()` ·
+      `read_latest_run_id()` · `write_latest_run_id()` · `publish_run()`, all in `artifacts.py`.
+      12 configured cells → **12 unique rows** sorted by `cell_id`; an unreached cell is `not_run`
+      and one that found nothing is `zero_result` with a committed reason — neither is omitted, so a
+      silently skipped cell cannot hide. `topic_slug`/`category_slug` are stamped from the
+      configuration, never trusted from the caller.
+      **`publication_eligible` is derived, not a parameter** (a test asserts it is absent from the
+      signature): a Stage 5 run is honestly ineligible because no target page was fetched, and the
+      derivation is proved *live* — a verified run with healthy cells is eligible, a failed cell or a
+      non-`harvest` mode is not. Thresholds are **recorded from `policy.v1.json`, never
+      recalibrated**.
+      **The pointer moves last, or not at all.** `publish_run` writes the manifest then advances
+      `LATEST_RUN_ID`; an unfinished run, a mismatched `harvest_run_id`, and a re-publish of a
+      finished run are all refused. An invalid manifest, a crashed write and a `KeyboardInterrupt`
+      each left the *previous* pointer intact with no debris. The pointer is one line, one trailing
+      newline, no CRLF. **52 assertions**, `tests/test_taxonomy_manifest.sh`
 - [ ] **S5-6** the cell driver — `run_cells.py`, sequential over cells. **NOT APPROVED; not started**
 - [ ] **S5-7** recovery and re-run semantics. **NOT APPROVED; not started**
 - [ ] **S5-C** Stage 5 closeout, documentation only. Its three allowed paths — including
