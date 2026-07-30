@@ -87,6 +87,70 @@ def null_if_unknown(value):
     return value
 
 
+# The committed `record.v1.json` alias_kind enum, and the only keys a url_alias
+# may carry — that object is `additionalProperties: false`, so anything else must
+# be dropped here rather than refused by the schema after the record is assembled.
+ALIAS_KINDS = ("permanent_redirect", "canonical_tag", "domain_rule",
+               "discovered_variant")
+ALIAS_KEYS = ("url", "kind", "evidence", "observed_at")
+
+
+class RecordError(ValueError):
+    """A record input this builder refuses to shape into a record."""
+
+
+def normalize_url_aliases(aliases):
+    """Validate, project, deduplicate and order `url_aliases`. (D6-A)
+
+    Owned here because `make_full_record` is the sole owner of the persistent
+    record shape: a caller that assembled this list itself would be a second place
+    that knows what a record looks like, and would drift from the schema.
+
+    Refuses rather than repairs, and refuses BEFORE the record exists — a malformed
+    alias that reached a written artifact would be a false claim about which URLs
+    are the same resource, and that is the one error nothing downstream can undo.
+
+    Ordered and deduplicated by `(kind, url)`, so two runs over one input produce
+    one byte sequence.
+    """
+    if not aliases:
+        return []
+    if isinstance(aliases, (str, bytes, dict)):
+        raise RecordError("url_aliases must be a sequence of alias objects, got %s"
+                          % type(aliases).__name__)
+
+    seen, out = set(), []
+    for index, alias in enumerate(aliases):
+        if not isinstance(alias, dict):
+            raise RecordError("url_aliases[%d] is not an object: %r" % (index, alias))
+        missing = [key for key in ALIAS_KEYS if not alias.get(key)]
+        if missing:
+            raise RecordError("url_aliases[%d] is missing %s"
+                              % (index, ", ".join(missing)))
+        kind = alias["kind"]
+        if kind not in ALIAS_KINDS:
+            raise RecordError("url_aliases[%d] kind %r is not one of the committed "
+                              "alias kinds %s" % (index, kind, ALIAS_KINDS))
+        url = alias["url"]
+        if not isinstance(url, str) or not url.startswith(("http://", "https://")):
+            raise RecordError("url_aliases[%d] url %r is not an absolute http(s) URL"
+                              % (index, url))
+        evidence = alias["evidence"]
+        if not isinstance(evidence, dict):
+            raise RecordError("url_aliases[%d] evidence must be an object" % index)
+
+        key = (kind, url)
+        if key in seen:
+            continue          # the same claim twice is one claim, not an error
+        seen.add(key)
+        # Projected to the admitted keys only: the schema forbids extras, and
+        # dropping them here keeps that decision in one place.
+        out.append({name: alias[name] for name in ALIAS_KEYS})
+
+    out.sort(key=lambda row: (row["kind"], row["url"]))
+    return out
+
+
 # --------------------------------------------------------------------------- builders
 def make_full_record(
     *,
@@ -134,6 +198,7 @@ def make_full_record(
     domain_fields=None,
     rejection_reason=None,
     case_facets=None,
+    url_aliases=None,
 ):
     """Build a `full` record. Every schema-required key is always present.
 
@@ -159,7 +224,7 @@ def make_full_record(
         "target_url": target_url,
         "identity_url": identity_url,
         "canonical_url": canonical_url or identity_url,
-        "url_aliases": [],
+        "url_aliases": normalize_url_aliases(url_aliases),
 
         "publisher": null_if_unknown(publisher),
         "author": null_if_unknown(author),

@@ -834,11 +834,56 @@ approval twice — once as a checkpoint and once immediately before it runs.
       - **Robots evidence stays unwired**: `canonical_robots_allowed=None`, so no `canonical_tag` alias
         is adopted and a `canonical_robots_not_verified` conflict is recorded instead. **S6-5 must
         preflight** whether cached robots evidence is available without a new request.
-- [ ] **S6-5 … S6-7, S6-L, S6-C** — **not approved, not implemented.** S6-5's path set is now five paths:
-      it predeclares `tests/harvest/test_run_cells.py` for exactly one deletion — retiring
-      `test_no_target_page_was_fetched` when S6-5 actually writes target evidence to full records. That
-      test **passes and is untouched** in S6-4. **Live network access remains unauthorized** and no
-      Stage 6 request has been made. **D6-A and D6-B remain resolved and unchanged.**
+- [x] **S6-5** target evidence on full records (`feat(harvest): add target evidence`).
+      `records.py` gained **only** the resolved D6-A parameter: keyword-only `url_aliases=None`, plus
+      `normalize_url_aliases()` and `RecordError`. `make_full_record` stays the **sole owner of the
+      persistent record shape** — it validates, projects to the four schema-admitted keys (`url_alias` is
+      `additionalProperties: false`), deduplicates and orders by `(kind, url)`, and **refuses before the
+      record is assembled**. Omission still yields `"url_aliases": []` byte-for-byte, so every committed
+      caller is unaffected. `run_cells._full_record` consumes the committed `TargetFetchOutcome` instead
+      of the Stage 4 no-enrichment defaults and **passes aliases in** — no completed record dict is
+      mutated. The driver's `FixtureOpener` now serves the target corpus; without it every fetch failed as
+      `unreachable`, a true statement about a missing fixture and a useless one about the page.
+      **47 assertions.**
+      - **Difference set measured exactly.** Between a fetch and a no-fetch record, precisely six fields
+        move: `access_status`, `http_status`, `verification_status`, `verification_evidence`,
+        `content_hash`, `last_checked_at`. Every score, the classification, the facet payload,
+        `record_id`, `content_id`, `identity_url`, `cell_id` and `target_url` are byte-identical — a fetch
+        supplies facts and re-judges nothing. `updated_at` stays null (CF-17); `verification_status` is
+        never `"verified"`; cross-reference rows carry no target evidence at all.
+      - **`config.enrich` brought forward from S6-6**, and only that field: derived from whether the
+        target-fetch phase was **enabled**, bound once in `run()` and threaded to both the fetch phase and
+        `_config_block`, keyword-only and required. Never derived from `publication_eligible` or from how
+        many records came back checked. `run()`'s signature is unchanged, so the `false` branch is proved
+        at the `_config_block` boundary rather than end-to-end. **S6-6 keeps** `config.bounds`,
+        target-attempt reporting, conflict routing, alias-conflict artifacts and the final
+        positive/negative eligibility proof.
+      - **Six spent progress guards retired**, each false by design once S6-5 landed. Four in
+        `test_run_cells.py`: `test_no_target_page_was_fetched` deleted (predeclared at S6-4);
+        `src/harvest/records.py` removed from the Stage 4 byte-unchanged tuple (D6-A authorizes it — the
+        S5-7 correction repeated); `test_a_stage_5_run_is_honestly_ineligible_for_publication` deleted
+        entirely, since its premise is a run that fetched nothing and the positive proof is S6-6's; and
+        the single `assertFalse(config["enrich"])` line, the direct consequence of the correction above.
+        One in `test_recovery.py`: `"last_checked_at"` added to `CLOCK_DERIVED`, plan §10's predicted
+        fifth clock-derived leaf — still **exactly** enumerated at five, so a sixth moving field fails.
+        Two in `test_target_ownership.py`: `test_the_run_is_still_honestly_ineligible` and
+        `test_the_records_still_say_nobody_checked_them`, S6-4's own guards against S6-5, deleted
+        entirely with every ownership, deduplication, budget and synthetic eligibility-predicate test in
+        that file preserved. None was replaced with a guard against S6-6.
+      - **Robots evidence stays unwired**, and the preflight established why: `RobotsCache.get`,
+        `.allowed` and `.crawl_delay` all fall through to `_fetch()` on a miss or expired TTL, so none can
+        be called without risking a request, and `self._cache` is private state. No committed
+        cached-verdict API exists, so `canonical_robots_allowed=None` stands and every record carries
+        `url_aliases: []` with `canonical_url == identity_url`.
+      - **Publication eligibility is now honestly `true`** for the integrated fixture run: all four
+        predicate clauses hold on real observed evidence (4 owners, four `ok`/`fetched` records with
+        distinct content hashes). Per plan §8 and §1.1 goal 4 that is the intended Stage 6 outcome, not a
+        premature one — S6-6 owns the *proof in both directions*, not an extra predicate.
+- [ ] **S6-6 … S6-7, S6-L, S6-C** — **not approved, not implemented.** **Before S6-6 is approved,
+      `test_run_cells.py` and `test_recovery.py` should be audited once for assertions whose truth depends
+      on Stage 6 not having landed, and the results predeclared** — that class of guard has now blocked
+      three consecutive checkpoints. **Live network access remains unauthorized** and no Stage 6 request
+      has been made. **D6-A and D6-B remain resolved and unchanged.**
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing

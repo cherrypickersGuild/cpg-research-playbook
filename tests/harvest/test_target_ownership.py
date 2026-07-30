@@ -407,22 +407,6 @@ class TestIntegratedRunStaysHonest(unittest.TestCase):
         self.assertGreater(
             self.manifest["request_accounting"]["target_fetch_owners"], 0)
 
-    def test_the_run_is_still_honestly_ineligible(self):
-        self.assertFalse(self.manifest["publication_eligible"])
-        self.assertIn("no target evidence",
-                      self.manifest["publication_ineligible_reason"])
-
-    def test_the_records_still_say_nobody_checked_them(self):
-        """S6-5 wires evidence onto records; S6-4 must not, so the reason above
-        is the truth about this run rather than a stale message."""
-        statuses = set()
-        for path in glob.glob(os.path.join(self.root, "runs", "*", "cells", "*.json")):
-            with open(path, "r", encoding="utf-8") as handle:
-                for record in json.load(handle)["records"]:
-                    if record["record_type"] == "full":
-                        statuses.add(record["access_status"])
-        self.assertEqual(statuses, {"not_checked"})
-
     def test_no_repository_runtime_path_was_created(self):
         for leaked in ("state/taxonomy_harvest", "data/harvested", "runs",
                        "LATEST_RUN_ID"):

@@ -319,26 +319,13 @@ class TestFullRun(unittest.TestCase):
         self.assertEqual(manifest["harvest_run_id"], self.result.run_id)
         self.assertEqual(manifest["mode"], artifacts.MODE_HARVEST)
 
-    def test_a_stage_5_run_is_honestly_ineligible_for_publication(self):
-        manifest = load(self.root, "runs/%s/manifest.json" % self.result.run_id)
-        self.assertFalse(manifest["publication_eligible"])
-        self.assertIn("target", manifest["publication_ineligible_reason"])
-
-    def test_no_target_page_was_fetched(self):
-        for rel in listing(self.root):
-            if "/cells/" not in rel:
-                continue
-            for record in load(self.root, rel)["records"]:
-                if record["record_type"] != "full":
-                    continue
-                self.assertEqual(record["access_status"], "not_checked")
-                self.assertEqual(record["verification_status"], "unverified")
-
     def test_the_config_block_names_the_committed_versions(self):
         config = load(self.root, "runs/%s/manifest.json"
                       % self.result.run_id)["config"]
         self.assertEqual(config["cross_topic_policy"], "cross_reference")
-        self.assertFalse(config["enrich"])
+        # `enrich` is no longer asserted here: S6-5 made it a derived fact about
+        # whether the target-fetch phase was enabled, and this run enables it.
+        # tests/harvest/test_target_evidence.py owns both directions of that.
         self.assertEqual(config["topics"],
                          sorted({c["topic_slug"]
                                  for c in run_cells.configured_cells()}))
@@ -905,7 +892,11 @@ class TestBoundary(unittest.TestCase):
         # asserting something the plan states is false, and would make this a
         # guard on the working tree rather than on the composition boundary.
         import subprocess
-        for path in ("src/harvest/pool.py", "src/harvest/records.py",
+        # `records.py` was removed from this list at S6-5: decision D6-A authorizes
+        # exactly one additive `url_aliases=None` parameter there, so asserting it
+        # never moves would assert something the plan states is false — the same
+        # correction S5-7 made when this list wrongly included artifacts.py.
+        for path in ("src/harvest/pool.py",
                      "src/harvest/coverage.py", "src/harvest/facets.py",
                      "src/harvest/verify.py", "src/harvest/classify.py",
                      "src/harvest/extract.py", "src/harvest/dedupe.py",

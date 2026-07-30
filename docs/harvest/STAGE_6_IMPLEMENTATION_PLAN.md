@@ -1279,6 +1279,73 @@ without a new network request: a same-host canonical is a robots cache hit, sinc
 fetched that origin's `robots.txt` during the target fetch, whereas a different-host canonical in the
 same registrable domain is a new origin and therefore a real probe.
 
+## 14.3 · S6-5 — `config.enrich` brought forward, and four spent Stage 5 guards
+
+**`config.enrich` moved from S6-6 into S6-5**, and only that field. S6-5 is what first
+makes the old hardcoded `False` untrue: a run that fetched four target pages and wrote
+observed evidence onto four records had enrichment enabled, and reporting `enrich: false`
+beside a `publication_eligible: true` **derived from that very evidence** would put two
+contradictory statements in one manifest.
+
+It is derived from **whether the target-fetch phase was enabled** — the driver's own
+explicit decision, bound once in `run()` and threaded to both the fetch phase and
+`_config_block`, so the reported fact and the behaviour cannot disagree. Deliberately
+**not** derived from `publication_eligible`, and **not** from how many records came back
+checked: a run that enabled enrichment and had every fetch fail still enriched, and must
+say so. The parameter is keyword-only and **required**, so a caller cannot omit it and
+silently re-acquire the dishonest default.
+
+`run()`'s public signature is unchanged — `test_recovery.py` pins it to five parameters,
+and an `enrich=` argument there would have broken it. The consequence, stated plainly:
+`run()` currently has exactly one mode, so the `false` branch is proved at the
+`_config_block` boundary and by a cell run without a pool, rather than end-to-end. That
+is a real limitation of the proof, not of the derivation.
+
+**S6-6 keeps everything else**: `config.bounds`, target HTTP-attempt reporting, conflict
+routing, the alias-conflict artifact and its schema, and the final positive/negative
+eligibility proof.
+
+**Six spent progress guards retired**, each false by design once S6-5 landed:
+
+```text
+test_run_cells.py  test_no_target_page_was_fetched              DELETED (predeclared in §11)
+                   asserted every full record is `not_checked`; S6-5 exists to change that
+test_run_cells.py  Stage 4 byte-unchanged tuple                 `src/harvest/records.py` REMOVED
+                   D6-A authorizes that file to change; asserting otherwise asserts something
+                   the plan states is false — the S5-7 correction, repeated
+test_run_cells.py  test_a_stage_5_run_is_honestly_ineligible…   DELETED entirely
+                   its premise is a run that fetched nothing; the positive eligibility proof
+                   is S6-6's, so it was deleted rather than retargeted
+test_run_cells.py  assertFalse(config["enrich"])                one line REMOVED
+                   the direct consequence of the correction above; both directions are now
+                   owned by tests/harvest/test_target_evidence.py
+test_recovery.py   CLOCK_DERIVED                                "last_checked_at" ADDED
+                   plan §10's predicted fifth clock-derived leaf; still exactly enumerated,
+                   so a SIXTH moving field fails rather than passing silently
+test_target_ownership.py  two S6-4 tests               DELETED entirely
+                   test_the_run_is_still_honestly_ineligible and
+                   test_the_records_still_say_nobody_checked_them — S6-4's own guards
+                   against S6-5, whose premise ("records still say not_checked") S6-5
+                   exists to falsify. Every ownership, deduplication, budget and
+                   synthetic eligibility-predicate test in that file is preserved.
+```
+
+**The pattern, now visible three checkpoints running.** S6-4 was blocked by two such guards,
+S6-5 predeclared one and was blocked by three more. Predeclaration worked; what was missing
+was a sweep of the *whole file* for other assertions whose truth depended on Stage 6 not
+having landed. **Before S6-6 is approved, `test_run_cells.py` and `test_recovery.py` should
+be audited once for that shape and the results predeclared**, rather than discovered a
+checkpoint at a time.
+
+**Robots evidence remains unwired.** `canonical_robots_allowed=None`, so no `canonical_tag`
+alias forms and every integrated-run record carries `url_aliases: []` with
+`canonical_url == identity_url`. A test pins that, so the day robots evidence is wired the
+change is visible rather than silent. The S6-5 preflight established **why** it stays
+unwired: `RobotsCache.get`, `.allowed` and `.crawl_delay` all fall through to `_fetch()` on a
+miss or expired TTL, so none of them can be called without risking a request, and
+`self._cache` is private state that reading would duplicate the TTL logic. There is no
+committed cached-verdict API.
+
 ## 15 · Approval status, and what this approval does not do
 
 Stage 5 §10's conditions 1–9 are met at `bc920b5b…` and evidenced in §3 and §4 of the Stage 5

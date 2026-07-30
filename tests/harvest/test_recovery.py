@@ -525,8 +525,12 @@ class TestSecondRun(unittest.TestCase):
     # four are derived from the run instant, which is the one input that really
     # did change between the two runs: the run id encodes it, the two stamps are
     # it, and `freshness_score` is a function of "how old is this item NOW".
+    # Five, exactly. `last_checked_at` joined at S6-5, which is what plan §10
+    # predicted when target fetching arrived: the difference set grows to five and
+    # is still ENUMERATED rather than normalized away, so a sixth moving field
+    # fails here instead of passing silently.
     CLOCK_DERIVED = {"generated_at", "harvest_run_id", "discovered_at",
-                     "freshness_score"}
+                     "freshness_score", "last_checked_at"}
 
     def artifact(self, kind, run_id, name):
         return load(self.root, "runs/%s/%s/%s.json" % (run_id, kind, name))

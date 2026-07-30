@@ -217,7 +217,22 @@ def _run_policy():
         return json.load(handle)
 
 
-def _config_block(cells, max_cells):
+def _config_block(cells, max_cells, *, enrich):
+    """The config facts this run used. `enrich` is REQUIRED, not defaulted.
+
+    S6-5 brought this one field forward from S6-6, because S6-5 is what first makes
+    the old hardcoded `False` untrue: a run that fetched four target pages and wrote
+    observed evidence onto four records had enrichment enabled, and reporting
+    otherwise would put a false statement in the manifest beside a
+    `publication_eligible: true` derived from that very evidence.
+
+    It is derived from whether the target-fetch phase was ENABLED for the run — the
+    driver's own explicit decision, threaded from where it is made. Deliberately
+    NOT from `publication_eligible`, nor from how many records happened to come
+    back checked: a run that enabled enrichment and had every fetch fail still
+    enriched, and must say so. Keyword-only and required so a caller cannot omit it
+    and silently re-acquire the old dishonest default.
+    """
     with open(PRECEDENCE_PATH, "r", encoding="utf-8") as handle:
         precedence = json.load(handle)
     with open(POLICY_PATH, "r", encoding="utf-8") as handle:
@@ -228,9 +243,7 @@ def _config_block(cells, max_cells):
         "precedence_version": precedence.get("config_version"),
         "canonicalization_version": request_key_mod.canonicalization_version(),
         "cross_topic_policy": precedence.get("cross_topic_policy"),
-        # Stage 5 fetches no target page, so nothing is enriched. Saying so is a
-        # fact about the run, not a limitation being papered over.
-        "enrich": False,
+        "enrich": bool(enrich),
         "bounds": {"max_cells": max_cells},
     }
 
@@ -555,8 +568,21 @@ def _cell_row(run, artifact_records):
 
 # ---------------------------------------------------------------- records
 def _full_record(candidate, classification, verdict, assignment, *,
-                 source_map, harvest_run_id, discovered_at):
-    """The S4-5B construction, called as committed. Nothing is re-derived here."""
+                 source_map, harvest_run_id, discovered_at, outcome=None,
+                 adjudication=None):
+    """The S4-5B construction, called as committed. Nothing is re-derived here.
+
+    S6-5: when a target page was fetched, the observed evidence REPLACES the
+    verdict's honest no-enrichment defaults. `verify.Verdict` carries
+    `access_status: "not_checked"` and friends because Stage 4 could not fetch
+    anything; once a fetch has happened those defaults are stale, and the outcome
+    is the only thing that actually saw the page.
+
+    Nothing else moves. Every score, the classification, the facet payload,
+    `record_id`, `content_id` and `identity_url` are exactly what they were without
+    a fetch — a fetch supplies facts and re-judges nothing. `canonical_url` and
+    `url_aliases` come from the S6-3 adjudication, which is evidence-gated.
+    """
     topic = classification.topic_slug
     category = classification.category_slug
     source_id = candidate.source_ids[0] if candidate.source_ids else None
@@ -568,6 +594,29 @@ def _full_record(candidate, classification, verdict, assignment, *,
                             % (candidate.candidate_key, source_id))
 
     payload = assignment.case_facets if assignment.applicable else None
+
+    # Observed evidence when a fetch happened; the committed Stage 4 defaults when
+    # it did not. Read from the outcome rather than recomputed — this module has no
+    # opinion about what a fetch saw.
+    canonical_url = candidate.canonical_url
+    url_aliases = None
+    if adjudication is not None:
+        canonical_url, url_aliases, _conflicts = adjudication
+    if outcome is not None:
+        access_status = outcome.access_status
+        http_status = outcome.http_status
+        verification_status = outcome.verification_status
+        verification_evidence = outcome.verification_evidence
+        content_hash = outcome.content_hash
+        last_checked_at = outcome.last_checked_at
+    else:
+        access_status = verdict.access_status
+        http_status = verdict.http_status
+        verification_status = verdict.verification_status
+        verification_evidence = verdict.verification_evidence
+        content_hash = verdict.content_hash
+        last_checked_at = None
+
     return records_mod.make_full_record(
         record_id=urlkey.record_id(topic, candidate.identity_url),
         content_id=candidate.content_id,
@@ -575,7 +624,7 @@ def _full_record(candidate, classification, verdict, assignment, *,
         cell_id="%s__%s" % (topic, category),
         identity_url=candidate.identity_url,
         target_url=candidate.target_url,
-        canonical_url=candidate.canonical_url,
+        canonical_url=canonical_url,
         harvest_run_id=harvest_run_id,
         source_id=source_id, source_adapter=source.get("adapter", ""),
         title=candidate.title, summary=candidate.summary,
@@ -583,15 +632,17 @@ def _full_record(candidate, classification, verdict, assignment, *,
         published_at=candidate.published_at, language=candidate.language,
         content_type=candidate.content_type,
         discovered_at=discovered_at,
-        access_status=verdict.access_status,
-        http_status=verdict.http_status,
-        verification_status=verdict.verification_status,
-        verification_evidence=verdict.verification_evidence,
+        access_status=access_status,
+        http_status=http_status,
+        verification_status=verification_status,
+        verification_evidence=verification_evidence,
+        last_checked_at=last_checked_at,
+        url_aliases=url_aliases,
         relevance_score=verdict.scores.relevance,
         quality_score=verdict.scores.quality,
         audience_fit_score=verdict.scores.audience_fit,
         freshness_score=verdict.scores.freshness,
-        content_hash=verdict.content_hash,
+        content_hash=content_hash,
         classification={
             "rule_id": classification.rule_id,
             "rationale": classification.rationale,
@@ -734,7 +785,14 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         sources=fixtures_mod.load_source_fixtures(
             os.path.join(fixture_root, "sources")),
         robots=fixtures_mod.load_robots_fixtures(
-            os.path.join(fixture_root, "robots")))
+            os.path.join(fixture_root, "robots")),
+        # S6-5: the target corpus, so an accepted candidate's own page is
+        # answerable. Without it every target fetch would fail as `unreachable` —
+        # a true statement about a missing fixture, and a useless one about the
+        # page. The opener keeps ONE URL index, so a target is indistinguishable
+        # from a source to everything above it.
+        targets=fixtures_mod.load_target_fixtures(
+            os.path.join(fixture_root, "targets")))
 
     # The lease tree is HttpClient's coordination scratch, not an artifact. It
     # lives in its own temp directory so `root` holds exactly the committed
@@ -753,6 +811,10 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
 
         # ---------------------------------------------------- sequential drive
         runs = []
+        # The run's enrichment decision, bound ONCE and used for both the fetch
+        # phase and the manifest's `config.enrich`, so the reported fact and the
+        # behaviour cannot disagree.
+        enrich = True
         # RUN-scoped, not cell-scoped: this is what makes one canonical target
         # identity a single fetch across every cell and every topic in the run.
         # The pool already owns the ownership gate; this map holds the one outcome
@@ -763,8 +825,9 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         for cell in selected:                       # one cell at a time. See §9.1.
             runs.append(_run_one_cell(cell, cache=cache, client=client,
                                       budget=budget, policy=policy,
-                                      clock=verify_clock, pool=pool,
-                                      outcomes=target_outcomes,
+                                      clock=verify_clock,
+                                      pool=pool if enrich else None,
+                                      outcomes=target_outcomes if enrich else None,
                                       canon_policy=canon_policy))
     finally:
         shutil.rmtree(lease_root, ignore_errors=True)
@@ -782,7 +845,11 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
             record = _full_record(
                 candidate, classification, run_.verdicts[key],
                 run_.assignments[key], source_map=source_map,
-                harvest_run_id=harvest_run_id, discovered_at=stamp)
+                harvest_run_id=harvest_run_id, discovered_at=stamp,
+                # Both absent for a run that fetched nothing, which is how the
+                # committed Stage 4 defaults keep applying unchanged.
+                outcome=run_.fetch_outcomes.get(key),
+                adjudication=run_.adjudications.get(key))
             owner_cell = record["cell_id"]
             if owner_cell not in by_cell:
                 raise RunCellsError(
@@ -905,7 +972,7 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         manifest = artifacts.build_run_manifest(
             harvest_run_id=harvest_run_id, started_at=stamp, finished_at=stamp,
             cells=rows, mode=artifacts.MODE_HARVEST,
-            config=_config_block(configured, max_cells),
+            config=_config_block(configured, max_cells, enrich=enrich),
             # A preflight is a bounded re-check of live sources at the start of a live
             # run. Nothing is live here, so the honest value is "none performed".
             source_preflight=(),
