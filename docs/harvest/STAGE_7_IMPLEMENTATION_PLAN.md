@@ -1,6 +1,8 @@
 # Stage 7 implementation plan — AX corpus migration
 
-**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-6 COMPLETE; STAGE 7 OPEN PENDING S7-C, UNAPPROVED`**
+**Status: `COMPLETED — STAGE 7 CLOSED`**
+
+**Completion handoff:** `docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md`
 
 ```text
 plan opened at        0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   Stage 6 closeout
@@ -29,10 +31,16 @@ real `state/taxonomy_harvest/` does not exist.
 
 **`S7-6`, the integration proof, is complete**; it added no capability and proved S7-1 … S7-5 are one
 offline workflow, with every apply confined to a temporary state root that no longer exists.
+**`S7-C`, the closeout, is complete through this documentation closeout commit.**
 
-**Stage 7 implementation is complete. Stage 7 itself is NOT closed.** `S7-C` remains **unapproved**:
-its exact documentation path set requires its own read-only closeout preflight, and nothing here
-authorizes a closeout, a push, Stage 8 wiring or any live activity.
+**STAGE 7 IS CLOSED.** The durable summary is
+`docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md`.
+
+**Closure approves nothing.** A **push** (`origin/main` is at `0d2da64`; all Stage 7 commits are
+local-only), an **operational apply** against the repository's default `state/taxonomy_harvest/`
+root, **promotion** into `data/harvested/`, **network or live activity**, and **Stage 8**
+(`validate_task.sh` wiring, CF-4) each remain **unapproved** and each needs its own explicit
+approval. A completed stage and a green gate do not together open the next one.
 
 - **Approving this plan approves no implementation checkpoint.** Not S7-1, not any later one.
 - **Listing a checkpoint's path set here does not authorize that checkpoint.** §9 exists so a
@@ -688,8 +696,8 @@ suspicious-URL hits            0       under the D7-H structural predicates (5 u
 
 ## 9 · Checkpoint decomposition
 
-**S7-1 … S7-6 are complete. `S7-C` is not approved.** It requires separate approval by name, and is
-limited to the path set established by its own closeout preflight. Every checkpoint includes updates to this
+**S7-1 … S7-6 and S7-C are complete; Stage 7 is closed.** Each was approved separately by name and
+limited to its declared path set — S7-C's established by its own read-only closeout preflight. Every checkpoint includes updates to this
 plan and to `docs/harvest/TODO.md`.
 
 ### S7-1 · Entity assessment — **COMPLETE**
@@ -1198,13 +1206,34 @@ root remains, no repository runtime path exists, and no request of any kind was 
 pending `S7-C`, which is **unapproved** and whose exact documentation path set requires its own
 read-only closeout preflight.
 
-### S7-C · Closeout
+### S7-C · Closeout — **COMPLETE**
 
 Documentation only, L0 validation only.
 
-**Its exact documentation path set is not declared here, and no handoff filename is pre-authorized or
-guessed.** S7-C requires **its own read-only closeout preflight** to establish that set — the same
-discipline that let Stage 5 and Stage 6 close without the authorization gap that hit Stage 4.
+Its path set was **not** declared in advance and no handoff filename was pre-authorized or guessed:
+S7-C ran **its own read-only closeout preflight** first — the same discipline that let Stage 5 and
+Stage 6 close without the authorization gap that hit Stage 4. That preflight established the set from
+the committed precedents (`0d2da64` S6-C, `6bf7f51` S5-C, `5fd9f91` S4-C each changed exactly a plan,
+this file and one new handoff), and S7-C changed exactly those three:
+
+```text
+docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md   (new)
+docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md
+docs/harvest/TODO.md
+```
+
+**L0 validation only** — exact three-path diff, `git diff --check`, nothing touched under `src/`,
+`tests/`, `scripts/`, `config/`, `schemas/`, `state/`, `data/` or any runtime path, protected baseline
+18/18, the 508-file untracked baseline unchanged, no runtime path and no temporary root, and
+cross-document consistency across completion status, handoff filename, closing implementation hash,
+commit chain, validation totals, push-state wording, non-goals and the incident record. **Per its own
+risk tier the focused suites and the full gate were NOT rerun**: the closing gate is S7-6's, 39/39
+suites green in one run before `c3d982c`, and §3 of the handoff attributes the figures to it rather
+than re-measuring them.
+
+The preflight also found the one factual defect this closeout had to fix: the TODO's `push_state`
+line still described the Stage 6 position (`0 behind / 0 ahead` at `0d2da64`), which stopped being
+true the moment S7-0 committed.
 
 ## 10 · Not Stage 7
 

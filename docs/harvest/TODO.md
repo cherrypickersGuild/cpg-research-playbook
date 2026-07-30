@@ -16,11 +16,14 @@ stage_5_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026
 stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
 stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
 stage_6_closeout_commit:     0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   S6-C, PUSHED
-stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   APPROVED plan of record
-                             (S7-0 … S7-6 complete; S7-C unapproved; STAGE 7 NOT CLOSED)
+stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   COMPLETED — STAGE 7 CLOSED
+stage_7_closing_commit:      c3d982c572844cf39787b5b2368e975bfb198986   S7-6, closing
+                             implementation baseline
+stage_7_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md
 stage_7_gate:                39/39 suites green — 2,023 unittest + 42 shell = 2,065 total
                              (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2 · +62 S7-3
-                              · +42 S7-4 · +49 net S7-5 · +26 S7-6; migration suite 250)
+                              · +42 S7-4 · +49 net S7-5 · +26 S7-6; migration wrapper
+                              250 assertions — the only suite Stage 7 added or changed)
 stage_7_ax_mapping:          231 accepted / 0 rejected, in memory only — nothing written.
                              Facet states 112 facet_partial · 118 unmapped_legacy_value
                              · 1 unresolved
@@ -28,18 +31,25 @@ stage_7_cli:                 scripts/harvest/migrate.sh — ax-cases (dry-run by
                              --apply publishes one bundle under --state-root) and
                              entity-assess.
 stage_7_apply:               works, and is exercised ONLY under injected temporary
-                             roots. The real repository has NO migration runtime
-                             bundle: state/taxonomy_harvest/ does not exist.
+                             roots. NO migration runtime bundle is retained:
+                             state/taxonomy_harvest/ does not exist. An operational
+                             default-root apply needs separate human approval.
+stage_8_state:               NOT OPENED and NOT APPROVED. validate_task.sh is unwired
+                             (CF-4); Stage 7 closure opens no successor stage.
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
-push_state:                  local main, HEAD and origin/main all at 0d2da64; 0 behind / 0 ahead
-assertions:                  38/38 suites green — 1,773 unittest + 42 shell = 1,815 total
-                             (1,773 across 36 unittest suites; 42 across 2 shell suites,
-                              config 18 + protected baseline 24. Basis stated because it
-                              changed during Stage 6: the Stage 5 figure of 1,324 across 30
-                              suites included the shell suites, the interim Stage 6 figures
-                              did not.)
+push_state:                  origin/main at 0d2da64 (Stage 6 closeout). The 7 Stage 7
+                             implementation commits were local-only before S7-C, and ALL
+                             Stage 7 commits — including the S7-C documentation closeout
+                             commit — remain UNPUSHED. Pushing needs its own approval.
+assertions:                  see stage_7_gate above for the current figure. At the Stage 6
+                             close this line read 38/38 suites — 1,773 unittest + 42 shell
+                             = 1,815 total (1,773 across 36 unittest suites; 42 across 2
+                             shell suites, config 18 + protected baseline 24). Basis stated
+                             because it changed during Stage 6: the Stage 5 figure of 1,324
+                             across 30 suites included the shell suites, the interim Stage 6
+                             figures did not. Stage 7 added exactly one suite.
 untracked_baseline:          508 files, byte-identical; drift 0, missing 0, extra 0
 ```
 
@@ -59,22 +69,27 @@ twice, once as a checkpoint and once immediately before execution, and neither w
 network access was never authorized and no Stage 6 request of any kind was made.** It is not marked
 complete, passed, failed or waived anywhere in this file.
 
-**A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** and is
-synchronized at `0d2da64` — local `main`, `HEAD` and `origin/main` all agree, 0 behind / 0 ahead.
+**A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** at `0d2da64`,
+which is also where `origin/main` still points: Stage 6 was the last state pushed, and every Stage 7
+commit is local-only.
 
-**STAGE 7 IS OPEN. `S7-0` … `S7-6` ARE COMPLETE; STAGE 7 IS NOT CLOSED.**
-`docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` is the **approved plan of record**; S7-1, the read-only
-entity assessment, **migrated 0 of 1,161 entities**, which is what it was for; S7-2, the
-suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites nothing; S7-3
-maps **231 accepted / 0 rejected in memory and writes nothing at all**; S7-4 adds `migrate.sh` with a
-`ax-cases` and `entity-assess`; S7-5 makes `--apply` publish one three-file bundle by a single
-directory rename, **exercised only under injected temporary roots**.
-S7-6 proves the five checkpoints are one offline workflow, end to end through the wrapper.
-**`S7-C` is unapproved** and **Stage 7 is not closed**: it needs its own approval by name, and its
-documentation path set comes from its own read-only closeout preflight. **The real repository holds
-no migration bundle —
-`state/taxonomy_harvest/` does not exist.** No live request, no promotion and no apply against the
-default state root is authorized. Green tests alone open nothing.
+**STAGE 7 IS CLOSED** as of 2026-07-31 at `c3d982c572844cf39787b5b2368e975bfb198986` — see
+`docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md` for the commit chain, the delivered
+migration contracts, closure validation, repository state, carried-forward findings and successor
+constraints. `STAGE_7_IMPLEMENTATION_PLAN.md` reads `COMPLETED — STAGE 7 CLOSED`; its §9 S7-C section
+records the documentation-only closeout.
+S7-1, the read-only entity assessment, **migrated 0 of 1,161 entities**, which is what it was for;
+S7-2, the suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites
+nothing; S7-3 maps **231 accepted / 0 rejected** in memory and writes nothing at all; S7-4 adds
+`migrate.sh` with `ax-cases` and `entity-assess`; S7-5 makes `--apply` publish one three-file bundle
+by a single directory rename, **exercised only under injected temporary roots**; S7-6 proves the five
+are one offline workflow, end to end through the wrapper; S7-C is this documentation closeout.
+
+**Closure approves nothing.** **No migration runtime bundle is retained — `state/taxonomy_harvest/`
+does not exist**, and that is the intended closing state. A **push**, an **operational apply** against
+the default state root, **promotion** into `data/harvested/`, any **live request**, and **Stage 8**
+(`validate_task.sh` wiring, CF-4) each remain unapproved and each needs its own explicit approval.
+**Stage 8 is not opened by this closure.** Green tests alone open nothing.
 
 **Baseline at Stage 7 opening**, carried from the Stage 6 closure and re-verified before S7-0 edited
 a line: **38/38 suites · 1,815 counted assertions · protected 18/18 · untracked 508/508 with drift 0,
@@ -1108,7 +1123,7 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
 - [ ] `tests/test_taxonomy_linkcheck.sh`
 - [ ] `tests/test_taxonomy_promote_txn.sh` — 4 fault-injection points + add/remove/partial modes
 
-## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-6 COMPLETE. S7-C NOT APPROVED. STAGE 7 NOT CLOSED.**
+## Stage 7 — AX corpus migration ⟵ **CLOSED.** All checkpoints S7-0 … S7-C complete.
 
 **Plan of record:** `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` — **`APPROVED — PLAN OF RECORD;
 S7-0 COMPLETE; NO IMPLEMENTATION CHECKPOINT APPROVED`**. It reconciles and **supersedes**
@@ -1331,13 +1346,25 @@ wiring (Stage 8), calibration (Stage 9), the live smoke, entity migration proper
       regenerates byte-identically; no temporary root remains; no real runtime path; no request of
       any kind.
 
-**Migration implementation and offline integration are COMPLETE (S7-1 … S7-6). STAGE 7 IS NOT
-CLOSED.** **`S7-C` is NOT APPROVED**: it needs its own approval **by name**, and its exact
-documentation path set requires **its own read-only closeout preflight** — no handoff filename is
-pre-authorized or guessed. Nothing here approves a closeout, a push, Stage 8 wiring or any live
-activity. **The real repository holds no migration runtime bundle.**
+- [x] **S7-C** Stage 7 closeout, documentation only (`docs(harvest): record stage 7 completion`) —
+      `docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md` plus the plan's status area and
+      S7-C section, and this file. Its path set was **not** declared in advance and no handoff
+      filename was pre-authorized: S7-C ran **its own read-only closeout preflight** first, which
+      established the three paths from the committed precedents (`0d2da64` S6-C, `6bf7f51` S5-C,
+      `5fd9f91` S4-C each changed exactly a plan, this file and one new handoff) and found the one
+      factual defect this closeout had to fix — the `push_state` line still described the Stage 6
+      position. L0 validation only: exact three-path diff, `git diff --check`, nothing touched under
+      `src/`, `tests/`, `scripts/`, `config/`, `schemas/`, `state/`, `data/`, protected baseline
+      18/18, the 508-file untracked baseline unchanged, no runtime path, no temporary root, and
+      cross-document consistency. Per its own risk tier the focused suites and the full gate were
+      **not** rerun: the closing gate is S7-6's, **39/39 suites green in one run** before `c3d982c`,
+      and the handoff attributes its figures to that run rather than re-measuring them.
 
-- [ ] **S7-C** closeout — documentation only; unapproved, path set established by its own preflight
+**Migration implementation, offline integration and closeout are COMPLETE. STAGE 7 IS CLOSED.**
+**No migration runtime bundle is retained** — `state/taxonomy_harvest/` does not exist, which is the
+intended closing state. A **push**, an **operational default-root apply**, **promotion**, any **live
+request** and **Stage 8** each remain unapproved and need explicit approval by name. **Stage 8 is not
+opened by this closure.**
 
 **Measured against the corpus at `0d2da64`, asserted by the checkpoints rather than assumed:** 231
 cases · 231 unique `source_url` → **231 distinct `identity_url`, zero collisions** · `case_key`
