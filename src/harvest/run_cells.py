@@ -90,6 +90,14 @@ MAX_CELLS = 12
 # loudly instead of quietly spending a cell's whole request budget.
 MAX_TARGET_FETCHES_PER_CELL = 25
 
+# S6-6B. The target-derived fields an accepted record contributes to its ledger
+# entry, copied verbatim from the finished record. A strict subset of the
+# committed `ledger.OBSERVATION_FIELDS`, and no ledger field is added: the schema
+# has carried all three since Stage 1, and this is the wiring that was missing.
+# Named here rather than spelled out at the call site so the set is one thing a
+# reader can check against the schema, not three strings inside a loop.
+LEDGER_TARGET_EVIDENCE_FIELDS = ("http_status", "content_hash", "last_checked_at")
+
 # The artifact timestamp format the cell and topic schemas pin with a pattern.
 STAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -907,6 +915,16 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         by_cell[cell_id] = _dedupe_records(by_cell[cell_id])
     all_records = _dedupe_records(all_records)
 
+    # S6-6B. The finished FULL records, by `record_id`, so the ledger can record
+    # the target evidence its committed schema has always had room for.
+    #
+    # Keyed by `record_id` because that is the join the ledger observation already
+    # computes for an accepted candidate — no second identity is introduced. Only
+    # full records enter: a `cross_reference` is a pointer at a record in another
+    # cell, it was never a page anyone fetched, and it carries no evidence to copy.
+    full_records_by_id = {record["record_id"]: record for record in all_records
+                          if record.get("record_type") == "full"}
+
     # Every write from here to the pointer is journalled, so an interruption
     # sweeps exactly the temp files THIS run created and provably nothing
     # else. Sequential by contract: the journal refuses to nest.
@@ -961,8 +979,36 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
                     "outcome": "accepted" if verdict.accepted else "rejected",
                 }
                 if verdict.accepted:
-                    observation["record_id"] = urlkey.record_id(
+                    record_id = urlkey.record_id(
                         classification.topic_slug, candidate.identity_url)
+                    observation["record_id"] = record_id
+                    # S6-6B: the target evidence the ledger has always been able to
+                    # hold. Plan §7.4 described this flow from the start; the
+                    # observation simply never carried the three values, so a
+                    # re-run had to re-derive from the artifacts what the ledger
+                    # exists to remember.
+                    #
+                    # COPIED FROM THE FINISHED RECORD, never recomputed from the
+                    # outcome: `_full_record` is what actually decided whether a
+                    # fetch's observation or Stage 4's honest defaults apply, and a
+                    # second derivation here could disagree with the record beside
+                    # it. No clock is read — `last_checked_at` is the record's, and
+                    # inventing a fresh instant would claim a check that never
+                    # happened at that moment.
+                    #
+                    # A FIELD IS WRITTEN ONLY WHEN THE RECORD HAS ONE. A run that
+                    # fetched nothing leaves all three null, a budget-skipped
+                    # target has no status and no hash, and a null written here
+                    # would be a claim rather than the absence of one. `merge_ledger`
+                    # already treats a null as "no news" and would keep an earlier
+                    # run's value; writing one anyway would make that path depend on
+                    # a distinction the caller never meant to draw.
+                    record = full_records_by_id.get(record_id)
+                    if record is not None:
+                        for field in LEDGER_TARGET_EVIDENCE_FIELDS:
+                            value = record.get(field)
+                            if value is not None:
+                                observation[field] = value
                 else:
                     observation["rejection_reason"] = verdict.rejection_reason
                 observations.append(observation)

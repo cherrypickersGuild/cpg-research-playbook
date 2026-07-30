@@ -439,6 +439,130 @@ class TestCellStatus(unittest.TestCase):
             self.assertEqual(urls, sorted(urls), cell["cell_id"])
 
 
+# ------------------------------------------------- target evidence in the ledger
+class TestLedgerCarriesTargetEvidence(unittest.TestCase):
+    """S6-6B: the ledger records the fetch, because that is what it is for.
+
+    `ledger.v1.json` has carried `http_status`, `content_hash` and
+    `last_checked_at` since Stage 1 and `merge_ledger` has always stored them, but
+    the run's observation never supplied any of the three — so the one structure
+    whose job is remembering what a previous run learned about a URL remembered
+    everything except what the fetch saw, and the next run could only recover it by
+    re-reading the artifacts.
+
+    Asserted at the RUN boundary over the committed corpus, not against
+    `merge_ledger` in isolation: the storage was never the missing part.
+    """
+
+    CELL = "research-and-models__benchmark-and-datasets"
+    FIELDS = ("http_status", "content_hash", "last_checked_at")
+
+    def setUp(self):
+        self.root, self.result = baseline()
+        self.entries = {
+            entry["identity_url"]: entry
+            for entry in load(self.root,
+                              "ledgers/%s.json" % self.CELL)["entries"]}
+        # The finished records this run actually wrote, which are the only
+        # admissible source of truth for what the ledger should say.
+        self.records = {
+            record["record_id"]: record
+            for record in load(self.root, "runs/%s/cells/%s.json"
+                               % (self.result.run_id, self.CELL))["records"]
+            if record["record_type"] == "full"}
+        self.fetched = [record for record in self.records.values()
+                        if record["access_status"] not in (None, "not_checked")]
+
+    def test_the_run_really_did_fetch_something(self):
+        """Anti-vacuity: every assertion below is empty without this."""
+        self.assertGreaterEqual(len(self.fetched), 1)
+        for record in self.fetched:
+            with self.subTest(record["identity_url"]):
+                self.assertEqual(record["verification_status"], "fetched")
+
+    def test_a_fetched_records_ledger_row_carries_all_three_values(self):
+        for record in self.fetched:
+            entry = self.entries[record["identity_url"]]
+            for field in self.FIELDS:
+                with self.subTest(url=record["identity_url"], field=field):
+                    self.assertIn(field, entry)
+                    self.assertIsNotNone(entry[field])
+
+    def test_each_value_equals_the_records_own(self):
+        """Copied, never recomputed — a second derivation could disagree with the
+        record sitting beside it in the same run."""
+        for record in self.fetched:
+            entry = self.entries[record["identity_url"]]
+            for field in self.FIELDS:
+                with self.subTest(url=record["identity_url"], field=field):
+                    self.assertEqual(entry[field], record[field])
+
+    def test_the_row_names_the_same_record(self):
+        for record in self.fetched:
+            entry = self.entries[record["identity_url"]]
+            self.assertEqual(entry["record_id"], record["record_id"])
+            self.assertEqual(entry["outcome"], "accepted")
+
+    def test_the_hashes_are_the_pages_own_and_not_one_shared_value(self):
+        """A join that lost the record would still pass an is-not-null check."""
+        hashes = {self.entries[r["identity_url"]]["content_hash"]
+                  for r in self.fetched}
+        self.assertEqual(len(hashes), len(self.fetched))
+
+    def test_last_checked_at_is_the_runs_instant_not_a_second_clock_read(self):
+        for record in self.fetched:
+            self.assertEqual(
+                self.entries[record["identity_url"]]["last_checked_at"], STAMP)
+
+    def test_a_rejected_entry_receives_no_fabricated_evidence(self):
+        """Nothing fetched it, so the ledger must claim nothing about it — not a
+        null, not a zero, not an empty string."""
+        rejected = [entry for entry in self.entries.values()
+                    if entry["outcome"] == "rejected"]
+        self.assertGreaterEqual(len(rejected), 1)
+        for entry in rejected:
+            for field in self.FIELDS:
+                with self.subTest(url=entry["identity_url"], field=field):
+                    self.assertNotIn(field, entry)
+
+    def test_a_cell_that_fetched_nothing_writes_no_evidence_at_all(self):
+        """The eleven zero-result cells accept nothing, so nothing is fetched."""
+        checked = 0
+        for cell in run_cells.configured_cells():
+            if cell["cell_id"] == self.CELL:
+                continue
+            for entry in load(self.root, "ledgers/%s.json"
+                              % cell["cell_id"])["entries"]:
+                checked += 1
+                for field in self.FIELDS:
+                    with self.subTest(cell=cell["cell_id"], field=field):
+                        self.assertNotIn(field, entry)
+        self.assertGreater(checked, 0, "no other cell had a ledger entry to check")
+
+    def test_the_fields_are_a_subset_of_the_committed_observation_contract(self):
+        """No ledger field is invented here: all three were already storable."""
+        from src.harvest import ledger as ledger_mod
+        self.assertEqual(set(run_cells.LEDGER_TARGET_EVIDENCE_FIELDS),
+                         set(self.FIELDS))
+        for field in self.FIELDS:
+            with self.subTest(field):
+                self.assertIn(field, ledger_mod.OBSERVATION_FIELDS)
+
+    def test_the_ledger_still_validates(self):
+        self.assertEqual(
+            schema.validate(load(self.root, "ledgers/%s.json" % self.CELL),
+                            "ledger.v1.json"), [])
+
+    def test_the_ledger_is_reproduced_byte_for_byte_by_an_identical_run(self):
+        """Determinism is what makes the values worth storing: they come from the
+        record, and the record is already proved stable across runs."""
+        again = tempfile.mkdtemp(prefix="s6_6b_ledger_")
+        self.addCleanup(shutil.rmtree, again, ignore_errors=True)
+        run_cells.run(again, clock=lambda: NOW)
+        self.assertEqual(read(again, "ledgers/%s.json" % self.CELL),
+                         read(self.root, "ledgers/%s.json" % self.CELL))
+
+
 # -------------------------------------------------------------- determinism
 class TestDeterminism(RunCase):
     def test_two_runs_with_a_pinned_clock_are_byte_identical(self):

@@ -675,9 +675,10 @@ alias conflicts). Until then `designated_target_fetch_owner_lane_id` and
 `linkcheck` / `promote` / `diff` / `compare-runs` subcommands, the transaction journal and the
 promotion tests listed under this heading stay **unscheduled, unapproved and untouched** (plan §14
 erratum E11). Checkpoint sequence
-**S6-0 · S6-1 · S6-2 · S6-3 · S6-4 · S6-5 · S6-6 · S6-6A · S6-7 · S6-L · S6-C**, each requiring its own
-separate approval **by name** (S6-6A was added between S6-6 and S6-7 by plan §14.4, which found target
-request accounting underivable inside S6-6's boundary); S6-C's handoff path and allowed paths are declared in advance in
+**S6-0 · S6-1 · S6-2 · S6-3 · S6-4 · S6-5 · S6-6 · S6-6A · S6-6B · S6-7 · S6-L · S6-C**, each requiring
+its own separate approval **by name** (S6-6A was added between S6-6 and S6-7 by plan §14.4, which found
+target request accounting underivable inside S6-6's boundary; S6-6B by the S6-7 preflight, which found
+plan §7.4 describing an unimplemented ledger flow — erratum E18); S6-C's handoff path and allowed paths are declared in advance in
 plan §11. **S6-L (bounded live smoke) is the only checkpoint that makes a network request** and needs
 approval twice — once as a checkpoint and once immediately before it runs.
 
@@ -948,8 +949,41 @@ approval twice — once as a checkpoint and once immediately before it runs.
         is not spent. Renaming the keys to keep the guard green was rejected on the S6-4/S5-4 precedent.
         Two independent `StubResponse` helpers and the exact `TargetFetchOutcome` field set were updated
         for the same reason.
+- [x] **S6-6B** ledger target observation propagation (`fix(harvest): persist target evidence in
+      ledgers`) — **corrective, found by the read-only S6-7 preflight, which stopped without editing a
+      file.** Plan §7.4 described the ledger carrying `http_status` / `content_hash` /
+      `last_checked_at` as a finished flow; the tree did not implement it. Everything that section
+      named was real except the last link: `ledger.v1.json` has admitted all three since Stage 1,
+      `OBSERVATION_FIELDS` has listed them since S5-3, `merge_ledger` has stored them since S5-3 —
+      and `run_cells.py`'s observation supplied **none** of them. Recorded as plan erratum **E18**;
+      §7.4 now carries the flow that exists.
+      - **The correction is four paths and no more.** `ledger.py` is **byte-unchanged**, no schema
+        moved, no fixture or config was touched, and `request_accounting` and both key spaces are
+        exactly as S6-6A left them. Only what the driver *observes* changed.
+      - **The record is the source of truth.** `LEDGER_TARGET_EVIDENCE_FIELDS` are **copied** from the
+        finished full record, joined by the `record_id` the observation already computes — never
+        recomputed from the `TargetFetchOutcome`, because a second derivation could disagree with the
+        record written beside it in the same run. **No clock is read**: `last_checked_at` is the
+        record's own. A `cross_reference` is excluded — it was never a page anyone fetched.
+      - **A field is written only when the record carries a non-null value.** A metadata-only record
+        contributes none of the three, a budget-skipped target contributes no status and no hash, and
+        a rejected candidate contributes nothing at all. A null written here would be a claim rather
+        than the absence of one, and `merge_ledger` already reads a null as "no news".
+      - **Proved at the run boundary, not against `merge_ledger`** — the storage already had its own
+        tests, and what had never been asserted was that a real run's ledger row says what that run's
+        record says. Each of the four target-fetched records is joined to its ledger entry and
+        compared field for field, with distinct per-page content hashes, no fabricated values on
+        rejected entries or in the eleven cells that fetched nothing, schema validity, and
+        byte-identical reproduction by a second identical run. **It fails against `88d40ca`** — 12
+        failures and 15 errors across all four records — which is what makes it a proof.
+      - **Why no test caught this for four checkpoints**: `test_ledger.py` never mentioned the three
+        fields, and `test_run_cells.py`'s ledger assertions covered entry counts, outcomes,
+        `seen_count`, `first_seen_at` and sort order — every property except the one §7.4 claimed.
+        The gap fell between S6-5, whose paths covered records rather than the ledger, and S6-7, which
+        is test-only.
 - [ ] **S6-7, S6-L, S6-C** — **not approved, not implemented.** **S6-7 is unblocked** by S6-6A, which
-      resolved the target request-accounting contract (plan §14.4), and remains **unapproved**.
+      resolved the target request-accounting contract (plan §14.4), and by S6-6B, which settled the
+      ledger's shape before S6-7 pins its determinism. S6-7 remains **unapproved**.
       **Live network access remains unauthorized** and no Stage 6 request has been made.
       **D6-A and D6-B remain resolved**; D6-B is now delivered.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands

@@ -419,9 +419,40 @@ repeat makes no network call at all. That is asserted.
 ### 7.4 The ledger records the fetch, because that is what it is for
 
 `ledger.v1.json` already carries `http_status`, `content_hash` and `last_checked_at` per entry — the
-exact target-derived triple. Stage 6 populates them through the committed
-`ledger.merge_ledger`/`OBSERVATION_FIELDS` path. `first_seen_at` is still written once, a terminal
-outcome is still final, and a corrupt ledger still raises. No ledger field is added.
+exact target-derived triple — and `ledger.merge_ledger` has always stored them, because all three
+have been in `OBSERVATION_FIELDS` since Stage 1. **What was missing until S6-6B was the wiring**, and
+this section previously described the finished flow as though it existed. It did not: `run_cells.py`
+built its ledger observation from `identity_url`, `content_id`, `source_id`, `outcome` and
+`record_id`/`rejection_reason` only, so the one structure whose job is remembering what a previous
+run learned about a URL remembered everything except what the fetch saw (erratum **E18**).
+
+The implemented flow, as of S6-6B:
+
+```text
+_full_record(candidate, …, outcome=…)      the finished record — the only thing that decided
+        │                                  whether the fetch's observation or Stage 4's honest
+        │                                  defaults apply
+        ▼
+full_records_by_id[record_id]              full records only; a cross_reference was never a page
+        │
+        ▼
+observation[http_status | content_hash | last_checked_at]      COPIED, per
+        │                                  run_cells.LEDGER_TARGET_EVIDENCE_FIELDS
+        ▼
+ledger.merge_ledger  →  ledgers/<cell_id>.json                 the committed store, unchanged
+```
+
+Three properties make this a wiring change and not a new judgement. **The record is the source of
+truth** — nothing is recomputed from the `TargetFetchOutcome`, because a second derivation could
+disagree with the record written beside it in the same run. **No clock is read**: `last_checked_at`
+is the record's own, and a fresh instant would claim a check that did not happen then. **A field is
+written only when the record carries a non-null value** — a metadata-only record contributes none of
+the three, a budget-skipped target contributes no status and no hash, and a rejected candidate
+contributes nothing at all, because a null written here would be a claim rather than the absence of
+one, and `merge_ledger` already reads a null as "no news".
+
+`first_seen_at` is still written once, a terminal outcome is still final, and a corrupt ledger still
+raises. **No ledger field is added, `ledger.py` is byte-unchanged, and no schema is touched.**
 
 ### 7.5 Budget exhaustion is `not_checked`, and it makes the run ineligible
 
@@ -910,7 +941,41 @@ strings `target_http_attempts`, `target_retries` and `target_redirect_hops`. Tha
 is retired for those three; choosing different key names to keep it green is the move S6-4 already
 rejected on the S5-4 precedent. Its `total_http_attempts` prohibition is **not** spent and is kept.
 
+### S6-6B · Ledger target observation propagation — L2, corrective
+
+Found by the **read-only S6-7 preflight**, which stopped without editing a file: §7.4 described the
+ledger carrying the target-derived triple as a finished flow, and the tree did not implement it. The
+storage was never missing — `ledger.v1.json` admits all three fields, `merge_ledger` stores them and
+`OBSERVATION_FIELDS` lists them — only the observation the driver built. Corrected **before** S6-7,
+because S6-7 pins ledger determinism across runs and a ledger about to gain three fields is not a
+stable thing to pin.
+
+```text
+M  src/harvest/run_cells.py       LEDGER_TARGET_EVIDENCE_FIELDS; the finished-record lookup; the
+                                  three copied observation fields
+M  tests/harvest/test_run_cells.py  the run-boundary integration proof
+M  docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md   §7.4 rewritten, erratum E18, this section, §11.1
+M  docs/harvest/TODO.md                          checkpoint registration
+```
+
+Exactly four paths. **`ledger.py` is not among them and is byte-unchanged**, and neither is any
+schema: the correction is entirely in what the driver observes. No fixture, no config, no accounting
+change — `request_accounting` and both key spaces are untouched by this checkpoint.
+
+**Proved at the run boundary, not against `merge_ledger`.** The storage already had its own tests;
+what had never been asserted was that a real run's ledger row carries what that run's record says.
+The proof runs the committed corpus into a temp root and joins each of the four target-fetched
+records to its ledger entry by `record_id`, asserting field-for-field equality, distinct per-page
+content hashes, no fabricated values on rejected entries or in the eleven cells that fetched nothing,
+schema validity, and byte-identical reproduction by a second identical run. It **fails against
+`88d40ca`** — 12 failures and 15 errors on all four records — which is what makes it a proof rather
+than a description.
+
 ### S6-7 · Determinism, failure modes and partial runs, end to end — L1 +FS
+
+**S6-7 follows this correction** and is unchanged by it beyond now having a stable ledger to pin. It
+remains unapproved, and its own preflight findings on enumeration scope and expressible failure modes
+are recorded where they were found, not pre-decided here.
 
 ```text
 A  tests/harvest/test_target_determinism.py
@@ -977,12 +1042,13 @@ forward, the final assertion count, and the exact repository state.
 
 ```text
 S6-0 ── S6-1 ──┬── S6-2 ──┐
-               └── S6-3 ──┴── S6-4 ── S6-5 ── S6-6 ── S6-6A ── S6-7 ── S6-L(optional) ── S6-C
+               └── S6-3 ──┴── S6-4 ── S6-5 ── S6-6 ── S6-6A ── S6-6B ── S6-7 ── S6-L(opt) ── S6-C
 ```
 
 **S6-6A sits between S6-6 and S6-7 by necessity, not by preference** (§14.4): S6-6 could not derive an
 exact target-attempt count inside its own ownership boundary, and S6-7 pins a manifest that S6-6A
-changes the shape of.
+changes the shape of. **S6-6B sits there for the same structural reason** (§7.4, E18): S6-7 pins
+ledger determinism, and the ledger was about to gain three fields.
 
 S6-2 and S6-3 are independently reviewable once S6-1 lands; S6-3 does not depend on S6-2. **S6-L is
 optional to closing Stage 6** — a green offline Stage 6 is a complete stage, and the live smoke is
@@ -1237,6 +1303,31 @@ The rule this one leaves behind: **an isolation boundary should name the judgeme
 data it refuses to look at.** "Forms no opinion about attempts" would have been true for the whole of
 Stage 6; "never observes an attempt" was a stronger claim than the design needed, and it cost a
 checkpoint to walk back.
+
+**E18 — §7.4 said Stage 6 "populates" the ledger's target triple. It did not, until S6-6B.** Found by
+the read-only S6-7 preflight on 2026-07-30, which **stopped without editing a file**. The section was
+not describing a design decision that later slipped; it was written in the present tense about a flow
+nobody had built. Everything it named was real except the last link:
+
+```text
+ledger.v1.json        admits http_status, content_hash, last_checked_at        ✓ since Stage 1
+OBSERVATION_FIELDS    lists all three                                          ✓ since S5-3
+merge_ledger          stores them, and treats a null as "no news"              ✓ since S5-3
+run_cells observation supplied none of them                                    ✗ the gap
+```
+
+No test caught it because none existed to catch it: `test_ledger.py` never mentions the three fields,
+and `test_run_cells.py`'s ledger assertions checked entry counts, outcomes, `seen_count`,
+`first_seen_at` and sort order — every property except the one §7.4 claimed. It fell between S6-5,
+whose declared paths covered records rather than the ledger, and S6-7, which is test-only.
+
+Corrected in **S6-6B** (§11), with §7.4 rewritten to the flow that now exists and a run-boundary test
+that fails against `88d40ca`. **The carried-forward finding is closed, not deferred.**
+
+The rule this one leaves behind: **a plan section written in the present tense is a claim, and a claim
+with no test is a guess.** §7.4's three sentences read exactly like the six other sections around them
+that *were* implemented, which is why it survived plan approval, four checkpoints and two audits — the
+prose gave a reader no way to tell a description from an intention.
 
 ---
 
