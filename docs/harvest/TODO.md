@@ -981,11 +981,56 @@ approval twice — once as a checkpoint and once immediately before it runs.
         `seen_count`, `first_seen_at` and sort order — every property except the one §7.4 claimed.
         The gap fell between S6-5, whose paths covered records rather than the ledger, and S6-7, which
         is test-only.
-- [ ] **S6-7, S6-L, S6-C** — **not approved, not implemented.** **S6-7 is unblocked** by S6-6A, which
-      resolved the target request-accounting contract (plan §14.4), and by S6-6B, which settled the
-      ledger's shape before S6-7 pins its determinism. S6-7 remains **unapproved**.
-      **Live network access remains unauthorized** and no Stage 6 request has been made.
-      **D6-A and D6-B remain resolved**; D6-B is now delivered.
+- [x] **S6-7** determinism, failure modes and partial runs, end to end
+      (`test(harvest): prove target determinism and recovery`). **Test and documentation only** —
+      exactly four paths, no production module, schema, config or committed fixture, and a test
+      asserts `tests/fixtures/harvest` is unmodified afterwards, because a composer bug would edit the
+      corpus every other suite reads. **88 assertions.**
+      - **Same-clock byte determinism over the whole tree.** Two equivalent runs into two roots: the
+        exact **43-path** file set, one hash, and then a file-by-file byte comparison, because a tree
+        hash alone would pass on two empty trees. Every artifact validates, and the suite-local
+        `schema_for()` names `alias_conflicts.json` — the mapping S6-6 missed in a private copy of that
+        helper, which is why it is spelled out here.
+      - **Order cannot reach the output.** Cell order shuffled through `run()`; **source** order
+        shuffled by handing `_run_one_cell` a reordered `sources` list, since `run()` takes cell IDs and
+        reads sources from the committed configuration; **candidate** order shuffled at the fetch-phase
+        boundary over real candidates from a real cell run. Each shuffle is asserted to have actually
+        shuffled before anything is compared.
+      - **Four composed scenarios, not one impossible run** (plan erratum **E21**). The committed corpus
+        accepts four records, so four target slots is the whole budget and several families are mutually
+        exclusive on one URL. Terminal failures (404 · 410 · 403 · terminal 500), bodies and redirects
+        (empty · non-HTML · 301-only · a 302 hop), canonical adjudication (cross-domain ·
+        same-domain-robots-unverified · two tags · self) and budget skipping each get their own
+        deterministic scenario. Every scenario emits a complete valid 43-path tree.
+      - **A composed corpus is a COPY.** Target `status`, `headers` and body are substituted in a temp
+        tree; `fixture_id`, filename and URL stay exactly as committed, or the record's identity moves
+        and the scenario stops being comparable to the clean run.
+      - **The five clock-derived leaves are a committed-corpus property** (erratum **E19**). Extended to
+        the complete tree, three more families carry instants of their own — the manifest's
+        `started_at`/`finished_at`, a rejection log's `rejected_at` and `freshness`, and the cross-run
+        ledger's four — each **enumerated exactly and none excused**. An alias carries `observed_at` and
+        a conflict `detected_at`, both absent from the committed corpus, so the alias- and
+        conflict-producing scenarios are proved by **same-clock byte identity** rather than by enlarging
+        the allowlist to admit leaves the committed corpus does not have.
+      - **`request_accounting` is identical across the two clocks**, target counters included: an
+        estimate would have no reason to survive a clock change.
+      - **An interruption in the fetch phase publishes nothing at all** — no run artifact, no
+        `ledgers/`, no `rejections/`, no pointer, no temp debris — and the retry is an **ordinary fresh
+        run** producing a tree hash-identical to a clean one. No resume was introduced. A finished
+        `run_id` is refused **before the first request and before the fixture corpus is even loaded**,
+        proved with counters that a control case shows would have caught real traffic.
+      - **Robots-denied is not composed at run level** (erratum **E20**), because all four accepted
+        targets and the feed that surfaces them share `github.com`: denying that host stops discovery,
+        so the scenario would prove nothing about a denied record. It keeps its existing owner in
+        `test_target_fetch.py` and fixture #20. The §5.0 transport exclusions stand — no timeout
+        sequencing, no `500 → 200` transition, no over-cap body, and the composed corpora are asserted
+        to carry no forbidden transport key either.
+      - **One defect found by its own test, in the suite itself**: the interruption class re-read the
+        artifact root per test while one of its own tests deliberately wrote into it, so the emptiness
+        assertion passed or failed on alphabetical method order. The post-interruption state is now
+        **captured once in `setUpClass`** — a suite about determinism does not get to be order-dependent.
+- [ ] **S6-L, S6-C** — **not approved, not implemented.** **Live network access remains unauthorized**
+      and no Stage 6 request has been made. **D6-A and D6-B remain resolved**; D6-B is delivered.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing

@@ -591,6 +591,28 @@ Stage 5 proved two consecutive runs differ at exactly **four** JSON leaves — `
 `generated_at`, `discovered_at`, `freshness_score` — enumerated by a recursive JSON diff rather than
 normalized away. Stage 6 adds exactly **one**: `last_checked_at`. The difference set becomes **five,
 enumerated the same way**, so a sixth moving field fails a test rather than passing silently.
+
+**The five are a property of the record-bearing artifacts over the COMMITTED corpus**, and S6-7 says
+so exactly rather than approximately (§14, E19). Measured across the complete tree, three other
+families carry instants of their own, each enumerated exactly and none excused:
+
+```text
+cells/ · topics/ · coverage.json · alias_conflicts.json   exactly the five
+runs/<id>/manifest.json      + started_at · finished_at   the run's own clock, in the document
+                                                          that describes the run
+rejections/<cell>.json       + rejected_at · freshness    when this run rejected it; `freshness`
+                                                          is the record's `freshness_score` under
+                                                          the name rejection.v1.json gives it
+ledgers/<cell>.json          updated_at · first_seen_at · last_seen_at · last_checked_at
+                                                          a CROSS-RUN store whose whole job is
+                                                          recording when a URL was seen
+```
+
+Two consequences worth stating plainly. A **composed** corpus that adopts an alias or records a
+conflict legitimately moves `observed_at` and `detected_at` as well; those runs are therefore compared
+**same-clock**, and the five-leaf allowlist is never enlarged to admit leaves the committed corpus does
+not have. And the ledger's timestamps moving is the **feature** — a cross-run memory that reported the
+same instant twice would be broken — which is why it is enumerated apart rather than folded in.
 `content_hash`, `http_status`, `access_status`, `verification_status`, `verification_evidence`,
 `canonical_url` and `url_aliases` are all **derived from fixture bytes** and must therefore reproduce
 **exactly**. Determinism is proved under shuffled source, candidate and cell orderings, as before.
@@ -980,14 +1002,61 @@ are recorded where they were found, not pre-decided here.
 ```text
 A  tests/harvest/test_target_determinism.py
 A  tests/test_taxonomy_target_determinism.sh
+M  docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md      this section, §10, errata E19-E21
+M  docs/harvest/TODO.md                             checkpoint registration
 ```
+
+Exactly four paths. **No production module, schema, config or committed fixture changes**, and a test
+asserts `tests/fixtures/harvest` is unmodified afterwards — a composer bug would otherwise edit the
+corpus every other suite reads.
 
 The five-leaf difference set enumerated by recursive JSON diff (§10) · byte-determinism under
 shuffled source, candidate and cell orderings · every §5 failure mode **the committed corpus can
-express** present in one run, every record validating · an interruption during the fetch phase writing
-**nothing at all** · a repeated finished `run_id` refused **before the first request** ·
-`verify_latest_run_id` still a checkable predicate · a run that never fetched still honestly
-ineligible.
+express**, across deterministic scenarios rather than one impossible run · an interruption during the
+fetch phase writing **nothing at all** · a repeated finished `run_id` refused **before the first
+request** · `verify_latest_run_id` still a checkable predicate · a run that never fetched still
+honestly ineligible.
+
+**Scenario corpora are copies.** A composed corpus is the committed fixture tree copied to a temp
+directory with target-fixture **content** substituted in the copy — `status`, `headers` and body only.
+`fixture_id`, the filename and the URL stay exactly as committed, because the loader keys the corpus
+by filename and indexes it by URL, and because an accepted record's identity must not move or the
+scenario stops being comparable to the clean run. The copied `MANIFEST.json` no longer describes the
+substituted bytes, and that is correct: it pins the **repository** corpus for `check_fixtures.py`, and
+the loader validates shape rather than provenance. Four scenarios, because the four accepted slots
+cannot hold every family at once:
+
+```text
+terminal failures   404 · 410 · 403 · terminal 500          all four still eligible (§8)
+bodies & redirects  empty · non-HTML · 301-only · 302 hop    one alias adopted
+canonical           cross-domain · same-domain-robots-unverified · two tags · self
+                                                             three conflicts, no alias
+budget skip         the committed corpus with the per-cell cap lowered test-locally
+                                                             two not_checked → INELIGIBLE
+```
+
+**A composed scenario is compared same-clock, never folded into the five.** A permanent redirect
+adopts an alias, which carries `observed_at`; a conflict carries `detected_at`. Both are legitimate
+sixth and seventh clock-derived leaves — and both are **absent from the committed corpus**, which
+adopts no alias and records no conflict. Enlarging the §10 allowlist to admit them would weaken the
+committed-corpus contract to buy nothing, so the alias- and conflict-producing corpora prove
+determinism by **byte identity under one clock** instead, and the two leaves are asserted to equal the
+run instant where they appear.
+
+**Robots-denied is not composed at run level, and that is a finding rather than an omission.** All
+four accepted targets live on `github.com`, and so does `fx_lm_eval_harness`, the source feed that
+surfaces them. Denying that host in a composed robots tree stops **discovery**, so the run produces no
+candidates and therefore no denied *record* — the scenario would prove nothing it claims to. The
+contract keeps its existing owner: `RobotsDenied → robots_denied` is asserted directly in
+`tests/harvest/test_target_fetch.py`, and fixture #20 exists precisely so a test can prove the denial
+preceded the fetch by asserting the file was never opened. **No production fixture or source input is
+altered to force this case into the new suite** (§14, E20).
+
+**The §5.0 exclusions stand unchanged.** No timeout sequencing, no `500 → 200` retry transition, no
+over-cap body, and no fixture carrying a transport directive — asserted for the composed corpora too,
+against the committed `FORBIDDEN_TARGET_KEYS`. Where a scenario does involve retries (the terminal
+500 does), the suite asserts the **DV-8 accounting identity** rather than a retry count: what the
+client does between the first 500 and the raise remains its own tested contract.
 
 The failure modes in one run come from **composing the committed corpus in a temp fixture tree**
 (§11, S6-1) — copying Group B and substituting a Group A body — not from new committed fixtures, of
@@ -1328,6 +1397,38 @@ The rule this one leaves behind: **a plan section written in the present tense i
 with no test is a guess.** §7.4's three sentences read exactly like the six other sections around them
 that *were* implemented, which is why it survived plan approval, four checkpoints and two audits — the
 prose gave a reader no way to tell a description from an intention.
+
+**E19 — "the difference set is five" is true of the record-bearing artifacts, not of every file.**
+§10 stated the five-leaf contract without saying which documents it ranges over, and Stage 5's test
+happened to range over exactly two families — `cells/` and `topics/` — so the question never came up.
+S6-7 extends the recursive diff to the complete tree and finds three more families with instants of
+their own: the manifest's `started_at`/`finished_at`, a rejection log's `rejected_at` and `freshness`,
+and a ledger's `updated_at`/`first_seen_at`/`last_seen_at`/`last_checked_at`. **None is a determinism
+defect and none is excused**: each family is enumerated exactly, in its own assertion, so a new moving
+leaf still fails. §10 now carries the full table.
+
+The `freshness` entry is worth naming on its own: `rejection.v1.json`'s `scores` block is
+`{relevance, quality, audience_fit, freshness}` while `record.v1.json` uses `*_score`, so the same
+clock-derived quantity appears under two leaf names depending on which document you read. S6-7
+enumerates both rather than normalizing them together, because the leaf that moved is the leaf the
+document actually has.
+
+**E20 — S6-7's "every §5 failure mode the committed corpus can express" excludes a run-level
+`robots_denied`, and always did.** The wording implied a set the corpus cannot produce. All four
+accepted targets are on `github.com`, and so is `fx_lm_eval_harness`, the feed that surfaces them:
+denying that host in a composed robots tree stops discovery, so the run yields no candidates and
+therefore no denied record. Forcing the case would require editing a source fixture or a topic config
+in the scenario — exactly what E15 refused for the same reason. The contract keeps its existing and
+better owner: `test_target_fetch.py` asserts `RobotsDenied → robots_denied` directly, and fixture #20
+proves the denial preceded the request by never being opened at all.
+
+**E21 — the S6-7 scenario corpus is four scenarios, not one run.** §11's "in one run" was written
+before the fixture corpus existed. The committed corpus accepts exactly four records, so four target
+slots is the whole budget, and terminal failures, body and redirect handling, canonical adjudication
+and budget skipping cannot all occupy them simultaneously — several are mutually exclusive on a single
+URL. S6-7 therefore runs four deterministic scenarios, each a separate composed corpus, rather than
+forcing an impossible single run. Every scenario emits a complete 43-path tree in which every artifact
+validates, which is the property "in one run" was reaching for.
 
 ---
 
