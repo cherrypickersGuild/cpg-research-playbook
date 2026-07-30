@@ -669,6 +669,25 @@ parsing and `content_hash`, and alias adjudication (301/308 aliases, `rel=canoni
 alias conflicts). Until then `designated_target_fetch_owner_lane_id` and
 `designated_extraction_owner_lane_id` stay null, which is their committed meaning.
 
+**Plan of record for target fetching:** `docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md` —
+**`PROPOSED — PLANNING APPROVAL ONLY`** (2026-07-30). It scopes Stage 6 to **target fetching and
+verification only**; the `refresh` / `linkcheck` / `promote` / `diff` / `compare-runs` subcommands,
+the transaction journal and the promotion tests listed under this heading stay **unscheduled,
+unapproved and untouched** (plan §14 erratum E11). Proposed checkpoint sequence
+**S6-0 · S6-1 · S6-2 · S6-3 · S6-4 · S6-5 · S6-6 · S6-7 · S6-L · S6-C**, each requiring its own
+separate approval **by name**; S6-C's handoff path and allowed paths are declared in advance in
+plan §11. **S6-L (bounded live smoke) is the only checkpoint that makes a network request** and needs
+approval twice — once as a checkpoint and once immediately before it runs.
+
+- [x] **S6-0** Stage 6 plan, documentation only — `docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md` plus
+      this registration. **Approval status: planning approved; no implementation checkpoint is
+      approved, and no live network access is authorized** (plan §15). CF-1 stays deferred and must be
+      fixed in its own checkpoint before any concurrency lands (plan §9.1); CF-2/CF-7 are not widened,
+      CF-11 stays protected, D2 keeps one home, and S4-4's provisional calibration is untouched
+      (plan §9). **Two decisions remain open and each blocks exactly one checkpoint** (plan §12):
+      **D6-A** one keyword-only `url_aliases=` parameter on `records.make_full_record` (blocks S6-5)
+      and **D6-B** one new `schemas/harvest/alias_conflict.v1.json` (blocks S6-6).
+- [ ] **S6-1 … S6-7, S6-L, S6-C** — not approved, not implemented. See the plan.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing
