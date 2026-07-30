@@ -1,8 +1,8 @@
 {
  "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
  "authored_at": "2026-07-30",
- "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Canonical Cross Host</title>\n  <link rel=\"canonical\" href=\"https://tgt-alt.harvest.test/elsewhere\">\n </head>\n <body>\n  <h1>Target Canonical Cross Host</h1>\n  <p>Declares a canonical URL on a different host.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
- "contract_intent": "Cross-host rel=canonical with no domain_migrations rule: alias conflict, no alias, identity unmoved (CF-15). tgt-alt.harvest.test is deliberately given no fixture \u2014 a cross-host canonical is refused on domain policy before any robots check or fetch.",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Canonical Cross Host</title>\n  <link rel=\"canonical\" href=\"https://other-target.test/elsewhere\">\n </head>\n <body>\n  <h1>Target Canonical Cross Host</h1>\n  <p>Declares a canonical URL on a different registrable domain.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Syntactically valid cross-host rel=canonical whose target is a DIFFERENT REGISTRABLE DOMAIN under the committed urlkey.registrable_host, with no applicable domain_migrations or trust rule: alias conflict, no alias, identity unmoved. Same-registrable-domain is decided by that committed helper and never by hostname equality, so the target had to differ in its registrable domain and not merely in its hostname. other-target.test is deliberately given no fixture and no robots fixture \u2014 a canonical on a different registrable domain is refused on domain policy before any robots check or fetch, so this correction neither fetches nor probes it.",
  "fixture_id": "tgt_canonical_cross_host",
  "headers": {
   "content-type": "text/html; charset=utf-8"

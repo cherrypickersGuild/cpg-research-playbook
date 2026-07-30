@@ -597,11 +597,11 @@
   {
    "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
    "authored_at": "2026-07-30",
-   "bytes": 1008,
+   "bytes": 1413,
    "fixture_id": "tgt_canonical_cross_host",
    "path": "targets/tgt_canonical_cross_host.json",
    "provenance": "synthetic",
-   "sha256": "b9aa91eb5e3e6eb5cc34747fd111bbd8d545fd8eec3c51a9f7660c1ef8edb2b8",
+   "sha256": "fafa3d862a059caa6a4604aceafc53d37d3eea6d24c96e24c9d86bc85ed8c8be",
    "status": 200,
    "url": "https://tgt.harvest.test/canonical-cross-host"
   },

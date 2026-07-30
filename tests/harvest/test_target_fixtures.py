@@ -35,9 +35,11 @@ import os
 import socket
 import tempfile
 import unittest
+from urllib.parse import urlsplit
 
 from src.harvest import fixtures
 from src.harvest import httpclient as hc
+from src.harvest.urlkey import registrable_host
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIXTURE_ROOT = os.path.join(ROOT, "tests", "fixtures", "harvest")
@@ -75,6 +77,13 @@ EXPECTED_TARGETS = {
 }
 
 NEW_ROBOTS_HOSTS = ("tgt.harvest.test", "tgt-robots-denied.harvest.test")
+
+# The canonical target inside tgt_canonical_cross_host. It must differ from the
+# fixture's own host in its REGISTRABLE DOMAIN, not merely in its hostname:
+# same-domain trust is decided by the committed urlkey.registrable_host, under
+# which two subdomains of one domain are the SAME domain.
+CROSS_DOMAIN_CANONICAL_URL = "https://other-target.test/elsewhere"
+CROSS_DOMAIN_CANONICAL_HOST = "other-target.test"
 
 
 def read_bytes(path):
@@ -215,13 +224,26 @@ class TestTheCommittedCorpus(unittest.TestCase):
         self.assertIn("Allow: /", robots["tgt.harvest.test"]["body"])
         self.assertIn("Disallow: /", robots["tgt-robots-denied.harvest.test"]["body"])
 
-    def test_the_cross_host_canonical_target_deliberately_has_no_fixture(self):
-        """Plan section 4: a cross-host canonical is refused on domain policy
-        before any robots check or fetch, so a fixture for it would be inert."""
+    def test_the_cross_domain_canonical_target_deliberately_has_no_fixture(self):
+        """Plan section 4: a canonical on a different REGISTRABLE DOMAIN is refused
+        on domain policy before any robots check or fetch, so a fixture for it
+        would be inert."""
         robots = fixtures.load_robots_fixtures(os.path.join(FIXTURE_ROOT, "robots"))
-        self.assertNotIn("tgt-alt.harvest.test", robots)
-        self.assertNotIn("tgt-alt.harvest.test",
+        self.assertNotIn(CROSS_DOMAIN_CANONICAL_HOST, robots)
+        self.assertNotIn(CROSS_DOMAIN_CANONICAL_HOST,
                          {f["url"].split("/")[2] for f in self.targets.values()})
+
+    def test_the_cross_domain_fixture_really_names_a_different_registrable_domain(self):
+        """The point of the fixture: differing hostnames are not enough, because
+        same-domain trust is decided by the committed helper and not by hostname
+        equality. Anti-vacuity — if these ever became one registrable domain, the
+        fixture would silently be exercising the same-domain branch instead."""
+        fixture = self.targets["tgt_canonical_cross_host"]
+        requested_host = urlsplit(fixture["url"]).hostname
+        self.assertNotEqual(requested_host, CROSS_DOMAIN_CANONICAL_HOST)
+        self.assertNotEqual(registrable_host(requested_host),
+                            registrable_host(CROSS_DOMAIN_CANONICAL_HOST))
+        self.assertIn(CROSS_DOMAIN_CANONICAL_URL, fixture["body"])
 
 
 # --------------------------------------------------------------------- refusals

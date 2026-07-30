@@ -738,10 +738,44 @@ approval twice — once as a checkpoint and once immediately before it runs.
         with its exact URL, status, contract purpose and robots host. **Only the tables authorize a
         fixture file; the directory globs no longer do.**
       - **D6-A and D6-B remain RESOLVED and unchanged**, as does every other approved Stage 6 decision.
-- [ ] **S6-1 … S6-7, S6-L, S6-C** — **not approved, not implemented.** No Stage 6 production module,
-      test, schema, script, config or fixture exists. **Live network access remains unauthorized** and
-      no Stage 6 request has been made. See the plan for each checkpoint's exact allowed paths, risk
-      tier and focused suite.
+- [x] **S6-1** target-page fixtures, the loader and the checker — `4df5380`
+      (`test(harvest): add target fixture corpus`). Discharges **CF-3**. 24 literal target fixtures and
+      2 new robots fixtures under `tgt.harvest.test` / `tgt-robots-denied.harvest.test`;
+      `fixtures.load_target_fixtures()` and `FixtureOpener(targets=…)` sharing **one** exact-URL index
+      with a collision that names both claimants; `check_fixtures.py` treating `TARGET_FIXTURE_IDS` as a
+      declared set checked in both directions and refusing any transport-simulation key, importing that
+      forbidden-key set from `fixtures.py` rather than re-listing it. `targets=None` means **no** targets,
+      so every committed caller is byte-identically unaffected. **70 assertions.**
+- [x] **S6-2** the injected target-fetch adapter and the error mapping — `e4a12b9`
+      (`feat(harvest): add target fetch outcomes`). `targetfetch.py`: `TargetFetchOutcome` ·
+      `fetch_target()` · `ACCESS_STATUS_FOR_ERROR` · `TargetFetchError`. Exactly one logical client call;
+      injected client, budget and clock; no system clock; retries, robots, redirects, timeouts and the
+      body cap all left to the committed `HttpClient`, whose final response or final typed error is the
+      only thing consumed. All ten committed `HttpError` classes mapped, enumerated from the AST and each
+      one instantiated and exercised; an unmapped subclass raises rather than receiving the nearest
+      plausible status. **61 assertions.**
+      - **Defect found by its own test:** a uniform MRO walk let the `HttpError` base entry answer for
+        every subclass, silently defeating the fail-loud contract. Fixed with `EXACT_MATCH_ONLY`, so the
+        base class answers only for itself while genuine subclass inheritance still works.
+- [x] **S6-2-C** canonical-domain authority correction, plan + one fixture
+      (`fix(harvest): align canonical domain policy`). **An S6-3 preflight stopped without editing a
+      file.** The blocker was a three-way contradiction: plan §4 said same-domain trust was "identical
+      host", `tgt_canonical_cross_host.json`'s `contract_intent` claimed a cross-domain conflict, and the
+      committed `urlkey.registrable_host` maps both `tgt.harvest.test` and `tgt-alt.harvest.test` to
+      `harvest.test` — so the two rules returned **opposite verdicts** on the one fixture built to prove
+      that row. Corrected to make **`urlkey.registrable_host` the single committed authority** (plan
+      erratum **E16**): §4 now reads "same / different registrable domain" with exact hostname equality a
+      subset of it; **CF-15's premise is corrected** and narrowed to the resulting boundary; the fixture's
+      canonical target is now `https://other-target.test/elsewhere`, a genuinely different registrable
+      domain, with only its own `MANIFEST.json` entry regenerated. No second host comparison, no
+      public-suffix implementation, no change to `registrable_host`, and Stage 1's URL-identity design is
+      not reopened. The same-domain branch is allocated to a **test-local synthetic** S6-3 case with an
+      anti-vacuity assertion, not to a new fixture.
+- [ ] **S6-3 … S6-7, S6-L, S6-C** — **not approved, not implemented.** `src/harvest/aliases.py`,
+      `tests/harvest/test_aliases.py` and `tests/test_taxonomy_aliases.sh` are all **absent**.
+      **Live network access remains unauthorized** and no Stage 6 request has been made. **D6-A and D6-B
+      remain resolved and unchanged.** See the plan for each checkpoint's exact allowed paths, risk tier
+      and focused suite.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing

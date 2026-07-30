@@ -20,6 +20,13 @@ is recorded as erratum **E15** (§14) and applied in place: two cases relocated 
 cases removed from Stage 6 outright, and the corpus replaced by two literal tables (§11, S6-1). Every
 other previously approved Stage 6 decision — including D6-A and D6-B — is unchanged.
 
+**Corrected on 2026-07-30 — canonical domain authority.** An S6-3 preflight stopped without editing a
+file because this plan said same-domain canonical trust "is implemented as identical host", which the
+committed `urlkey.registrable_host` contradicts. Recorded as erratum **E16** (§14) and applied in §4,
+§9.7 (CF-15), §11 (S6-1 fixture #3 and the S6-3 test allocation). **`urlkey.registrable_host` is the
+single authority**; no second host comparison is added and the helper itself is unchanged. D6-A and
+D6-B remain resolved and unchanged, and no S6-3 implementation is approved or present.
+
 **Date:** 2026-07-30 · **Branch:** `main`
 
 ```text
@@ -219,18 +226,33 @@ byte-identical before and after. There is no code path from a fetch to an identi
 | 200, `final_url == url` | unchanged | — | `ok` |
 | Every hop 301/308 (`Response.permanent_redirect` true) | `final_url` | `+{kind: "permanent_redirect", evidence: {http_status, location}}` | `redirected` |
 | Any 302/307 in the chain | **unchanged** | **none** | `ok` — the temporary final URL is noted in `verification_evidence` only |
-| `rel=canonical`, **same host**, absolute, syntactically valid, non-circular, robots-allowed | that URL | `+{kind: "canonical_tag", evidence: {rel_canonical}}` | as fetched |
-| `rel=canonical`, **different host**, with a matching `domain_migrations` rule | that URL | `+{kind: "domain_rule", evidence: {rule_id, config}}` | as fetched |
-| `rel=canonical`, **different host**, no rule and no independent 301/308 to the same target | **unchanged** | **none** | as fetched · **alias conflict recorded** |
+| `rel=canonical`, **same registrable domain**, absolute, syntactically valid, non-circular, robots-allowed | that URL | `+{kind: "canonical_tag", evidence: {rel_canonical}}` | as fetched |
+| `rel=canonical`, **different registrable domain**, with a matching `domain_migrations` rule | that URL | `+{kind: "domain_rule", evidence: {rule_id, config}}` | as fetched |
+| `rel=canonical`, **different registrable domain**, no rule and no independent 301/308 to the same target | **unchanged** | **none** | as fetched · **alias conflict recorded** |
 | Malformed, relative-unresolvable, circular (A→B→A), or two conflicting `<link rel=canonical>` | **unchanged** | **none** | as fetched · **alias conflict recorded** |
 
 Notes that are decisions, not details:
 
-- **"Same registrable domain" is implemented as "identical host."** No public-suffix library is
-  available (`jsonschema` is the only pinned dependency) and inventing suffix rules is how a
-  destructive merge gets shipped. `example.com` → `www.example.com` is therefore treated as
-  cross-domain: no alias, one recorded conflict. Conservative in the safe direction, and recorded as
-  **CF-15** rather than papered over.
+- **"Same registrable domain" is decided by the committed `urlkey.registrable_host`, and by nothing
+  else.** Corrected on 2026-07-30 (§14, E16). This plan previously said the check "is implemented as
+  identical host", justified by there being no public-suffix library. The justification was true and
+  the conclusion was wrong: `urlkey.registrable_host` was committed at Stage 1 for exactly this
+  purpose — its docstring says "used only for same-domain trust checks" — and it makes the same
+  no-public-suffix tradeoff deliberately, taking the last two labels.
+
+  The operative rule, therefore:
+
+  - **same registrable domain** ⇒ the same-domain branch. Exact hostname equality is a *subset* of
+    this: two different hostnames that `registrable_host` maps to one value (`example.com` and
+    `www.example.com`; `a.example.com` and `b.example.com`) take the same-domain branch.
+  - **different `registrable_host` values** ⇒ the cross-domain branch.
+  - Every other prerequisite on those rows is **unchanged**: absolute and syntactically valid,
+    non-circular, robots-allowed, and — on the cross-domain row — a matching `domain_migrations` rule
+    or independent 301/308 evidence.
+
+  Stage 6 adds **no second hostname comparison, no public-suffix implementation and no special-case
+  host list**, and this checkpoint does not change `registrable_host` itself. The broader Stage 1
+  URL-identity design is not reopened or re-audited.
 - **Robots is checked before a canonical tag is trusted**, via the committed
   `HttpClient.robots.allowed` — no second matcher. That check may itself cost an HTTP attempt, which
   is budgeted and accounted like any other.
@@ -501,8 +523,15 @@ Recorded here so they are visible at the closeout rather than discovered later.
 
 ```text
 CF-13  a post-acceptance inaccessible record has no rejection path, deliberately (§7.1)
-CF-15  "same registrable domain" is implemented as "identical host"; www. variants become
-       conflicts rather than aliases (§4)
+CF-15  CORRECTED 2026-07-30 (§14 E16). Its premise — that same-domain trust was limited to
+       identical hostnames, so a www. variant became a conflict — was false: the committed
+       urlkey.registrable_host has decided this since Stage 1. The permanent boundary that
+       replaces it: same registrable domain is decided by that committed helper; a canonical
+       on a DIFFERENT registrable domain stays conflict-or-policy-controlled exactly per the
+       §4 table; and the helper's own best-effort limitation (last two labels, so a.co.uk and
+       b.co.uk compare equal) is an inherited Stage 1 tradeoff, gated behind the syntax and
+       robots check — not a new Stage 6 redesign task. This corrects only that premise and
+       claims nothing broader about canonical-domain handling.
 CF-16  ResponseTooLarge / UnexpectedContentType / EmptyResponse collapse onto `unreachable`;
        the exact class survives verbatim in verification_evidence (§5)
 CF-17  `updated_at` stays null even when Last-Modified is present (§6)
@@ -606,7 +635,7 @@ content-type handling are exercised by the committed client rather than by a moc
 |---|---|---|---|---|---|
 | 1 | `tgt_ok_plain.json` | `https://tgt.harvest.test/ok-plain` | 200 `text/html` | §4 row 1: a clean fetch with **no** canonical tag — `canonical_url` stays `identity_url`, `access_status: ok`, `verification_status: fetched`. The baseline every other row is compared against | `tgt.harvest.test` † |
 | 2 | `tgt_canonical_same_host.json` | `https://tgt.harvest.test/canonical-same-host` | 200 `text/html` | same-host `rel=canonical`, absolute and non-circular → auto-accepted, alias `kind: canonical_tag` | `tgt.harvest.test` |
-| 3 | `tgt_canonical_cross_host.json` | `https://tgt.harvest.test/canonical-cross-host` | 200 `text/html` | canonical names `tgt-alt.harvest.test` with no `domain_migrations` rule → **alias conflict, no alias**, identity unmoved (CF-15) | `tgt.harvest.test` |
+| 3 | `tgt_canonical_cross_host.json` | `https://tgt.harvest.test/canonical-cross-host` | 200 `text/html` | canonical names `https://other-target.test/elsewhere` — a **different registrable domain** — with no `domain_migrations` rule → **alias conflict, no alias**, identity unmoved. Corrected 2026-07-30 (§14 E16): it previously named `tgt-alt.harvest.test`, which `registrable_host` maps to the same `harvest.test` and which therefore exercised the *same-domain* branch, not this row | `tgt.harvest.test` |
 | 4 | `tgt_canonical_conflicting.json` | `https://tgt.harvest.test/canonical-conflicting` | 200 `text/html` | two conflicting `<link rel=canonical>` on one page → conflict, no alias | `tgt.harvest.test` |
 | 5 | `tgt_canonical_circular_1.json` | `https://tgt.harvest.test/canonical-circular` | 301 → #6 | hop 1 of the circular case | `tgt.harvest.test` |
 | 6 | `tgt_canonical_circular_2.json` | `https://tgt.harvest.test/canonical-circular-b` | 200 `text/html` | its canonical names #5's URL — already in **this fetch's own redirect chain** → conflict, no alias. This is the only circular form Stage 6 can observe, because §1.2 forbids following a canonical to check it | `tgt.harvest.test` |
@@ -655,9 +684,10 @@ different robots response is itself the contract.
 
 ‡ `github.com` needs no new robots fixture — `tests/fixtures/harvest/robots/github.com.json` is
 committed, allows `/posts/…` and declares no crawl-delay. It is **not modified.**
-`tgt-alt.harvest.test` (the cross-host canonical target in fixture #3) gets **no** robots fixture and
-**no** target fixture: a cross-host canonical is refused on domain policy **before** any robots check
-or fetch (§4), so a fixture for it would be inert. `.test` is RFC 2606-reserved and can never resolve,
+`other-target.test` (the cross-domain canonical target in fixture #3) gets **no** robots fixture and
+**no** target fixture: a canonical on a different registrable domain is refused on domain policy
+**before** any robots check or fetch (§4), so a fixture for it would be inert — and nothing in Stage 6
+ever fetches or probes a discovered canonical URL. `.test` is RFC 2606-reserved and can never resolve,
 which is why the synthetic hosts use it — the existing `robots-5xx.test` control set the precedent.
 
 **S6-7 composes this corpus; it does not extend it.** To put several §5 failure modes into one run,
@@ -710,8 +740,31 @@ A  tests/test_taxonomy_aliases.sh
 
 A pure function: no I/O, no clock beyond the injected instant, no network. Reads
 `canonicalization.v1.json` as data; a test asserts no configured host, domain or rule id appears as a
-string literal. Proves the §4 table row by row, and proves `identity_url`, `record_id` and
-`content_id` are byte-identical in every row — including every conflict row.
+string literal in production `aliases.py`, with the forbidden values derived **dynamically from the
+committed policy** rather than typed into the test. Proves the §4 table row by row, and proves
+`identity_url`, `record_id` and `content_id` are byte-identical in every row — including every conflict
+row — using test-local sentinel data, never by importing record construction.
+
+**Same-domain trust uses the committed `urlkey.registrable_host` and adds no second host comparison**
+(§4). Two consequences for S6-3's tests, recorded here from the 2026-07-30 preflight (§14, E16):
+
+- **The same-domain branch needs a test-local synthetic case, not a fixture.** Two *different*
+  hostnames that `registrable_host` maps to one value — e.g. two synthetic subdomains under
+  `harvest.test` — must select the **same-domain** branch. The case is derived **through the committed
+  helper**, never from typed-in hostnames, and carries an anti-vacuity assertion proving both halves of
+  what makes it interesting: the host strings **differ**, and their `registrable_host` values are
+  **equal**. **No further permanent S6-1 fixture is added for this**; it is test-local by design.
+- **The opposing branch is covered by the corrected fixture.** `tgt_canonical_cross_host.json` now
+  names `https://other-target.test/elsewhere`, a genuinely different registrable domain, so it
+  exercises the cross-domain conflict row it was always meant to.
+
+**Policy loading, from the same preflight.** `adjudicate()` and `extract_rel_canonical()` stay **pure
+relative to their explicit inputs** and **must not open a file during adjudication**. No committed API
+returns the whole canonicalization document — `request_key.canonicalization_version` yields only the
+`config_version` int — so where the document is needed, `aliases.py` may own a private, cached
+module-boundary loader following the committed idiom of `verify.load_policy` and
+`classify.load_precedence`, with the document passed **into** the two functions as data. It must not
+become a competing hostname parser and must not duplicate a configured domain or rule literal.
 
 ### S6-4 · Ownership, deduplication and bounds in the driver — L2
 
@@ -1051,6 +1104,44 @@ this document and none in shipped code:
 The rule this leaves behind, which is why the preflight was right to stop: **a checkpoint's fixture
 authorization is a literal file list, never a directory glob.** A glob cannot be reviewed, and a
 corpus that has to be improvised at implementation time was never specified.
+
+**E16 — this plan asserted that same-domain canonical trust "is implemented as identical host". It is
+not, and never was.** Found by an S6-3 preflight on 2026-07-30, which **stopped without editing a
+file**. `urlkey.registrable_host` has been committed since Stage 1, documented as "used only for
+same-domain trust checks", and takes the last two labels — so it already made the no-public-suffix
+tradeoff this plan cited as the reason no such helper could exist. The wording was wrong in a way that
+mattered rather than cosmetically:
+
+```text
+tgt.harvest.test        → registrable_host → harvest.test
+tgt-alt.harvest.test    → registrable_host → harvest.test        SAME registrable domain
+```
+
+so `tgt_canonical_cross_host.json`, the one fixture built to prove the cross-domain conflict row, was
+in fact a **same-domain** case. The two rules returned **opposite verdicts** on it: identical-host said
+conflict, the committed helper said auto-accept. Whichever was implemented, one committed artifact
+would have been stating something false, and neither could be fixed from inside S6-3's three paths.
+
+Corrected here, in one checkpoint, without touching `registrable_host` or reopening Stage 1:
+
+1. **§4 now reads "same / different registrable domain"**, with the committed helper named as the sole
+   authority and exact hostname equality noted as a subset of it. No second comparison, no
+   public-suffix implementation, no special-case host list. Every other prerequisite on those rows —
+   syntax, non-circularity, robots, `domain_migrations`, independent 301/308 — is unchanged.
+2. **CF-15's premise is corrected** (§9.7) and its replacement boundary recorded. The correction is
+   deliberately narrow: it claims nothing broader about canonical-domain handling, and the helper's own
+   best-effort limitation stays an inherited Stage 1 tradeoff.
+3. **The fixture's canonical target became `https://other-target.test/elsewhere`** — a genuinely
+   different registrable domain — with its `contract_intent` and its single `MANIFEST.json` entry
+   updated. Same filename; no fixture added, removed or renamed; no robots fixture for the new host,
+   because a cross-domain canonical is refused before any robots check and Stage 6 never probes a
+   discovered canonical.
+4. **The same-domain branch is allocated to a test-local synthetic case** in S6-3, with an anti-vacuity
+   assertion, rather than to a new permanent fixture.
+
+The rule this one leaves behind: **when a plan states what an existing API does, check the API.** This
+note's justification was sound reasoning from a premise nobody had verified, and it survived plan
+approval, a decision-record checkpoint and a fixture-scope correction before a preflight caught it.
 
 ---
 
