@@ -1,6 +1,6 @@
 # Stage 7 implementation plan — AX corpus migration
 
-**Status: `APPROVED — PLAN OF RECORD; S7-0 AND S7-1 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
+**Status: `APPROVED — PLAN OF RECORD; S7-0, S7-1 AND S7-2 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
 
 ```text
 plan opened at        0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   Stage 6 closeout
@@ -16,12 +16,14 @@ live requests         none, ever, by this pipeline
 ## 0 · Authority, and what this document does not authorize
 
 **This document is the approved plan of record for Stage 7.** `S7-0` — writing it and the Stage 7
-section of `docs/harvest/TODO.md` — is complete. **`S7-1`, the read-only entity assessment, is also
-complete**; it migrated **zero** entities, which is what it was for.
+section of `docs/harvest/TODO.md` — is complete. **`S7-1`, the read-only entity assessment, is
+complete**; it migrated **zero** entities, which is what it was for. **`S7-2`, the suspicious-URL
+guard, is complete**; it refuses URLs and nothing else, and refuses **0 of the 231** protected AX
+case pages.
 
-**`S7-2` … `S7-C` remain unapproved**, and nothing in this document approves them: no AX mapping, no
-guard, no CLI and no apply path exists, and none may be written until the checkpoint that owns it is
-approved by name.
+**`S7-3` … `S7-C` remain unapproved**, and nothing in this document approves them: no AX mapping, no
+CLI and no apply path exists, and none may be written until the checkpoint that owns it is approved
+by name.
 
 - **Approving this plan approves no implementation checkpoint.** Not S7-1, not any later one.
 - **Listing a checkpoint's path set here does not authorize that checkpoint.** §9 exists so a
@@ -399,6 +401,15 @@ The detailed patterns from the master plan group under those four ids:
 | `feed_path` | the path's **last segment** is `feed`, `rss` or `atom` |
 | `index_page` | `raw.githubusercontent.com` + a path ending `README.md`; **or** a path segment beginning `awesome-`; **or** a `tag` or `category` path segment; **or** a trailing `/page/<n>` |
 
+**Precedence (clarified at S7-2, the one design clarification that checkpoint was authorized to
+make).** A URL can satisfy more than one rule — `https://www.google.com/search?q=x` satisfies the
+first two, `https://example.test/tag/ai/feed` the last two. The rule ids above are an **ordered**
+constant and the **first match wins**, in exactly that order: `search_engine_host` ·
+`search_query_path` · `feed_path` · `index_page`. The order runs from the most specific claim about
+the URL's origin to the most general claim about its shape, so the reported rule is the strongest
+thing known about the URL. It is deterministic and pinned in both directions by the suite: one rule
+never masks a lower one that fires on its own.
+
 **The predicates are matched on structure — host equality and path segments — never on substrings**
 (erratum **E24**). Measured against the corpus at HEAD: a literal substring reading of §11's wording
 rejects **5 of 231 legitimate case pages** (4 `cloud.google.com` vendor-blog URLs caught by
@@ -659,8 +670,8 @@ suspicious-URL hits            0       under the D7-H structural predicates (5 u
 
 ## 9 · Checkpoint decomposition
 
-**S7-1 is complete. None of the remaining checkpoints is approved.** Each requires separate approval
-by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
+**S7-1 and S7-2 are complete. None of the remaining checkpoints is approved.** Each requires separate
+approval by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
 plan and to `docs/harvest/TODO.md`.
 
 ### S7-1 · Entity assessment — **COMPLETE**
@@ -727,7 +738,7 @@ checkers exit 0. The protected registry is byte-identical before and after, asse
 suite; the 18 protected files and the 508 untracked paths are unchanged; no runtime path was created;
 no request of any kind was made.
 
-### S7-2 · Migration base and suspicious-URL guard
+### S7-2 · Migration base and suspicious-URL guard — **COMPLETE**
 
 The four rule ids, the structural predicates, the override reader, the bundle path builders. Pure —
 no filesystem output. **No config edit.**
@@ -739,6 +750,54 @@ tests/test_taxonomy_migration.sh
 docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md
 docs/harvest/TODO.md
 ```
+
+**As shipped — the guard only.** S7-2 delivered the minimal foundation the guard needs and nothing
+else: **the override reader and the bundle path builders were NOT written**, because neither is
+required to decide whether one URL is suspicious, and a checkpoint does not build what it does not
+need. They stay available to the checkpoint that first has a caller for them.
+
+Public surface, four names:
+
+```text
+SUSPICIOUS_RULE_IDS       ("search_engine_host", "search_query_path", "feed_path", "index_page")
+                          one immutable ordered constant — the vocabulary AND the precedence
+MigrationInputError       input that is not an absolute http(s) URL. Deliberately NOT one of the
+                          four verdicts: "not a URL" and "a search page" are different findings
+GuardMatch                frozen, value-comparable, exactly two fields: rule_id and detail. There
+                          is no field that could carry a replacement URL
+suspicious_url_match(url) the complete match, or None
+looks_like_index_or_search(url)   the boolean convenience predicate, delegating to the above
+```
+
+**Precedence is first-match in the constant's order**, pinned in both directions:
+`https://www.google.com/search?q=ai` → `search_engine_host`; `https://example.test/tag/ai/feed` →
+`feed_path`; and each lower rule still fires on its own when no higher one does.
+
+**`urlkey.registrable_host` is deliberately not used**, and a test asserts `base.py` imports exactly
+`dataclasses` and `urllib.parse`. The registrable domain of `cloud.google.com` is `google.com`, so
+resolving hosts that way would reintroduce the E24 defect. Host **equality** against a committed
+full-host set — plus a first-label `search.` check — is the contract. No second canonicalizer,
+registrable-domain parser or URL normalizer was created.
+
+**Refusal only.** The guard never rewrites, repairs, percent-decodes or prepends a scheme; the raw
+input is examined and returned untouched, and the suite asserts the detail text contains no URL at
+all. `config/harvest/migration_overrides.v1.json` is **read by a test to prove the four ids match its
+declared `matched_rule` vocabulary** and is otherwise untouched.
+
+**Measured against the protected AX corpus: `0 of 231` suspicious URLs** — and the zero is proved
+non-vacuous rather than asserted: the corpus is checked to be exactly 231 rows with non-empty
+absolute URLs, and ten fabricated positives run through the same loop and are all refused. Each of
+the four rules has at least two positive examples; the negative controls include all four
+`cloud.google.com` vendor-blog URLs, the E24 LinkedIn article with its interior `/search/` segment,
+`research.example.com`, `/feeds/latest`, `/tags/ai`, `/awesome/thing`, `?faq=1`, `?queryset=1`,
+`?ref=query`, and `github.com/.../README.md` (the README rule is scoped to
+`raw.githubusercontent.com` and is not generalised).
+
+**Validation:** focused `tests/test_taxonomy_migration.sh` **71 assertions (43 S7-1 + 28 S7-2)**,
+plus `identity` 42, `records` 51 and `schema` 35; then the full gate once — **39/39 suites,
+1,886 assertions (1,844 unittest + 42 shell)**; then all five checkers exit 0. The S7-1 assessment
+still regenerates byte-identically; both protected registries are byte-identical; no runtime path was
+created; no request of any kind was made.
 
 ### S7-3 · In-memory AX mapping
 

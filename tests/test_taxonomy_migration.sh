@@ -1,6 +1,32 @@
 #!/usr/bin/env bash
-# test_taxonomy_migration.sh — Stage 7 migration. At S7-1: the entity assessment.
+# test_taxonomy_migration.sh — Stage 7 migration: the entity assessment (S7-1)
+# and the suspicious-URL guard (S7-2). 71 assertions, 43 + 28.
 #
+# --- S7-2, the guard ---------------------------------------------------------
+# The guard decides whether a legacy case page is refused, so the failures that
+# matter are the ones that would refuse a legitimate page or admit an index one:
+#   * substring matching creeping back in. Read as substrings, the master plan's
+#     wording refuses five real pages in the protected corpus — four
+#     `cloud.google.com` posts caught by `google.`, and one LinkedIn article
+#     whose path merely contains a `/search/` segment (erratum E24). Both are
+#     pinned as negative controls, with `research.example.com`, `/feeds/`,
+#     `/tags/`, `?faq=` and a query VALUE containing a search token beside them;
+#   * a rule that cannot fire. Each of the four has several positive examples, so
+#     "0 of 231" is a finding about the corpus rather than a guard that never
+#     worked — and the 231-case test runs fabricated positives through the same
+#     loop to prove exactly that;
+#   * unstable precedence. A URL matching two rules is always reported under the
+#     first in the committed order, pinned in both directions;
+#   * a malformed input filed under a suspicious rule. "Not a URL" and "a search
+#     page" are different findings: the first raises, and the guard never
+#     prepends a scheme or otherwise repairs the input;
+#   * a rewritten URL. `GuardMatch` has no field that could carry one, and the
+#     detail text is asserted to contain no URL at all.
+# Purity is structural, from the module's own AST: `base.py` imports exactly
+# `dataclasses` and `urllib.parse`, executes nothing at import beyond
+# definitions, and defines no second canonicalizer or registrable-domain parser.
+#
+# --- S7-1, the entity assessment ---------------------------------------------
 # The entity registry is NOT migrated, and this suite is what keeps that a fact
 # rather than a promise. Six failures it is designed to catch, each of which
 # would put a wrong number in front of the person making the product decision:
@@ -30,8 +56,8 @@
 # checked again against a synthetic corpus with hand-known answers.
 #
 # Later Stage 7 checkpoints EXTEND this wrapper; it is not replaced. It runs
-# whatever `tests/harvest/test_migration.py` currently holds, so S7-2 onwards add
-# tests without touching the runner.
+# whatever `tests/harvest/test_migration.py` currently holds, so S7-3 onwards add
+# tests without touching the runner — S7-2 changed only this description.
 #
 # Offline: no socket, no clock, no network. The only write goes to an injected
 # temporary directory. Asserts production state/ and config/ are untouched AND

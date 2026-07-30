@@ -17,7 +17,9 @@ stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
 stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
 stage_6_closeout_commit:     0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   S6-C, PUSHED
 stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   APPROVED plan of record
-                             (S7-0 and S7-1 complete; S7-2 … S7-C unapproved)
+                             (S7-0, S7-1 and S7-2 complete; S7-3 … S7-C unapproved)
+stage_7_gate:                39/39 suites green — 1,844 unittest + 42 shell = 1,886 total
+                             (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2)
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
@@ -50,13 +52,14 @@ complete, passed, failed or waived anywhere in this file.
 **A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** and is
 synchronized at `0d2da64` — local `main`, `HEAD` and `origin/main` all agree, 0 behind / 0 ahead.
 
-**STAGE 7 IS OPEN. `S7-0` AND `S7-1` ARE COMPLETE.**
+**STAGE 7 IS OPEN. `S7-0`, `S7-1` AND `S7-2` ARE COMPLETE.**
 `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` is the **approved plan of record**; S7-1, the read-only
-entity assessment, **migrated 0 of 1,161 entities**, which is what it was for. **`S7-2` … `S7-C` are
-unapproved**: each needs its own approval by name, is limited to the exact path set declared in that
-plan's §9, and a path appearing there is not an approval to write it. No AX mapping, guard, CLI or
-apply path exists. No live request, no promotion and no real runtime migration is authorized. Green
-tests alone open nothing.
+entity assessment, **migrated 0 of 1,161 entities**, which is what it was for; S7-2, the
+suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites nothing.
+**`S7-3` … `S7-C` are unapproved**: each needs its own approval by name, is limited to the exact path
+set declared in that plan's §9, and a path appearing there is not an approval to write it. No AX
+mapping, CLI or apply path exists. No live request, no promotion and no real runtime migration is
+authorized. Green tests alone open nothing.
 
 **Baseline at Stage 7 opening**, carried from the Stage 6 closure and re-verified before S7-0 edited
 a line: **38/38 suites · 1,815 counted assertions · protected 18/18 · untracked 508/508 with drift 0,
@@ -1090,7 +1093,7 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
 - [ ] `tests/test_taxonomy_linkcheck.sh`
 - [ ] `tests/test_taxonomy_promote_txn.sh` — 4 fault-injection points + add/remove/partial modes
 
-## Stage 7 — AX corpus migration ⟵ **S7-0 AND S7-1 COMPLETE. S7-2 … S7-C NOT APPROVED.**
+## Stage 7 — AX corpus migration ⟵ **S7-0, S7-1 AND S7-2 COMPLETE. S7-3 … S7-C NOT APPROVED.**
 
 **Plan of record:** `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` — **`APPROVED — PLAN OF RECORD;
 S7-0 COMPLETE; NO IMPLEMENTATION CHECKPOINT APPROVED`**. It reconciles and **supersedes**
@@ -1150,11 +1153,35 @@ wiring (Stage 8), calibration (Stage 9), the live smoke, entity migration proper
       assertions (1,816 unittest + 42 shell)**; five checkers exit 0; the protected registry is
       byte-identical before and after; no runtime path; no request of any kind.
 
-**S7-2 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
+- [x] **S7-2** migration base and the suspicious-URL guard (`feat(harvest): add migration URL guard`)
+      — `src/harvest/migrate/base.py`, `tests/harvest/test_migration.py`,
+      `tests/test_taxonomy_migration.sh`, plus the plan and this file. Exactly the five paths declared
+      in plan §9, and **no config edit**. Public surface: the immutable ordered `SUSPICIOUS_RULE_IDS`
+      (`search_engine_host` · `search_query_path` · `feed_path` · `index_page` — the vocabulary
+      **and** the precedence), `MigrationInputError`, the frozen two-field `GuardMatch`,
+      `suspicious_url_match()` and its boolean delegate `looks_like_index_or_search()`.
+      **First-match precedence** was the one design clarification S7-2 was authorized to make, and it
+      is recorded in D7-H. **The guard refuses and nothing else:** `GuardMatch` has no field that
+      could carry a replacement, and the detail text is asserted to contain no URL — nothing is
+      rewritten, repaired, percent-decoded or given a scheme. Matching is **structural**: host
+      equality plus a first-label `search.` check, whole path segments, and query parameter **names**
+      parsed rather than searched. `urlkey.registrable_host` is deliberately unused — the registrable
+      domain of `cloud.google.com` is `google.com`, which is the E24 defect — and an AST test pins
+      that `base.py` imports exactly `dataclasses` and `urllib.parse`, executes nothing at import
+      beyond definitions, and defines no second canonicalizer. **Measured: 0 of 231 protected AX
+      `source_url` values are suspicious**, proved non-vacuous by ten fabricated positives run
+      through the same loop; each rule carries at least two positive examples, and the negative
+      controls include all four `cloud.google.com` blog URLs and the E24 LinkedIn article. **The
+      override reader and the bundle path builders were deliberately NOT written** — neither is
+      needed to decide whether one URL is suspicious. Focused suites: migration **71 (43 + 28)**,
+      identity 42, records 51, schema 35; full gate **39/39 suites, 1,886 assertions (1,844 unittest
+      + 42 shell)**; five checkers exit 0; both protected registries byte-identical; the S7-1
+      assessment still regenerates byte-identically; no runtime path; no request of any kind.
+
+**S7-3 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
 path set in plan §9. A path appearing in the plan is not an approval to write it; a checkpoint that
 finds it needs another path **stops and requests a plan correction** rather than widening its scope.
-- [ ] **S7-2** migration base and the suspicious-URL guard (`ambiguous_legacy_url`, never rewrites);
-      no config edit
+
 - [ ] **S7-3** in-memory AX mapping, schema-validated, no filesystem output
 - [ ] **S7-4** `scripts/harvest/migrate.sh` and the dry-run report
 - [ ] **S7-5** atomic apply and repeated-run semantics, injected temp root only
