@@ -1,18 +1,29 @@
 # Stage 6 — target fetching and verification: implementation plan
 
 ```text
-Status: APPROVED AS THE PLAN OF RECORD — CHECKPOINT-BY-CHECKPOINT · NO CHECKPOINT APPROVED
+Status: COMPLETED — STAGE 6 CLOSED
 ```
 
-**Approved on 2026-07-30 as the plan of record, and only as a checkpoint-by-checkpoint plan of
-record.** The approval settles what Stage 6 *is* and the order it will be built in. It authorizes no
-production code, no test, no script, no schema, no config, no filesystem write outside `docs/`, **no
-live network request**, and **not S6-1**. Every checkpoint S6-1 … S6-C still requires its own separate
-approval, named explicitly, before any file outside `docs/` changes (§13, §15).
+**Stage 6 closed on 2026-07-30** at `7aa1ccec439162d238ad87fd00c3b543ed3e8f55`, its closing
+implementation commit. Completion handoff:
+`docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md`.
 
-**The two open design decisions are RESOLVED** — D6-A and D6-B, both as recommended, recorded in §12.
-Resolving a decision authorizes the *shape* of a future change, never the change itself: the
-checkpoint each one unblocks (S6-5, S6-6) remains unapproved and unimplemented.
+**Approving this plan approved the *plan*, not any checkpoint.** Each of S6-1 … S6-C required its own
+separate approval, named explicitly, before any file outside `docs/` changed. **S6-0 · S6-0-C · S6-1 ·
+S6-2 · S6-2-C · S6-3 · S6-T · S6-TD · S6-4 · S6-5 · S6-6 · S6-6A · S6-6B · S6-7 · S6-C were each
+approved by name on 2026-07-30**; all of them shipped and are marked completed below. That rule did
+not lapse at closure: a completed stage and a green gate do **not** open Stage 7, which needs its own
+explicit approval.
+
+**S6-L — the bounded live smoke — was optional to closure and was NOT RUN.** It required approval
+twice, once as a checkpoint and once immediately before execution, and neither was given, so **live
+network access was never authorized and no Stage 6 request of any kind was made**. It is not recorded
+as passed, failed, waived or completed; it was never approved and never executed. §11.1 always allowed
+this: a green offline Stage 6 is a complete stage.
+
+**The two open design decisions were RESOLVED** — D6-A and D6-B, both as recommended, recorded in §12.
+Resolving a decision authorized the *shape* of a future change, never the change itself; each shipped
+inside the checkpoint it unblocked, D6-A at S6-5 and D6-B at S6-6.
 
 **Corrected on 2026-07-30 — S6-1 fixture scope.** An S6-1 preflight stopped without editing a file
 because this plan's own corpus wording determined no literal, implementable fixture set. The correction
@@ -25,7 +36,8 @@ file because this plan said same-domain canonical trust "is implemented as ident
 committed `urlkey.registrable_host` contradicts. Recorded as erratum **E16** (§14) and applied in §4,
 §9.7 (CF-15), §11 (S6-1 fixture #3 and the S6-3 test allocation). **`urlkey.registrable_host` is the
 single authority**; no second host comparison is added and the helper itself is unchanged. D6-A and
-D6-B remain resolved and unchanged, and no S6-3 implementation is approved or present.
+D6-B remain resolved and unchanged. *(Written before S6-3 was approved; S6-3 subsequently shipped at
+`39b709b` on the corrected rule, and `registrable_host` is still the single authority.)*
 
 **Date:** 2026-07-30 · **Branch:** `main`
 
@@ -1066,6 +1078,11 @@ timeout, no `500 → 200` retry sequence and no over-cap body, each of which bel
 
 ### S6-L · Bounded live smoke — **separately approved, and approved again at the moment of running**
 
+> **NOT RUN.** The heading states what S6-L *would* require, not what happened. Stage 6 closed without
+> it: neither approval was ever given, so no live request was made, and S6-L is recorded as unexecuted
+> and unauthorized — never as passed, failed, waived or complete. It was **optional to closure**
+> (§11.1). This specification stands unchanged for whenever it is approved.
+
 **This is the only checkpoint that makes a network request, and planning approval does not authorize
 it.** It requires explicit human confirmation immediately before execution, per CLAUDE.md's
 stop-and-ask rule for external side effects.
@@ -1089,23 +1106,41 @@ pre-approve.
 A/M  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_<date>.md   (the report section only)
 ```
 
-### S6-C · Stage 6 closeout — L0, documentation only
+### S6-C · Stage 6 closeout *(completed — documentation only)* — L0
 
-**Paths declared now, in advance**, so the authorization gap hit at the Stage 4 closeout cannot recur
-and writing the handoff needs no separate path-set approval:
+**Approved and shipped 2026-07-30.** Handoff committed at
+`docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md`, exactly the three paths declared
+below and not one more. **Paths were declared in advance**, before Stage 6 wrote a line of code, so
+the authorization gap hit at the Stage 4 closeout did not recur for the second stage running: writing
+the handoff needed no separate path-set approval, only the checkpoint approval every checkpoint needs.
 
 ```text
-A  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_<YYYY-MM-DD>.md
-M  docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md      status header only
+A  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
+M  docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md      status area and this section
 M  docs/harvest/TODO.md                             closeout registration
 ```
 
-Exactly those three paths. L0 validation only: exact three-path diff · `git diff --check` · nothing
-under `src/`, `tests/`, `scripts/`, `config/`, `schemas/`, `state/`, `data/` or any run artifact ·
-protected baseline and the 508-file untracked baseline unchanged. Per its own risk tier the focused
-suites and the full gate are **not** rerun for a documentation-only change. It must record: the commit
-chain, every deviation with its approval, CF-3 discharged, CF-1 still deferred, CF-13/15/16/17 carried
-forward, the final assertion count, and the exact repository state.
+L0 validation only, as specified: exact three-path diff · `git diff --check` · no change under
+`src/`, `tests/`, `scripts/`, `config/`, `schemas/`, `state/`, `data/` or any run artifact ·
+protected baseline 18/18 · the 508-file untracked baseline unchanged · no runtime path created.
+**The focused suites and the full gate were not rerun**, per this checkpoint's own risk tier — the
+closing gate is the one recorded in §3 of the handoff, **38/38 suites green in one run** before the
+S6-7 commit at `7aa1cce`.
+
+Following the S5-C precedent, the plan edit covers the status area **and** this section: both are the
+plan describing its own closure. No historical approval record, erratum or planning decision was
+rewritten — the two preflight-correction notes in the header keep their original wording, with one
+parenthetical noting that S6-3 subsequently shipped.
+
+**S6-L was optional to this closure and was not run**, because it was never approved (§11.1, and the
+status note at the head of this plan). It is recorded as unexecuted and unauthorized — not as passed,
+failed, waived or completed.
+
+The handoff records: the commit chain through `7aa1cce`, every deviation with the approval that
+authorized it, CF-3 discharged, CF-1 still deferred and guarded, CF-13/15/16/17 carried forward with
+the deliberate CF-14 gap retained, errata E15-E21, the final assertion count on a stated basis, the
+domain-throttle status as unexplained-and-instrumented rather than fixed, canonical robots evidence
+still unwired, and the exact repository state.
 
 ### 11.1 Dependency graph
 

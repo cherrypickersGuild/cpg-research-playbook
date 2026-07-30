@@ -13,18 +13,38 @@ stage_4_closing_commit:      b303d9db1e7433a740960bfbaaf83e82acfd8433   S4-5B
 stage_4_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md
 stage_5_closing_commit:      bc920b5b8b57907165b7a5f8d47239383b974212   S5-7
 stage_5_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026-07-30.md
+stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
+stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
-push_state:                  origin/main at e178586 (S5-5); S5-6 and S5-7 local-only, 2 unpushed
-assertions:                  1,324 across 30 suites, all green
-                             (940 at Stage 4 close + 33 S5-1 + 44 S5-2 + 46 S5-3
-                              + 43 S5-4 + 52 S5-5 + 90 S5-6 + 76 S5-7)
-untracked_baseline:          508 files, byte-identical; drift 0
+push_state:                  origin/main at 6bf7f51 (Stage 5 closeout); 14 Stage 6 commits
+                             local-only and unpushed before S6-C
+assertions:                  38/38 suites green — 1,773 unittest + 42 shell = 1,815 total
+                             (1,773 across 36 unittest suites; 42 across 2 shell suites,
+                              config 18 + protected baseline 24. Basis stated because it
+                              changed during Stage 6: the Stage 5 figure of 1,324 across 30
+                              suites included the shell suites, the interim Stage 6 figures
+                              did not.)
+untracked_baseline:          508 files, byte-identical; drift 0, missing 0, extra 0
 ```
 
 **STAGE 4 IS CLOSED** as of 2026-07-30 — see
 `docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md` for the commit chain, closure
 validation, repository state and successor constraints. `STAGE_4_IMPLEMENTATION_PLAN.md` reads
 `COMPLETED — STAGE 4 CLOSED`; its §12 records the documentation-only closeout.
+
+**STAGE 6 IS CLOSED** as of 2026-07-30 at `7aa1ccec439162d238ad87fd00c3b543ed3e8f55` — see
+`docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md` for the commit chain, the delivered
+target-fetching contracts, closure validation, repository state, carried-forward findings and
+successor constraints. `STAGE_6_IMPLEMENTATION_PLAN.md` reads `COMPLETED — STAGE 6 CLOSED`; its
+§11 S6-C section records the documentation-only closeout.
+
+**S6-L, the bounded live smoke, was optional to that closure and was NOT RUN** — it needed approval
+twice, once as a checkpoint and once immediately before execution, and neither was given. **Live
+network access was never authorized and no Stage 6 request of any kind was made.** It is not marked
+complete, passed, failed or waived anywhere in this file.
+
+**A completed stage authorizes nothing in the next one.** **Stage 7 is not open** and has no planning
+document; green tests alone do not open it.
 
 ---
 
@@ -670,8 +690,8 @@ alias conflicts). Until then `designated_target_fetch_owner_lane_id` and
 `designated_extraction_owner_lane_id` stay null, which is their committed meaning.
 
 **Plan of record for target fetching:** `docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md` —
-**`APPROVED AS THE PLAN OF RECORD — CHECKPOINT-BY-CHECKPOINT · NO CHECKPOINT APPROVED`**
-(2026-07-30). It scopes Stage 6 to **target fetching and verification only**; the `refresh` /
+**`COMPLETED — STAGE 6 CLOSED`** (2026-07-30). It scopes Stage 6 to **target fetching and
+verification only**; the `refresh` /
 `linkcheck` / `promote` / `diff` / `compare-runs` subcommands, the transaction journal and the
 promotion tests listed under this heading stay **unscheduled, unapproved and untouched** (plan §14
 erratum E11). Checkpoint sequence
@@ -682,18 +702,20 @@ plan §7.4 describing an unimplemented ledger flow — erratum E18); S6-C's hand
 plan §11. **S6-L (bounded live smoke) is the only checkpoint that makes a network request** and needs
 approval twice — once as a checkpoint and once immediately before it runs.
 
-**Four things this heading deliberately keeps apart:**
+**Four things this heading deliberately keeps apart** *(recorded as they stood at planning; items 1
+and 2 are unchanged, items 3 and 4 are updated at closure)*:
 
-1. **The plan is approved as the plan of record**, checkpoint-by-checkpoint (plan §15). What Stage 6
-   *is*, and the order it will be built in, are settled.
+1. **The plan was approved as the plan of record**, checkpoint-by-checkpoint (plan §15). What Stage 6
+   *is*, and the order it was built in, were settled there.
 2. **D6-A and D6-B are RESOLVED** (plan §12), both as recommended. A resolved decision fixes the
-   *shape* of a future change and authorizes nothing else.
-3. **S6-1 through S6-C are unapproved and unimplemented.** No production module, test, schema,
-   script, config or fixture exists for Stage 6, and none may be written until its own checkpoint is
-   approved by name. Approving the plan approved **not even S6-1**.
-4. **Live network access is not authorized.** No Stage 6 request has been made and none may be; every
-   checkpoint S6-1 … S6-7 is fixture-backed with a no-socket assertion, and S6-L is the single
-   separately approved exception, still pending both of its approvals.
+   *shape* of a future change and authorizes nothing else; each shipped inside the checkpoint it
+   unblocked, D6-A at S6-5 and D6-B at S6-6.
+3. **S6-1 through S6-C were each approved by name and have shipped.** Approving the plan approved
+   **not even S6-1**; every checkpoint below carries its own approval and its own commit.
+4. **Live network access was never authorized, and no Stage 6 request of any kind was made.** Every
+   checkpoint S6-1 … S6-7 is fixture-backed with a no-socket assertion. **S6-L, the single exception,
+   needed both of its approvals and received neither, so it was never run** — see the closure note at
+   the head of this file.
 
 - [x] **S6-0** Stage 6 plan and decision record, documentation only —
       `docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md` plus this registration. Two commits: the plan
@@ -1029,8 +1051,22 @@ approval twice — once as a checkpoint and once immediately before it runs.
         artifact root per test while one of its own tests deliberately wrote into it, so the emptiness
         assertion passed or failed on alphabetical method order. The post-interruption state is now
         **captured once in `setUpClass`** — a suite about determinism does not get to be order-dependent.
-- [ ] **S6-L, S6-C** — **not approved, not implemented.** **Live network access remains unauthorized**
-      and no Stage 6 request has been made. **D6-A and D6-B remain resolved**; D6-B is delivered.
+- [x] **S6-C** Stage 6 closeout, documentation only (`docs(harvest): record stage 6 completion`) —
+      `docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md` plus the plan's status area and
+      S6-C section, and this file. Exactly the three paths **declared up front** in plan §11 before
+      Stage 6 wrote a line of code, so the authorization gap hit at the Stage 4 closeout did not recur
+      for the second stage running. L0 validation only — exact three-path diff, `git diff --check`,
+      nothing touched under `src/`, `tests/`, `scripts/`, `config/`, `schemas/`, `state/`, `data/` or
+      any run artifact, protected baseline 18/18, the 508-file untracked baseline unchanged, no runtime
+      path created. Per its own risk tier the focused suites and the full gate were **not** rerun for a
+      documentation-only change: the closing gate is S6-7's, **38/38 suites green in one run** before
+      `7aa1cce`.
+- [ ] **S6-L** — **optional to closure, never approved, NOT RUN.** It needs approval twice, once as a
+      checkpoint and once immediately before execution; neither was given. **Live network access
+      remains unauthorized and no Stage 6 request of any kind was made.** Left unticked deliberately:
+      this is not a deferred task with work owing, it is an authorized-and-declined option. It is not
+      recorded as passed, failed, waived or complete. **D6-A and D6-B remain resolved and both are
+      delivered.**
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing
