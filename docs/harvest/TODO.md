@@ -28,12 +28,12 @@ validation, repository state and successor constraints. `STAGE_4_IMPLEMENTATION_
 ## Stage 5 — artifact persistence
 
 **Plan of record:** `docs/harvest/STAGE_5_IMPLEMENTATION_PLAN.md` —
-**`PROPOSED — PLANNING APPROVED, IMPLEMENTATION NOT APPROVED`** (2026-07-30).
+**`IN PROGRESS — S5-1 … S5-6 COMPLETE; S5-7, S5-C NOT APPROVED`** (2026-07-30).
 
-**The plan is approved; no checkpoint is.** Approving the plan authorized documentation only. Each
-of S5-1 … S5-C requires separate approval **by name** before any file outside `docs/` changes — a
-completed predecessor and a green gate do not together authorize the next checkpoint. See §12 of
-that plan.
+**A completed predecessor authorizes nothing.** Each of S5-1 … S5-C requires separate approval **by
+name** before any file outside `docs/` changes — a completed predecessor and a green gate do not
+together authorize the next checkpoint. **S5-7 and S5-C are not approved and have not begun.** See
+§12 of that plan.
 
 Stage 5 turns the completed in-memory Stage 4 pipeline into a deterministic, atomic, idempotent
 artifact tree under `state/taxonomy_harvest/`. It adds no new judgement: no classification, scoring,
@@ -112,7 +112,29 @@ threshold calibration (Stage 9), and concurrent cell execution.
       finished run are all refused. An invalid manifest, a crashed write and a `KeyboardInterrupt`
       each left the *previous* pointer intact with no debris. The pointer is one line, one trailing
       newline, no CRLF. **52 assertions**, `tests/test_taxonomy_manifest.sh`
-- [ ] **S5-6** the cell driver — `run_cells.py`, sequential over cells. **NOT APPROVED; not started**
+- [x] **S5-6** the cell driver — `src/harvest/run_cells.py`: `run()` · `configured_cells()` ·
+      `RunResult` · `CellRun` · `RunCellsError` · `MAX_CELLS`. The checkpoint that makes Stage 5 a
+      *stage* rather than a library: the committed Stage 4 pipeline is driven over the fixture
+      corpus, cell by cell, and one run's artifacts land on disk. **No other file was modified**, and
+      the eleven modules it composes (`pool`, `records`, `coverage`, `facets`, `verify`, `classify`,
+      `extract`, `dedupe`, `facetassign`, `artifacts`, `ledger`) are asserted **byte-unchanged
+      against HEAD inside the suite** — if composition had required editing one of them, it was not
+      composition.
+      One run emits **42 files** (12 cell artifacts · 3 topic artifacts · 12 rejection logs ·
+      12 ledgers · coverage · manifest · `LATEST_RUN_ID`); the file set is asserted **exactly**, so
+      an extra path fails as loudly as a missing one, and all 42 validate. Two runs with a pinned
+      clock hash identically, and so does a run with its 12 cells **shuffled**.
+      **11 zero-result cells and one `ok` cell (4 records) is a real finding about the corpus, not a
+      harness failure** — every zero cell reports `all_below_relevance_threshold`, which is what the
+      committed relevance lists actually say about these items. The bar was not lowered.
+      **One translation exists, and only one:** `verify.decide`'s six reasons onto the manifest's
+      five-value `zero_result_reason` enum, dominant-by-count with ties broken by a committed
+      precedence list, enumerated from verify's **AST** so a seventh reason fails the test rather
+      than a live cell. A cell whose source fixture is deleted reports `adapter_error`, still gets a
+      complete valid artifact, and leaves the other eleven cells, the manifest and the pointer
+      untouched. **0 target-fetch owners → the run is honestly ineligible for publication**, derived.
+      **CF-1 stays untriggered and is now guarded by a static scan**, not merely intended.
+      **91 assertions**, `tests/test_taxonomy_run_cells.sh`
 - [ ] **S5-7** recovery and re-run semantics. **NOT APPROVED; not started**
 - [ ] **S5-C** Stage 5 closeout, documentation only. Its three allowed paths — including
       `docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_<date>.md` — are **declared up front**, so the
@@ -120,13 +142,17 @@ threshold calibration (Stage 9), and concurrent cell execution.
 
 **Carried-forward findings reconciled during Stage 5 planning** (detail in §9 of that plan):
 
-- **CF-1 stays deferred.** It was recorded against "Stage 5"; Stage 5 runs cells **sequentially**, so
-  the unlocked pool paths keep zero concurrent callers. Any later change that runs cells
+- **CF-1 stays deferred, and is now guarded.** It was recorded against "Stage 5"; Stage 5 runs cells
+  **sequentially**, so the unlocked pool paths keep zero concurrent callers. S5-6 shipped that way and
+  a static scan of `run_cells.py` fails on any concurrency primitive. Any later change that runs cells
   concurrently must fix CF-1 **first**, in its own checkpoint.
 - **CF-2 / CF-7 are measured and non-blocking.** `verify.decide` can emit exactly six rejection
   reasons and **all six are already storable** in `rejection.v1.json`; the five record-only
   `not_a_case_*` / `keyword_only_match` values are unreachable from Stage 5's automated gate. No
-  schema change is required. Both remain carried forward as fidelity questions.
+  schema change is required. S5-6 met the same gap from the other side — the manifest's
+  `zero_result_reason` enum has no `off_topic` and no composite value — and translated it in exactly
+  one place rather than widening a schema; the precise reason and number still survive verbatim in
+  the cell's rejection log. Both remain carried forward as fidelity questions.
 - **CF-11 unchanged and protected.** S5-4 must prove an empty `industry.secondary` is not reported
   as a coverage gap, so the report cannot create pressure to manufacture the findings CF-11 exists
   to prevent.

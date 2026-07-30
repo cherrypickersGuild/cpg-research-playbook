@@ -1,12 +1,12 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: IN PROGRESS — S5-1 … S5-5 COMPLETE; S5-6, S5-7, S5-C NOT APPROVED
+Status: IN PROGRESS — S5-1 … S5-6 COMPLETE; S5-7, S5-C NOT APPROVED
 ```
 
 **Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
-own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-5
-were approved on 2026-07-30**; all five checkpoints shipped and are marked completed below.
+own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-6
+were approved on 2026-07-30**; all six checkpoints shipped and are marked completed below.
 Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
 together authorize the next one. This rule is restated at every checkpoint and in §12.
 
@@ -524,7 +524,84 @@ approved API.
 - **Risk tier.** L1 +FS.
 - **Depends on.** S5-2, S5-3, S5-4.
 
-### S5-6 · The cell driver
+### S5-6 · The cell driver *(completed)*
+
+**Approved and shipped 2026-07-30. 91 assertions, `tests/test_taxonomy_run_cells.sh`.** As built:
+`src/harvest/run_cells.py` — `run`, `configured_cells`, `RunResult`, `CellRun`, `RunCellsError`,
+`MAX_CELLS`, plus the private `_run_one_cell`, `_cell_row`, `_zero_result_reason`, `_full_record`,
+`_cross_reference_rows` and `_dedupe_records`. **No other file was modified.** The eleven Stage 4 and
+Stage 5 production modules it composes — `pool`, `records`, `coverage`, `facets`, `verify`,
+`classify`, `extract`, `dedupe`, `facetassign`, `artifacts`, `ledger` — are asserted **byte-unchanged
+against HEAD inside the suite**: if composition had required editing one of them, it was not
+composition.
+
+Measured on the committed corpus: one run emits **42 files** — 12 cell artifacts, 3 topic artifacts,
+12 rejection logs, 12 ledgers, a coverage report, a manifest and `LATEST_RUN_ID` — and the file set is
+asserted **exactly**, so an extra path fails as loudly as a missing one. All 42 validate against their
+committed schemas. Two runs with a pinned clock hash identically (`badfd192…`), and so does a run with
+its 12 cells shuffled. 25 source-fetch owners, 25 HTTP attempts, **0 target-fetch owners** — so the
+run is honestly ineligible for publication, derived, not asserted.
+
+**The corpus is 11 zero-result cells and one `ok` cell (4 records), and that is a real finding, not a
+harness failure.** Every zero cell reports `all_below_relevance_threshold`, which is what the
+committed relevance lists actually say about these fixture items. The bar was not lowered to
+manufacture a result.
+
+**One translation exists, and only one.** `verify.decide` emits six rejection reasons; the manifest's
+`zero_result_reason` enum admits five values and has no `off_topic`. `ZERO_RESULT_FOR_REJECTION` is
+the single mapping, and a cell's reason is the **dominant** one by count with ties broken by a
+committed precedence list — a function of the rejections, never of scoring order. The mapping is
+pinned the way S5-3 pinned CF-2: the test enumerates the reasons from `verify.decide`'s **AST**, so a
+seventh reason fails the suite instead of a live cell reporting the wrong one. `insufficient_evidence
+→ all_rejected_quality` is CF-7 seen from the other side and is recorded in §9.2, not invented here;
+the exact reason and number survive verbatim in the cell's rejection log either way.
+
+**A failure is contained, and named.** A cell whose source fixture is deleted reports `adapter_error`,
+still receives a complete valid artifact, and the other eleven cells and the manifest and pointer are
+unaffected — measured, not assumed. The manifest's `error_reason` enum is **narrower** than the
+adapter vocabulary (`http_4xx`, `index_fetch_failed`, `robots_denied_index` and the generic
+`adapter_error` have no manifest value); an inadmissible reason becomes `null` rather than being
+bent into a nearby value that would be a lie, and the adapter's own reason survives in
+`metadata.sources[].reason`, which the schema leaves free-form.
+
+**Contract clarified while building** (no deviation; recorded because the plan's one-line data flow is
+narrower than the composition requires):
+
+- **A record is filed into the cell the committed classifier assigned, not the cell that discovered
+  it.** Discovery and ownership are different things and conflating them would hide a real outcome.
+  The manifest's `candidates`/`accepted`/`rejected` therefore describe what a cell **processed**; its
+  artifact holds what was **classified into** it. On this corpus the two sets coincide exactly.
+- **`records.make_cross_reference` is driven from `precedence.v1.json`, not from a new policy.** The
+  committed setting reads `cross_topic_policy: "cross_reference"` — "Owning topic (highest precedence
+  rank) emits a full record; every other qualifying topic emits a cross_reference row pointing at
+  it." The owner and the other qualifying cells are both already chosen by `classify.classify`, so
+  emitting the pointer is mechanical. Within one topic nothing is emitted: duplicate suppression
+  inside a topic is mandatory and not configurable, so a pointer beside its own full record would be
+  exactly the duplicate the rule forbids. **The corpus produces no cross-topic competition**, so this
+  path is proved by unit tests over injected classifications and a test records that the baseline run
+  needs none — visible by design rather than silently dead.
+- **Duplicate `record_id` survivors are chosen by content.** Two cells can discover one URL, and
+  `records.sort_key` is identical for two records of one identity, so it cannot break that tie on its
+  own; the tie breaks on the serialized bytes. Ordering alone would have made the survivor depend on
+  which cell ran first — the same defect S5-2 found in the topic merge.
+- **The manifest omits `coverage` and `rounds`.** `coverage_report.v1.json`'s `by_category` rows carry
+  `counts_toward_gap` and `unmet_reason`, which the manifest's `coverage[].axis_targets` closes out;
+  projecting them in would either fail validation or need a second, drifting copy. The coverage report
+  is its own committed artifact at `runs/<run_id>/coverage.json`. Stage 5 runs one round — round 1 is
+  always the configured cells — so `rounds` is omitted rather than claimed empty, and
+  `source_preflight` is empty because a preflight re-checks **live** sources and nothing here is live.
+- **The lease tree lives in its own temp directory, not under `root`.** §2.1 names no `locks/` for
+  Stage 5, so `root` holds exactly the committed layout and nothing else.
+- **The committed policy is read unmodified; only `sleep` is injected as a no-op.** No threshold,
+  weight, exclusion, retry rule or crawl-delay is touched, so what verify applies and what the
+  manifest records are the committed values. Pacing exists to protect a remote host and every response
+  here comes from a local file.
+
+**CF-1 stays untriggered and is now guarded, not merely intended.** A static scan of the module
+(docstrings stripped, the committed `code_only` idiom) fails on `threading`, `multiprocessing`,
+`asyncio`, `async def`, `await`, `Lock(` or `Semaphore(`. Cells run one after another, so
+`pool.add_candidate`, `acquire_target_fetch` and `acquire_extraction` keep their zero concurrent
+callers.
 
 - **Goal.** Run the Stage 4 pipeline over the fixture corpus for each configured cell and emit the
   full artifact set for one run. This is the checkpoint that makes Stage 5 a *stage* rather than a
@@ -666,6 +743,10 @@ callers and the unlocked check-then-set paths stay harmless.
 checkpoint, before the concurrency lands. Sequential execution is a deliberate Stage 5 constraint,
 not an oversight, and it is also what makes the byte-determinism proofs in §3.4 straightforward.
 
+**S5-6 shipped sequentially and the constraint is now enforced by a test**, not merely intended: a
+static scan of `run_cells.py` fails on `threading`, `multiprocessing`, `asyncio`, `async def`,
+`await`, `Lock(` or `Semaphore(`. CF-1 remains deferred with zero concurrent callers.
+
 ### 9.2 CF-2 and CF-7 — rejection vocabulary. **Measured, non-blocking.**
 
 CF-2 was recorded for "Stage 5, when that log is first written". Measured against the committed code:
@@ -686,6 +767,17 @@ test fails instead of the artifact.
 CF-7 (`below_composite_threshold` absent) is likewise non-blocking: `verify.decide` already reports
 the closest honest reason with the detail naming the actual rule and number. Both stay carried
 forward as **fidelity** questions for whichever stage revisits the rejection vocabulary.
+
+**S5-6 met the same gap from the other side and did not widen it.** The manifest's
+`zero_result_reason` enum admits five values and has no `off_topic`, so a cell's reason is translated
+in exactly one place (`run_cells.ZERO_RESULT_FOR_REJECTION`): `off_topic` and
+`below_relevance_threshold` → `all_below_relevance_threshold`; `below_quality_threshold` and
+`insufficient_evidence` → `all_rejected_quality`; `developer_only_audience` and
+`category_exclusion_applied` → `category_exclusion_applied`, which is what `cases.v1.json` already
+states for a dev-tool sweep. The `insufficient_evidence` row is CF-7's composite gap resurfacing: the
+zero-result vocabulary has no nearer value, and the precise reason and number survive verbatim in the
+cell's rejection log. **No schema changed.** The mapping is pinned by the same AST enumeration S5-3
+used, so a seventh `verify.decide` reason fails the suite rather than a live cell.
 
 ### 9.3 S4-4 live-corpus calibration. **Untouched by Stage 5.**
 
