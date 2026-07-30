@@ -1,12 +1,12 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: IN PROGRESS — S5-1 … S5-6 COMPLETE; S5-7, S5-C NOT APPROVED
+Status: IN PROGRESS — S5-1 … S5-7 COMPLETE; S5-C NOT APPROVED
 ```
 
 **Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
-own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-6
-were approved on 2026-07-30**; all six checkpoints shipped and are marked completed below.
+own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-7
+were approved on 2026-07-30**; all seven checkpoints shipped and are marked completed below.
 Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
 together authorize the next one. This rule is restated at every checkpoint and in §12.
 
@@ -621,7 +621,84 @@ callers.
 - **Risk tier.** L2 +FS — it composes six committed modules.
 - **Depends on.** S5-1 … S5-5.
 
-### S5-7 · Recovery and re-run semantics
+### S5-7 · Recovery and re-run semantics *(completed)*
+
+**Approved and shipped 2026-07-30. 76 assertions, `tests/test_taxonomy_recovery.sh`.** As built:
+`artifacts.py` gained `WriteJournal`, `write_journal`, `run_is_finished` and `verify_latest_run_id`;
+`run_cells.py` gained an up-front repeat refusal and wrapped its entire write phase in the journal.
+No signature changed, no schema changed, and the nine Stage 4 modules stayed byte-unchanged.
+
+**Interruption was measured, not reasoned about.** `os.replace`, `os.unlink` and the pointer write
+were each actually broken. A run interrupted two artifacts in: the two files that landed both
+validate, the interrupted run has **no manifest**, there is **no temp debris**, `LATEST_RUN_ID` still
+names run 1 and `verify_latest_run_id` confirms it, and — the property worth the most — **the
+cross-run ledger was not half-updated** (`seen_count` still 1, `last_seen_at` still run 1's stamp). A
+`KeyboardInterrupt` behaves identically, which is why the S5-1 cleanup catches `BaseException`.
+
+**The manifest-without-pointer case is the safe direction, and is left that way deliberately.** A run
+that dies between the two leaves a complete, valid, orphaned manifest and a pointer still naming the
+previous run. That run is then **refused** if repeated rather than resumed: no resume policy was
+invented, and the operator runs a fresh `run_id`.
+
+**The repeat refusal moved to the front, and that is the whole point of it.** `publish_run` already
+refused a finished `run_id`, but only at the end — by which time the cross-run ledger had counted
+every candidate twice and the rejection log had been replaced, for a run that was never going to be
+published. `run_is_finished` is checked before the first byte; a refused repeat leaves the tree
+**hash-identical**, asserted.
+
+**The sweeper proves ownership instead of pattern-matching.** `WriteJournal` removes only temp paths
+it watched being created — a foreign `.tmp_*` is left strictly alone, because a glob-and-delete
+sweeper would destroy another writer's in-flight file, which is a worse failure than the debris it
+cleans. It refuses to unlink any name without the temp prefix even if told to, so it cannot be talked
+into deleting a finished artifact; it never raises (it runs from a `finally`, where raising would mask
+the interruption that called it); and it is idempotent. A clean run sweeps nothing, and says so
+(`RunResult.swept == ()`).
+
+**Contract clarified while building** (no deviation; recorded because the invariant line is looser
+than the committed schemas):
+
+- **`ledgers/` merge; `rejections/` are replaced per cell, and cannot merge.** `rejection.v1.json` is
+  `additionalProperties: false` and carries exactly one `harvest_run_id`, and its entries carry no run
+  field — so a merged log could not name the run that produced its rows, and those rows would grow
+  without bound and become indistinguishable. The cross-run guarantee that actually matters is
+  asserted instead: **a run never clobbers a cell it did not run** (running cell B leaves cell A's
+  ledger and rejection log byte-identical). Bending the schema to fit the sentence was rejected.
+- **"Reproduces identical artifacts over unchanged inputs" — the clock is an input.** Two consecutive
+  runs into one root differ in exactly four fields, and the suite **enumerates** that difference set
+  with a recursive JSON diff rather than normalizing it away, so a fifth moving field is a failure
+  rather than a silent pass: `harvest_run_id`, `generated_at`, `discovered_at` and `freshness_score`.
+  All four are derived from the run instant. `relevance`, `quality`, `audience_fit`, every identity,
+  every classification and all metadata counts are reproduced exactly — **a re-run does not
+  re-judge**. Freshness is asserted to have *decayed*, not merely changed: an item read a day later is
+  less fresh, and a re-run reporting identical freshness would be the defect.
+
+**One defect in S5-6's own test scaffolding was found and fixed by writing this suite.** The
+interruption injection originally counted every `os.replace`. `HttpClient` writes its domain leases
+atomically too, so the counter spent its budget on lease files during discovery and the run died
+*before writing any artifact* — the partial-tree tests passed while proving nothing. The injection is
+now scoped to renames under the artifact root, and a test asserts the interruption really was
+part-way through (exactly two artifacts present) so the class cannot go vacuous again.
+
+**Allowed-path addition, approved 2026-07-30: `tests/harvest/test_run_cells.py` (M), two edits.**
+Both are guards S5-6 left that measure repository state rather than a contract, and neither can
+survive the approval of the checkpoint it constrains — the same reconciliation S5-3, S5-4 and S5-5
+each recorded. (1) `test_it_does_not_begin_s5_7_or_stage_6` forbade the token `sweep` in
+`run_cells.py`, which is precisely this checkpoint's semantics; per the S5-5 precedent the **entire**
+method was deleted rather than narrowed, and **not** replaced with a guard against S5-C or Stage 6.
+(2) `test_the_stage_4_modules_are_byte_unchanged` listed `artifacts.py` and `ledger.py` among the
+modules asserted unchanged against HEAD — but §8 of this plan states outright that `artifacts.py`
+accretes across S5-2, S5-3, S5-4, S5-5 **and S5-7**, so the assertion asserted something the plan
+says is false and would have made every future checkpoint red pre-commit (a CF-6 shape, on a
+checkpoint that edits no config). It was narrowed to the **nine Stage 4 modules**, which is what its
+own comment always claimed it was testing. Renaming the sweeper to dodge the token scan was rejected
+on S5-4's precedent: it would obfuscate code to satisfy a test.
+
+**CF-1 stays deferred.** The journal is a module-level handle rather than a parameter because every
+writer in the process — including `ledger.py`'s two, which this checkpoint may not edit — funnels
+through `write_atomic`, and threading an argument through each would leave whichever one was
+forgotten unswept. It **refuses to nest**, so two overlapping runs in one process are rejected rather
+than allowed to cross-attribute their temp files. A concurrency checkpoint must revisit it, and must
+still fix CF-1 first.
 
 - **Goal.** Prove the tree survives interruption, and define what a second run does.
 - **Allowed paths.** `src/harvest/artifacts.py` (M) · `src/harvest/run_cells.py` (M) ·
@@ -746,6 +823,13 @@ not an oversight, and it is also what makes the byte-determinism proofs in §3.4
 **S5-6 shipped sequentially and the constraint is now enforced by a test**, not merely intended: a
 static scan of `run_cells.py` fails on `threading`, `multiprocessing`, `asyncio`, `async def`,
 `await`, `Lock(` or `Semaphore(`. CF-1 remains deferred with zero concurrent callers.
+
+**S5-7 added a second thing a concurrency checkpoint must revisit, and made it refuse rather than
+misbehave.** The write journal is a module-level handle in `artifacts.py`, because every writer in
+the process funnels through `write_atomic` and `ledger.py`'s two writers could not be given a
+parameter. It **refuses to nest**: two overlapping runs in one process raise instead of
+cross-attributing their temp files. S5-7's static scan covers `artifacts.py` as well as
+`run_cells.py`.
 
 ### 9.2 CF-2 and CF-7 — rejection vocabulary. **Measured, non-blocking.**
 

@@ -33,8 +33,16 @@ accounting all run unmodified above the injected opener, exactly as in the Stage
 suite. Only pacing sleeps are suppressed: a fixture is a local file and there is
 no remote host to be polite to.
 
-Not here: target-page fetching and live requests (Stage 6), recovery and re-run
-semantics (S5-7), promotion, concurrency.
+S5-7 added the run's relationship with time and with itself. A `run_id` that
+already has a manifest in this root is refused BEFORE the first byte is written,
+because a finished run's artifacts are immutable and discovering the clash at
+publication would mean the cross-run ledger had already counted every candidate
+twice. Every write is journalled, so an interruption sweeps the temp files this
+run created and provably nothing else, and a run that dies leaves the previous
+run's artifacts and `LATEST_RUN_ID` exactly as it found them.
+
+Not here: target-page fetching and live requests (Stage 6), promotion,
+concurrency.
 """
 import datetime
 import glob
@@ -253,7 +261,7 @@ class RunResult:
     """What one run produced. Returned so a caller need not re-read the tree."""
 
     __slots__ = ("run_id", "root", "started_at", "finished_at", "cells", "records",
-                 "manifest", "coverage", "paths", "ran")
+                 "manifest", "coverage", "paths", "ran", "swept")
 
     def __init__(self, **kw):
         for name in self.__slots__:
@@ -559,10 +567,26 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
 
     Order matters at the end: the manifest is written and only then does
     `LATEST_RUN_ID` advance, so the pointer can never name an incomplete run.
+
+    Re-run semantics (S5-7): a `run_id` that already has a manifest in this root
+    is refused **before the first byte is written**, and every write of the run is
+    journalled so an interruption sweeps its own temp files and nothing else.
     """
     now = (clock() if clock is not None else _default_clock())
     stamp = now.strftime(STAMP_FORMAT)
     harvest_run_id = artifacts.run_id(clock=lambda: now)
+
+    # Refused HERE, not at publication. A finished run's artifacts are immutable;
+    # discovering the clash after the cells had run would mean the cross-run
+    # ledger had already counted every candidate twice and the rejection logs had
+    # already been replaced — for a run that was never going to be published.
+    if artifacts.run_is_finished(root, harvest_run_id):
+        raise RunCellsError(
+            "run %s already finished in this root: %s exists. Refusing to re-run "
+            "a finished run_id — its artifacts are immutable and the cross-run "
+            "ledger would count every candidate a second time. Run again with a "
+            "fresh run_id."
+            % (harvest_run_id, artifacts.run_manifest_path(root, harvest_run_id)))
 
     def verify_clock():
         return stamp
@@ -672,98 +696,104 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         by_cell[cell_id] = _dedupe_records(by_cell[cell_id])
     all_records = _dedupe_records(all_records)
 
-    # ------------------------------------------------------------- artifacts
-    paths = []
-    cell_artifacts = {}
-    for run_ in runs:
-        cell = run_.cell
-        artifact = artifacts.build_cell_artifact(
-            by_cell[run_.cell_id],
-            topic=cell["topic"], topic_slug=cell["topic_slug"],
-            category=cell["category"], category_slug=cell["category_slug"],
-            cell_id=run_.cell_id, harvest_run_id=harvest_run_id,
-            generated_at=stamp,
-            metadata={"sources": run_.sources, "rejected": len(run_.rejected)})
-        cell_artifacts[run_.cell_id] = artifact
-        paths.append(artifacts.write_cell_artifact(
-            artifacts.cell_artifact_path(root, harvest_run_id, run_.cell_id),
-            artifact))
+    # Every write from here to the pointer is journalled, so an interruption
+    # sweeps exactly the temp files THIS run created and provably nothing
+    # else. Sequential by contract: the journal refuses to nest.
+    with artifacts.write_journal(owner=harvest_run_id) as journal:
+        # ------------------------------------------------------------- artifacts
+        paths = []
+        cell_artifacts = {}
+        for run_ in runs:
+            cell = run_.cell
+            artifact = artifacts.build_cell_artifact(
+                by_cell[run_.cell_id],
+                topic=cell["topic"], topic_slug=cell["topic_slug"],
+                category=cell["category"], category_slug=cell["category_slug"],
+                cell_id=run_.cell_id, harvest_run_id=harvest_run_id,
+                generated_at=stamp,
+                metadata={"sources": run_.sources, "rejected": len(run_.rejected)})
+            cell_artifacts[run_.cell_id] = artifact
+            paths.append(artifacts.write_cell_artifact(
+                artifacts.cell_artifact_path(root, harvest_run_id, run_.cell_id),
+                artifact))
 
-    for topic_slug in sorted({run_.cell["topic_slug"] for run_ in runs}):
-        members = [run_ for run_ in runs if run_.cell["topic_slug"] == topic_slug]
-        artifact = artifacts.build_topic_artifact(
-            [cell_artifacts[m.cell_id] for m in sorted(members,
-                                                       key=lambda m: m.cell_id)],
-            topic=members[0].cell["topic"], topic_slug=topic_slug,
-            harvest_run_id=harvest_run_id, generated_at=stamp)
-        paths.append(artifacts.write_topic_artifact(
-            artifacts.topic_artifact_path(root, harvest_run_id, topic_slug),
-            artifact))
+        for topic_slug in sorted({run_.cell["topic_slug"] for run_ in runs}):
+            members = [run_ for run_ in runs if run_.cell["topic_slug"] == topic_slug]
+            artifact = artifacts.build_topic_artifact(
+                [cell_artifacts[m.cell_id] for m in sorted(members,
+                                                           key=lambda m: m.cell_id)],
+                topic=members[0].cell["topic"], topic_slug=topic_slug,
+                harvest_run_id=harvest_run_id, generated_at=stamp)
+            paths.append(artifacts.write_topic_artifact(
+                artifacts.topic_artifact_path(root, harvest_run_id, topic_slug),
+                artifact))
 
-    # ------------------------------------------------- rejections and ledger
-    for run_ in runs:
-        pairs = [(candidate, run_.verdicts[candidate.candidate_key])
-                 for candidate in run_.rejected]
-        paths.append(ledger_mod.write_rejection_log(
-            root, run_.cell_id,
-            ledger_mod.build_rejection_log(pairs, cell_id=run_.cell_id,
-                                           harvest_run_id=harvest_run_id,
-                                           generated_at=stamp)))
+        # ------------------------------------------------- rejections and ledger
+        for run_ in runs:
+            pairs = [(candidate, run_.verdicts[candidate.candidate_key])
+                     for candidate in run_.rejected]
+            paths.append(ledger_mod.write_rejection_log(
+                root, run_.cell_id,
+                ledger_mod.build_rejection_log(pairs, cell_id=run_.cell_id,
+                                               harvest_run_id=harvest_run_id,
+                                               generated_at=stamp)))
 
-        observations = []
-        for candidate in run_.extracted:
-            verdict = run_.verdicts[candidate.candidate_key]
-            classification = run_.classifications[candidate.candidate_key]
-            observation = {
-                "identity_url": candidate.identity_url,
-                "content_id": candidate.content_id,
-                "source_id": (candidate.source_ids[0]
-                              if candidate.source_ids else None),
-                "outcome": "accepted" if verdict.accepted else "rejected",
-            }
-            if verdict.accepted:
-                observation["record_id"] = urlkey.record_id(
-                    classification.topic_slug, candidate.identity_url)
-            else:
-                observation["rejection_reason"] = verdict.rejection_reason
-            observations.append(observation)
-        observations.sort(key=lambda o: o["identity_url"])
+            observations = []
+            for candidate in run_.extracted:
+                verdict = run_.verdicts[candidate.candidate_key]
+                classification = run_.classifications[candidate.candidate_key]
+                observation = {
+                    "identity_url": candidate.identity_url,
+                    "content_id": candidate.content_id,
+                    "source_id": (candidate.source_ids[0]
+                                  if candidate.source_ids else None),
+                    "outcome": "accepted" if verdict.accepted else "rejected",
+                }
+                if verdict.accepted:
+                    observation["record_id"] = urlkey.record_id(
+                        classification.topic_slug, candidate.identity_url)
+                else:
+                    observation["rejection_reason"] = verdict.rejection_reason
+                observations.append(observation)
+            observations.sort(key=lambda o: o["identity_url"])
 
-        paths.append(ledger_mod.write_ledger(
-            root, run_.cell_id,
-            ledger_mod.merge_ledger(ledger_mod.load_ledger(root, run_.cell_id),
-                                    observations, now=stamp,
-                                    cell_id=run_.cell_id)))
+            paths.append(ledger_mod.write_ledger(
+                root, run_.cell_id,
+                ledger_mod.merge_ledger(ledger_mod.load_ledger(root, run_.cell_id),
+                                        observations, now=stamp,
+                                        cell_id=run_.cell_id)))
 
-    # -------------------------------------------------------------- coverage
-    thresholds = artifacts.policy_thresholds()
-    coverage = artifacts.build_coverage_report(
-        all_records, harvest_run_id=harvest_run_id, generated_at=stamp,
-        # One round, and the thresholds it applied were read once from the
-        # committed policy. Proved rather than asserted: the manifest's reading
-        # and the scheduler's independent reading of the same file must agree.
-        thresholds_constant=(thresholds == scheduler.load_thresholds()))
-    paths.append(artifacts.write_coverage_report(
-        artifacts.coverage_report_path(root, harvest_run_id), coverage))
+        # -------------------------------------------------------------- coverage
+        thresholds = artifacts.policy_thresholds()
+        coverage = artifacts.build_coverage_report(
+            all_records, harvest_run_id=harvest_run_id, generated_at=stamp,
+            # One round, and the thresholds it applied were read once from the
+            # committed policy. Proved rather than asserted: the manifest's reading
+            # and the scheduler's independent reading of the same file must agree.
+            thresholds_constant=(thresholds == scheduler.load_thresholds()))
+        paths.append(artifacts.write_coverage_report(
+            artifacts.coverage_report_path(root, harvest_run_id), coverage))
 
-    # -------------------------------------------------------------- manifest
-    rows = [_cell_row(run_, by_cell[run_.cell_id]) for run_ in runs]
-    accounting = pool.accounting()
-    manifest = artifacts.build_run_manifest(
-        harvest_run_id=harvest_run_id, started_at=stamp, finished_at=stamp,
-        cells=rows, mode=artifacts.MODE_HARVEST,
-        config=_config_block(configured, max_cells),
-        # A preflight is a bounded re-check of live sources at the start of a live
-        # run. Nothing is live here, so the honest value is "none performed".
-        source_preflight=(),
-        classification_decisions=decisions,
-        request_accounting=accounting,
-        target_fetch_owners=accounting.get("target_fetch_owners", 0))
+        # -------------------------------------------------------------- manifest
+        rows = [_cell_row(run_, by_cell[run_.cell_id]) for run_ in runs]
+        accounting = pool.accounting()
+        manifest = artifacts.build_run_manifest(
+            harvest_run_id=harvest_run_id, started_at=stamp, finished_at=stamp,
+            cells=rows, mode=artifacts.MODE_HARVEST,
+            config=_config_block(configured, max_cells),
+            # A preflight is a bounded re-check of live sources at the start of a live
+            # run. Nothing is live here, so the honest value is "none performed".
+            source_preflight=(),
+            classification_decisions=decisions,
+            request_accounting=accounting,
+            target_fetch_owners=accounting.get("target_fetch_owners", 0))
 
-    # Manifest first, pointer second — S5-5's one promise.
-    paths.append(artifacts.publish_run(root, harvest_run_id, manifest))
+        # Manifest first, pointer second — S5-5's one promise.
+        paths.append(artifacts.publish_run(root, harvest_run_id, manifest))
 
+    # The journal has swept on the way out of the block above; on a clean run
+    # there is nothing to sweep, and saying so is worth more than assuming it.
     return RunResult(run_id=harvest_run_id, root=root, started_at=stamp,
                      finished_at=stamp, cells=manifest["cells"],
                      records=all_records, manifest=manifest, coverage=coverage,
-                     paths=paths, ran=sorted(ran))
+                     paths=paths, ran=sorted(ran), swept=tuple(journal.swept))

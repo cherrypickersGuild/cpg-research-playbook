@@ -34,9 +34,16 @@ S5-3 added the ledger and rejection-log PATHS here, beside the other two, so the
 committed layout has one home. Their MEANING — merge semantics, outcome
 transitions, what counts as a rejection — lives in `ledger.py`.
 
-Not here: coverage or manifest semantics (S5-4, S5-5), cell execution (S5-6),
-locking, concurrency, or the network.
+S5-7 added the recovery primitives beside them: a `WriteJournal` that sweeps the
+temp files ONE run created (and provably nothing else), `run_is_finished` so a
+driver can refuse a repeat before it writes rather than after, and
+`verify_latest_run_id`, which turns the pointer's promise into something a
+caller can check after an interruption instead of assume.
+
+Not here: cell execution (S5-6 drives this module, not the reverse), target
+fetching, locking, concurrency, or the network.
 """
+import contextlib
 import copy
 import datetime
 import json
@@ -113,6 +120,97 @@ def _fsync_dir(directory):
         os.close(fd)
 
 
+# ---------------------------------------------------------------- write journal
+class WriteJournal:
+    """Every temp file one run created, so its own debris can be swept (S5-7).
+
+    `write_atomic` already removes its temp file on failure and on interruption.
+    This exists for the case where that cleanup ITSELF cannot complete: the
+    unlink is best-effort by necessity — a file can be held open, a directory can
+    turn read-only — and a swallowed failure there is exactly how a `.tmp_*` file
+    outlives the write that made it.
+
+    OWNERSHIP IS PROVED, NEVER GUESSED. The journal does not glob for `.tmp_*`;
+    it removes only paths it watched being created. A temp file belonging to
+    anything else is left strictly alone, which matters because a glob-and-delete
+    sweeper would destroy another writer's in-flight file. A finished artifact is
+    untouched by construction — it never carries the temp prefix — and the unlink
+    re-checks that prefix anyway, so the sweeper cannot be talked into removing a
+    real artifact by a bad entry.
+    """
+
+    def __init__(self, owner=None):
+        self.owner = owner            # the run_id, for diagnosis only
+        self._outstanding = []
+        self.swept = []
+
+    def note(self, path):
+        """Record a temp file that is about to exist."""
+        self._outstanding.append(path)
+
+    def done(self, path):
+        """Forget a temp file that has been renamed into place or removed."""
+        try:
+            self._outstanding.remove(path)
+        except ValueError:
+            pass
+
+    @property
+    def outstanding(self):
+        return tuple(self._outstanding)
+
+    def sweep(self):
+        """Remove what this run created and left behind. Never raises.
+
+        Called from a `finally`, so raising here would mask the interruption that
+        made the sweep necessary. A path that cannot be removed stays outstanding
+        and is reported rather than retried.
+        """
+        remaining = []
+        for path in self._outstanding:
+            if not os.path.basename(path).startswith(TEMP_PREFIX):
+                # Refused, not swept: the journal may only ever remove temp
+                # files, whatever it was told.
+                continue
+            if not os.path.exists(path):
+                continue
+            try:
+                os.unlink(path)
+            except OSError:
+                remaining.append(path)
+                continue
+            self.swept.append(path)
+        self._outstanding = remaining
+        return list(self.swept)
+
+
+# The journal in force for the current run, or None. A module-level handle
+# rather than a parameter because every writer in the process — including
+# `ledger.py`'s two — funnels through `write_atomic`, and threading an argument
+# through each of them would leave whichever one was forgotten unswept.
+# Sequential by contract: `write_journal` REFUSES to nest, so two overlapping
+# runs in one process cannot cross-attribute their temp files (see plan §9.1).
+_ACTIVE_JOURNAL = None
+
+
+@contextlib.contextmanager
+def write_journal(owner=None):
+    """Install a journal for the duration of one run, and sweep on the way out."""
+    global _ACTIVE_JOURNAL
+    if _ACTIVE_JOURNAL is not None:
+        raise ArtifactError(
+            "a write journal is already active (owner %r); refusing to nest, "
+            "because two journals cannot both own the same temp file"
+            % (_ACTIVE_JOURNAL.owner,))
+    journal = WriteJournal(owner)
+    _ACTIVE_JOURNAL = journal
+    try:
+        yield journal
+    finally:
+        _ACTIVE_JOURNAL = None
+        journal.sweep()
+
+
 def write_atomic(path, data):
     """Write `data` to `path` so that no partial file is ever observable.
 
@@ -127,6 +225,11 @@ def write_atomic(path, data):
     directory = os.path.dirname(os.path.abspath(path))
     os.makedirs(directory, exist_ok=True)
     tmp = _temp_path(directory, os.path.basename(path))
+    journal = _ACTIVE_JOURNAL
+    if journal is not None:
+        # Noted BEFORE the file exists: a crash between creation and the note
+        # would otherwise leave debris the journal has never heard of.
+        journal.note(tmp)
     try:
         with open(tmp, "wb") as handle:
             handle.write(data)
@@ -136,12 +239,15 @@ def write_atomic(path, data):
     except BaseException:
         # BaseException, not Exception: KeyboardInterrupt is exactly the
         # interruption this cleanup exists for. The temp file must not outlive
-        # the write that created it.
+        # the write that created it. If the unlink cannot complete, the entry
+        # stays outstanding and the journal sweeps it at the end of the run.
         try:
             os.unlink(tmp)
         except OSError:
             pass
         raise
+    if journal is not None:
+        journal.done(tmp)             # renamed into place; nothing left to sweep
     _fsync_dir(directory)
     return path
 
@@ -544,6 +650,54 @@ def publish_run(root, run_id_value, manifest):
     write_run_manifest(path, manifest)
     write_latest_run_id(root, run_id_value)      # LAST, and only now
     return path
+
+
+# ------------------------------------------------------------------ recovery
+def run_is_finished(root, run_id_value):
+    """True when this run already has a manifest — that is what "finished" means.
+
+    `publish_run` enforces the same fact at the END of a run. This exposes it so
+    a driver can refuse a repeat BEFORE it writes anything: discovering it only
+    at publication time would mean the cross-run ledger had already counted every
+    candidate a second time, and the cell's rejection log had already been
+    replaced, for a run that was never going to be published.
+    """
+    return os.path.exists(run_manifest_path(root, run_id_value))
+
+
+def verify_latest_run_id(root):
+    """The pointer's one promise, as a checkable predicate rather than a hope.
+
+    Returns the run_id `LATEST_RUN_ID` names, or None when no run has finished in
+    this root. Raises when the pointer names a run whose manifest is missing,
+    unreadable, invalid, or names a different run — the four states the write
+    order in `publish_run` exists to make impossible. Written to be run AFTER an
+    interruption, when "is this tree still consistent?" is the only question that
+    matters.
+    """
+    named = read_latest_run_id(root)
+    if named is None:
+        return None
+    path = run_manifest_path(root, named)
+    if not os.path.exists(path):
+        raise ArtifactError(
+            "LATEST_RUN_ID names run %s but %s does not exist; the pointer moved "
+            "before the manifest was safely on disk" % (named, path))
+    try:
+        with open(path, "rb") as handle:
+            doc = json.loads(handle.read().decode("utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        raise ArtifactError("LATEST_RUN_ID names run %s but its manifest is "
+                            "unreadable (%s)" % (named, exc)) from exc
+    errors = schema.validate(doc, "run_manifest.v1.json")
+    if errors:
+        raise ArtifactError(
+            "LATEST_RUN_ID names run %s but its manifest does not validate "
+            "(%d problem(s)): %s" % (named, len(errors), "; ".join(errors[:2])))
+    if doc.get("harvest_run_id") != named:
+        raise ArtifactError("LATEST_RUN_ID names run %s but that manifest names %r"
+                            % (named, doc.get("harvest_run_id")))
+    return named
 
 
 def write_cell_artifact(path, artifact):

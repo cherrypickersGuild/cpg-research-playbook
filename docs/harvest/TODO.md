@@ -28,12 +28,12 @@ validation, repository state and successor constraints. `STAGE_4_IMPLEMENTATION_
 ## Stage 5 — artifact persistence
 
 **Plan of record:** `docs/harvest/STAGE_5_IMPLEMENTATION_PLAN.md` —
-**`IN PROGRESS — S5-1 … S5-6 COMPLETE; S5-7, S5-C NOT APPROVED`** (2026-07-30).
+**`IN PROGRESS — S5-1 … S5-7 COMPLETE; S5-C NOT APPROVED`** (2026-07-30).
 
 **A completed predecessor authorizes nothing.** Each of S5-1 … S5-C requires separate approval **by
 name** before any file outside `docs/` changes — a completed predecessor and a green gate do not
-together authorize the next checkpoint. **S5-7 and S5-C are not approved and have not begun.** See
-§12 of that plan.
+together authorize the next checkpoint. **S5-C is not approved and has not begun**, and neither has
+Stage 6. See §12 of that plan.
 
 Stage 5 turns the completed in-memory Stage 4 pipeline into a deterministic, atomic, idempotent
 artifact tree under `state/taxonomy_harvest/`. It adds no new judgement: no classification, scoring,
@@ -135,7 +135,40 @@ threshold calibration (Stage 9), and concurrent cell execution.
       untouched. **0 target-fetch owners → the run is honestly ineligible for publication**, derived.
       **CF-1 stays untriggered and is now guarded by a static scan**, not merely intended.
       **91 assertions**, `tests/test_taxonomy_run_cells.sh`
-- [ ] **S5-7** recovery and re-run semantics. **NOT APPROVED; not started**
+- [x] **S5-7** recovery and re-run semantics — `artifacts.py` gained `WriteJournal` ·
+      `write_journal()` · `run_is_finished()` · `verify_latest_run_id()`; `run_cells.py` gained an
+      up-front repeat refusal and wrapped its whole write phase in the journal. No signature changed,
+      no schema changed, and the nine Stage 4 modules stayed byte-unchanged.
+      **Interruption was measured, not reasoned about** — `os.replace`, `os.unlink` and the pointer
+      write were each actually broken. A run interrupted two artifacts in: both files that landed
+      validate, the interrupted run has **no manifest**, there is **no temp debris**, the pointer
+      still names run 1, and **the cross-run ledger was not half-updated** (`seen_count` still 1).
+      A `KeyboardInterrupt` behaves identically. A run dying between manifest and pointer leaves a
+      complete orphaned manifest and the previous pointer — the safe direction — and is then
+      **refused if repeated rather than resumed**; no resume policy was invented.
+      **The repeat refusal moved to the front**, which is its whole point: `publish_run` refused a
+      finished `run_id` only at the end, by which time the ledger had double-counted and the
+      rejection log had been replaced. A refused repeat now leaves the tree **hash-identical**.
+      **The sweeper proves ownership** — it removes only temp paths it watched being created, leaves
+      a foreign `.tmp_*` strictly alone (globbing and deleting would destroy another writer's
+      in-flight file), refuses to unlink any name without the temp prefix, never raises, and is
+      idempotent. A clean run sweeps nothing and says so.
+      **Two consecutive runs differ in exactly four clock-derived fields** — `harvest_run_id`,
+      `generated_at`, `discovered_at`, `freshness_score` — **enumerated by a recursive JSON diff, not
+      normalized away**, so a fifth moving field fails instead of passing silently. Every identity,
+      classification, metadata count and the other three scores are reproduced exactly: **a re-run
+      does not re-judge.** Freshness is asserted to have *decayed*, so the field cannot silently
+      freeze.
+      **`ledgers/` merge; `rejections/` are replaced per cell and cannot merge** — `rejection.v1.json`
+      is `additionalProperties: false` with one `harvest_run_id` and run-less entries, so a merged log
+      could not name the run that produced its rows. The guarantee that matters is asserted instead:
+      **a run never clobbers a cell it did not run.**
+      **Writing this suite found a defect in S5-6's own test scaffolding**: the interruption injection
+      counted every `os.replace`, and HttpClient writes domain leases atomically, so the budget was
+      spent on lease files and the run died before writing any artifact — the partial-tree tests
+      passed while proving nothing. Now scoped to renames under the artifact root, with an assertion
+      that the interruption really was part-way through.
+      **76 assertions**, `tests/test_taxonomy_recovery.sh`
 - [ ] **S5-C** Stage 5 closeout, documentation only. Its three allowed paths — including
       `docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_<date>.md` — are **declared up front**, so the
       authorization gap hit at Stage 4 closeout cannot recur. **NOT APPROVED; not started**
@@ -144,8 +177,11 @@ threshold calibration (Stage 9), and concurrent cell execution.
 
 - **CF-1 stays deferred, and is now guarded.** It was recorded against "Stage 5"; Stage 5 runs cells
   **sequentially**, so the unlocked pool paths keep zero concurrent callers. S5-6 shipped that way and
-  a static scan of `run_cells.py` fails on any concurrency primitive. Any later change that runs cells
-  concurrently must fix CF-1 **first**, in its own checkpoint.
+  a static scan of `run_cells.py` — extended to `artifacts.py` by S5-7 — fails on any concurrency
+  primitive. S5-7's write journal is the second thing a concurrency checkpoint must revisit: it is a
+  module-level handle (every writer funnels through `write_atomic`, and `ledger.py`'s two could not
+  take a parameter) and it **refuses to nest** rather than cross-attributing two runs' temp files.
+  Any later change that runs cells concurrently must fix CF-1 **first**, in its own checkpoint.
 - **CF-2 / CF-7 are measured and non-blocking.** `verify.decide` can emit exactly six rejection
   reasons and **all six are already storable** in `rejection.v1.json`; the five record-only
   `not_a_case_*` / `keyword_only_match` values are unreachable from Stage 5's automated gate. No

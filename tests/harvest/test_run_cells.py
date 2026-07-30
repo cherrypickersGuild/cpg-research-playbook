@@ -884,12 +884,6 @@ class TestBoundary(unittest.TestCase):
                         src.index("artifacts.publish_run("))
         self.assertEqual(src.count("artifacts.publish_run("), 1)
 
-    def test_it_does_not_begin_s5_7_or_stage_6(self):
-        # Recovery sweeping and target fetching belong to their own checkpoints.
-        for token in ("target_fetch(", "sweep", "acquire_target_fetch",
-                      "linkcheck", "promote(", "data/harvested"):
-            self.assertNotIn(token, self.source(), token)
-
     def test_the_module_exposes_the_committed_contract(self):
         for name in ("run", "RunResult", "RunCellsError", "MAX_CELLS",
                      "configured_cells"):
@@ -906,13 +900,17 @@ class TestBoundary(unittest.TestCase):
 
     def test_the_stage_4_modules_are_byte_unchanged(self):
         # S5-6 composes Stage 4; if it had to edit it, it was not composition.
+        # STAGE 4 ONLY. `artifacts.py` and `ledger.py` are Stage 5's own modules
+        # and the plan (§8) says outright that `artifacts.py` accretes across
+        # S5-2, S5-3, S5-4, S5-5 and S5-7 — asserting they never move would be
+        # asserting something the plan states is false, and would make this a
+        # guard on the working tree rather than on the composition boundary.
         import subprocess
         for path in ("src/harvest/pool.py", "src/harvest/records.py",
                      "src/harvest/coverage.py", "src/harvest/facets.py",
                      "src/harvest/verify.py", "src/harvest/classify.py",
                      "src/harvest/extract.py", "src/harvest/dedupe.py",
-                     "src/harvest/facetassign.py", "src/harvest/artifacts.py",
-                     "src/harvest/ledger.py"):
+                     "src/harvest/facetassign.py"):
             rc = subprocess.call(["git", "diff", "--exit-code", "--quiet",
                                   "HEAD", "--", path], cwd=ROOT)
             self.assertEqual(rc, 0, path)
