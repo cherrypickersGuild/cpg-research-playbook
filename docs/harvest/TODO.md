@@ -879,11 +879,38 @@ approval twice — once as a checkpoint and once immediately before it runs.
         predicate clauses hold on real observed evidence (4 owners, four `ok`/`fetched` records with
         distinct content hashes). Per plan §8 and §1.1 goal 4 that is the intended Stage 6 outcome, not a
         premature one — S6-6 owns the *proof in both directions*, not an extra predicate.
-- [ ] **S6-6 … S6-7, S6-L, S6-C** — **not approved, not implemented.** **Before S6-6 is approved,
-      `test_run_cells.py` and `test_recovery.py` should be audited once for assertions whose truth depends
-      on Stage 6 not having landed, and the results predeclared** — that class of guard has now blocked
-      three consecutive checkpoints. **Live network access remains unauthorized** and no Stage 6 request
-      has been made. **D6-A and D6-B remain resolved and unchanged.**
+- [x] **S6-6** alias-conflict artifact, reporting and the eligibility proof
+      (`feat(harvest): add alias conflict reporting`) — **minus target HTTP-attempt reporting, which the
+      preflight proved undeliverable in this boundary.** `schemas/harvest/alias_conflict.v1.json` is
+      committed (**D6-B, RESOLVED**) and validates the **complete** document, envelope included, so a
+      count disagreeing with its own rows cannot be written. `artifacts.py` gained
+      `alias_conflicts_path()` · `conflict_id()` · `build_alias_conflicts()` · `write_alias_conflicts()` ·
+      `alias_conflicts_count()`; the driver routes conflicts S6-3 already adjudicated, deduplicated
+      run-wide by content so two owners of one identity yield one finding. Written through the single S5-1
+      atomic writer, **before** the manifest, which then reads the count back from the validated
+      document — so artifact and manifest cannot drift. `conflict_id` is a content hash, never positional.
+      An empty set still produces the artifact: "found none" must be distinguishable from "nobody
+      looked". `config.bounds` now reports every cap the run enforced. **47 assertions.**
+      - **§8 eligibility proved in both directions**: true only when all four clauses hold; false for each
+        clause failing alone, with the committed priority; derived from run facts only; a
+        `cross_reference` row cannot manufacture a missing-evidence finding; and neither the existence nor
+        the size of the conflict artifact moves it either way. **No new predicate was added.**
+      - **Target request accounting is BLOCKED and no longer S6-6's** (plan §14.4). `pool.accounting()`
+        sums source snapshots only, and the committed `TargetFetchOutcome` deliberately carries no
+        `FetchAccounting` — so an exact count is unreachable from these paths. **Nothing was estimated and
+        no `client.stats` delta was taken.** `http_attempts` keeps its **source-only** meaning and must
+        not be newly described as including target attempts. Source and target accounting stay distinct.
+      - **A separate accounting checkpoint is required after S6-6 and before S6-7.** It is **not
+        approved**, and its exact paths are **not declared**: it needs a read-only ownership/path audit
+        first, since the candidate routes touch `targetfetch.py` or the byte-frozen `pool.py`.
+        **S6-7 is blocked until the accounting contract is resolved.**
+      - **One defect found by its own test**: the `conflict_id` content-derivation test indexed a row by
+        position after the rows are sorted, so it was asserting the sort order rather than the id. The
+        production hash was correct; the test now selects by `identity_url`.
+- [ ] **S6-7, S6-L, S6-C** — **not approved, not implemented.** **S6-7 is blocked** behind the target
+      request-accounting checkpoint (plan §14.4), whose own scope needs a read-only ownership audit
+      first. **Live network access remains unauthorized** and no Stage 6 request has been made.
+      **D6-A and D6-B remain resolved**; D6-B is now delivered.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing

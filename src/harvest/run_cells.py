@@ -244,7 +244,10 @@ def _config_block(cells, max_cells, *, enrich):
         "canonicalization_version": request_key_mod.canonicalization_version(),
         "cross_topic_policy": precedence.get("cross_topic_policy"),
         "enrich": bool(enrich),
-        "bounds": {"max_cells": max_cells},
+        # Every bound this run actually enforced, so a capped run is visible in the
+        # manifest rather than only in the code. S6-6.
+        "bounds": {"max_cells": max_cells,
+                   "max_target_fetches_per_cell": MAX_TARGET_FETCHES_PER_CELL},
     }
 
 
@@ -884,6 +887,22 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
                                  classification.category_slug),
                 })
 
+    # Run-level, deduplicated by content: two owners sharing one identity produce
+    # the same conflict, and it is one finding rather than two. S6-6 routes what
+    # S6-3 already adjudicated; it re-adjudicates nothing and requests nothing.
+    conflict_rows, seen_conflicts = [], set()
+    for run_ in runs:
+        for key in sorted(run_.adjudications):
+            _canonical, _aliases, conflicts = run_.adjudications[key]
+            for conflict in conflicts:
+                payload = conflict.payload()
+                fingerprint = (payload["reason"], payload["identity_url"],
+                               payload["proposed_alias"])
+                if fingerprint in seen_conflicts:
+                    continue
+                seen_conflicts.add(fingerprint)
+                conflict_rows.append(conflict)
+
     for cell_id in by_cell:
         by_cell[cell_id] = _dedupe_records(by_cell[cell_id])
     all_records = _dedupe_records(all_records)
@@ -966,6 +985,13 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         paths.append(artifacts.write_coverage_report(
             artifacts.coverage_report_path(root, harvest_run_id), coverage))
 
+        # Written BEFORE the manifest, because the manifest reports the count read
+        # back from this validated document rather than a number carried beside it.
+        alias_conflicts = artifacts.build_alias_conflicts(
+            conflict_rows, harvest_run_id=harvest_run_id, generated_at=stamp)
+        paths.append(artifacts.write_alias_conflicts(
+            artifacts.alias_conflicts_path(root, harvest_run_id), alias_conflicts))
+
         # -------------------------------------------------------------- manifest
         rows = [_cell_row(run_, by_cell[run_.cell_id]) for run_ in runs]
         accounting = pool.accounting()
@@ -982,7 +1008,10 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
             # Passed so eligibility is derived from what the records actually say,
             # not from the owner count alone: acquiring one target-fetch owner must
             # not make a run publishable while its records still say not_checked.
-            records=all_records)
+            records=all_records,
+            # The artifact is the single source of truth about how many conflicts
+            # this run found; the manifest reads it back rather than restating it.
+            alias_conflicts=alias_conflicts)
 
         # Manifest first, pointer second — S5-5's one promise.
         paths.append(artifacts.publish_run(root, harvest_run_id, manifest))

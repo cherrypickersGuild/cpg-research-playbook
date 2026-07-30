@@ -133,6 +133,8 @@ def schema_for(rel):
         return "run_manifest.v1.json"
     if parts[-1] == "coverage.json":
         return "coverage_report.v1.json"
+    if parts[-1] == "alias_conflicts.json":
+        return "alias_conflict.v1.json"
     return {"cells": "cell_artifact.v1.json", "topics": "topic_artifact.v1.json",
             "rejections": "rejection.v1.json", "ledgers": "ledger.v1.json"}[parts[-2]]
 

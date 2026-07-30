@@ -313,6 +313,11 @@ def coverage_report_path(root, run_id_value):
     return os.path.join(run_dir(root, run_id_value), "coverage.json")
 
 
+def alias_conflicts_path(root, run_id_value):
+    """`<root>/runs/<run_id>/alias_conflicts.json` — per-run, like coverage."""
+    return os.path.join(run_dir(root, run_id_value), "alias_conflicts.json")
+
+
 def run_manifest_path(root, run_id_value):
     """`<root>/runs/<run_id>/manifest.json` — per-run."""
     return os.path.join(run_dir(root, run_id_value), "manifest.json")
@@ -490,6 +495,98 @@ def write_coverage_report(path, report):
     return write_document(path, report, "coverage_report.v1.json")
 
 
+# ------------------------------------------------------- alias conflicts (S6-6)
+def conflict_id(reason, identity_url, proposed_alias):
+    """A content-derived id, so the same contradiction is the same id every run.
+
+    Deliberately not a counter or a uuid: either would make the id depend on
+    iteration order, and two runs over one input would then differ in a field
+    nobody could explain.
+    """
+    import hashlib
+    material = "\x1f".join([reason or "", identity_url or "",
+                            proposed_alias or ""])
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
+
+
+def build_alias_conflicts(conflicts, *, harvest_run_id, generated_at):
+    """One alias_conflicts.v1.json document. The count is DERIVED.
+
+    Takes the `AliasConflict` rows S6-3 produced (or their payload dicts) and
+    shapes them; it adjudicates nothing and resolves nothing. `resolution` is
+    always "unresolved" — a resolved conflict is not a conflict, and nothing in
+    Stage 6 resolves one.
+
+    An EMPTY conflict set is a real answer and still produces the artifact: a run
+    that found no contradictory evidence says so, rather than omitting a file and
+    leaving a reader unable to tell "none" from "never looked".
+
+    Rows are sorted by `(reason, identity_url, proposed_alias)` so bytes follow
+    content rather than the order cells happened to run in.
+    """
+    rows = []
+    for index, conflict in enumerate(conflicts or ()):
+        payload = (conflict.payload() if hasattr(conflict, "payload")
+                   else dict(conflict))
+        reason = payload.get("reason")
+        identity_url = payload.get("identity_url")
+        if not reason or not identity_url:
+            raise ArtifactError(
+                "alias conflict %d names no reason or no identity_url: %r"
+                % (index, payload))
+        proposed = payload.get("proposed_alias")
+        rows.append({
+            "conflict_id": conflict_id(reason, identity_url, proposed),
+            "reason": reason,
+            "identity_url": identity_url,
+            "proposed_alias": proposed,
+            # A conflict with no explanation is not reportable: the whole point
+            # of the row is telling an operator what to look at.
+            "detail": payload.get("detail") or reason,
+            "resolution": "unresolved",
+            "detected_at": generated_at,
+        })
+    rows.sort(key=lambda row: (row["reason"], row["identity_url"],
+                               row["proposed_alias"] or ""))
+
+    document = {
+        "schema_version": 1,
+        "artifact_type": "alias_conflicts",
+        "harvest_run_id": harvest_run_id,
+        "generated_at": generated_at,
+        # Derived from the rows beside it, exactly like every S5-2 count: a caller
+        # may not supply it, so the number can never disagree with the list.
+        "alias_conflicts_count": len(rows),
+        "conflicts": rows,
+    }
+    if document["alias_conflicts_count"] != len(document["conflicts"]):
+        raise ArtifactError("alias_conflicts_count disagrees with its own rows")
+    return document
+
+
+def write_alias_conflicts(path, document):
+    return write_document(path, document, "alias_conflict.v1.json")
+
+
+def alias_conflicts_count(document):
+    """The count read back from a VALIDATED artifact document.
+
+    The manifest reports this rather than a number the driver carried alongside,
+    so the two can never drift: the artifact is the single source of truth about
+    how many conflicts a run found.
+    """
+    if not isinstance(document, dict):
+        raise ArtifactError("alias conflicts document must be an object")
+    rows = document.get("conflicts")
+    if not isinstance(rows, list):
+        raise ArtifactError("alias conflicts document carries no conflicts list")
+    declared = document.get("alias_conflicts_count")
+    if declared != len(rows):
+        raise ArtifactError(
+            "alias_conflicts_count %r disagrees with %d rows" % (declared, len(rows)))
+    return len(rows)
+
+
 # ------------------------------------------------------------- run manifest
 def configured_cell_rows():
     """One `not_run` row per configured cell, keyed by `cell_id`.
@@ -589,7 +686,8 @@ def build_run_manifest(*, harvest_run_id, started_at, finished_at, cells=(),
                        mode=MODE_HARVEST, config=None, source_preflight=(),
                        classification_decisions=(), coverage=None, rounds=None,
                        request_accounting=None, target_fetch_owners=0,
-                       records=(), environment=None, policy=None):
+                       records=(), alias_conflicts=None, environment=None,
+                       policy=None):
     """One manifest per run. Counts and eligibility are derived, not asserted.
 
     `cells` supplies outcomes for the cells that ran; every other configured cell
@@ -636,6 +734,12 @@ def build_run_manifest(*, harvest_run_id, started_at, finished_at, cells=(),
         doc["coverage"] = coverage
     if request_accounting is not None:
         doc["request_accounting"] = request_accounting
+    # Read back from the VALIDATED alias-conflicts artifact, never carried
+    # alongside it, so the manifest's count and the artifact's rows cannot drift.
+    # Reported even when zero: "this run found none" is a fact worth stating, and
+    # omitting it would be indistinguishable from "nobody looked".
+    if alias_conflicts is not None:
+        doc["alias_conflicts_count"] = alias_conflicts_count(alias_conflicts)
     # A run that never scheduled a second round omits `rounds` rather than
     # writing an empty claim; when present, round 1 records the thresholds in
     # force so it is provable they never moved.

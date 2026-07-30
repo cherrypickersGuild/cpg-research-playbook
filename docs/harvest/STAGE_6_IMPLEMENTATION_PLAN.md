@@ -1346,6 +1346,50 @@ miss or expired TTL, so none of them can be called without risking a request, an
 `self._cache` is private state that reading would duplicate the TTL logic. There is no
 committed cached-verdict API.
 
+## 14.4 · S6-6 — target request accounting is BLOCKED, and no longer S6-6's
+
+**The S6-6 preflight proved an exact target HTTP-attempt count cannot be derived
+within S6-6's ownership boundary.** Two independent reasons, both structural:
+
+- **`pool.accounting()["http_attempts"]` can never see a target fetch.** It sums
+  `self.sources` only, and source snapshots are created by
+  `record_established_source`, which exclusively the *source*-fetch path calls. A
+  target fetch adds nothing to that map, so its attempts, retries and redirect hops
+  are invisible to that aggregate — the under-reporting first observed at S6-4
+  (`http_attempts: 25` after four target fetches).
+- **The committed S6-2 `TargetFetchOutcome` does not carry the count.** `HttpClient`
+  freezes a DV-8 `FetchAccounting` onto every `Response` and every typed error, but
+  `targetfetch.py` deliberately never reads it — its docstring says so: *"It never
+  learns how many attempts were made, how many redirect hops were followed."* That
+  was S6-2's declared isolation boundary, and it is why the number is unreachable.
+
+**Consequences, recorded so nobody re-derives them:**
+
+- **S6-6 no longer owns target-attempt reporting.** It reports none.
+- **No estimate is permitted, and no `client.stats` delta.** DV-8 exists precisely
+  to forbid diffing shared counters — a target fetch interleaved with a robots
+  fetch would mis-attribute, and a plausible-looking wrong number is worse than an
+  absent one.
+- **Source and target request accounting must remain DISTINCT.** §2 makes them
+  different key spaces with different owners and different counters; folding target
+  attempts into `http_attempts` would erase that boundary. **`http_attempts` keeps
+  its existing source-only meaning and must not be newly described as including
+  target attempts.**
+- **A separate accounting checkpoint is required after S6-6 and before S6-7.** Its
+  exact paths are **not declared here**: it needs a read-only ownership and path
+  audit first, because the candidate routes touch `targetfetch.py` (add a field to
+  the outcome) or `pool.py` (record target attempts), and `pool.py` is byte-frozen
+  by the Stage 5 successor constraints. Guessing the path set is what produced three
+  consecutive mid-checkpoint stops.
+- **S6-7 is blocked until the accounting contract is resolved.** S6-7 asserts
+  determinism and failure modes over a full run's artifacts, and a manifest whose
+  request accounting is about to change shape is not a stable thing to pin.
+
+**What S6-6 did ship**: the alias-conflict artifact and its committed schema, the
+derived `alias_conflicts_count` read back from the validated document, `config.bounds`
+reporting every cap the run enforced, and the §8 eligibility proof in both
+directions. Canonical robots evidence remains unwired.
+
 ## 15 · Approval status, and what this approval does not do
 
 Stage 5 §10's conditions 1–9 are met at `bc920b5b…` and evidenced in §3 and §4 of the Stage 5

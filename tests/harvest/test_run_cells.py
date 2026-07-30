@@ -124,11 +124,14 @@ def schema_for(rel):
         return "run_manifest.v1.json"
     if parts[-1] == "coverage.json":
         return "coverage_report.v1.json"
+    if parts[-1] == "alias_conflicts.json":
+        return "alias_conflict.v1.json"
     return SCHEMA_FOR_DIR[parts[-2]]
 
 
 def expected_paths(run_id, cell_ids, topic_slugs):
     paths = ["LATEST_RUN_ID",
+             "runs/%s/alias_conflicts.json" % run_id,
              "runs/%s/coverage.json" % run_id,
              "runs/%s/manifest.json" % run_id]
     for cell_id in cell_ids:
