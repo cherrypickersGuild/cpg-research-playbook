@@ -670,24 +670,53 @@ alias conflicts). Until then `designated_target_fetch_owner_lane_id` and
 `designated_extraction_owner_lane_id` stay null, which is their committed meaning.
 
 **Plan of record for target fetching:** `docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md` —
-**`PROPOSED — PLANNING APPROVAL ONLY`** (2026-07-30). It scopes Stage 6 to **target fetching and
-verification only**; the `refresh` / `linkcheck` / `promote` / `diff` / `compare-runs` subcommands,
-the transaction journal and the promotion tests listed under this heading stay **unscheduled,
-unapproved and untouched** (plan §14 erratum E11). Proposed checkpoint sequence
+**`APPROVED AS THE PLAN OF RECORD — CHECKPOINT-BY-CHECKPOINT · NO CHECKPOINT APPROVED`**
+(2026-07-30). It scopes Stage 6 to **target fetching and verification only**; the `refresh` /
+`linkcheck` / `promote` / `diff` / `compare-runs` subcommands, the transaction journal and the
+promotion tests listed under this heading stay **unscheduled, unapproved and untouched** (plan §14
+erratum E11). Checkpoint sequence
 **S6-0 · S6-1 · S6-2 · S6-3 · S6-4 · S6-5 · S6-6 · S6-7 · S6-L · S6-C**, each requiring its own
 separate approval **by name**; S6-C's handoff path and allowed paths are declared in advance in
 plan §11. **S6-L (bounded live smoke) is the only checkpoint that makes a network request** and needs
 approval twice — once as a checkpoint and once immediately before it runs.
 
-- [x] **S6-0** Stage 6 plan, documentation only — `docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md` plus
-      this registration. **Approval status: planning approved; no implementation checkpoint is
-      approved, and no live network access is authorized** (plan §15). CF-1 stays deferred and must be
-      fixed in its own checkpoint before any concurrency lands (plan §9.1); CF-2/CF-7 are not widened,
-      CF-11 stays protected, D2 keeps one home, and S4-4's provisional calibration is untouched
-      (plan §9). **Two decisions remain open and each blocks exactly one checkpoint** (plan §12):
-      **D6-A** one keyword-only `url_aliases=` parameter on `records.make_full_record` (blocks S6-5)
-      and **D6-B** one new `schemas/harvest/alias_conflict.v1.json` (blocks S6-6).
-- [ ] **S6-1 … S6-7, S6-L, S6-C** — not approved, not implemented. See the plan.
+**Four things this heading deliberately keeps apart:**
+
+1. **The plan is approved as the plan of record**, checkpoint-by-checkpoint (plan §15). What Stage 6
+   *is*, and the order it will be built in, are settled.
+2. **D6-A and D6-B are RESOLVED** (plan §12), both as recommended. A resolved decision fixes the
+   *shape* of a future change and authorizes nothing else.
+3. **S6-1 through S6-C are unapproved and unimplemented.** No production module, test, schema,
+   script, config or fixture exists for Stage 6, and none may be written until its own checkpoint is
+   approved by name. Approving the plan approved **not even S6-1**.
+4. **Live network access is not authorized.** No Stage 6 request has been made and none may be; every
+   checkpoint S6-1 … S6-7 is fixture-backed with a no-socket assertion, and S6-L is the single
+   separately approved exception, still pending both of its approvals.
+
+- [x] **S6-0** Stage 6 plan and decision record, documentation only —
+      `docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md` plus this registration. Two commits: the plan
+      (`docs(harvest): plan stage 6`) and the resolutions
+      (`docs(harvest): resolve stage 6 design decisions`). CF-1 stays deferred and must be fixed in its
+      own checkpoint before any concurrency lands (plan §9.1); CF-2/CF-7 are not widened, CF-3 is
+      discharged only when S6-1 ships, CF-11 stays protected, D2 keeps one home, and S4-4's provisional
+      calibration is untouched (plan §9). New findings CF-13/15/16/17 are carried forward (plan §9.7).
+      - **D6-A — RESOLVED** (plan §12.1): one backward-compatible keyword-only `url_aliases=None` on
+        `records.make_full_record`, which stays the **sole owner of the persistent record shape** and
+        owns the validation, normalization and projection of aliases. Omitting the argument keeps the
+        committed empty-list behaviour byte-for-byte. `run_cells.py` **passes** adjudicated aliases and
+        never mutates the completed record dict. Authorizes `src/harvest/records.py` in the S6-5
+        allowed-path set for that one additive parameter — and nowhere else. **Blocks S6-5 no longer;
+        S6-5 remains unapproved.**
+      - **D6-B — RESOLVED** (plan §12.2): commit `schemas/harvest/alias_conflict.v1.json` at the exact
+        path S6-6 declares. It validates the **complete** `runs/<run_id>/alias_conflicts.json` document
+        — directly or through an explicitly committed wrapper — and the artifact is **validated before
+        it is written**, through the single S5-1 writer. `alias_conflicts_count` is **derived from the
+        validated artifact contents**, never a caller-supplied source of truth. The schema carries **no
+        vocabulary hash** and needs no generator run. Authorizes the schema and its owning focused
+        tests in the S6-6 allowed-path set — and no unrelated path. **Blocks S6-6 no longer; S6-6
+        remains unapproved.**
+- [ ] **S6-1 … S6-7, S6-L, S6-C** — **not approved, not implemented.** See the plan for each
+      checkpoint's exact allowed paths, risk tier and focused suite.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing

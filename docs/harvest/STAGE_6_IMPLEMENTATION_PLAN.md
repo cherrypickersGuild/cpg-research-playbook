@@ -1,13 +1,18 @@
 # Stage 6 — target fetching and verification: implementation plan
 
 ```text
-Status: PROPOSED — PLANNING APPROVAL ONLY
+Status: APPROVED AS THE PLAN OF RECORD — CHECKPOINT-BY-CHECKPOINT · NO CHECKPOINT APPROVED
 ```
 
-**Approving this document approves the plan and nothing else.** It authorizes no production code, no
-test, no script, no schema, no config, no filesystem write outside `docs/`, **no live network
-request**, and not even S6-1. Every checkpoint S6-1 … S6-C requires its own separate approval, named
-explicitly, before any file outside `docs/` changes (§13).
+**Approved on 2026-07-30 as the plan of record, and only as a checkpoint-by-checkpoint plan of
+record.** The approval settles what Stage 6 *is* and the order it will be built in. It authorizes no
+production code, no test, no script, no schema, no config, no filesystem write outside `docs/`, **no
+live network request**, and **not S6-1**. Every checkpoint S6-1 … S6-C still requires its own separate
+approval, named explicitly, before any file outside `docs/` changes (§13, §15).
+
+**The two open design decisions are RESOLVED** — D6-A and D6-B, both as recommended, recorded in §12.
+Resolving a decision authorizes the *shape* of a future change, never the change itself: the
+checkpoint each one unblocks (S6-5, S6-6) remains unapproved and unimplemented.
 
 **Date:** 2026-07-30 · **Branch:** `main`
 
@@ -592,11 +597,15 @@ no candidate and no adapter is invoked on one.
 
 ```text
 M  src/harvest/run_cells.py         _full_record consumes the outcome instead of the verdict's
-                                    honest no-enrichment defaults
-M  src/harvest/records.py           §12 D6-A, if and only if approved
+                                    honest no-enrichment defaults; passes adjudicated aliases
+M  src/harvest/records.py           one keyword-only `url_aliases=None` and its validation,
+                                    normalization and projection — §12.1 D6-A, RESOLVED
 A  tests/harvest/test_target_evidence.py
 A  tests/test_taxonomy_target_evidence.sh
 ```
+
+Exactly four paths. `src/harvest/records.py` is authorized here by §12.1 and nowhere else, for that one
+additive parameter and nothing more.
 
 Proves §6 exactly: the six evidence fields set from observation; `verification_status` is `"fetched"`
 and never `"verified"`; `updated_at` stays null; all four scores, every facet payload, `record_id`,
@@ -608,15 +617,19 @@ evidence onto **two** records.
 
 ```text
 M  src/harvest/artifacts.py         derive_publication_eligibility extended (§8); alias-conflict
-                                    artifact path and builder; alias_conflicts_count
+                                    artifact path and builder; alias_conflicts_count derived
 M  src/harvest/run_cells.py         config.enrich, config.bounds, conflict routing
-A  schemas/harvest/alias_conflict.v1.json        §12 D6-B, if and only if approved
-A  tests/harvest/test_eligibility.py
+A  schemas/harvest/alias_conflict.v1.json        §12.2 D6-B, RESOLVED
+A  tests/harvest/test_eligibility.py             owns the new schema's assertions
 A  tests/test_taxonomy_eligibility.sh
 ```
 
+Exactly five paths. `schemas/harvest/alias_conflict.v1.json` is authorized here by §12.2 and nowhere
+else; `tests/harvest/test_eligibility.py` is its owning focused test, so no additional test path is
+needed for it.
+
 Eligibility proved live in **both** directions and in each failing direction independently (§8). The
-conflict artifact — if D6-B is approved — is written by the **single S5-1 writer**, serialized by the
+conflict artifact is written by the **single S5-1 writer**, serialized by the
 **single S5-1 serializer**, and validated against its committed schema **before** any byte reaches
 disk. No second writer, no second serializer, no second validator. The Stage 5 file-set assertion is
 updated from an exact 42 to an exact new number, still asserted **exactly**.
@@ -691,30 +704,79 @@ staged).
 
 ---
 
-## 12 · Open decisions requiring approval before their checkpoint
+## 12 · Design decisions — both RESOLVED on 2026-07-30
 
-Two, both minimal, both blocking exactly one checkpoint. Neither is decided by approving this plan.
+Two, both minimal, each blocking exactly one checkpoint. **Both are now resolved as recommended.**
+A resolved decision fixes the *shape* of a future change and nothing else: S6-5 and S6-6 remain
+unapproved and unimplemented, and neither may begin on the strength of this section.
 
-**D6-A — one keyword-only parameter on `records.make_full_record` (blocks S6-5).**
-`records.py` hardcodes `"url_aliases": []` with no parameter, so §4's aliases cannot reach a record
-without either (a) adding `url_aliases=None`, keyword-only, omitted-when-falsy, exactly mirroring the
-DV-2 `case_facets` precedent, or (b) mutating the built dict in `run_cells.py` after construction.
-**Recommended: (a).** Option (b) creates a second place that knows the record's shape and would drift
-from the schema — the failure mode D2 exists to prevent. Cost of (a): `records.py` stops being
-byte-unchanged since `b303d9d`, which the Stage 5 handoff §7 says needs an explicit authorization. It
-is a ~3-line additive change touching no existing behaviour, and Stage 4's own S4-5B proved the
-builder accepts new keyword payloads without disturbing identity.
+### 12.1 · D6-A — RESOLVED: one keyword-only parameter on `records.make_full_record` (S6-5)
 
-**D6-B — one new committed schema, `schemas/harvest/alias_conflict.v1.json` (blocks S6-6).**
-`IMPLEMENTATION_PLAN.md` §2.3 already specifies the file (`runs/<run_id>/alias_conflicts.json`) and
-its exact fields (`conflict_id, kind, record_ids[], proposed_alias, evidence, detected_at,
-resolution`), but no schema was ever committed for it — and §3.5's rule is that **nothing is written
-without validating against a committed schema first**. Either (a) add the schema and write the
-artifact, or (b) report only the manifest's already-committed `alias_conflicts_count` and drop the
-per-conflict detail. **Recommended: (a).** The count alone tells an operator a conflict exists but not
-which records or what evidence, which makes the eventual `resolve-alias` step guesswork. Cost of (a):
-Stage 6 adds one schema file — the first since Stage 2.5. It carries no vocabulary hash, so it is
-**not** part of the atomic vocabulary-plus-generated-schema contract and needs no generator run.
+`records.py` hardcodes `"url_aliases": []` with no parameter, so §4's adjudicated aliases could not
+reach a record. **Approved: one backward-compatible keyword-only parameter**, exactly mirroring the
+DV-2 `case_facets` precedent:
+
+```python
+url_aliases=None
+```
+
+The alternative — mutating the completed record dict in `run_cells.py` after construction — was
+**rejected**: it creates a second place that knows the persistent record's shape, which is precisely
+the drift D2 exists to prevent.
+
+What this decision records, and what S6-5 must therefore honour:
+
+- **`make_full_record` remains the sole owner of the persistent record shape.** No other module
+  assembles, reshapes or completes a record. There is one builder, and after S6-5 there is still one.
+- **`make_full_record` owns validation, normalization and projection of `url_aliases`** — the shape
+  check against `record.v1.json`'s `url_alias` definition, the sort-and-deduplicate by `(kind, url)`
+  from §4, and the projection of admitted keys. `run_cells.py` supplies adjudicated aliases; it does
+  not decide how they are stored.
+- **Existing callers keep the committed behaviour.** Omitting the argument, or passing `None` or an
+  empty sequence, yields `"url_aliases": []` byte-for-byte as today. The parameter is additive,
+  keyword-only, and changes no existing call site — Stage 4's S4-5B already proved this builder accepts
+  a new keyword payload without disturbing `record_id`, `content_id` or `identity_url`.
+- **`run_cells.py` passes aliases; it never mutates the completed record dict.** Asserted by S6-5, not
+  merely intended.
+- **`records.py` stops being byte-unchanged since `b303d9d`.** That is the authorized cost of this
+  decision, recorded here as the explicit authorization the Stage 5 handoff §7 requires, and confined
+  to this one additive parameter. No other line of `records.py` changes.
+
+**The S6-5 allowed-path declaration in §11 now includes `src/harvest/records.py` unconditionally**, and
+every other path this decision requires — and no unrelated path.
+
+### 12.2 · D6-B — RESOLVED: a committed schema for the alias-conflict artifact (S6-6)
+
+`IMPLEMENTATION_PLAN.md` §2.3 already specifies the artifact (`runs/<run_id>/alias_conflicts.json`)
+and its per-conflict fields (`conflict_id`, `kind`, `record_ids[]`, `proposed_alias`, `evidence`,
+`detected_at`, `resolution`), but no schema was ever committed for it — and §3.5's rule is that
+nothing is written without validating against a committed schema **first**. **Approved: commit
+`schemas/harvest/alias_conflict.v1.json`** at the exact future path declared by S6-6 in §11.
+
+The alternative — reporting only the manifest's already-committed `alias_conflicts_count` and dropping
+the per-conflict detail — was **rejected**: a bare count tells an operator that a conflict exists but
+not which records or what evidence, which makes the eventual `resolve-alias` step guesswork.
+
+What this decision records, and what S6-6 must therefore honour:
+
+- **The committed schema validates the complete artifact**, not merely one conflict entry — the whole
+  `runs/<run_id>/alias_conflicts.json` document shape, either directly or through an explicitly
+  committed wrapper object carrying the entries. A schema that validated only an entry would leave the
+  document's own envelope unvalidated, which is the gap §3.5 exists to close.
+- **The artifact is validated before it is written.** It goes through the single S5-1
+  `write_document` path — validate in memory, then serialize, then atomically rename — so an invalid
+  document writes no file at all. No second validator, serializer or writer.
+- **`alias_conflicts_count` is derived from the validated artifact contents.** It is never a
+  caller-supplied parameter and never an independently maintained counter, so the manifest's count
+  cannot disagree with the conflicts beside it — the same rule S5-2 established for every artifact
+  count.
+- **The schema carries no vocabulary hash.** It is therefore **not** part of the atomic
+  vocabulary-plus-generated-schema contract, needs no `gen_facet_schema.py` run, and cannot fall out of
+  sync with a vocabulary file. `gen_facet_schema.py --check` and `check_facets.py` are unaffected.
+- Stage 6 adds **exactly one** schema file, the first since Stage 2.5, and no existing schema changes.
+
+**The S6-6 allowed-path declaration in §11 now includes the new schema and its owning focused tests
+unconditionally** — and no unrelated path.
 
 ---
 
@@ -796,7 +858,7 @@ before the stage boundaries existed. Target fetching arrives here, in the harves
 
 **E13 — `IMPLEMENTATION_PLAN.md` §10 lists runtime directories no stage has created yet.** Stage 5
 created `runs/`, `rejections/` and `ledgers/`; Stage 6 adds nothing beyond, at most, one file inside
-the existing `runs/<run_id>/` (§12 D6-B). `logs/`, `tmp/`, `candidate_output/`, `promote_staging/`,
+the existing `runs/<run_id>/` (§12.2 D6-B). `logs/`, `tmp/`, `candidate_output/`, `promote_staging/`,
 `promote_rollback/`, `promotion_receipt.json`, `registries/`, `cache/`, `domains/`, `migrations/` and
 `locks/` each remain the property of the stage that first needs one.
 
@@ -805,11 +867,11 @@ above: the authoritative state is `main` synchronized with `origin/main` at `6bf
 
 ---
 
-## 15 · Stage 6 opening condition, and what this plan does not do
+## 15 · Approval status, and what this approval does not do
 
 Stage 5 §10's conditions 1–9 are met at `bc920b5b…` and evidenced in §3 and §4 of the Stage 5
-completion handoff; condition 10 — explicit approval — is the one this document exists to be
-considered for.
+completion handoff. **Condition 10 — explicit approval — was given on 2026-07-30 for this plan, as the
+plan of record and nothing more.** Stage 6 is now *planned*; it is not *open for implementation*.
 
 **Approving this document approves the plan only.** It authorizes:
 
