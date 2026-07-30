@@ -11,6 +11,8 @@
 #     other (unaudited) test is skipped with a clear message, never trusted
 #   * production state/ is content-hash-snapshotted before AND after; ANY change
 #     fails the run non-zero and is reported (never auto-restored/overwritten)
+#   * the four repository runtime paths are checked before AND after; any that
+#     exists fails the run and is reported (never removed) — see RUNTIME_PATHS
 # Real exit codes are preserved throughout; no meaningful command is piped
 # through a filter.
 #
@@ -44,6 +46,35 @@ ISOLATED=(
   test_guard_command.sh test_safe_commit.sh test_safe_push_main.sh
   test_permission_rules.sh
   test_parallel_harvest.sh test_matrix_harvest.sh
+  # --- taxonomy harvest (Stage 8, S8-1; plan decisions D1-D4) --------------
+  # All 39 committed wrappers, individually — no aggregate entry, no wildcard,
+  # no dynamic discovery. Each was audited against the criterion above: each
+  # derives its own ROOT, writes only under its own `mktemp -d` or an injected
+  # --state-root, asserts production state/ (and in 33 of 39, config/) is
+  # unmodified afterwards, and contacts no remote. test_taxonomy_migration.sh
+  # proves by AST scan of its own source that no call site passes `--apply`
+  # without `--state-root`; test_taxonomy_domain_throttle.sh binds a LOCAL
+  # recording server on loopback and issues no outbound request.
+  test_taxonomy_adapter_concurrency.sh   test_taxonomy_adapters.sh
+  test_taxonomy_aliases.sh               test_taxonomy_artifacts.sh
+  test_taxonomy_budget.sh                test_taxonomy_cell_artifact.sh
+  test_taxonomy_classify.sh              test_taxonomy_config.sh
+  test_taxonomy_coverage.sh              test_taxonomy_coverage_report.sh
+  test_taxonomy_customer_interaction.sh  test_taxonomy_dedupe.sh
+  test_taxonomy_domain_throttle.sh       test_taxonomy_eligibility.sh
+  test_taxonomy_extract.sh               test_taxonomy_facet_ambiguity.sh
+  test_taxonomy_facet_identity.sh        test_taxonomy_facet_states.sh
+  test_taxonomy_facetassign.sh           test_taxonomy_facets.sh
+  test_taxonomy_http.sh                  test_taxonomy_identity.sh
+  test_taxonomy_ledger.sh                test_taxonomy_manifest.sh
+  test_taxonomy_migration.sh             test_taxonomy_pool.sh
+  test_taxonomy_protected_baseline.sh    test_taxonomy_records.sh
+  test_taxonomy_recovery.sh              test_taxonomy_run_cells.sh
+  test_taxonomy_schema.sh                test_taxonomy_source_cache.sh
+  test_taxonomy_target_accounting.sh     test_taxonomy_target_determinism.sh
+  test_taxonomy_target_evidence.sh       test_taxonomy_target_fetch.sh
+  test_taxonomy_target_fixtures.sh       test_taxonomy_target_ownership.sh
+  test_taxonomy_verify.sh
 )
 is_isolated() {
   local b; b="$(basename "$1")"
@@ -92,6 +123,87 @@ for f in "${FILES[@]:-}"; do
     .claude/hooks/guard_command.py)               add_test tests/test_guard_command.sh; add_test tests/test_permission_rules.sh ;;
     scripts/safe_commit.sh)                       add_test tests/test_safe_commit.sh; add_test tests/test_permission_rules.sh ;;
     scripts/safe_push_main.sh)                    add_test tests/test_safe_push_main.sh; add_test tests/test_permission_rules.sh ;;
+
+    # ===================================================================== #
+    # taxonomy harvest — Stage 8, S8-1                                      #
+    # ===================================================================== #
+    # Routed by OWNERSHIP, not import fan-out: each production file selects
+    # the wrapper whose declared subject is that file's contract, plus any
+    # wrapper that committed evidence shows drives it AS ITS SUBJECT. Routing
+    # by imports would be useless — src/harvest/schema.py is imported by 25 of
+    # the 39 suites and urlkey.py by 17 — and would be a blanket "run all 39"
+    # arm in disguise. There is no blanket arm.
+    #
+    # Every target is spelled `tests/<name>.sh`, byte-identical to what the
+    # `tests/*.sh` glob below emits, because add_test de-duplicates on the
+    # exact path STRING. `./tests/x.sh` and `tests/x.sh` would both be added
+    # and the suite would run twice.
+
+    # -- deliberately unmapped, matched first so no later pattern claims them.
+    # Package plumbing with no behavioural surface: a change that matters lands
+    # in a mapped sibling. hash_tree.py has zero consumers anywhere in
+    # src/harvest/**, scripts/harvest/** or tests/** — mapping it would invent
+    # coverage that does not exist. Both are recorded in the Stage 8 plan.
+    src/harvest/__init__.py|src/harvest/adapters/__init__.py|src/harvest/migrate/__init__.py) ;;
+    scripts/harvest/hash_tree.py) ;;
+
+    # -- src/harvest/** : core modules
+    src/harvest/adapters/*.py)                    add_test tests/test_taxonomy_adapters.sh; add_test tests/test_taxonomy_adapter_concurrency.sh ;;
+    src/harvest/aliases.py)                       add_test tests/test_taxonomy_aliases.sh; add_test tests/test_taxonomy_eligibility.sh ;;
+    src/harvest/artifacts.py)                     add_test tests/test_taxonomy_artifacts.sh; add_test tests/test_taxonomy_cell_artifact.sh; add_test tests/test_taxonomy_ledger.sh; add_test tests/test_taxonomy_coverage_report.sh; add_test tests/test_taxonomy_manifest.sh ;;
+    src/harvest/budget.py)                        add_test tests/test_taxonomy_budget.sh ;;
+    src/harvest/classify.py)                      add_test tests/test_taxonomy_classify.sh ;;
+    src/harvest/coverage.py|src/harvest/scheduler.py) add_test tests/test_taxonomy_coverage.sh; add_test tests/test_taxonomy_coverage_report.sh ;;
+    src/harvest/dedupe.py)                        add_test tests/test_taxonomy_dedupe.sh ;;
+    src/harvest/domainlease.py)                   add_test tests/test_taxonomy_domain_throttle.sh; add_test tests/test_taxonomy_http.sh ;;
+    src/harvest/extract.py)                       add_test tests/test_taxonomy_extract.sh ;;
+    src/harvest/facetassign.py)                   add_test tests/test_taxonomy_facetassign.sh ;;
+    src/harvest/facets.py)                        add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_facet_ambiguity.sh; add_test tests/test_taxonomy_facet_identity.sh; add_test tests/test_taxonomy_facet_states.sh; add_test tests/test_taxonomy_customer_interaction.sh ;;
+    src/harvest/fixtures.py)                      add_test tests/test_taxonomy_adapters.sh; add_test tests/test_taxonomy_source_cache.sh; add_test tests/test_taxonomy_target_fixtures.sh ;;
+    src/harvest/httpclient.py)                    add_test tests/test_taxonomy_http.sh; add_test tests/test_taxonomy_domain_throttle.sh ;;
+    src/harvest/ledger.py)                        add_test tests/test_taxonomy_ledger.sh ;;
+    src/harvest/migrate/*.py)                     add_test tests/test_taxonomy_migration.sh ;;
+    src/harvest/pool.py)                          add_test tests/test_taxonomy_pool.sh ;;
+    src/harvest/records.py)                       add_test tests/test_taxonomy_records.sh; add_test tests/test_taxonomy_schema.sh ;;
+    src/harvest/request_key.py)                   add_test tests/test_taxonomy_pool.sh; add_test tests/test_taxonomy_dedupe.sh ;;
+    src/harvest/run_cells.py)                     add_test tests/test_taxonomy_run_cells.sh; add_test tests/test_taxonomy_recovery.sh ;;
+    src/harvest/schema.py)                        add_test tests/test_taxonomy_schema.sh; add_test tests/test_taxonomy_records.sh ;;
+    src/harvest/slug.py)                          add_test tests/test_taxonomy_facet_identity.sh; add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_config.sh ;;
+    src/harvest/sourcecache.py)                   add_test tests/test_taxonomy_source_cache.sh ;;
+    src/harvest/targetfetch.py)                   add_test tests/test_taxonomy_target_fetch.sh; add_test tests/test_taxonomy_target_ownership.sh; add_test tests/test_taxonomy_target_evidence.sh; add_test tests/test_taxonomy_target_accounting.sh; add_test tests/test_taxonomy_target_determinism.sh ;;
+    src/harvest/urlkey.py)                        add_test tests/test_taxonomy_identity.sh; add_test tests/test_taxonomy_aliases.sh; add_test tests/test_taxonomy_facet_identity.sh ;;
+    src/harvest/verify.py)                        add_test tests/test_taxonomy_verify.sh ;;
+
+    # -- scripts/harvest/** : CLI and checkers
+    scripts/harvest/migrate.sh)                   add_test tests/test_taxonomy_migration.sh ;;
+    scripts/harvest/check_config.py)              add_test tests/test_taxonomy_config.sh ;;
+    scripts/harvest/check_facets.py)              add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_migration.sh ;;
+    scripts/harvest/check_fixtures.py)            add_test tests/test_taxonomy_source_cache.sh; add_test tests/test_taxonomy_target_fixtures.sh; add_test tests/test_taxonomy_adapters.sh ;;
+    scripts/harvest/gen_facet_schema.py)          add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_facetassign.sh ;;
+    scripts/harvest/protected_baseline.py|scripts/harvest/gen_protected_baseline.sh|scripts/harvest/verify_protected_baseline.sh) add_test tests/test_taxonomy_protected_baseline.sh ;;
+
+    # -- config/harvest/**
+    config/harvest/topics/*.v1.json)              add_test tests/test_taxonomy_config.sh; add_test tests/test_taxonomy_adapters.sh; add_test tests/test_taxonomy_adapter_concurrency.sh ;;
+    config/harvest/facets/*.v1.json)              add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_facet_ambiguity.sh; add_test tests/test_taxonomy_facet_states.sh; add_test tests/test_taxonomy_facet_identity.sh; add_test tests/test_taxonomy_customer_interaction.sh; add_test tests/test_taxonomy_facetassign.sh ;;
+    config/harvest/precedence.v1.json)            add_test tests/test_taxonomy_classify.sh ;;
+    config/harvest/policy.v1.json)                add_test tests/test_taxonomy_verify.sh ;;
+    config/harvest/coverage_targets.v1.json)      add_test tests/test_taxonomy_coverage.sh; add_test tests/test_taxonomy_facets.sh ;;
+    config/harvest/canonicalization.v1.json)      add_test tests/test_taxonomy_aliases.sh; add_test tests/test_taxonomy_pool.sh ;;
+    config/harvest/migration_overrides.v1.json)   add_test tests/test_taxonomy_migration.sh ;;
+    # no consumer exists in production code or tests; check_config.py is its
+    # only committed authority, so no behavioural suite is claimed for it.
+    config/harvest/watchlists/*.v1.json)          add_test tests/test_taxonomy_config.sh ;;
+
+    # -- schemas/harvest/**
+    schemas/harvest/record.v1.json)               add_test tests/test_taxonomy_schema.sh; add_test tests/test_taxonomy_records.sh ;;
+    schemas/harvest/taxonomy.v1.json)             add_test tests/test_taxonomy_config.sh ;;
+    schemas/harvest/facet_vocabulary.v1.json|schemas/harvest/facets.generated.v1.json) add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_facetassign.sh ;;
+    schemas/harvest/cell_artifact.v1.json|schemas/harvest/topic_artifact.v1.json) add_test tests/test_taxonomy_cell_artifact.sh ;;
+    schemas/harvest/ledger.v1.json|schemas/harvest/rejection.v1.json) add_test tests/test_taxonomy_ledger.sh ;;
+    schemas/harvest/run_manifest.v1.json)         add_test tests/test_taxonomy_manifest.sh ;;
+    schemas/harvest/coverage_report.v1.json)      add_test tests/test_taxonomy_coverage_report.sh ;;
+    schemas/harvest/alias_conflict.v1.json)       add_test tests/test_taxonomy_aliases.sh; add_test tests/test_taxonomy_eligibility.sh ;;
+    schemas/harvest/candidate_pool.v1.json|schemas/harvest/discovery_lane.v1.json) add_test tests/test_taxonomy_pool.sh ;;
   esac
 done
 [ "$MODE" = "all" ] && { for t in tests/*.sh; do add_test "$t"; done; }
@@ -115,7 +227,48 @@ snapshot_state() {
 }
 BEFORE="$(snapshot_state)"
 
+# --- repository runtime paths (Stage 8, S8-1; plan decision D9) ------------
+# The four paths the taxonomy pipeline writes at runtime. No test may create
+# any of them: every write belongs under an injected temporary root.
+#
+# These are `[ -e ]` tests, not `git status`, for two independent reasons:
+#   * state/taxonomy_harvest/ is gitignored (.gitignore: /state/taxonomy_harvest/),
+#     so porcelain cannot see a leaked migration bundle at all;
+#   * data/harvested/, runs/ and LATEST_RUN_ID sit at the repository root,
+#     outside the state/ tree snapshot_state() walks.
+# snapshot_state() remains the independent second witness for the first path,
+# since `find state -type f` does see ignored files.
+#
+# Checked BEFORE the first wrapper and AFTER the last, so a leak is reported
+# once by the harness rather than being attributed to whichever wrapper's own
+# epilogue happens to run next. 16 of the 39 taxonomy wrappers carry their own
+# leak guard; this does not replace or weaken them.
+#
+# Nothing is deleted, restored or relocated — matching the state/ snapshot's
+# deliberate refusal to auto-restore. A leak is evidence; removing it destroys
+# the evidence.
+RUNTIME_PATHS=(state/taxonomy_harvest data/harvested runs LATEST_RUN_ID)
+runtime_leaks() {
+  local p
+  for p in "${RUNTIME_PATHS[@]}"; do [ -e "$p" ] && printf '%s\n' "$p"; done
+  return 0
+}
+report_leaks() {  # report_leaks <when> <paths>
+  echo "  FAIL - repository runtime path(s) present $1 the run (NOT removing):"
+  local p; for p in $2; do echo "           $p"; done
+  echo "         every write must stay under an injected temporary root."
+}
+RUNTIME_BEFORE="$(runtime_leaks)"
+[ -n "$RUNTIME_BEFORE" ] && { report_leaks "BEFORE" "$RUNTIME_BEFORE"; FAIL=1; }
+
 for t in "${SAFE[@]:-}"; do [ -z "$t" ] && continue; run "offline $t" bash "$t"; done
+
+RUNTIME_AFTER="$(runtime_leaks)"
+if [ -n "$RUNTIME_AFTER" ]; then
+  report_leaks "AFTER" "$RUNTIME_AFTER"; FAIL=1
+else
+  echo "  ok   - repository runtime paths absent (${RUNTIME_PATHS[*]})"
+fi
 
 AFTER="$(snapshot_state)"
 if [ "$BEFORE" != "$AFTER" ]; then

@@ -1,10 +1,16 @@
 # Stage 8 — harness wiring and full offline regression
 
-**Status: S8-0 APPROVED AND COMPLETE. S8-1, S8-2 and S8-C are NOT APPROVED.**
+**Status: S8-0 and S8-1 APPROVED AND COMPLETE. S8-2 and S8-C are NOT APPROVED.
+STAGE 8 IS NOT COMPLETE, and CF-4 is NOT closed.**
 
 ```text
 plan_of_record:        docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md   (this file)
-approved_checkpoint:   S8-0 only — the documentation checkpoint that produced this file
+approved_checkpoints:  S8-0 (plan of record) and S8-1 (harness wiring) — both complete
+s8_0_commit:           0657db8a65e311ea0f20b43a2fbf2c0e811d5ee5   docs, two paths
+s8_1_commit:           see §8 S8-1 implementation record
+open:                  S8-2 (full offline regression) and S8-C (closeout) are each
+                       NOT APPROVED and each need approval by name. CF-4 stays OPEN
+                       until S8-2's authoritative --all regression passes.
 start_anchor:          b9a08a33ff215ce226c885a7f70c97cd4974ccad   Stage 7 push-state record
 predecessor:           docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md
 origin:                CF-4, first recorded at STAGE_4_IMPLEMENTATION_PLAN.md §"Carried forward"
@@ -16,13 +22,17 @@ untracked_baseline:    508 files, drift 0 / missing 0 / extra 0 (unchanged by an
 
 ## 0 · What this document approves, and what it does not
 
-**S8-0 is the only currently approved checkpoint.** It is documentation-only: it produced this
-file and the Stage 8 section of `docs/harvest/TODO.md`, and nothing else.
+**S8-0 and S8-1 are complete and approved. S8-2 and S8-C are not.**
 
-**Committing this plan does not approve S8-1, S8-2 or S8-C.** A plan of record describes what
-Stage 8 *would* do if each of its checkpoints were separately approved. It is a specification, not
-an authorization. The rule that governed every checkpoint of Stages 2.5 through 7 does not lapse
-because a plan now exists:
+S8-0 was documentation-only: it produced this file and the Stage 8 section of
+`docs/harvest/TODO.md`. S8-1 was subsequently approved by name and executed; it changed
+`scripts/validate_task.sh` and these two documents, and nothing else. Its implementation record is
+§8 S8-1.
+
+**Neither committing this plan nor completing S8-1 approves S8-2 or S8-C.** A plan of record
+describes what Stage 8 *would* do if each of its checkpoints were separately approved. It is a
+specification, not an authorization. The rule that governed every checkpoint of Stages 2.5 through
+7 does not lapse because a plan now exists, and it did not lapse when S8-1 went green:
 
 > **Every stage and every checkpoint needs its own approval by name, with an exact allowed-path set
 > declared up front.** A completed predecessor, an approved plan and a green gate do not together
@@ -31,12 +41,14 @@ because a plan now exists:
 
 Concretely, and stated so no successor session can read this file as permission:
 
-- **S8-1 (harness wiring) is unapproved.** `scripts/validate_task.sh` must not be edited until a
-  human approves S8-1 by name and restates its allowed paths.
-- **S8-2 (full offline regression) is unapproved**, and is verification-only when it is approved:
-  it has no allowed write paths and produces no commit.
-- **S8-C (closeout) is unapproved.**
+- **S8-2 (full offline regression) is unapproved and unexecuted.** It is verification-only when it
+  is approved: no allowed write paths, no commit. **`bash scripts/validate_task.sh --all` has not
+  been run at any point in Stage 8.**
+- **S8-C (closeout) is unapproved.** No Stage 8 completion handoff has been prepared.
 - **A push is unapproved**, at every point, and remains a separate explicit approval after S8-C.
+- **Stage 8 is not complete, and CF-4 is not closed.** S8-1 wired the harness; only S8-2's
+  authoritative `--all` regression can demonstrate that the wiring achieves what CF-4 asks for. A
+  green S8-1 is not that demonstration and must not be reported as one.
 
 **Stage 8 contains none of the following, at any checkpoint:**
 
@@ -582,7 +594,7 @@ convention held by S4-C, S5-C, S6-C and S7-C.
 the code it authorizes exists. Folding it into the wiring commit would make the plan a description
 of a decision already taken.
 
-### S8-1 — harness wiring · NOT APPROVED
+### S8-1 — harness wiring · APPROVED · COMPLETE
 
 **Purpose.** Make `--all` run every committed shell wrapper.
 
@@ -627,6 +639,85 @@ until it turns green.
 
 **Why not combined with S8-2.** S8-2 must observe committed bytes. A regression run inside the
 wiring checkpoint would validate a working tree that no commit records.
+
+#### S8-1 implementation record
+
+Executed as specified. `scripts/validate_task.sh` is the only production file changed; the other
+two paths are this plan and `TODO.md`. **No file under `tests/` was touched, and no taxonomy
+wrapper was modified** (D3).
+
+**A · `ISOLATED[]` — 19 → 58 entries.** The 39 basenames of §3.2 were appended as one commented
+block. The 19 legacy entries are preserved verbatim, in their original order, as a prefix — proved
+by comparing against `b9a08a3`. Every one of the 58 `tests/*.sh` wrappers on disk has exactly one
+allowlist entry; there are no duplicates, no wildcard or dynamic-discovery entry, and no entry
+naming a file that does not exist.
+
+**B · Case table — 50 taxonomy arms added, 91 `add_test` calls, all 39 wrappers routed.** The 19
+pre-existing legacy arms are **byte-identical and in order** against `b9a08a3`; the taxonomy arms
+are additive and adjacent. By surface:
+
+```text
+src/harvest/**       26 arms   (25 mapping + 1 deliberate no-op for the three __init__.py files)
+scripts/harvest/**    7 arms   ( 6 mapping + 1 deliberate no-op for hash_tree.py)
+config/harvest/**     8 arms
+schemas/harvest/**    9 arms
+                     --------
+                     50 arms   91 add_test calls   39/39 taxonomy wrappers routed
+```
+
+The two documented omissions are implemented as **explicit empty arms placed before the wildcard
+patterns**, so `case`'s first-match-wins ordering stops a later glob from silently claiming them.
+This makes the omission visible in the code rather than only in this plan. The largest taxonomy arm
+adds 6 wrappers (`config/harvest/facets/*.v1.json`); there is no blanket arm and no
+`test_taxonomy_*` glob anywhere in the script. Every target is spelled `tests/<name>.sh`.
+
+**C · Runtime-path containment.** `RUNTIME_PATHS=(state/taxonomy_harvest data/harvested runs
+LATEST_RUN_ID)` with a `runtime_leaks()` helper using `[ -e ]`, called once before the first
+wrapper and once after the last. Either detection sets the existing sticky `FAIL=1` and prints the
+offending path. **Nothing is deleted, restored or relocated.** `snapshot_state()` is untouched and
+remains the independent second witness for `state/taxonomy_harvest`, since `find state -type f`
+sees gitignored files. The 16 wrapper-owned leak guards are untouched and unweakened. One line was
+added to the script's header comment so its enumeration of isolation proofs stays truthful.
+
+**Preserved, and verified statically:** `--all`'s single `tests/*.sh` glob · `--all` argument
+positioning · WARN-skip semantics · sticky `FAIL=1` and `exit "$FAIL"` · serial execution with a
+direct `bash "$t"` child · the `state/` content-hash snapshot · basename allowlist semantics. **Not
+added:** timeout or watchdog · interpreter or tool version gate · test-count parsing or new summary
+format · concurrency · harness self-test · aggregate wrapper · `CLAUDE.md` edit.
+
+**Focused validation actually performed** (S8-2's closing gate was **not** run):
+
+```text
+1  bash -n scripts/validate_task.sh                                    rc 0
+2  static inventory + semantics + containment proof, 39 checks         ALL PASS
+     incl. legacy arms byte-identical vs b9a08a3, legacy ISOLATED[]
+     prefix verbatim, 39/39 wrappers routed, no blanket arm
+3  explicit-mode routing samples, one per routing shape, each rc 0,
+   each ending "== validate_task.sh: PASS ==", each with 0 WARN skips,
+   "production state/ unchanged" and "repository runtime paths absent":
+     src/harvest/budget.py                    -> budget                        1:1 arm
+     src/harvest/urlkey.py                    -> identity aliases facet_identity  fan-out
+     scripts/harvest/migrate.sh               -> migration                     CLI arm
+     config/harvest/topics/cases.v1.json      -> config adapters
+                                                 adapter_concurrency           config wildcard
+     schemas/harvest/run_manifest.v1.json     -> manifest                      schema arm
+4  scripts/harvest/protected_baseline.py      -> protected_baseline            rc 0
+   (the shell-native baseline suite, reached through its own arm)
+5  omission proof: src/harvest/__init__.py + scripts/harvest/hash_tree.py
+   route to ZERO wrappers while still being linted                     rc 0
+```
+
+Every sample ran exactly its expected wrapper set, each wrapper exactly once, with no unexpected
+wrapper and no skip. `tests/test_taxonomy_domain_throttle.sh` was deliberately not exercised — no
+sample routes to it — so no domain-throttle diagnostic arose.
+
+**Repository state after S8-1:** tracked changes limited to the three allowed paths · index empty
+before commit · `git diff --check` rc 0 · protected baseline 18/18 · untracked baseline 508/508
+with drift 0 / missing 0 / extra 0 · all four runtime paths absent · nothing under `tests/`,
+`src/`, `config/`, `schemas/`, `state/` or `data/` modified · `CLAUDE.md` unmodified.
+
+**What S8-1 does not establish.** It does not show that `--all` is green, because `--all` was not
+run. **CF-4 remains open** until S8-2's authoritative regression passes.
 
 ### S8-2 — full offline regression · NOT APPROVED · verification-only
 
@@ -801,6 +892,11 @@ callers), **CF-2 / CF-7**, **CF-5 / CF-8 / CF-9**, **CF-6** (§9.2), **CF-11**, 
 
 ## 12 · Closing statement
 
-**S8-0 is complete. Stage 8 implementation is not approved.** `scripts/validate_task.sh` is
-unchanged and CF-4 remains open. S8-1, S8-2 and S8-C each require separate approval by name with
-the allowed-path set restated at approval time. A push remains a separate approval after closeout.
+**S8-0 and S8-1 are complete. Stage 8 is not.** `scripts/validate_task.sh` now wires all 39
+taxonomy wrappers, but **`bash scripts/validate_task.sh --all` has not been run**, so **CF-4
+remains open**: the harness is wired, and nothing yet demonstrates that the wired gate is green.
+
+**S8-2 and S8-C each require separate approval by name**, with the allowed-path set restated at
+approval time. S8-2 is verification-only and writes nothing; S8-C is documentation-only and does
+not include `CLAUDE.md`. A push remains a separate approval after closeout. Stage 8 contains no
+network access, no operational migration apply, no promotion, and no retained runtime output.
