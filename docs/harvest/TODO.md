@@ -675,8 +675,9 @@ alias conflicts). Until then `designated_target_fetch_owner_lane_id` and
 `linkcheck` / `promote` / `diff` / `compare-runs` subcommands, the transaction journal and the
 promotion tests listed under this heading stay **unscheduled, unapproved and untouched** (plan §14
 erratum E11). Checkpoint sequence
-**S6-0 · S6-1 · S6-2 · S6-3 · S6-4 · S6-5 · S6-6 · S6-7 · S6-L · S6-C**, each requiring its own
-separate approval **by name**; S6-C's handoff path and allowed paths are declared in advance in
+**S6-0 · S6-1 · S6-2 · S6-3 · S6-4 · S6-5 · S6-6 · S6-6A · S6-7 · S6-L · S6-C**, each requiring its own
+separate approval **by name** (S6-6A was added between S6-6 and S6-7 by plan §14.4, which found target
+request accounting underivable inside S6-6's boundary); S6-C's handoff path and allowed paths are declared in advance in
 plan §11. **S6-L (bounded live smoke) is the only checkpoint that makes a network request** and needs
 approval twice — once as a checkpoint and once immediately before it runs.
 
@@ -903,13 +904,53 @@ approval twice — once as a checkpoint and once immediately before it runs.
       - **A separate accounting checkpoint is required after S6-6 and before S6-7.** It is **not
         approved**, and its exact paths are **not declared**: it needs a read-only ownership/path audit
         first, since the candidate routes touch `targetfetch.py` or the byte-frozen `pool.py`.
-        **S6-7 is blocked until the accounting contract is resolved.**
+        **S6-7 is blocked until the accounting contract is resolved.** — **DISCHARGED by S6-6A.**
       - **One defect found by its own test**: the `conflict_id` content-derivation test indexed a row by
         position after the rows are sorted, so it was asserting the sort order rather than the id. The
         production hash was correct; the test now selects by `identity_url`.
-- [ ] **S6-7, S6-L, S6-C** — **not approved, not implemented.** **S6-7 is blocked** behind the target
-      request-accounting checkpoint (plan §14.4), whose own scope needs a read-only ownership audit
-      first. **Live network access remains unauthorized** and no Stage 6 request has been made.
+- [x] **S6-6A** target request accounting (`feat(harvest): report target request accounting`) — the
+      checkpoint §14.4 demanded and deliberately left undeclared, **scoped by a read-only ownership and
+      path audit that edited no file, ran no test and made no request.** `TargetFetchOutcome` gained one
+      field, `accounting`, **copied** from the client's final `Response` or its typed error — never
+      recomputed, never diffed from `client.stats`, on the idiom `sourcecache.py` already states for the
+      source lane. A failure uses the committed `getattr(error, "accounting", ZERO_ACCOUNTING)`, since
+      `BudgetExhausted` carries no class default; a budget-skipped target keeps **genuine zeros**,
+      because no request was made. `artifacts.target_request_accounting()` sums the map **once**, at the
+      manifest boundary.
+      - **The route was `targetfetch.py`, and `pool.py` never needed to move.**
+        `pool.accounting()["http_attempts"]` sums `self.sources`, which only `record_established_source`
+        populates and which the target path is forbidden to call — so the pool structurally cannot see a
+        target fetch. `pool.py` and `httpclient.py` are **byte-unchanged**, the Stage 4 byte-freeze holds
+        and **no guard was retired for them**.
+      - **One outcome per owned canonical identity, so a shared URL is counted once** — the S6-4
+        ownership guarantee stated as a number rather than re-proved.
+      - **Three keys, and the boundary they respect**: `target_http_attempts`, `target_retries`,
+        `target_redirect_hops`, optional and inside `request_accounting` beside the owner counters that
+        already describe both lanes. `http_attempts`, `retries` and `redirect_hops` keep their
+        **source-only** meaning, unchanged in value and wording. **No `total_http_attempts`** — folding
+        the two key spaces is what §2 forbids, and the prohibition is still asserted by a live test. No
+        `request_charges` projection, no target conditional revalidations, no robots retrievals, no
+        estimate.
+      - **Omission and zero are different answers.** `target_outcomes` defaults to a `None` sentinel:
+        omitted, the three keys are absent and every committed caller is byte-identically unaffected;
+        supplied — **including empty** — all three appear at zero. "Fetched nothing" must stay
+        distinguishable from "did not report".
+      - **Plan erratum E17.** §5.0's "never observes an attempt, a hop count, a retry" was a stronger
+        claim than the design needed: it fenced off transport *ownership*, but the wording also forbade
+        reading a number the client had already frozen, which was the sole structural reason §14.4 called
+        the count unreachable. The fence stands — one logical call, no retry/timeout/redirect/body-size
+        logic, no branch on any counter — and the sentence now says so. **The documentation is in this
+        commit, not a separate one**: the superseded sentence and the code superseding it are one
+        contract.
+      - **One spent progress guard retired in part**, `test_eligibility.py::test_no_target_attempt_total_
+        is_reported`: the three `target_*` names it forbade are now the shipped keys and are asserted by
+        **exact value** instead, while its `total_http_attempts` prohibition is **kept** because that one
+        is not spent. Renaming the keys to keep the guard green was rejected on the S6-4/S5-4 precedent.
+        Two independent `StubResponse` helpers and the exact `TargetFetchOutcome` field set were updated
+        for the same reason.
+- [ ] **S6-7, S6-L, S6-C** — **not approved, not implemented.** **S6-7 is unblocked** by S6-6A, which
+      resolved the target request-accounting contract (plan §14.4), and remains **unapproved**.
+      **Live network access remains unauthorized** and no Stage 6 request has been made.
       **D6-A and D6-B remain resolved**; D6-B is now delivered.
 - [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume

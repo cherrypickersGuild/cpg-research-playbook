@@ -14,11 +14,20 @@ WHAT IT DOES NOT OWN, and deliberately cannot reimplement, because the injected
     the response-size cap · reading the response body
 
 This module sees exactly two things: the client's FINAL `Response`, or the
-client's FINAL typed error. It never learns how many attempts were made, how many
-redirect hops were followed, whether anything was retried, or what a partial body
-looked like — so it cannot grow a second opinion about any of the above. A fixture
-that could time out or answer differently on a second call would break that
-separation, which is why the S6-1 corpus refuses transport-simulation directives.
+client's FINAL typed error. It never sees a partial body, and it cannot grow a
+second opinion about any of the above. A fixture that could time out or answer
+differently on a second call would break that separation, which is why the S6-1
+corpus refuses transport-simulation directives.
+
+It DOES carry outward the DV-8 `FetchAccounting` the client has already frozen
+onto that final response or error (S6-6A, plan erratum E17) — copied, never
+recomputed, and never diffed from the shared `client.stats`. Reading a number the
+client computed is not owning the behaviour that produced it: nothing here branches
+on an attempt, a hop count or a retry, and the counters travel unread exactly as
+`body` and `content_type` do. An earlier draft of this docstring said the module
+"never learns how many attempts were made"; that was a stronger claim than the
+design needed, and it was the sole reason an exact target-attempt count was
+unreachable from the run manifest.
 
 WHAT IT ALSO DOES NOT DO: no alias or canonical adjudication (S6-3 — this module
 carries the body and content type outward but never parses them), no candidate
@@ -127,6 +136,14 @@ class TargetFetchOutcome:
     `rel=canonical` without this module growing an HTML parser. `final_url` and
     `permanent_redirect` are the client's own classification, passed through: this
     module never decides whether a redirect was permanent.
+
+    `accounting` travels the same way (S6-6A): it is the client's own immutable
+    per-logical-fetch `FetchAccounting`, copied off the final response or the final
+    typed error. It is what makes an EXACT target request count reportable without
+    estimating one and without diffing shared counters — the run manifest sums it
+    over the run-scoped outcome map, one entry per owned canonical identity, so a URL
+    accepted twice is counted once. `ZERO_ACCOUNTING` is the honest default for an
+    outcome no client call produced, such as a budget skip.
     """
     requested_url: str
     access_status: str
@@ -140,6 +157,7 @@ class TargetFetchOutcome:
     content_type: str = None
     body: bytes = None
     error_class: str = None
+    accounting: hc.FetchAccounting = hc.ZERO_ACCOUNTING
 
     @property
     def succeeded(self):
@@ -232,6 +250,10 @@ def _success(url, response, stamp):
         content_hash=response.content_hash,
         content_type=response.content_type,
         body=body,
+        # The client's own frozen counters, read straight off the response. Not
+        # recomputed here, and deliberately not derived from `client.stats`, whose
+        # lifetime aggregate would attribute another call's work to this one.
+        accounting=response.accounting,
     )
 
 
@@ -251,6 +273,13 @@ def _failure(url, error, stamp, *, access_status):
         last_checked_at=stamp,
         http_status=status if isinstance(status, int) else None,
         error_class=type(error).__name__,
+        # A failed logical fetch cost exactly as much as a successful one, and the
+        # client freezes the same counters onto it. `getattr` rather than attribute
+        # access because only `HttpError` carries a class-level default: a
+        # `BudgetExhausted` raised before `get()` ever ran — or any other exception
+        # this module did not expect — has no accounting to read, and zeros are then
+        # the truth about how many requests it produced.
+        accounting=getattr(error, "accounting", hc.ZERO_ACCOUNTING),
     )
 
 

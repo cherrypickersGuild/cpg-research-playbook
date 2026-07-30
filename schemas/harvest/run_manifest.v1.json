@@ -228,7 +228,7 @@
 
     "request_accounting": {
       "type": "object",
-      "description": "Logical fetch ownership is asserted; HTTP attempts are merely observed. Three lanes sharing a feed produce ONE source-fetch owner; a 301 plus one 503 retry on that feed still produces one owner and three attempts, with the budget charged 3.",
+      "description": "Logical fetch ownership is asserted; HTTP attempts are merely observed. Three lanes sharing a feed produce ONE source-fetch owner; a 301 plus one 503 retry on that feed still produces one owner and three attempts, with the budget charged 3. Source discovery and target-page fetching are two key spaces and are counted apart: http_attempts, retries and redirect_hops are SOURCE-ONLY and always have been, and the target_ counters are their target-page counterparts. There is deliberately no combined total — summing the two would erase the boundary. The target counters are summed over one outcome per owned canonical identity, so a URL accepted in two cells or under two topics contributes once.",
       "additionalProperties": false,
       "properties": {
         "source_fetch_owners": { "type": "integer", "minimum": 0 },
@@ -237,7 +237,10 @@
         "http_attempts": { "type": "integer", "minimum": 0 },
         "retries": { "type": "integer", "minimum": 0 },
         "redirect_hops": { "type": "integer", "minimum": 0 },
-        "conditional_revalidations": { "type": "integer", "minimum": 0 }
+        "conditional_revalidations": { "type": "integer", "minimum": 0 },
+        "target_http_attempts": { "type": "integer", "minimum": 0, "description": "Every target HTTP attempt the run made: the first, every retry, and every request issued for a followed redirect target. Robots.txt retrieval is not a target attempt. Exact, from the per-fetch counters HttpClient froze onto each response or typed error — never estimated and never diffed from the shared client.stats." },
+        "target_retries": { "type": "integer", "minimum": 0, "description": "Target attempts made because of retry policy only. Following a redirect is not a retry." },
+        "target_redirect_hops": { "type": "integer", "minimum": 0, "description": "Redirects actually followed while fetching target pages." }
       }
     },
 

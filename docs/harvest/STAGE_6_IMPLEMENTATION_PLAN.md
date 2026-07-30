@@ -284,8 +284,13 @@ transport would quietly become a second HTTP implementation.
   (`connect/read/request_timeout_sec`, `max_response_bytes`, `_read_capped`). Stage 6 adds no timeout
   or size logic and duplicates neither test.
 - **`targetfetch.py` consumes only the injected client's final response or its typed error.** It sees
-  one `Response` or one `HttpError`; it never observes an attempt, a hop count, a retry or a partial
-  body, and it has no opinion about how many requests produced what it was handed.
+  one `Response` or one `HttpError`, and it never sees a partial body. **Amended by S6-6A (erratum
+  E17):** it *does* read the DV-8 `FetchAccounting` the client has already frozen onto that final
+  response or error, and carries it outward unread — exactly as it already carries `body` and
+  `content_type`. What it still does not do is form an opinion: it never branches on an attempt, a
+  hop count or a retry, and it independently implements and interprets **no** retry, redirect,
+  timeout, body-size or transport policy. Reporting a number the client computed is not owning the
+  behaviour that produced it; recomputing or second-guessing it would be.
 - **S6-2's tests raise the existing typed errors from a stub or injected client** to verify the
   `access_status` mapping. That is the whole of Stage 6's failure-mode surface, and it needs no
   fixture, no socket and no transport simulation.
@@ -851,6 +856,60 @@ conflict artifact is written by the **single S5-1 writer**, serialized by the
 disk. No second writer, no second serializer, no second validator. The Stage 5 file-set assertion is
 updated from an exact 42 to an exact new number, still asserted **exactly**.
 
+### S6-6A · Target request accounting — L2
+
+The checkpoint §14.4 said was required and deliberately left undeclared: its scope came from a
+read-only ownership and path audit, not from a guess. **S6-7 is blocked behind it**, because a
+manifest whose request accounting is about to change shape is not a stable thing to pin.
+
+```text
+M  src/harvest/targetfetch.py       TargetFetchOutcome.accounting, copied from the client's final
+                                    response or typed error; never recomputed
+M  src/harvest/artifacts.py         target_request_accounting(); build_run_manifest(target_outcomes=)
+M  src/harvest/run_cells.py         passes the run-scoped outcome map — one call site
+M  schemas/harvest/run_manifest.v1.json   three optional integer keys inside request_accounting
+M  tests/harvest/test_target_fetch.py     field set, StubResponse, pass-through
+M  tests/harvest/test_target_ownership.py StubResponse
+M  tests/harvest/test_eligibility.py      the spent progress guard, retired in part
+A  tests/harvest/test_target_accounting.py
+M  tests/test_taxonomy_eligibility.sh     header prose, which the retired guard made false
+A  tests/test_taxonomy_target_accounting.sh
+M  docs/harvest/STAGE_6_IMPLEMENTATION_PLAN.md   §5.0 erratum E17, this section, §11.1, §14.4
+M  docs/harvest/TODO.md                          checkpoint registration
+```
+
+Exactly twelve paths, and the documentation is **inside** this checkpoint rather than split into a
+commit of its own: §5.0's superseded sentence and the code that supersedes it are one contract, and
+shipping either without the other leaves the plan disagreeing with the tree.
+
+**`pool.py` is not among them, and that is the finding.** `pool.accounting()["http_attempts"]` sums
+`self.sources`, which only `record_established_source` populates and which the target path is
+forbidden to call (§3) — so the pool can never see a target fetch, and routing target attempts
+through it would put the two key spaces one function call apart. Every fact needed is already frozen
+onto the objects `targetfetch` holds. `pool.py` therefore stays byte-frozen and
+`test_run_cells.py::test_the_stage_4_modules_are_byte_unchanged` needs no retirement.
+
+**What is reported, and what is not.** Three optional keys inside `request_accounting` —
+`target_http_attempts`, `target_retries`, `target_redirect_hops` — summed **once**, at the manifest
+boundary, over the **run-scoped** outcome map. One outcome per owned canonical identity, so a URL
+accepted in two cells or under two topics is counted **once**, which is the S6-4 guarantee expressed
+as a number. Deliberately absent: `total_http_attempts` (folding the two key spaces is precisely what
+§2 forbids), `request_charges` (no source counterpart in this block; it stays on the outcome for a
+later checkpoint), target conditional revalidations (no counter exists, no revalidation path is
+built) and robots retrievals (DV-8 excludes them from `attempts` by contract). **`http_attempts`,
+`retries` and `redirect_hops` keep their existing source-only meaning**, unchanged in value and in
+wording. No estimate, and no `client.stats` delta.
+
+**Omission and zero are different answers.** `target_outcomes` defaults to a `None` sentinel: omitted,
+the three keys are absent and every committed caller is byte-identically unaffected; supplied — even
+empty — all three appear, at zero. "This run fetched no target" must stay distinguishable from "this
+run did not report".
+
+**The names are the obvious ones on purpose.** `test_eligibility.py`'s S6-6 guard forbids the exact
+strings `target_http_attempts`, `target_retries` and `target_redirect_hops`. That guard is spent and
+is retired for those three; choosing different key names to keep it green is the move S6-4 already
+rejected on the S5-4 precedent. Its `total_http_attempts` prohibition is **not** spent and is kept.
+
 ### S6-7 · Determinism, failure modes and partial runs, end to end — L1 +FS
 
 ```text
@@ -918,8 +977,12 @@ forward, the final assertion count, and the exact repository state.
 
 ```text
 S6-0 ── S6-1 ──┬── S6-2 ──┐
-               └── S6-3 ──┴── S6-4 ── S6-5 ── S6-6 ── S6-7 ── S6-L(optional) ── S6-C
+               └── S6-3 ──┴── S6-4 ── S6-5 ── S6-6 ── S6-6A ── S6-7 ── S6-L(optional) ── S6-C
 ```
+
+**S6-6A sits between S6-6 and S6-7 by necessity, not by preference** (§14.4): S6-6 could not derive an
+exact target-attempt count inside its own ownership boundary, and S6-7 pins a manifest that S6-6A
+changes the shape of.
 
 S6-2 and S6-3 are independently reviewable once S6-1 lands; S6-3 does not depend on S6-2. **S6-L is
 optional to closing Stage 6** — a green offline Stage 6 is a complete stage, and the live smoke is
@@ -1153,6 +1216,28 @@ The rule this one leaves behind: **when a plan states what an existing API does,
 note's justification was sound reasoning from a premise nobody had verified, and it survived plan
 approval, a decision-record checkpoint and a fixture-scope correction before a preflight caught it.
 
+**E17 — §5.0 said `targetfetch.py` "never observes an attempt, a hop count, a retry". Amended by
+S6-6A.** The sentence conflated two different things and only one of them was ever the contract.
+S6-2 wrote it to fence off *transport ownership*: no retry loop, no timeout, no redirect following, no
+body cap, no second opinion about how many requests should be made. That fence stands and is still
+asserted. But the wording also forbade *reading a number the client had already computed and frozen*,
+and that prohibition had no purpose — it was the sole structural reason §14.4 found an exact target
+attempt count unreachable, and it made the outcome discard `Response.accounting` on the success path
+and `HttpError.accounting` on the failure path, both of which DV-8 exists to provide.
+
+The corrected line: **`targetfetch.py` carries the client-frozen `FetchAccounting` outward without
+independently implementing or interpreting retry, redirect, timeout, body-size or transport policy.**
+It never branches on a counter; it copies one object, exactly as it already copies `body`,
+`content_type`, `final_url` and `permanent_redirect` without parsing or reclassifying any of them.
+`fetch_target` still makes exactly one logical client call, still raises on an unmapped `HttpError`
+subclass, and still has no retry, timeout or size logic of its own — all of which remain pinned by
+`tests/harvest/test_target_fetch.py`.
+
+The rule this one leaves behind: **an isolation boundary should name the judgement it forbids, not the
+data it refuses to look at.** "Forms no opinion about attempts" would have been true for the whole of
+Stage 6; "never observes an attempt" was a stronger claim than the design needed, and it cost a
+checkpoint to walk back.
+
 ---
 
 ## 14.1 · S6-T / S6-TD — the `domain_throttle` instability, unexplained
@@ -1384,6 +1469,26 @@ within S6-6's ownership boundary.** Two independent reasons, both structural:
 - **S6-7 is blocked until the accounting contract is resolved.** S6-7 asserts
   determinism and failure modes over a full run's artifacts, and a manifest whose
   request accounting is about to change shape is not a stable thing to pin.
+
+**RESOLVED by S6-6A** (§11, `S6-6A · Target request accounting`). The read-only audit
+this section demanded was performed before a file was edited, and it settled the two
+open questions:
+
+- **The route is `targetfetch.py`, not `pool.py`.** The client already freezes an
+  exact `FetchAccounting` onto the final response and onto every typed error; the
+  only gap was that `_success` and `_failure` discarded it. The outcome now carries
+  that committed object — copied, never reconstructed, the same rule
+  `sourcecache.py` states for the source lane. `pool.py` and `httpclient.py` are
+  **untouched**, so the byte-freeze holds and no guard is retired for them.
+- **The two key spaces stay distinct in the manifest, by name.** Three new optional
+  keys, `target_http_attempts` / `target_retries` / `target_redirect_hops`, sit
+  beside the owner counters that already describe both lanes. `http_attempts`,
+  `retries` and `redirect_hops` keep their **source-only** meaning, unchanged in
+  value and in wording, and `total_http_attempts` remains forbidden by a live test.
+  Nothing is estimated and no `client.stats` delta is taken; every number is the sum
+  of counters the client incremented at the moment each event occurred.
+
+**S6-7 is unblocked** by S6-6A landing green, and remains **unapproved**.
 
 **What S6-6 did ship**: the alias-conflict artifact and its committed schema, the
 derived `alias_conflicts_count` read back from the validated document, `config.bounds`

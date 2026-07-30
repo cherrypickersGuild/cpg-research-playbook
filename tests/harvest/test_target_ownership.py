@@ -36,6 +36,7 @@ import unittest
 
 from src.harvest import aliases as aliases_mod
 from src.harvest import artifacts
+from src.harvest import httpclient as hc
 from src.harvest import pool as pool_mod
 from src.harvest import run_cells
 from src.harvest import targetfetch as targetfetch_mod
@@ -66,7 +67,7 @@ class StubClient:
 
 
 class StubResponse:
-    def __init__(self, url, body):
+    def __init__(self, url, body, accounting=hc.ZERO_ACCOUNTING):
         self.status = 200
         self.url = url
         self.final_url = url
@@ -75,6 +76,9 @@ class StubResponse:
         self.permanent_redirect = False
         self.content_hash = "hash-of-%s" % url
         self.content_type = "text/html; charset=utf-8"
+        # S6-6A: the committed Response always carries one, so a stub standing in
+        # for it must too. Zero by default — this suite counts CALLS, not attempts.
+        self.accounting = accounting
 
 
 class Candidate:

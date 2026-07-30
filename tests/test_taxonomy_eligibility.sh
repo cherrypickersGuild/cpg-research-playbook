@@ -23,12 +23,14 @@
 # artifact cannot drift.
 #
 # Deliberately NOT here: alias adjudication itself (every §4 row belongs to
-# tests/test_taxonomy_aliases.sh) and target HTTP-attempt reporting. The S6-6
-# preflight established that an exact target-attempt count cannot be derived from
-# the committed TargetFetchOutcome or pool.accounting(), so it is **not reported
-# rather than estimated**, `http_attempts` keeps its existing source-only meaning,
-# and a test asserts no invented target-attempt key appears. A separate accounting
-# checkpoint owns that.
+# tests/test_taxonomy_aliases.sh) and the exact target HTTP-attempt values, which
+# belong to S6-6A and tests/test_taxonomy_target_accounting.sh. S6-6 could not
+# derive them at all — the committed TargetFetchOutcome carried no accounting and
+# pool.accounting() structurally cannot see a target fetch — so what this suite
+# keeps is the BOUNDARY: `http_attempts` still means source attempts and only
+# source attempts, the target counters are their own separate keys, and no
+# combined total is reported, because folding the two key spaces together is what
+# plan §2 forbids.
 #
 # Offline: no network path is involved, and the one integrated run uses the
 # committed fixture opener into an injected temp root. Asserts production state/ and

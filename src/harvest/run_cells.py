@@ -1005,6 +1005,15 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
             classification_decisions=decisions,
             request_accounting=accounting,
             target_fetch_owners=accounting.get("target_fetch_owners", 0),
+            # S6-6A. The RUN-scoped map, not per-cell outcomes and not per-record:
+            # it holds one outcome per owned canonical identity, so an identity
+            # accepted in two cells or under two topics contributes its attempts
+            # once. Passed as facts; `build_run_manifest` derives the counters, so
+            # no target number is ever caller-asserted. Sorted for a deterministic
+            # summation order — the total is order-independent, but the argument
+            # should not depend on dict insertion order either.
+            target_outcomes=[target_outcomes[key]
+                             for key in sorted(target_outcomes)],
             # Passed so eligibility is derived from what the records actually say,
             # not from the owner count alone: acquiring one target-fetch owner must
             # not make a run publishable while its records still say not_checked.

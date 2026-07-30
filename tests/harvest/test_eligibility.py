@@ -20,10 +20,13 @@ re-deriving it:
 S6-6 adds NO eligibility predicate. It proves the one S6-4 brought forward, routes
 what S6-3 already adjudicated, and reports what the artifact already says.
 
-Deliberately absent: alias adjudication itself (S6-3 owns every §4 row) and target
-HTTP-attempt reporting, which the S6-6 preflight established cannot be derived from
-the committed `TargetFetchOutcome` or `pool.accounting()` and is therefore left to a
-separate accounting checkpoint. Nothing here estimates it.
+Deliberately absent: alias adjudication itself (S6-3 owns every §4 row) and the
+exact target HTTP-attempt values, which belong to S6-6A and
+`tests/harvest/test_target_accounting.py`. S6-6 could not derive them at all — the
+committed `TargetFetchOutcome` carried no accounting and `pool.accounting()`
+structurally cannot see a target fetch — so this file's contribution is now the
+boundary rather than the numbers: the source counters still mean what they always
+meant, the target counters are their own keys, and no combined total exists.
 """
 import datetime
 import glob
@@ -393,19 +396,37 @@ class TestIntegratedRun(unittest.TestCase):
         self.assertTrue(self.manifest["publication_eligible"])
         self.assertIsNone(self.manifest["publication_ineligible_reason"])
 
-    def test_no_target_attempt_total_is_reported(self):
-        """The S6-6 preflight established an exact target-attempt count cannot be
-        derived from the committed TargetFetchOutcome or pool.accounting(). It is
-        therefore NOT reported rather than estimated, and `http_attempts` keeps its
-        existing source-only meaning until a separate accounting checkpoint."""
+    def test_the_source_accounting_keeps_its_source_only_meaning(self):
+        """S6-6A added target counters beside these; it changed neither of these.
+
+        The negative half of this test was S6-6's progress guard, which forbade the
+        four target key names outright because no exact count could be derived
+        inside S6-6's boundary. S6-6A derives them, so three of those names are now
+        the shipped keys and are asserted BY VALUE in test_target_accounting.py.
+        What is not spent, and is kept below, is the prohibition on a COMBINED
+        total: folding the two key spaces into one number is what plan §2 forbids,
+        and no checkpoint has authorized it.
+        """
         accounting = self.manifest["request_accounting"]
         self.assertEqual(accounting["source_fetch_owners"], 25)
         self.assertEqual(accounting["http_attempts"], 25)
-        for invented in ("target_http_attempts", "target_attempts",
-                         "target_retries", "target_redirect_hops",
-                         "total_http_attempts"):
-            with self.subTest(invented):
-                self.assertNotIn(invented, accounting)
+        for combined in ("total_http_attempts", "total_attempts",
+                         "http_attempts_including_targets"):
+            with self.subTest(combined):
+                self.assertNotIn(combined, accounting)
+
+    def test_the_target_counters_are_present_and_separate(self):
+        """Present because S6-6A reports them; separate because they are their own
+        keys. Exact values belong to that checkpoint's own suite — what matters
+        here is that adding them did not disturb the S6-6 artifact or eligibility
+        contract this file owns."""
+        accounting = self.manifest["request_accounting"]
+        for key in ("target_http_attempts", "target_retries",
+                    "target_redirect_hops"):
+            with self.subTest(key):
+                self.assertIn(key, accounting)
+                self.assertIsInstance(accounting[key], int)
+        self.assertGreater(accounting["target_http_attempts"], 0)
 
     def test_no_repository_runtime_path_was_created(self):
         for leaked in ("state/taxonomy_harvest", "data/harvested", "runs",

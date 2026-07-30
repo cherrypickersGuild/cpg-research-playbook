@@ -69,10 +69,16 @@ class StubClient:
 
 
 class StubResponse:
-    """Only the fields fetch_target is allowed to read."""
+    """Only the fields fetch_target is allowed to read.
+
+    `accounting` joined the read set at S6-6A. It is listed here rather than
+    defaulted away deliberately: this class IS the declaration of what the module
+    may look at, so a field appearing here is the visible cost of a new read.
+    """
 
     def __init__(self, status=200, final_url=URL, body=BODY, redirects=0,
-                 permanent_redirect=False, content_hash="hash", content_type="text/html"):
+                 permanent_redirect=False, content_hash="hash", content_type="text/html",
+                 accounting=hc.ZERO_ACCOUNTING):
         self.status = status
         self.final_url = final_url
         self.body = body
@@ -80,6 +86,7 @@ class StubResponse:
         self.permanent_redirect = permanent_redirect
         self.content_hash = content_hash
         self.content_type = content_type
+        self.accounting = accounting
 
 
 def fetch(client, *, url=URL, budget=None, stamp=STAMP):
@@ -382,7 +389,10 @@ class TestDependencyIsolation(unittest.TestCase):
             {"requested_url", "access_status", "verification_status",
              "verification_evidence", "last_checked_at", "http_status", "final_url",
              "permanent_redirect", "content_hash", "content_type", "body",
-             "error_class"})
+             "error_class",
+             # S6-6A: the client's own frozen per-fetch counters, carried outward
+             # unread. Still not an alias, a pool or a record field.
+             "accounting"})
 
     def test_the_body_is_carried_outward_byte_identical_and_unparsed(self):
         markup = b'<html><head><link rel="canonical" href="https://x.test/a"></head></html>'

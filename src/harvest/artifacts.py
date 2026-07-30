@@ -646,6 +646,46 @@ def unchecked_full_records(records):
     return unchecked, total
 
 
+def target_request_accounting(outcomes):
+    """Exact target-fetch counters, summed from what the client already froze.
+
+    One `TargetFetchOutcome` per OWNED CANONICAL IDENTITY is the input contract, and
+    it is the whole reason this is a sum rather than an estimate. S6-4 fetches each
+    identity once per run and hands the same outcome object to every record owning
+    it, so summing the run-scoped map counts a URL accepted in two cells — or under
+    two topics — exactly once. Summing per record would count it twice and would
+    quietly contradict the ownership guarantee it is supposed to describe.
+
+    Every number here was incremented by the committed HTTP client at the moment
+    the event occurred, frozen onto the response or the typed error, and copied onto
+    the outcome by S6-2 (this module names no transport type and constructs none —
+    it reads three integers off objects it is handed). Nothing is estimated,
+    nothing is derived from a formula, and no
+    `client.stats` delta is taken: that dict is a client-lifetime aggregate shared by
+    every call, and diffing it around one fetch attributes other work to this one.
+
+    THREE KEYS, AND THE ONES DELIBERATELY MISSING. Source and target accounting are
+    two key spaces with different owners (plan §2), so the target counters are named
+    apart and `http_attempts` / `retries` / `redirect_hops` keep their source-only
+    meaning. There is no `total_http_attempts`: a sum across the two would erase the
+    boundary this separation exists to hold. `request_charges` is available on every
+    outcome but is not projected here — the block has no `budget_charged` counterpart
+    on the source side either. Conditional revalidations are not reported because the
+    target path has no revalidation to count, and robots retrievals never enter
+    `attempts` by DV-8's own contract.
+    """
+    totals = {"target_http_attempts": 0, "target_retries": 0,
+              "target_redirect_hops": 0}
+    for outcome in outcomes or ():
+        accounting = getattr(outcome, "accounting", None)
+        if accounting is None:
+            continue
+        totals["target_http_attempts"] += accounting.attempts
+        totals["target_retries"] += accounting.retries
+        totals["target_redirect_hops"] += accounting.redirect_hops
+    return totals
+
+
 def derive_publication_eligibility(mode, cells, *, target_fetch_owners=0,
                                    records=()):
     """Derived from facts the manifest already records — never asserted.
@@ -686,6 +726,7 @@ def build_run_manifest(*, harvest_run_id, started_at, finished_at, cells=(),
                        mode=MODE_HARVEST, config=None, source_preflight=(),
                        classification_decisions=(), coverage=None, rounds=None,
                        request_accounting=None, target_fetch_owners=0,
+                       target_outcomes=None,
                        records=(), alias_conflicts=None, environment=None,
                        policy=None):
     """One manifest per run. Counts and eligibility are derived, not asserted.
@@ -734,6 +775,23 @@ def build_run_manifest(*, harvest_run_id, started_at, finished_at, cells=(),
         doc["coverage"] = coverage
     if request_accounting is not None:
         doc["request_accounting"] = request_accounting
+    # Target counters are DERIVED here from the outcomes themselves, never carried
+    # in beside them, so the reported number and the fetches that produced it cannot
+    # drift — the same rule `alias_conflicts_count` follows.
+    #
+    # The None sentinel is load-bearing and is why this is not a defaulted empty
+    # tuple: OMITTED means the caller is not reporting target accounting, and every
+    # committed pre-S6-6A caller stays byte-identical; SUPPLIED-BUT-EMPTY means this
+    # run owned no target fetch, which is a fact, and all three keys appear at zero.
+    # An absent key and a zero must not be the same statement.
+    #
+    # The merge builds a NEW dict rather than updating the one the caller passed:
+    # a builder that mutated its argument would edit `pool.accounting()`'s result
+    # under a caller still holding it.
+    if target_outcomes is not None:
+        merged = dict(doc.get("request_accounting") or {})
+        merged.update(target_request_accounting(target_outcomes))
+        doc["request_accounting"] = merged
     # Read back from the VALIDATED alias-conflicts artifact, never carried
     # alongside it, so the manifest's count and the artifact's rows cannot drift.
     # Reported even when zero: "this run found none" is a fact worth stating, and
