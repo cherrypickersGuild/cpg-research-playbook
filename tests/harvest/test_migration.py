@@ -60,6 +60,7 @@ import ast
 import copy
 import dataclasses
 import hashlib
+import inspect
 import io
 import json
 import os
@@ -810,16 +811,21 @@ class TestGuardIsPure(unittest.TestCase):
             self.assertIsNotNone(base.suspicious_url_match("https://example.test/a/feed"))
             self.assertTrue(base.looks_like_index_or_search("https://example.test/tag/x"))
 
-    def test_the_module_imports_only_standard_url_parsing(self):
+    def test_the_module_reaches_for_no_network_clock_or_process(self):
+        """S7-5 made this module the migration PATH owner, so `os` and `re` are
+        expected now. What must never appear is anything that could reach the
+        network, a clock, a subprocess, or the record/schema/config machinery.
+        """
         imported = set()
         for node in ast.walk(self.module_ast()):
             if isinstance(node, ast.Import):
                 imported.update(alias.name for alias in node.names)
             elif isinstance(node, ast.ImportFrom):
                 imported.add(node.module or "")
-        self.assertEqual(imported, {"dataclasses", "urllib.parse"},
-                         "base.py must stay pure: no filesystem, network, clock, "
-                         "config, schema or record dependency")
+        self.assertEqual(imported, {"dataclasses", "os", "re", "urllib.parse"})
+        for forbidden in ("socket", "subprocess", "time", "datetime", "json",
+                          "urllib.request", "shutil"):
+            self.assertNotIn(forbidden, imported)
 
     def test_importing_the_module_only_defines_things(self):
         """Import-time side effects are impossible if nothing executes at import."""
@@ -1005,24 +1011,30 @@ class TestMapperSurfaceIsPure(unittest.TestCase):
         self.assertNotIn("verify", imported)
         self.assertNotIn("facetassign", imported)
 
-    def test_it_writes_no_file_and_builds_no_artifact(self):
-        """`artifacts.serialize` is reused for the report; nothing else is.
-
-        The report is rendered by the committed serializer rather than by a
-        second one — but no writer, no path builder and no publication call
-        appears anywhere in the module, so no bundle can be produced here.
+    def test_the_mapping_writes_nothing_and_no_harvest_run_machinery_is_used(self):
+        """S7-5 publishes, so writers exist — but not in the mapping, and never
+        the ordinary run machinery.
         """
-        called = self.called_names()
+        mapping = self.mapping_calls()
         for forbidden in ("artifacts_mod.write_atomic", "artifacts_mod.write_document",
-                          "artifacts_mod.publish_run", "artifacts_mod.run_dir",
+                          "os.replace", "os.makedirs", "os.mkdir", "os.rmdir",
+                          "os.unlink"):
+            self.assertNotIn(forbidden, mapping,
+                             "the mapping must not write: %r" % forbidden)
+        called = self.called_names()
+        for forbidden in ("artifacts_mod.publish_run", "artifacts_mod.run_dir",
                           "artifacts_mod.cell_artifact_path",
                           "artifacts_mod.write_run_manifest",
                           "artifacts_mod.build_run_manifest",
-                          "os.replace", "os.makedirs", "os.mkdir", "os.rename",
-                          "shutil.move"):
-            self.assertNotIn(forbidden, called)
+                          "artifacts_mod.write_latest_run_id",
+                          "artifacts_mod.latest_run_id_path",
+                          "shutil.move", "shutil.rmtree", "shutil.copytree"):
+            self.assertNotIn(forbidden, called,
+                             "a migration is not a run: %r" % forbidden)
         self.assertIn("artifacts_mod.serialize", called,
                       "the report must reuse the committed rendering primitive")
+        self.assertIn("artifacts_mod.write_document", called,
+                      "the bundle must be written by the committed validating writer")
 
     def test_the_result_boundary_is_immutable_and_exactly_two_fields(self):
         result = mapped([a_case()])
@@ -1751,7 +1763,7 @@ class TestAxDryRunOverTheProtectedCorpus(unittest.TestCase):
             "rejections", "report_type", "report_version", "reviewed_admit_count",
             "reviewed_reject_count", "source_count", "unresolved_case_ids",
             "unresolved_rejection_count"])
-        self.assertEqual(self.report["report_type"], "ax_cases_dry_run")
+        self.assertEqual(self.report["report_type"], "ax_cases")   # E29
         self.assertEqual(self.report["operation"], "ax-cases")
 
     def test_it_dumps_no_accepted_records_and_no_machine_path(self):
@@ -2020,41 +2032,39 @@ class TestDryRunWithSuspiciousCases(unittest.TestCase):
             self.assertEqual(out_one, out_two)
 
 
-class TestApplyIsRefused(unittest.TestCase):
+class TestNoTestEverAppliesToTheDefaultStateRoot(unittest.TestCase):
+    """S7-4's `--apply` refusal is retired; this replaces what it protected.
 
-    def test_apply_is_refused_before_anything_is_read_or_written(self):
-        status, out, err = run_cli(["--apply"] + FIXED_RUN)
-        self.assertEqual(status, 1)
-        self.assertEqual(out, b"")
-        self.assertIn("--apply is not implemented", err)
-        self.assertIn("S7-5", err)
-        self.assertIn("nothing was written", err)
+    Once apply works, a bare `--apply` writes to the OPERATIONAL default,
+    `state/taxonomy_harvest` — the real repository. Every apply in this suite
+    therefore goes through `apply_cli`, which always injects `--state-root`, and
+    this test proves no other invocation exists.
+    """
 
-    def test_apply_does_not_fall_back_to_a_dry_run(self):
-        status, out, _err = run_cli(["--apply"] + FIXED_RUN)
-        self.assertEqual(status, 1)
-        self.assertEqual(out, b"")
+    def test_the_apply_helper_always_injects_a_state_root(self):
+        source = inspect.getsource(apply_cli)
+        self.assertIn("--state-root", source)
+        self.assertIn("--apply", source)
 
-    def test_apply_creates_no_staging_or_final_path(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            registry = write_json(os.path.join(tmp, "r.json"),
-                                  a_ax_registry([a_case()]))
-            overrides = write_json(os.path.join(tmp, "o.json"),
-                                   an_overrides_document())
-            before = tree_snapshot(tmp)
-            status, _out, _err = run_cli(["--apply", "--registry", registry,
-                                          "--overrides", overrides,
-                                          "--expect-count", "1"] + FIXED_RUN)
-            self.assertEqual(status, 1)
-            self.assertEqual(tree_snapshot(tmp), before)
-        for leak in ("state/taxonomy_harvest", "data/harvested", "runs", "LATEST_RUN_ID"):
-            self.assertFalse(os.path.exists(os.path.join(ROOT, leak)), leak)
+    def test_no_other_call_site_passes_apply_without_a_state_root(self):
+        with open(os.path.abspath(__file__), encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        offenders = []
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.List, ast.Tuple)):
+                continue
+            literals = [e.value for e in node.elts
+                        if isinstance(e, ast.Constant) and isinstance(e.value, str)]
+            if "--apply" in literals and "--state-root" not in literals:
+                offenders.append(node.lineno)
+        # The only exception is `apply_cli`'s own argument list, which injects
+        # both, and the wrapper test that spells them out in full.
+        self.assertEqual(offenders, [], "line(s) pass --apply with no --state-root")
 
-    def test_the_refusal_is_reachable_through_the_wrapper(self):
-        status, out, err = run_wrapper(["ax-cases", "--apply"])
-        self.assertNotEqual(status, 0)
-        self.assertEqual(out, b"")
-        self.assertIn(b"S7-5", err)
+    def test_the_operational_default_is_still_the_documented_one(self):
+        self.assertEqual(ax_cases.DEFAULT_STATE_ROOT, "state/taxonomy_harvest")
+        self.assertFalse(os.path.exists(os.path.join(ROOT, "state", "taxonomy_harvest")),
+                         "a test applied to the real repository state root")
 
 
 class TestEntityAssessCli(unittest.TestCase):
@@ -2104,6 +2114,817 @@ class TestEntityAssessCli(unittest.TestCase):
         self.assertIn("migrates 0 entities", text)
         for leak in ("state/taxonomy_harvest/", "data/harvested/", "runs/"):
             self.assertFalse(os.path.exists(os.path.join(ROOT, leak.rstrip("/"))))
+
+
+# ============================================ S7-5 · atomic apply and re-run
+RUN_C = "20260802T090000Z-77"
+AT_C = "2026-08-02T09:00:00Z"
+BUNDLE_FILES = ("candidate_output/cases__case-studies__harvest.json",
+                "manifest.json",
+                "rejections/cases__case-studies__rejections.json")
+
+
+def bundle_tree(root, run_id):
+    """The published bundle's relative paths and bytes."""
+    bundle = base.bundle_path(root, run_id)
+    tree = {}
+    for base_dir, dirs, files in os.walk(bundle):
+        dirs.sort()
+        for name in sorted(files):
+            path = os.path.join(base_dir, name)
+            with open(path, "rb") as handle:
+                tree[os.path.relpath(path, bundle).replace(os.sep, "/")] = handle.read()
+    return tree
+
+
+def state_root_paths(root):
+    """Every path under a state root, relative and sorted — files and dirs."""
+    found = []
+    for base_dir, dirs, files in os.walk(root):
+        dirs.sort()
+        for name in sorted(dirs) + sorted(files):
+            found.append(os.path.relpath(os.path.join(base_dir, name),
+                                         root).replace(os.sep, "/"))
+    return sorted(found)
+
+
+def apply_cli(root, argv=(), run_id=RUN_A, migrated_at=AT_A):
+    return run_cli(["--apply", "--state-root", root, "--run-id", run_id,
+                    "--migrated-at", migrated_at] + list(argv))
+
+
+def synthetic_inputs(tmp, cases, rows=()):
+    registry = write_json(os.path.join(tmp, "r.json"), a_ax_registry(cases))
+    overrides = write_json(os.path.join(tmp, "o.json"), an_overrides_document(rows))
+    return ["--registry", registry, "--overrides", overrides,
+            "--expect-count", str(len(cases))]
+
+
+class TestMigrationPathHelpers(unittest.TestCase):
+
+    def test_paths_are_derived_and_nothing_is_created(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = os.path.join(tmp, "state")
+            self.assertEqual(base.migrations_root(root), os.path.join(root, "migrations"))
+            self.assertEqual(base.bundle_dirname(RUN_A), RUN_A + "__ax_cases")
+            bundle = base.bundle_path(root, RUN_A)
+            self.assertEqual(base.manifest_path(root, RUN_A),
+                             os.path.join(bundle, "manifest.json"))
+            self.assertEqual(base.candidate_artifact_path(root, RUN_A),
+                             os.path.join(bundle, "candidate_output",
+                                          "cases__case-studies__harvest.json"))
+            self.assertEqual(base.rejection_artifact_path(root, RUN_A),
+                             os.path.join(bundle, "rejections",
+                                          "cases__case-studies__rejections.json"))
+            self.assertFalse(os.path.exists(root), "deriving a path created one")
+
+    def test_the_relative_path_set_is_exactly_three_files(self):
+        self.assertEqual(base.BUNDLE_RELATIVE_PATHS, BUNDLE_FILES)
+
+    def test_an_invalid_or_traversing_run_id_is_refused(self):
+        for bad in ("", "..", "../../etc", "20260731T000000Z-1/../x", "run-1",
+                    "20260731T000000Z", "20260731t000000z-1", None, 17,
+                    "20260731T000000Z-1\\x"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(base.MigrationPathError):
+                    base.bundle_path("root", bad)
+
+    def test_an_empty_state_root_is_refused(self):
+        for bad in ("", "   ", None):
+            with self.subTest(bad=bad):
+                with self.assertRaises(base.MigrationPathError):
+                    base.migrations_root(bad)
+
+    def test_the_staging_name_carries_the_prefix_and_the_run_id(self):
+        name = base.staging_name(RUN_A, "abc123")
+        self.assertTrue(name.startswith(base.STAGING_PREFIX))
+        self.assertIn(RUN_A, name)
+        self.assertTrue(name.endswith("_abc123"))
+        for bad in ("", "a/b", "..", None):
+            with self.subTest(bad=bad):
+                with self.assertRaises(base.MigrationPathError):
+                    base.staging_name(RUN_A, bad)
+
+    def test_ownership_is_proved_from_the_parent_and_the_name(self):
+        root = os.path.join("some", "state")
+        mine = os.path.join(base.migrations_root(root),
+                            base.staging_name(RUN_A, "deadbeef"))
+        self.assertTrue(base.owns_staging(mine, root, RUN_A))
+        self.assertFalse(base.owns_staging(mine, root, RUN_B))
+        self.assertFalse(base.owns_staging(mine, os.path.join("other", "state"), RUN_A))
+        self.assertFalse(base.owns_staging(
+            os.path.join(base.migrations_root(root), ".tmp_other_thing"), root, RUN_A))
+        self.assertFalse(base.owns_staging(
+            os.path.join(base.migrations_root(root), RUN_A + "__ax_cases"), root, RUN_A))
+        self.assertFalse(base.owns_staging(None, root, RUN_A))
+
+    def test_the_guard_is_still_pure_after_the_path_helpers_arrived(self):
+        """S7-2's contract, kept: the guard path touches no filesystem."""
+        import socket
+        with mock.patch("builtins.open", side_effect=AssertionError("opened a file")), \
+                mock.patch.object(socket, "socket",
+                                  side_effect=AssertionError("opened a socket")), \
+                mock.patch("os.path.exists", side_effect=AssertionError("stat")), \
+                mock.patch("os.makedirs", side_effect=AssertionError("mkdir")):
+            self.assertIsNone(base.suspicious_url_match("https://example.test/a"))
+            self.assertEqual(base.suspicious_url_match(
+                "https://example.test/a/feed").rule_id, "feed_path")
+            self.assertTrue(base.looks_like_index_or_search("https://example.test/tag/x"))
+
+    def test_the_guard_functions_reach_no_path_helper(self):
+        with open(os.path.join(ROOT, "src", "harvest", "migrate", "base.py"),
+                  encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        guard = {"suspicious_url_match", "looks_like_index_or_search", "_parts",
+                 "_segments", "_query_keys", "_search_engine_host",
+                 "_search_query_path", "_feed_path", "_index_page"}
+        forbidden = {"os", "open", "makedirs", "rmdir", "unlink", "replace",
+                     "migrations_root", "bundle_path", "staging_name"}
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef) or node.name not in guard:
+                continue
+            for inner in ast.walk(node):
+                if isinstance(inner, ast.Name):
+                    self.assertNotIn(inner.id, forbidden, node.name)
+                if isinstance(inner, ast.Attribute):
+                    self.assertNotIn(inner.attr, forbidden, node.name)
+
+
+class TestReportFamilyE29(unittest.TestCase):
+    """E29: `report_type` names the family; `dry_run` is the discriminator."""
+
+    def test_the_public_constant_is_the_family_not_a_mode(self):
+        self.assertEqual(ax_cases.REPORT_TYPE, "ax_cases")
+        self.assertEqual(ax_cases.REPORT_VERSION, 1)
+
+    def test_dry_run_and_apply_share_the_family_and_differ_only_in_the_flag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            status, dry, _err = run_cli(args + FIXED_RUN)
+            self.assertEqual(status, 0)
+            status, applied, err = apply_cli(root, args)
+            self.assertEqual(status, 0, err)
+            dry_report, apply_report = json.loads(dry), json.loads(applied)
+            self.assertEqual(dry_report["report_type"], "ax_cases")
+            self.assertEqual(apply_report["report_type"], "ax_cases")
+            self.assertTrue(dry_report["dry_run"])
+            self.assertFalse(apply_report["dry_run"])
+            self.assertEqual(sorted(dry_report), sorted(apply_report))
+            self.assertEqual(len(sorted(dry_report)), 16)
+            differing = {k for k in dry_report if dry_report[k] != apply_report[k]}
+            self.assertEqual(differing, {"dry_run"})
+
+    def test_no_output_carries_the_retired_mode_label(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            _s, dry, _e = run_cli(args + FIXED_RUN)
+            _s, applied, _e = apply_cli(root, args)
+            for payload in (dry, applied):
+                self.assertNotIn(b"ax_cases_dry_run", payload)
+                self.assertNotIn(b"ax_cases_apply", payload)
+            for data in bundle_tree(root, RUN_A).values():
+                self.assertNotIn(b"ax_cases_dry_run", data)
+
+    def test_relabelling_changed_no_dry_run_behaviour(self):
+        """Counts, ordering, exit status and the no-write guarantee are intact."""
+        status, out, err = run_cli(list(FIXED_RUN))
+        report = json.loads(out)
+        self.assertEqual((status, err), (0, ""))
+        self.assertEqual((report["source_count"], report["accepted_count"],
+                          report["rejected_count"]), (231, 231, 0))
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [a_case(case_id="c%d" % i, case_key="k|%d" % i, source_url=url)
+                     for i, url in enumerate(("https://example.test/tag/z",
+                                              "https://example.test/tag/a"))]
+            args = synthetic_inputs(tmp, cases)
+            before = tree_snapshot(tmp)
+            status, out, err = run_cli(args + FIXED_RUN)
+            self.assertEqual(status, 1)
+            rows = json.loads(out)["rejections"]
+            self.assertEqual([r["identity_url"] for r in rows],
+                             sorted(r["identity_url"] for r in rows))
+            self.assertEqual(tree_snapshot(tmp), before)
+
+
+class TestApplyOverTheProtectedCorpus(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.root = os.path.join(cls.tmp.name, "state")
+        cls.digest_before = sha256_file(AX_REGISTRY)
+        cls.status, cls.out, cls.err = apply_cli(cls.root)
+        cls.report = json.loads(cls.out) if cls.out else {}
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_it_publishes_and_reports_231_accepted_0_rejected(self):
+        self.assertEqual(self.status, 0, self.err)
+        self.assertEqual(self.err, "")
+        self.assertFalse(self.report["dry_run"])
+        self.assertEqual(self.report["accepted_count"], EXPECTED_AX_CASES)
+        self.assertEqual(self.report["rejected_count"], 0)
+        self.assertEqual(self.report["source_count"], EXPECTED_AX_CASES)
+        self.assertTrue(self.out.endswith(b"\n"))
+        self.assertFalse(self.out.endswith(b"\n\n"))
+
+    def test_the_bundle_is_exactly_three_files(self):
+        tree = bundle_tree(self.root, RUN_A)
+        self.assertEqual(tuple(sorted(tree)), BUNDLE_FILES)
+        bundle = "migrations/%s__ax_cases" % RUN_A
+        self.assertEqual(state_root_paths(self.root), sorted([
+            "migrations",
+            bundle,
+            bundle + "/candidate_output",
+            bundle + "/candidate_output/cases__case-studies__harvest.json",
+            bundle + "/manifest.json",
+            bundle + "/rejections",
+            bundle + "/rejections/cases__case-studies__rejections.json",
+        ]))
+
+    def test_all_three_documents_validate_against_the_committed_schemas(self):
+        tree = bundle_tree(self.root, RUN_A)
+        for relative, schema_name in (
+                (BUNDLE_FILES[0], "cell_artifact.v1.json"),
+                (BUNDLE_FILES[1], "run_manifest.v1.json"),
+                (BUNDLE_FILES[2], "rejection.v1.json")):
+            schema_mod.validate_or_raise(json.loads(tree[relative]), schema_name)
+
+    def test_the_candidate_artifact_carries_derived_counts_and_one_source_row(self):
+        artifact = json.loads(bundle_tree(self.root, RUN_A)[BUNDLE_FILES[0]])
+        self.assertEqual(artifact["cell_id"], "cases__case-studies")
+        self.assertEqual(artifact["topic"], "Cases")
+        self.assertEqual(artifact["category"], "Case Studies")
+        self.assertEqual(artifact["harvest_run_id"], RUN_A)
+        self.assertEqual(artifact["generated_at"], AT_A)
+        self.assertEqual(len(artifact["records"]), EXPECTED_AX_CASES)
+        meta = artifact["metadata"]
+        self.assertEqual(meta["total_records"], EXPECTED_AX_CASES)
+        self.assertEqual(meta["full_records"], EXPECTED_AX_CASES)
+        self.assertEqual(meta["cross_references"], 0)
+        self.assertEqual(meta["rejected"], 0)
+        self.assertEqual(meta["sources"], [{"source_id": "ax_case_harvest_registry",
+                                            "adapter": "migration", "result": "ok",
+                                            "candidates": EXPECTED_AX_CASES,
+                                            "accepted": EXPECTED_AX_CASES,
+                                            "requests_made": 0}])
+        self.assertNotIn("elapsed_sec", json.dumps(meta))
+
+    def test_the_rejection_artifact_is_written_even_when_empty(self):
+        document = json.loads(bundle_tree(self.root, RUN_A)[BUNDLE_FILES[2]])
+        self.assertEqual(document["rejections"], [])
+        self.assertEqual(document["cell_id"], "cases__case-studies")
+        self.assertEqual(document["harvest_run_id"], RUN_A)
+        self.assertEqual(document["generated_at"], AT_A)
+
+    def test_the_manifest_is_one_migration_cell_and_is_ineligible_by_derivation(self):
+        manifest = json.loads(bundle_tree(self.root, RUN_A)[BUNDLE_FILES[1]])
+        self.assertEqual(manifest["mode"], "migration")
+        self.assertEqual(len(manifest["cells"]), 1)
+        self.assertEqual(manifest["cells"][0], {
+            "cell_id": "cases__case-studies", "topic_slug": "cases",
+            "category_slug": "case-studies", "status": "ok",
+            "candidates": EXPECTED_AX_CASES, "accepted": EXPECTED_AX_CASES,
+            "rejected": 0, "requests_made": 0, "adapters_used": ["migration"]})
+        self.assertEqual(manifest["source_preflight"], [])
+        self.assertEqual(manifest["classification_decisions"], [])
+        self.assertEqual(manifest["config"], {"topics": ["cases"], "enrich": False,
+                                              "bounds": {"expected_source_count": 231}})
+        self.assertFalse(manifest["publication_eligible"])
+        self.assertIn("231 of 231", manifest["publication_ineligible_reason"])
+        for absent in ("request_accounting", "coverage", "rounds",
+                       "alias_conflicts_count", "lane_quality", "merges"):
+            self.assertNotIn(absent, manifest)
+
+    def test_nothing_else_is_created_anywhere(self):
+        paths = state_root_paths(self.root)
+        for forbidden in ("LATEST_RUN_ID", "runs", "ledgers", "coverage", "topics",
+                          "alias_conflicts", "data"):
+            self.assertFalse(any(forbidden in p for p in paths), forbidden)
+        for leak in ("state/taxonomy_harvest", "data/harvested", "runs", "LATEST_RUN_ID"):
+            self.assertFalse(os.path.exists(os.path.join(ROOT, leak)), leak)
+
+    def test_the_protected_registry_is_untouched(self):
+        self.assertEqual(sha256_file(AX_REGISTRY), self.digest_before)
+
+
+class TestSameRunIdIsRefused(unittest.TestCase):
+
+    def test_a_second_apply_refuses_before_reading_any_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            status, out, err = apply_cli(root, args)
+            self.assertEqual(status, 0, err)
+            first = bundle_tree(root, RUN_A)
+            before = state_root_paths(root)
+
+            calls = []
+            real_loader = ax_cases.load_json_document
+
+            def counting_loader(path, label):
+                calls.append(label)
+                return real_loader(path, label)
+
+            with mock.patch.object(ax_cases, "load_json_document", counting_loader):
+                status, out, err = apply_cli(root, args)
+            self.assertEqual(status, 1)
+            self.assertEqual(out, b"", "a refused apply printed a report")
+            self.assertIn("already exists", err)
+            self.assertEqual(calls, [], "the refusal read an input first")
+            self.assertEqual(bundle_tree(root, RUN_A), first,
+                             "the first bundle was disturbed")
+            self.assertEqual(state_root_paths(root), before)
+
+    def test_the_counting_loader_is_not_vacuous(self):
+        """A successful apply DOES read both inputs through the same seam."""
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            calls = []
+            real_loader = ax_cases.load_json_document
+
+            def counting_loader(path, label):
+                calls.append(label)
+                return real_loader(path, label)
+
+            with mock.patch.object(ax_cases, "load_json_document", counting_loader):
+                status, _out, err = apply_cli(os.path.join(tmp, "state"), args)
+            self.assertEqual(status, 0, err)
+            self.assertEqual(calls, ["AX case registry", "reviewed-overrides document"])
+
+    def test_a_file_or_a_directory_at_the_destination_both_refuse(self):
+        for kind in ("file", "directory"):
+            with self.subTest(kind=kind):
+                with tempfile.TemporaryDirectory() as tmp:
+                    args = synthetic_inputs(tmp, [a_case()])
+                    root = os.path.join(tmp, "state")
+                    final = base.bundle_path(root, RUN_A)
+                    os.makedirs(os.path.dirname(final))
+                    if kind == "file":
+                        with open(final, "w", encoding="utf-8") as handle:
+                            handle.write("occupied")
+                    else:
+                        os.makedirs(final)
+                    status, out, err = apply_cli(root, args)
+                    self.assertEqual(status, 1)
+                    self.assertEqual(out, b"")
+                    self.assertIn("already exists", err)
+
+
+class TestDistinctRunsAreDeterministic(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.root = os.path.join(cls.tmp.name, "state")
+        cls.status_a, _out_a, cls.err_a = apply_cli(cls.root, run_id=RUN_A,
+                                                    migrated_at=AT_A)
+        cls.status_b, _out_b, cls.err_b = apply_cli(cls.root, run_id=RUN_C,
+                                                    migrated_at=AT_C)
+        cls.first = bundle_tree(cls.root, RUN_A)
+        cls.second = bundle_tree(cls.root, RUN_C)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_both_runs_published_side_by_side(self):
+        self.assertEqual((self.status_a, self.status_b), (0, 0),
+                         self.err_a + self.err_b)
+        self.assertEqual(tuple(sorted(self.first)), BUNDLE_FILES)
+        self.assertEqual(tuple(sorted(self.second)), BUNDLE_FILES)
+        self.assertEqual(sorted(os.listdir(base.migrations_root(self.root))),
+                         sorted([RUN_A + "__ax_cases", RUN_C + "__ax_cases"]))
+
+    def differences(self, relative):
+        left = json.loads(self.first[relative])
+        right = json.loads(self.second[relative])
+        changed = set()
+
+        def walk(a, b, path):
+            if isinstance(a, dict):
+                self.assertEqual(sorted(a), sorted(b), path)
+                for key in a:
+                    walk(a[key], b[key], path + "." + key)
+            elif isinstance(a, list):
+                self.assertEqual(len(a), len(b), path)
+                for index, (x, y) in enumerate(zip(a, b)):
+                    walk(x, y, "%s[%d]" % (path, index))
+            elif a != b:
+                changed.add(path)
+
+        walk(left, right, "")
+        return changed
+
+    def test_the_candidate_artifact_moves_exactly_four_leaf_families(self):
+        changed = self.differences(BUNDLE_FILES[0])
+        record_leaves = {p for p in changed if p.startswith(".records[")}
+        top = changed - record_leaves
+        self.assertEqual(top, {".generated_at", ".harvest_run_id"})
+        suffixes = {p.split("]", 1)[1] for p in record_leaves}
+        self.assertEqual(suffixes, {".harvest_run_id",
+                                    ".provenance.migration.migrated_at"})
+        self.assertEqual(len(record_leaves), EXPECTED_AX_CASES * 2)
+
+    def test_the_manifest_moves_exactly_three_leaves(self):
+        self.assertEqual(self.differences(BUNDLE_FILES[1]),
+                         {".harvest_run_id", ".started_at", ".finished_at"})
+
+    def test_the_rejection_document_moves_only_its_own_two_leaves(self):
+        self.assertEqual(self.differences(BUNDLE_FILES[2]),
+                         {".generated_at", ".harvest_run_id"})
+
+    def test_normalizing_exactly_those_leaves_makes_the_bytes_equal(self):
+        def normalize(document):
+            document = copy.deepcopy(document)
+            for key in ("harvest_run_id", "generated_at", "started_at", "finished_at"):
+                document.pop(key, None)
+            for record in document.get("records", ()):
+                record.pop("harvest_run_id", None)
+                record["provenance"]["migration"].pop("migrated_at", None)
+            for row in document.get("rejections", ()):
+                row.pop("rejected_at", None)
+            return json.dumps(document, sort_keys=True, ensure_ascii=False)
+
+        for relative in BUNDLE_FILES:
+            with self.subTest(relative=relative):
+                self.assertEqual(normalize(json.loads(self.first[relative])),
+                                 normalize(json.loads(self.second[relative])))
+
+    def test_the_two_runs_agree_on_every_count_and_ordering(self):
+        first = json.loads(self.first[BUNDLE_FILES[0]])
+        second = json.loads(self.second[BUNDLE_FILES[0]])
+        self.assertEqual(len(first["records"]), EXPECTED_AX_CASES)
+        self.assertEqual([r["record_id"] for r in first["records"]],
+                         [r["record_id"] for r in second["records"]])
+        self.assertEqual([r["content_id"] for r in first["records"]],
+                         [r["content_id"] for r in second["records"]])
+        states = [facets_mod.reporting_state(r) for r in first["records"]]
+        self.assertEqual(states, [facets_mod.reporting_state(r)
+                                  for r in second["records"]])
+        self.assertEqual(first["metadata"], second["metadata"])
+        for manifest in (json.loads(self.first[BUNDLE_FILES[1]]),
+                         json.loads(self.second[BUNDLE_FILES[1]])):
+            self.assertFalse(manifest["publication_eligible"])
+
+    def test_input_row_order_does_not_change_the_published_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [a_case(case_id="c%d" % i, case_key="k|%d" % i,
+                            source_url="https://example.test/case/%d" % i)
+                     for i in range(5)]
+            forward = write_json(os.path.join(tmp, "r1.json"), a_ax_registry(cases))
+            backward = write_json(os.path.join(tmp, "r2.json"),
+                                  a_ax_registry(list(reversed(cases))))
+            overrides = write_json(os.path.join(tmp, "o.json"),
+                                   an_overrides_document())
+            roots = []
+            for index, registry in enumerate((forward, backward)):
+                root = os.path.join(tmp, "state%d" % index)
+                status, _out, err = apply_cli(
+                    root, ["--registry", registry, "--overrides", overrides,
+                           "--expect-count", "5"])
+                self.assertEqual(status, 0, err)
+                roots.append(bundle_tree(root, RUN_A))
+            self.assertEqual(roots[0], roots[1])
+
+
+class TestFaultInjectionLeavesNothingBehind(unittest.TestCase):
+    """Five boundaries. Every one must leave the state root as it was found."""
+
+    def prepared(self, tmp, pre_existing_migrations=False):
+        args = synthetic_inputs(tmp, [a_case()])
+        root = os.path.join(tmp, "state")
+        os.makedirs(root)
+        # An unrelated sibling and an unrelated staging-like directory: neither
+        # may be touched by any cleanup.
+        with open(os.path.join(root, "unrelated.txt"), "w", encoding="utf-8") as h:
+            h.write("keep me")
+        if pre_existing_migrations:
+            migrations = base.migrations_root(root)
+            os.makedirs(os.path.join(migrations, base.STAGING_PREFIX + "someone_else"))
+            with open(os.path.join(migrations, "note.txt"), "w",
+                      encoding="utf-8") as h:
+                h.write("not mine")
+        return args, root
+
+    def assert_nothing_published(self, root, before):
+        self.assertFalse(os.path.exists(base.bundle_path(root, RUN_A)))
+        self.assertEqual(state_root_paths(root), before)
+        migrations = base.migrations_root(root)
+        if os.path.isdir(migrations):
+            for name in os.listdir(migrations):
+                self.assertFalse(name.startswith(base.STAGING_PREFIX + RUN_A),
+                                 "owned staging survived: %s" % name)
+
+    def test_boundary_1_failure_before_the_first_document_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp, pre_existing_migrations=True)
+            before = state_root_paths(root)
+            with mock.patch.object(ax_cases.artifacts_mod, "write_document",
+                                   side_effect=RuntimeError("boundary 1")):
+                with self.assertRaises(RuntimeError):
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3],
+                                             expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assert_nothing_published(root, before)
+
+    def test_boundaries_2_and_3_failure_after_a_document_write(self):
+        for stop_after in (1, 2):
+            with self.subTest(stop_after=stop_after):
+                with tempfile.TemporaryDirectory() as tmp:
+                    args, root = self.prepared(tmp)
+                    before = state_root_paths(root)
+                    real = ax_cases.artifacts_mod.write_document
+                    calls = []
+
+                    def failing(path, document, schema_name):
+                        calls.append(path)
+                        if len(calls) > stop_after:
+                            raise RuntimeError("boundary after %d" % stop_after)
+                        return real(path, document, schema_name)
+
+                    with mock.patch.object(ax_cases.artifacts_mod, "write_document",
+                                           failing):
+                        with self.assertRaises(RuntimeError):
+                            ax_cases.apply_migration(
+                                state_root=root, registry_path=args[1],
+                                overrides_path=args[3], expected_count=1,
+                                harvest_run_id=RUN_A, migrated_at=AT_A)
+                    self.assertEqual(len(calls), stop_after + 1)
+                    self.assert_nothing_published(root, before)
+
+    def test_boundary_4_failure_after_every_write_before_the_rename(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp)
+            before = state_root_paths(root)
+            with mock.patch.object(ax_cases, "_verify_staged_paths",
+                                   side_effect=RuntimeError("boundary 4")):
+                with self.assertRaises(RuntimeError):
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3], expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assert_nothing_published(root, before)
+
+    def test_boundary_5_failure_during_the_final_rename(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp)
+            before = state_root_paths(root)
+            with mock.patch.object(ax_cases.os, "replace",
+                                   side_effect=OSError("boundary 5")):
+                with self.assertRaises(OSError):
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3], expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assert_nothing_published(root, before)
+
+    def test_a_keyboard_interrupt_behaves_identically(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp)
+            before = state_root_paths(root)
+            with mock.patch.object(ax_cases.artifacts_mod, "write_document",
+                                   side_effect=KeyboardInterrupt()):
+                with self.assertRaises(KeyboardInterrupt):
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3], expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assert_nothing_published(root, before)
+
+    def test_an_unrelated_staging_directory_and_sibling_survive(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp, pre_existing_migrations=True)
+            foreign = os.path.join(base.migrations_root(root),
+                                   base.STAGING_PREFIX + "someone_else")
+            note = os.path.join(base.migrations_root(root), "note.txt")
+            with mock.patch.object(ax_cases.os, "replace",
+                                   side_effect=OSError("nope")):
+                with self.assertRaises(OSError):
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3], expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assertTrue(os.path.isdir(foreign), "a foreign staging dir was removed")
+            with open(note, encoding="utf-8") as handle:
+                self.assertEqual(handle.read(), "not mine")
+            self.assertTrue(os.path.exists(os.path.join(root, "unrelated.txt")))
+
+    def test_a_pre_existing_migrations_parent_is_never_removed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp)
+            migrations = base.migrations_root(root)
+            os.makedirs(migrations)
+            with mock.patch.object(ax_cases.os, "replace", side_effect=OSError("x")):
+                with self.assertRaises(OSError):
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3], expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assertTrue(os.path.isdir(migrations),
+                            "a parent this apply did not create was removed")
+
+    def test_a_newly_created_empty_migrations_parent_is_removed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp)
+            migrations = base.migrations_root(root)
+            self.assertFalse(os.path.isdir(migrations))
+            with mock.patch.object(ax_cases.os, "replace", side_effect=OSError("x")):
+                with self.assertRaises(OSError):
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3], expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assertFalse(os.path.isdir(migrations),
+                             "the parent this apply created was left behind")
+
+    def test_cleanup_refuses_a_path_it_does_not_own(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = os.path.join(tmp, "state")
+            foreign = os.path.join(base.migrations_root(root), "not-staging")
+            os.makedirs(foreign)
+            self.assertFalse(ax_cases._remove_owned_staging(foreign, root, RUN_A))
+            self.assertTrue(os.path.isdir(foreign))
+            elsewhere = os.path.join(tmp, "elsewhere")
+            os.makedirs(elsewhere)
+            self.assertFalse(ax_cases._remove_owned_staging(elsewhere, root, RUN_A))
+            self.assertTrue(os.path.isdir(elsewhere))
+
+    def test_the_rename_boundary_is_all_or_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args, root = self.prepared(tmp)
+            final = base.bundle_path(root, RUN_A)
+            observed = {}
+            real_replace = os.replace
+
+            def observing(src, dst):
+                observed["final_absent_before"] = not os.path.exists(final)
+                observed["staged"] = tuple(sorted(ax_cases._staged_paths(src)))
+                return real_replace(src, dst)
+
+            with mock.patch.object(ax_cases.os, "replace", observing):
+                published = ax_cases.apply_migration(
+                    state_root=root, registry_path=args[1], overrides_path=args[3],
+                    expected_count=1, harvest_run_id=RUN_A, migrated_at=AT_A)[1]
+            self.assertTrue(observed["final_absent_before"])
+            self.assertEqual(observed["staged"], BUNDLE_FILES)
+            self.assertEqual(tuple(sorted(bundle_tree(root, RUN_A))), BUNDLE_FILES)
+            self.assertEqual(published, final)
+            for name in os.listdir(base.migrations_root(root)):
+                self.assertFalse(name.startswith(base.STAGING_PREFIX))
+
+
+class TestLateDestinationAppearance(unittest.TestCase):
+
+    def test_a_bundle_appearing_during_staging_is_never_overwritten(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            final = base.bundle_path(root, RUN_A)
+            sentinel_bytes = b"sentinel bundle"
+            real_verify = ax_cases._verify_staged_paths
+
+            def verify_then_squat(staging):
+                found = real_verify(staging)
+                os.makedirs(final)
+                with open(os.path.join(final, "manifest.json"), "wb") as handle:
+                    handle.write(sentinel_bytes)
+                return found
+
+            with mock.patch.object(ax_cases, "_verify_staged_paths",
+                                   verify_then_squat):
+                with self.assertRaises(ax_cases.AxMigrationError) as caught:
+                    ax_cases.apply_migration(state_root=root, registry_path=args[1],
+                                             overrides_path=args[3], expected_count=1,
+                                             harvest_run_id=RUN_A, migrated_at=AT_A)
+            self.assertIn("appeared while this bundle was being staged",
+                          str(caught.exception))
+            with open(os.path.join(final, "manifest.json"), "rb") as handle:
+                self.assertEqual(handle.read(), sentinel_bytes)
+            self.assertEqual(sorted(os.listdir(final)), ["manifest.json"])
+            for name in os.listdir(base.migrations_root(root)):
+                self.assertFalse(name.startswith(base.STAGING_PREFIX),
+                                 "owned staging survived the refusal")
+
+
+class TestApplyPolicyAndCli(unittest.TestCase):
+
+    SUSPICIOUS = "https://example.test/tag/ai"
+
+    def suspicious_inputs(self, tmp, rows=()):
+        cases = [a_case(case_id="case-2026-9500", case_key="s|1",
+                        source_url=self.SUSPICIOUS),
+                 a_case(case_id="case-2026-9501", case_key="ok|1",
+                        source_url="https://example.test/cases/ok")]
+        return synthetic_inputs(tmp, cases, rows)
+
+    def test_unresolved_without_allow_reports_completely_and_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = self.suspicious_inputs(tmp)
+            root = os.path.join(tmp, "state")
+            status, out, err = apply_cli(root, args)
+            self.assertEqual(status, 1)
+            report = json.loads(out)
+            self.assertEqual(report["unresolved_rejection_count"], 1)
+            self.assertEqual(len(report["rejections"]), 1)
+            self.assertFalse(report["dry_run"])
+            self.assertIn("--allow-unmappable", err)
+            self.assertFalse(os.path.exists(root), "a refused apply created a root")
+
+    def test_allow_unmappable_publishes_the_accepted_and_the_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = self.suspicious_inputs(tmp)
+            root = os.path.join(tmp, "state")
+            status, out, err = apply_cli(root, args + ["--allow-unmappable"])
+            self.assertEqual(status, 0, err)
+            tree = bundle_tree(root, RUN_A)
+            artifact = json.loads(tree[BUNDLE_FILES[0]])
+            rejections = json.loads(tree[BUNDLE_FILES[2]])
+            self.assertEqual(len(artifact["records"]), 1)
+            self.assertEqual(artifact["metadata"]["rejected"], 1)
+            self.assertEqual(len(rejections["rejections"]), 1)
+            self.assertEqual(rejections["rejections"][0]["target_url"], self.SUSPICIOUS)
+            for record in artifact["records"]:
+                self.assertNotEqual(record["target_url"], self.SUSPICIOUS)
+            manifest = json.loads(tree[BUNDLE_FILES[1]])
+            self.assertEqual(manifest["cells"][0]["rejected"], 1)
+            self.assertEqual(manifest["cells"][0]["accepted"], 1)
+
+    def test_a_reviewed_admit_publishes_the_raw_url_verbatim(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = self.suspicious_inputs(tmp, [a_review_row()])
+            root = os.path.join(tmp, "state")
+            status, out, err = apply_cli(root, args)
+            self.assertEqual(status, 0, err)
+            artifact = json.loads(bundle_tree(root, RUN_A)[BUNDLE_FILES[0]])
+            urls = {r["target_url"] for r in artifact["records"]}
+            self.assertIn(self.SUSPICIOUS, urls)
+            self.assertEqual(len(artifact["records"]), 2)
+            self.assertEqual(json.loads(out)["reviewed_admit_count"], 1)
+
+    def test_a_reviewed_reject_publishes_it_as_a_reviewed_rejection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = self.suspicious_inputs(tmp, [a_review_row(decision="reject",
+                                                             note="an index page")])
+            root = os.path.join(tmp, "state")
+            status, out, err = apply_cli(root, args)
+            self.assertEqual(status, 0, err)
+            tree = bundle_tree(root, RUN_A)
+            rejections = json.loads(tree[BUNDLE_FILES[2]])["rejections"]
+            self.assertEqual(len(rejections), 1)
+            self.assertIn("a reviewer confirmed the rejection", rejections[0]["detail"])
+            self.assertEqual(json.loads(out)["reviewed_reject_count"], 1)
+
+    def test_a_count_mismatch_or_malformed_input_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            status, out, err = apply_cli(root, args[:-2] + ["--expect-count", "9"])
+            self.assertEqual(status, 1)
+            self.assertEqual(out, b"")
+            self.assertFalse(os.path.exists(root))
+            status, out, err = apply_cli(root, ["--registry",
+                                                os.path.join(tmp, "missing.json")])
+            self.assertEqual(status, 1)
+            self.assertEqual(out, b"")
+            self.assertFalse(os.path.exists(root))
+
+    def test_state_root_without_apply_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err = run_cli(["--state-root", tmp] + list(FIXED_RUN))
+            self.assertEqual(status, 1)
+            self.assertEqual(out, b"")
+            self.assertIn("only meaningful with --apply", err)
+            self.assertEqual(os.listdir(tmp), [])
+
+    def test_the_wrapper_forwards_a_state_root_containing_spaces(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = os.path.join(tmp, "a state root with spaces")
+            directory = os.path.join(tmp, "inputs with spaces")
+            os.makedirs(directory)
+            registry = write_json(os.path.join(directory, "r.json"),
+                                  a_ax_registry([a_case()]))
+            overrides = write_json(os.path.join(directory, "o.json"),
+                                   an_overrides_document())
+            status, out, err = run_wrapper(
+                ["ax-cases", "--apply", "--state-root", root,
+                 "--registry", registry, "--overrides", overrides,
+                 "--expect-count", "1", "--run-id", RUN_A, "--migrated-at", AT_A])
+            self.assertEqual(status, 0, err.decode("utf-8"))
+            self.assertFalse(json.loads(out)["dry_run"])
+            self.assertEqual(tuple(sorted(bundle_tree(root, RUN_A))), BUNDLE_FILES)
+
+    def test_no_apply_ever_writes_to_the_real_repository_state_root(self):
+        self.assertFalse(os.path.exists(os.path.join(ROOT, "state", "taxonomy_harvest")))
+        for leak in ("data/harvested", "runs", "LATEST_RUN_ID"):
+            self.assertFalse(os.path.exists(os.path.join(ROOT, leak)), leak)
+
+    def test_the_protected_inputs_are_byte_identical(self):
+        self.assertEqual(sha256_file(AX_REGISTRY), sha256_file(AX_REGISTRY))
+        digest = sha256_file(OVERRIDES)
+        with tempfile.TemporaryDirectory() as tmp:
+            apply_cli(os.path.join(tmp, "state"))
+        self.assertEqual(sha256_file(OVERRIDES), digest)
+        self.assertEqual(sha256_file(REGISTRY), sha256_file(REGISTRY))
 
 
 if __name__ == "__main__":

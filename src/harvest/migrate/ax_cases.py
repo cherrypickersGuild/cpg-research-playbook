@@ -41,6 +41,7 @@ import json
 import os
 import re
 import sys
+import uuid
 
 from .. import artifacts as artifacts_mod
 from .. import records as records_mod
@@ -517,11 +518,23 @@ DEFAULT_REGISTRY = "state/ax_case_harvest_registry.json"
 DEFAULT_OVERRIDES = "config/harvest/migration_overrides.v1.json"
 DEFAULT_EXPECT_COUNT = 231
 
-# The dry-run report's own contract, versioned separately from any artifact
-# schema: this document is written to stdout and never to disk, so it is
-# deliberately NOT a committed artifact type.
-REPORT_TYPE = "ax_cases_dry_run"
+# The report's own contract, versioned separately from any artifact schema: this
+# document goes to stdout and never to disk, so it is deliberately NOT a
+# committed artifact type.
+#
+# E29: the S7-4 value was `ax_cases_dry_run`, which named one MODE. The report
+# already carries `operation` and a `dry_run` boolean, so the family label was
+# simply false on an apply result. `report_type` names the family; `dry_run` is
+# the sole discriminator. No second type, no alias, no version bump — the shape
+# never changed.
+REPORT_TYPE = "ax_cases"
 REPORT_VERSION = 1
+
+DEFAULT_STATE_ROOT = "state/taxonomy_harvest"
+
+# Cell identity for the one cell a migration produces, in display and slug form.
+TOPIC_DISPLAY = "Cases"
+CATEGORY_DISPLAY = "Case Studies"
 
 # The committed override row shape (`_reviewed_unmappable_shape` in
 # migration_overrides.v1.json). Every key is required, and an unrecognised key
@@ -621,9 +634,13 @@ def _check_matched_rules(declared_rows, cases):
                  % (index, row["matched_rule"], row["case_id"], match.rule_id))
 
 
-def build_dry_run_report(document, reviews, result, *, expected_count,
-                         allow_unmappable, harvest_run_id, migrated_at):
-    """The complete dry-run facts. No paths, no environment, no accepted payloads."""
+def build_report(document, reviews, result, *, expected_count, allow_unmappable,
+                 harvest_run_id, migrated_at, dry_run=True):
+    """The complete facts. No paths, no environment, no accepted payloads.
+
+    One shape for both modes (E29): `dry_run` is the discriminator, and an apply
+    result is the same sixteen fields with it set false.
+    """
     decisions = {row["case_id"]: row["decision"] for row in reviews}
     suspicious = [case["case_id"] for case in document["cases"]
                   if base.suspicious_url_match(case["source_url"]) is not None]
@@ -634,7 +651,7 @@ def build_dry_run_report(document, reviews, result, *, expected_count,
         "report_type": REPORT_TYPE,
         "report_version": REPORT_VERSION,
         "operation": "ax-cases",
-        "dry_run": True,
+        "dry_run": bool(dry_run),
         "harvest_run_id": harvest_run_id,
         "migrated_at": migrated_at,
         "expected_count": expected_count,
@@ -655,10 +672,9 @@ def render_report(report):
     return artifacts_mod.serialize(report).decode("utf-8")
 
 
-def dry_run(*, registry_path=DEFAULT_REGISTRY, overrides_path=DEFAULT_OVERRIDES,
-            facets_dir=None, expected_count=DEFAULT_EXPECT_COUNT,
-            allow_unmappable=False, harvest_run_id, migrated_at):
-    """Map the whole registry in memory and derive the report. Writes nothing.
+def load_and_map(*, registry_path, overrides_path, facets_dir, expected_count,
+                 harvest_run_id, migrated_at):
+    """(document, reviews, result). The shared read-and-map both modes use.
 
     The mapping always runs with `allow_unmappable=True` so the report is
     COMPLETE; whether the command succeeded is decided separately, from the
@@ -680,12 +696,254 @@ def dry_run(*, registry_path=DEFAULT_REGISTRY, overrides_path=DEFAULT_OVERRIDES,
     result = map_registry(document, harvest_run_id=harvest_run_id,
                           migrated_at=migrated_at, reviewed=list(reviews),
                           allow_unmappable=True, facets_dir=facets_dir)
-    report = build_dry_run_report(document, reviews, result,
+    return document, reviews, result
+
+
+def dry_run(*, registry_path=DEFAULT_REGISTRY, overrides_path=DEFAULT_OVERRIDES,
+            facets_dir=None, expected_count=DEFAULT_EXPECT_COUNT,
+            allow_unmappable=False, harvest_run_id, migrated_at):
+    """Map the whole registry in memory and derive the report. Writes nothing."""
+    document, reviews, result = load_and_map(
+        registry_path=registry_path, overrides_path=overrides_path,
+        facets_dir=facets_dir, expected_count=expected_count,
+        harvest_run_id=harvest_run_id, migrated_at=migrated_at)
+    return build_report(document, reviews, result, expected_count=expected_count,
+                        allow_unmappable=allow_unmappable,
+                        harvest_run_id=harvest_run_id, migrated_at=migrated_at,
+                        dry_run=True)
+
+
+# ====================================================== S7-5 · atomic publication
+# Three documents are built and validated COMPLETELY in memory, then written into
+# a uniquely named sibling staging directory, then published by ONE
+# same-filesystem directory rename. A reader sees the whole bundle or no bundle.
+# There is no resume, no pointer, nothing under `runs/`, and no promotion.
+def build_candidate_artifact(result, *, harvest_run_id, migrated_at, source_count):
+    """`cell_artifact.v1.json` through the committed builder — counts derived."""
+    metadata = {"sources": [{"source_id": SOURCE_ID,
+                             "adapter": SOURCE_ADAPTER,
+                             "result": "ok",
+                             "candidates": source_count,
+                             "accepted": len(result.accepted),
+                             "requests_made": 0}],
+                "rejected": len(result.rejected)}
+    return artifacts_mod.build_cell_artifact(
+        list(result.accepted), topic=TOPIC_DISPLAY, topic_slug=TOPIC_SLUG,
+        category=CATEGORY_DISPLAY, category_slug=CATEGORY_SLUG, cell_id=CELL_ID,
+        harvest_run_id=harvest_run_id, generated_at=migrated_at, metadata=metadata)
+
+
+def build_rejection_artifact(result, *, harvest_run_id, migrated_at):
+    """`rejection.v1.json`. The S7-3 rows verbatim — no second representation.
+
+    An empty list is still written: "this migration refused nothing" is a fact,
+    and omitting the file would make it indistinguishable from "nobody looked".
+    """
+    return {"schema_version": 1,
+            "cell_id": CELL_ID,
+            "harvest_run_id": harvest_run_id,
+            "generated_at": migrated_at,
+            "rejections": [dict(row) for row in result.rejected]}
+
+
+def derive_publication_ineligibility(records):
+    """(False, reason). Derived from the records, never asserted by a caller.
+
+    `artifacts.build_run_manifest` is deliberately not used: it expands to the
+    twelve configured cells and refuses any other cell id, which is a harvest
+    contract, not this one. The eligibility FACT is still derived here, from the
+    committed unchecked-record owner.
+    """
+    unchecked, total = artifacts_mod.unchecked_full_records(records)
+    _require(unchecked == total,
+             "%d of %d accepted migrated records claim checked access. Migration "
+             "issues no request, so a checked record cannot have come from here; "
+             "the bundle is refused rather than published with a false claim."
+             % (total - unchecked, total))
+    if not total:
+        return False, ("the migration produced no accepted records, so there is "
+                       "nothing to publish")
+    return False, ("all %d of %d accepted records carry no target evidence "
+                   "(access_status not_checked): a migration fetches nothing"
+                   % (unchecked, total))
+
+
+def build_migration_manifest(result, *, harvest_run_id, migrated_at, expected_count,
+                             source_count):
+    """`run_manifest.v1.json` with exactly one migration cell row."""
+    eligible, reason = derive_publication_ineligibility(list(result.accepted))
+    return {
+        "schema_version": 1,
+        "harvest_run_id": harvest_run_id,
+        "mode": "migration",
+        "started_at": migrated_at,
+        "finished_at": migrated_at,
+        "environment": artifacts_mod.environment_block(),
+        "config": {"topics": [TOPIC_SLUG], "enrich": False,
+                   "bounds": {"expected_source_count": expected_count}},
+        "cells": [{"cell_id": CELL_ID,
+                   "topic_slug": TOPIC_SLUG,
+                   "category_slug": CATEGORY_SLUG,
+                   "status": "ok",
+                   "candidates": source_count,
+                   "accepted": len(result.accepted),
+                   "rejected": len(result.rejected),
+                   "requests_made": 0,
+                   "adapters_used": [SOURCE_ADAPTER]}],
+        "source_preflight": [],
+        "classification_decisions": [],
+        "publication_eligible": eligible,
+        "publication_ineligible_reason": reason,
+    }
+
+
+def build_bundle_documents(result, *, harvest_run_id, migrated_at, expected_count,
+                           source_count):
+    """The complete bundle as ((relative path, document, schema name), …).
+
+    Every document is built before any directory exists, and all three are
+    validated before the first staging write.
+    """
+    documents = (
+        (base.BUNDLE_RELATIVE_PATHS[0],
+         build_candidate_artifact(result, harvest_run_id=harvest_run_id,
+                                  migrated_at=migrated_at,
+                                  source_count=source_count),
+         "cell_artifact.v1.json"),
+        (base.BUNDLE_RELATIVE_PATHS[1],
+         build_migration_manifest(result, harvest_run_id=harvest_run_id,
+                                  migrated_at=migrated_at,
                                   expected_count=expected_count,
-                                  allow_unmappable=allow_unmappable,
-                                  harvest_run_id=harvest_run_id,
-                                  migrated_at=migrated_at)
-    return report
+                                  source_count=source_count),
+         "run_manifest.v1.json"),
+        (base.BUNDLE_RELATIVE_PATHS[2],
+         build_rejection_artifact(result, harvest_run_id=harvest_run_id,
+                                  migrated_at=migrated_at),
+         "rejection.v1.json"),
+    )
+    for relative, document, schema_name in documents:
+        schema_mod.validate_or_raise(document, schema_name,
+                                     label="migration bundle %s" % relative)
+    # Written content first and the manifest last, mirroring the committed
+    # harvest order: nothing observes a partial bundle anyway (the rename is what
+    # publishes), but a manifest that describes files already staged beside it
+    # keeps the same reading order a reviewer already knows.
+    order = {relative: index for index, relative in enumerate(
+        (base.BUNDLE_RELATIVE_PATHS[0], base.BUNDLE_RELATIVE_PATHS[2],
+         base.BUNDLE_RELATIVE_PATHS[1]))}
+    return tuple(sorted(documents, key=lambda row: order[row[0]]))
+
+
+def _staged_paths(staging):
+    found = []
+    for base_dir, dirs, files in os.walk(staging):
+        dirs.sort()
+        for name in sorted(files):
+            found.append(os.path.relpath(os.path.join(base_dir, name),
+                                         staging).replace(os.sep, "/"))
+    return tuple(sorted(found))
+
+
+def _verify_staged_paths(staging):
+    """The staged tree is EXACTLY the three committed paths, or nothing ships."""
+    found = _staged_paths(staging)
+    _require(found == base.BUNDLE_RELATIVE_PATHS,
+             "the staged bundle holds %s; exactly %s was expected"
+             % (list(found), list(base.BUNDLE_RELATIVE_PATHS)))
+    return found
+
+
+def _remove_owned_staging(staging, state_root, run_id):
+    """Remove ONLY the staging directory this invocation created.
+
+    Ownership is proved twice — the caller hands back the exact path it created,
+    and the path must be one this layout would have named under this migrations
+    root for this run id. Nothing is globbed, and no other path is ever accepted.
+    """
+    if not staging or not base.owns_staging(staging, state_root, run_id):
+        return False
+    if not os.path.isdir(staging):
+        return False
+    for base_dir, dirs, files in os.walk(staging, topdown=False):
+        for name in files:
+            os.unlink(os.path.join(base_dir, name))
+        for name in dirs:
+            os.rmdir(os.path.join(base_dir, name))
+    os.rmdir(staging)
+    return True
+
+
+def apply_bundle(result, *, state_root, harvest_run_id, migrated_at, expected_count,
+                 source_count):
+    """Publish the bundle atomically, or leave the state root as it was found.
+
+    Order is the whole contract: build and validate everything, stage beside the
+    destination, verify the staged path set, recheck the destination, then ONE
+    `os.replace` of the directory. An interruption anywhere before that rename
+    publishes nothing and leaves no debris.
+    """
+    final = base.bundle_path(state_root, harvest_run_id)
+    _require(not os.path.lexists(final),
+             "the bundle %s already exists. A finished run id is never "
+             "overwritten, merged or resumed; rerun with a new run id."
+             % base.bundle_dirname(harvest_run_id))
+
+    documents = build_bundle_documents(result, harvest_run_id=harvest_run_id,
+                                       migrated_at=migrated_at,
+                                       expected_count=expected_count,
+                                       source_count=source_count)
+
+    root = base.migrations_root(state_root)
+    created_root = not os.path.isdir(root)
+    staging = os.path.join(root, base.staging_name(harvest_run_id, uuid.uuid4().hex))
+    try:
+        os.makedirs(staging)                     # creates `migrations/` if needed
+        for relative, document, schema_name in documents:
+            target = os.path.join(staging, *relative.split("/"))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            artifacts_mod.write_document(target, document, schema_name)
+        _verify_staged_paths(staging)
+        _require(not os.path.lexists(final),
+                 "%s appeared while this bundle was being staged; publication is "
+                 "refused rather than overwriting it." % base.bundle_dirname(
+                     harvest_run_id))
+        os.replace(staging, final)
+    except BaseException:
+        # Cleanup catches BaseException so an interrupt leaves no debris either.
+        _remove_owned_staging(staging, state_root, harvest_run_id)
+        if created_root and os.path.isdir(root) and not os.listdir(root):
+            os.rmdir(root)
+        raise
+    return final
+
+
+def apply_migration(*, state_root, registry_path=DEFAULT_REGISTRY,
+                    overrides_path=DEFAULT_OVERRIDES, facets_dir=None,
+                    expected_count=DEFAULT_EXPECT_COUNT, allow_unmappable=False,
+                    harvest_run_id, migrated_at):
+    """(report, bundle path or None). Nothing is written unless it publishes."""
+    final = base.bundle_path(state_root, harvest_run_id)
+    _require(not os.path.lexists(final),
+             "the bundle %s already exists. A finished run id is never "
+             "overwritten, merged or resumed; rerun with a new run id."
+             % base.bundle_dirname(harvest_run_id))
+
+    document, reviews, result = load_and_map(
+        registry_path=registry_path, overrides_path=overrides_path,
+        facets_dir=facets_dir, expected_count=expected_count,
+        harvest_run_id=harvest_run_id, migrated_at=migrated_at)
+    report = build_report(document, reviews, result, expected_count=expected_count,
+                          allow_unmappable=allow_unmappable,
+                          harvest_run_id=harvest_run_id, migrated_at=migrated_at,
+                          dry_run=False)
+    if report["unresolved_rejection_count"] and not allow_unmappable:
+        return report, None                      # reported, and nothing written
+    published = apply_bundle(result, state_root=state_root,
+                             harvest_run_id=harvest_run_id,
+                             migrated_at=migrated_at,
+                             expected_count=expected_count,
+                             source_count=len(document["cases"]))
+    return report, published
 
 
 def _positive_int(value):
@@ -712,7 +970,10 @@ def build_parser():
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--migrated-at", default=None)
     parser.add_argument("--apply", action="store_true",
-                        help="not implemented: apply is S7-5")
+                        help="publish one migration bundle under --state-root")
+    parser.add_argument("--state-root", default=None,
+                        help="root holding migrations/; defaults to %s"
+                             % DEFAULT_STATE_ROOT)
     return parser
 
 
@@ -726,27 +987,43 @@ def main(argv=None, stdout=None, stderr=None):
     err = stderr if stderr is not None else sys.stderr
     args = build_parser().parse_args(sys.argv[1:] if argv is None else argv)
 
-    if args.apply:
-        err.write("migrate.sh ax-cases: --apply is not implemented and not "
-                  "authorized. Applying a migration bundle is checkpoint S7-5, "
-                  "which has not been approved; nothing was written.\n")
+    if args.state_root is not None and not args.apply:
+        err.write("migrate.sh ax-cases: --state-root is only meaningful with "
+                  "--apply. A dry-run writes nothing, so it has no state root; "
+                  "the option is refused rather than silently ignored.\n")
         return 1
 
     harvest_run_id = args.run_id or artifacts_mod.run_id()
     migrated_at = args.migrated_at or records_mod.utcnow()
+    state_root = args.state_root or DEFAULT_STATE_ROOT
     try:
-        report = dry_run(registry_path=args.registry,
-                         overrides_path=args.overrides,
-                         facets_dir=args.facets_dir,
-                         expected_count=args.expect_count,
-                         allow_unmappable=args.allow_unmappable,
-                         harvest_run_id=harvest_run_id,
-                         migrated_at=migrated_at)
-    except (AxMigrationError, base.MigrationInputError,
-            schema_mod.SchemaError) as exc:
+        if args.apply:
+            report, published = apply_migration(
+                state_root=state_root,
+                registry_path=args.registry,
+                overrides_path=args.overrides,
+                facets_dir=args.facets_dir,
+                expected_count=args.expect_count,
+                allow_unmappable=args.allow_unmappable,
+                harvest_run_id=harvest_run_id,
+                migrated_at=migrated_at)
+        else:
+            report, published = dry_run(
+                registry_path=args.registry,
+                overrides_path=args.overrides,
+                facets_dir=args.facets_dir,
+                expected_count=args.expect_count,
+                allow_unmappable=args.allow_unmappable,
+                harvest_run_id=harvest_run_id,
+                migrated_at=migrated_at), None
+    except (AxMigrationError, base.MigrationInputError, base.MigrationPathError,
+            schema_mod.SchemaError, artifacts_mod.ArtifactError, OSError) as exc:
         err.write("migrate.sh ax-cases: %s\n" % exc)
         return 1
 
+    # The report is rendered LAST on an apply: it is printed only once the final
+    # rename has already put the complete bundle in place, so a success report
+    # can never describe a publication that did not happen.
     out.write(render_report(report).encode("utf-8"))
     if report["unresolved_rejection_count"] and not args.allow_unmappable:
         err.write("migrate.sh ax-cases: %d legacy URL(s) tripped the suspicious-URL "

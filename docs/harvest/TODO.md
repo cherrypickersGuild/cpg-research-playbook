@@ -17,16 +17,19 @@ stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
 stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
 stage_6_closeout_commit:     0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   S6-C, PUSHED
 stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   APPROVED plan of record
-                             (S7-0 … S7-4 complete; S7-5 … S7-C unapproved)
-stage_7_gate:                39/39 suites green — 1,948 unittest + 42 shell = 1,990 total
+                             (S7-0 … S7-5 complete; S7-6 and S7-C unapproved)
+stage_7_gate:                39/39 suites green — 1,997 unittest + 42 shell = 2,039 total
                              (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2 · +62 S7-3
-                              · +42 S7-4)
+                              · +42 S7-4 · +49 net S7-5, the migration suite now 224)
 stage_7_ax_mapping:          231 accepted / 0 rejected, in memory only — nothing written.
                              Facet states 112 facet_partial · 118 unmapped_legacy_value
                              · 1 unresolved
-stage_7_cli:                 scripts/harvest/migrate.sh — ax-cases (dry-run only) and
-                             entity-assess. NO migration bundle, manifest or runtime
-                             output exists; --apply is refused (S7-5, unapproved).
+stage_7_cli:                 scripts/harvest/migrate.sh — ax-cases (dry-run by default,
+                             --apply publishes one bundle under --state-root) and
+                             entity-assess.
+stage_7_apply:               works, and is exercised ONLY under injected temporary
+                             roots. The real repository has NO migration runtime
+                             bundle: state/taxonomy_harvest/ does not exist.
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
@@ -59,16 +62,18 @@ complete, passed, failed or waived anywhere in this file.
 **A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** and is
 synchronized at `0d2da64` — local `main`, `HEAD` and `origin/main` all agree, 0 behind / 0 ahead.
 
-**STAGE 7 IS OPEN. `S7-0` … `S7-4` ARE COMPLETE.**
+**STAGE 7 IS OPEN. `S7-0` … `S7-5` ARE COMPLETE.**
 `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` is the **approved plan of record**; S7-1, the read-only
 entity assessment, **migrated 0 of 1,161 entities**, which is what it was for; S7-2, the
 suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites nothing; S7-3
 maps **231 accepted / 0 rejected in memory and writes nothing at all**; S7-4 adds `migrate.sh` with a
-**dry-run-only** `ax-cases` and `entity-assess`.
-**`S7-5` … `S7-C` are unapproved**: each needs its own approval by name, is limited to the exact path
-set declared in that plan's §9, and a path appearing there is not an approval to write it. **No
-migration bundle, manifest, staging directory or apply path exists — `--apply` is refused.** No live
-request, no promotion and no real runtime migration is authorized. Green tests alone open nothing.
+`ax-cases` and `entity-assess`; S7-5 makes `--apply` publish one three-file bundle by a single
+directory rename, **exercised only under injected temporary roots**.
+**`S7-6` and `S7-C` are unapproved** and **Stage 7 is not complete**: each needs its own approval by
+name, is limited to the exact path set declared in that plan's §9, and a path appearing there is not
+an approval to write it. **The real repository holds no migration bundle —
+`state/taxonomy_harvest/` does not exist.** No live request, no promotion and no apply against the
+default state root is authorized. Green tests alone open nothing.
 
 **Baseline at Stage 7 opening**, carried from the Stage 6 closure and re-verified before S7-0 edited
 a line: **38/38 suites · 1,815 counted assertions · protected 18/18 · untracked 508/508 with drift 0,
@@ -1102,7 +1107,7 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
 - [ ] `tests/test_taxonomy_linkcheck.sh`
 - [ ] `tests/test_taxonomy_promote_txn.sh` — 4 fault-injection points + add/remove/partial modes
 
-## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-4 COMPLETE. S7-5 … S7-C NOT APPROVED.**
+## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-5 COMPLETE. S7-6 AND S7-C NOT APPROVED.**
 
 **Plan of record:** `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` — **`APPROVED — PLAN OF RECORD;
 S7-0 COMPLETE; NO IMPLEMENTATION CHECKPOINT APPROVED`**. It reconciles and **supersedes**
@@ -1250,11 +1255,54 @@ wiring (Stage 8), calibration (Stage 9), the live smoke, entity migration proper
       both protected registries byte-identical; the S7-1 assessment still regenerates
       byte-identically; no runtime path; no request of any kind.
 
-**S7-5 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
-path set in plan §9. A path appearing in the plan is not an approval to write it; a checkpoint that
-finds it needs another path **stops and requests a plan correction** rather than widening its scope.
+- [x] **S7-5** atomic apply and repeated-run semantics (`feat(harvest): add atomic migration apply`)
+      — `src/harvest/migrate/{base,ax_cases}.py`, `scripts/harvest/migrate.sh`,
+      `tests/harvest/test_migration.py`, `tests/test_taxonomy_migration.sh`, plus the plan and this
+      file. Exactly the seven paths declared in plan §9. **Apply works, and every apply so far has
+      been to an injected temporary root — the real `state/taxonomy_harvest/` does not exist.**
+      CLI: `--apply` and `--state-root PATH` (operational default `state/taxonomy_harvest`);
+      `--state-root` without `--apply` is refused rather than ignored. `base.py` became the Stage 7
+      **path owner** — `migrations_root` · `bundle_path` · `manifest_path` ·
+      `candidate_artifact_path` · `rejection_artifact_path` · `staging_name` · `owns_staging` ·
+      `validate_run_id` · `MigrationPathError` — deriving paths and **creating none**, every one
+      behind an anchored run-id pattern so a separator or `..` never reaches the filesystem; the
+      ordinary `runs/<run_id>` builders are neither used nor duplicated. **The bundle is exactly
+      three files** (`manifest.json`, `candidate_output/cases__case-studies__harvest.json`,
+      `rejections/cases__case-studies__rejections.json`) — no topic, coverage, alias-conflict,
+      ledger, pointer, journal, sidecar or placeholder, nothing under `runs/`, no `LATEST_RUN_ID`,
+      no promotion. **Everything is built and schema-validated before a staging directory exists**;
+      the three documents are written through the committed `artifacts.write_document` into a
+      uniquely named **sibling** staging directory, the staged path set is asserted to be exactly
+      three, the destination is rechecked, and publication is **one `os.replace` of the directory** —
+      the report prints only after it. **Eligibility is derived**: every accepted record must be
+      `not_checked` or the bundle is refused, and `publication_eligible` is false with a
+      deterministic reason. **A used run id is refused before the registry, overrides or facets are
+      read**, proved with a counting loader; the first bundle stays byte-identical. **Cleanup owns
+      exactly one path**, proved from both the retained path and `owns_staging`; a foreign
+      `.tmp_migration_*`, an unrelated file and a pre-existing `migrations/` all survive, and a
+      `migrations/` this apply created is removed only when empty. **Five fault-injection boundaries**
+      each leave the state root path-identical, and a sentinel bundle appearing mid-staging is left
+      byte-identical rather than overwritten. **Two distinct runs move exactly the enumerated
+      leaves** (candidate: `generated_at`, `harvest_run_id`, and per record `harvest_run_id` +
+      `provenance.migration.migrated_at`; manifest: three; rejections: two) and are byte-equal once
+      normalized. Protected corpus under a temp root: **231 accepted / 0 rejected**.
+      **E29 applied in the same checkpoint:** `report_type` is now `ax_cases` for both modes —
+      `dry_run` is the sole discriminator, the sixteen-field shape is unchanged, and there is no
+      `ax_cases_apply` type and no alias. **Incident recorded:** the retired S7-4 apply-refusal tests
+      wrote two bundles into the real gitignored `state/taxonomy_harvest/` during implementation;
+      they were removed, tracked files and both baselines were never affected, and a new assertion
+      scans the suite's own AST so no call site can pass `--apply` without `--state-root` again.
+      Focused: migration **224**, artifacts 33, manifest 52, cell_artifact 44, recovery 75,
+      run_cells 99, records 51, schema 35, identity 42, facets 34, eligibility 48; full gate
+      **39/39 suites, 2,039 assertions (1,997 unittest + 42 shell)**; five checkers exit 0; both
+      protected registries and the override config byte-identical; the S7-1 assessment still
+      regenerates byte-identically; no real runtime path; no request of any kind.
 
-- [ ] **S7-5** atomic apply and repeated-run semantics, injected temp root only
+**S7-6 and S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the
+exact path set in plan §9. A path appearing in the plan is not an approval to write it; a checkpoint
+that finds it needs another path **stops and requests a plan correction** rather than widening its
+scope. **Stage 7 is not complete.**
+
 - [ ] **S7-6** integration — apply twice with stable normalized records, exact bundle path set,
       interruption with no partial publication, protected-source byte identity, no runtime leak,
       full gate (**39 suites** — `tests/test_taxonomy_migration.sh` joined the gate at S7-1)

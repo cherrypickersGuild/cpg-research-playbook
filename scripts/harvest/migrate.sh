@@ -7,14 +7,15 @@
 # forwarded verbatim, so a path containing spaces survives intact.
 #
 #   migrate.sh ax-cases [options]      map the AX registry in memory and report.
-#                                      DRY-RUN ONLY: it writes nothing at all.
+#                                      Dry-run by default: it writes nothing.
+#                                      With --apply it publishes ONE bundle under
+#                                      --state-root, by a single directory rename.
 #   migrate.sh entity-assess [options] assess the entity registry. Migrates zero
 #                                      entities; writes only to --output.
 #   migrate.sh --help                  this text.
 #
-# `ax-cases --apply` is recognised and REFUSED: applying a migration bundle is
-# checkpoint S7-5, which is neither implemented nor approved. It is refused in
-# Python, before anything is read or written.
+# `--state-root` is refused without `--apply`: a dry-run has no state root, and
+# an ignored option is worse than a rejected one.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
@@ -24,16 +25,19 @@ usage() {
 usage: migrate.sh <command> [options]
 
 commands:
-  ax-cases        map the protected AX case registry in memory and print a
-                  deterministic JSON dry-run report to stdout. Writes nothing.
+  ax-cases        map the protected AX case registry and print a deterministic
+                  JSON report to stdout. Dry-run unless --apply is given.
                   --registry PATH --overrides PATH --facets-dir PATH
                   --expect-count N --allow-unmappable
                   --run-id ID --migrated-at YYYY-MM-DDTHH:MM:SSZ
+                  --apply --state-root PATH
   entity-assess   render the entity-registry assessment. Migrates nothing.
                   --registry PATH --output PATH
   --help, -h      show this text
 
-`ax-cases --apply` is refused: apply is checkpoint S7-5 and is not implemented.
+--apply publishes exactly one bundle at <state-root>/migrations/<run-id>__ax_cases
+by a single directory rename. A finished run id is never reused, overwritten,
+merged or resumed. --state-root without --apply is refused.
 USAGE
 }
 

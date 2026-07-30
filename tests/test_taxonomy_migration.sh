@@ -1,7 +1,44 @@
 #!/usr/bin/env bash
 # test_taxonomy_migration.sh — Stage 7 migration: the entity assessment (S7-1),
-# the suspicious-URL guard (S7-2), the in-memory AX mapping (S7-3) and the
-# dry-run CLI (S7-4). 175 assertions, 43 + 28 + 62 + 42.
+# the suspicious-URL guard (S7-2), the in-memory AX mapping (S7-3), the dry-run
+# CLI (S7-4) and the atomic apply (S7-5). 224 assertions.
+#
+# --- S7-5, atomic publication ------------------------------------------------
+# Apply is the first Stage 7 operation that leaves something behind, so the
+# failures worth pinning are the ones that would leave it half-behind or in the
+# wrong place:
+#   * a partial bundle. Three documents are built AND schema-validated before a
+#     staging directory exists; they are written into a uniquely named sibling
+#     of the destination; the staged path set is asserted to be exactly three;
+#     and publication is ONE `os.replace` of the directory. Five fault-injection
+#     boundaries — before the first write, after each of the two content writes,
+#     after the manifest write, and during the rename — each leave the state root
+#     path-identical to its pre-call snapshot, with no owned staging left;
+#   * cleanup taking something it does not own. Removal is proved twice: the
+#     exact path this invocation created, AND a path this layout would have
+#     named under this migrations root for this run id. A foreign
+#     `.tmp_migration_*` sibling, an unrelated note and a pre-existing
+#     `migrations/` all survive every failure; only a `migrations/` this apply
+#     created is removed, and only when empty;
+#   * a run id being reused. A destination that exists in any form — file or
+#     directory — refuses the apply BEFORE the registry, overrides or facets are
+#     read, proved with a counting loader that a control case shows would have
+#     recorded both reads;
+#   * a destination appearing late. The publisher rechecks immediately before the
+#     rename; a sentinel bundle created mid-staging is left byte-identical and
+#     the apply refuses rather than overwriting;
+#   * bytes that move between runs. Two runs under distinct ids are diffed
+#     recursively per document family: the candidate artifact may move exactly
+#     `generated_at`, `harvest_run_id` and each record's `harvest_run_id` and
+#     `provenance.migration.migrated_at`; the manifest exactly three leaves; the
+#     rejection document exactly two. Normalizing precisely those makes all three
+#     byte-equal;
+#   * a write to the real repository. Every apply here injects `--state-root`,
+#     and an AST scan of this very file proves no other call site passes
+#     `--apply` without one — the S7-4 refusal that used to protect the default
+#     root is retired, so this replaces it.
+# E29: `report_type` is `ax_cases` for BOTH modes; `dry_run` is the sole
+# discriminator, and the sixteen-field shape is unchanged.
 #
 # --- S7-4, the CLI and the dry-run -------------------------------------------
 # The dry-run is the command a person will actually read before deciding whether

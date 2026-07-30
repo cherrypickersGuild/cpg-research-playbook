@@ -1,6 +1,6 @@
 # Stage 7 implementation plan — AX corpus migration
 
-**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-4 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
+**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-5 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
 
 ```text
 plan opened at        0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   Stage 6 closeout
@@ -23,9 +23,13 @@ case pages. **`S7-3`, the in-memory AX mapping, is complete**; it maps **231 acc
 and writes nothing at all. **`S7-4`, the CLI and dry-run, is complete**; `migrate.sh ax-cases`
 reports and writes nothing, and **`--apply` is refused**.
 
-**`S7-5` … `S7-C` remain unapproved**, and nothing in this document approves them: **no migration
-bundle, no manifest, no staging directory, no rename and no apply path exists**, and none may be
-written until the checkpoint that owns it is approved by name.
+**`S7-5`, the atomic apply, is complete**; it publishes one three-file bundle by a single directory
+rename, and **every apply in this repository so far has been to an injected temporary root** — the
+real `state/taxonomy_harvest/` does not exist.
+
+**`S7-6` and `S7-C` remain unapproved**, and nothing in this document approves them: the integration
+closeout and the stage closeout are unwritten, and neither may be started until it is approved by
+name.
 
 - **Approving this plan approves no implementation checkpoint.** Not S7-1, not any later one.
 - **Listing a checkpoint's path set here does not authorize that checkpoint.** §9 exists so a
@@ -547,6 +551,15 @@ E27  check_facets' lexical-support gate refuses `technology-software` grounded o
      primary; it records insufficient_evidence naming the slug and the gate.
 E28  §14's "apply twice" is about record stability, not about reusing a run id or overwriting a
      bundle. Resolved by D7-C: two applies, two run ids, two bundles, identical normalized records.
+E29  S7-4's report family was misnamed as a MODE. `REPORT_TYPE = "ax_cases_dry_run"` named one
+     execution mode even though the report already carries `operation: "ax-cases"` and a
+     `dry_run` boolean, so an apply result would have been published under a false label.
+     Resolved at S7-5: `report_type: "ax_cases"` names the stable AX-migration report FAMILY;
+     `report_version` stays 1; `operation` is unchanged; `dry_run` is the sole dry-run/apply
+     discriminator; the sixteen-field shape is unchanged. No `ax_cases_apply` type, no alias, no
+     compatibility value, and no version bump — the shape never changed and the old value was a
+     false label rather than a separate valid family. The S7-4 shipped description and its
+     assertion were corrected in the same checkpoint.
 ```
 
 ## 5 · Complete legacy → record mapping
@@ -672,7 +685,7 @@ suspicious-URL hits            0       under the D7-H structural predicates (5 u
 
 ## 9 · Checkpoint decomposition
 
-**S7-1 … S7-4 are complete. None of the remaining checkpoints is approved.** Each requires separate
+**S7-1 … S7-5 are complete. None of the remaining checkpoints is approved.** Each requires separate
 approval by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
 plan and to `docs/harvest/TODO.md`.
 
@@ -926,17 +939,19 @@ run context is derived through the **committed owners only** — `artifacts.run_
 `records.utcnow()` — and `--run-id` / `--migrated-at` inject it for tests. No second timestamp format
 was created and no Git state is read.
 
-**`--apply` is recognised and REFUSED.** It exits 1 with a message naming S7-5, writes nothing to
-stdout, does not fall back to a dry-run, and creates no staging or final path — proved by hashing a
-controlled temporary tree either side of the attempt, and reachable through the wrapper. The refusal
-is test-pinned and is S7-5's to replace.
+**`--apply` was recognised and REFUSED at S7-4**, exiting 1 with a message naming S7-5 and writing
+nothing. **S7-5 replaced that refusal with a working apply**, exactly as anticipated — and with it,
+the tests that pinned the refusal, because once apply works a bare `--apply` writes to the
+operational default root.
 
 **The dry-run report** is one deterministic JSON document on **binary** stdout (a Windows text stream
 would rewrite its LFs), rendered by the committed `artifacts.serialize` — no second serializer —
 with exactly these sixteen fields:
 
 ```text
-report_type ("ax_cases_dry_run") · report_version (1) · operation ("ax-cases") · dry_run (true)
+report_type ("ax_cases" — E29; the value shipped at S7-4 was "ax_cases_dry_run" and was corrected
+            at S7-5, because it named a mode rather than the report family)
+report_version (1) · operation ("ax-cases") · dry_run (true in this mode)
 harvest_run_id · migrated_at · expected_count · source_count
 accepted_count · rejected_count · reviewed_admit_count · reviewed_reject_count
 unresolved_rejection_count · unresolved_case_ids[] · allow_unmappable
@@ -983,7 +998,7 @@ the module still imports no clock, socket or subprocess module. Nothing about th
 guarantees was weakened; `base.py` was left **byte-unchanged**, so the S7-2 guard purity assertions
 stand exactly as committed.
 
-### S7-5 · Atomic apply and repeated-run semantics
+### S7-5 · Atomic apply and repeated-run semantics — **COMPLETE**
 
 D7-B's bundle and D7-C's protocol. **All apply validation uses an injected temporary root.**
 
@@ -996,6 +1011,98 @@ tests/test_taxonomy_migration.sh
 docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md
 docs/harvest/TODO.md
 ```
+
+**No apply against the repository's real state root was executed as part of this checkpoint's
+delivered validation**, and `state/taxonomy_harvest/` does not exist. See the incident note at the
+end of this section: two bundles were written there during implementation by the retired S7-4
+refusal tests, were removed, and are now prevented by an assertion.
+
+**CLI.** `migrate.sh ax-cases` gains `--apply` and `--state-root PATH` (operational default
+`state/taxonomy_harvest`). `--state-root` without `--apply` is **refused**, not ignored: a dry-run
+has no state root. Every other option keeps its S7-4 behaviour, and the wrapper still forwards
+`"$@"` verbatim — a state root containing spaces is asserted end to end.
+
+**Path ownership (`base.py`).** `MIGRATIONS_DIRNAME` · `BUNDLE_SUFFIX` · `BUNDLE_RELATIVE_PATHS` ·
+`STAGING_PREFIX` · `RUN_ID_PATTERN` · `MigrationPathError` · `validate_run_id` · `migrations_root` ·
+`bundle_dirname` · `bundle_path` · `manifest_path` · `candidate_artifact_path` ·
+`rejection_artifact_path` · `staging_name` · `owns_staging`. They **derive and create nothing**;
+every one goes through the anchored run-id pattern, so a separator, a `..` or an absolute path never
+reaches the filesystem. The ordinary `runs/<run_id>` builders are neither used nor duplicated.
+
+**The published bundle, exactly three files:**
+
+```text
+<state-root>/migrations/<run_id>__ax_cases/
+├── manifest.json                                        run_manifest.v1.json
+├── candidate_output/cases__case-studies__harvest.json    cell_artifact.v1.json
+└── rejections/cases__case-studies__rejections.json       rejection.v1.json
+```
+
+No topic artifact, coverage artifact, alias-conflict artifact, ledger, pointer, report file, journal,
+checksum sidecar, second manifest or placeholder. Nothing under `runs/`, no `LATEST_RUN_ID`, no
+promotion. The report stays on stdout.
+
+**The sequence, and why that order.** Final path derived → **finished-run refusal** → registry and
+overrides read → expected-count enforced → complete in-memory mapping → unresolved-review policy →
+all three documents built → **all three schema-validated** → `migrations/` created if needed → one
+uniquely named sibling staging directory `.tmp_migration_<run_id>_<uuid4hex>` → the three documents
+written through the committed `artifacts.write_document` (validate, deterministic bytes, temp
+cleanup, fsync, atomic replace) → staged path set asserted to be **exactly** the three → destination
+rechecked → **one `os.replace` of the directory** → only then the report. Staging is a sibling
+because `os.replace` is atomic only within one filesystem; a system temp directory would make
+publication a copy.
+
+**Eligibility is derived, never asserted.** `artifacts.unchecked_full_records` must report every
+accepted record `not_checked`, or bundle construction is refused rather than publishing a false
+claim; `publication_eligible` is then `false` with a deterministic reason ("all 231 of 231 accepted
+records carry no target evidence…"). `artifacts.build_run_manifest` is deliberately unused — it
+expands to the twelve configured cells and refuses any other cell id, which is a harvest contract,
+not this one.
+
+**Same run id is never reused.** A destination existing in **any** form — file or directory —
+refuses, **before the registry, overrides or facets are read**, proved with a counting loader that a
+control case shows would otherwise have recorded both reads. The first bundle stays byte-identical,
+no staging appears, and no success report is printed.
+
+**Cleanup owns exactly one path.** On any `BaseException` before the rename, only the staging
+directory this invocation created is removed — proved twice, from the exact retained path and from
+`owns_staging` (right parent, right prefix, right run id). A foreign `.tmp_migration_*` sibling, an
+unrelated file and a pre-existing `migrations/` all survive; a `migrations/` this apply created is
+removed only when empty; the original exception is preserved, `KeyboardInterrupt` included.
+
+**Proved by fault injection at five boundaries** — before the first write, after each content write,
+after the manifest write, and during the rename — each leaving the state root path-identical to its
+pre-call snapshot. At the rename boundary the destination is observed absent and the staging tree
+observed complete immediately before, and complete immediately after: no state exists with one or two
+files. A sentinel bundle created mid-staging is **left byte-identical** and publication refuses.
+
+**Two distinct runs, exact moving leaves.** Both bundles publish side by side and agree on every
+count, ordered `record_id`, ordered `content_id` and facet-state distribution. The recursive diff
+permits exactly: candidate artifact — `generated_at`, `harvest_run_id`, and per record
+`harvest_run_id` and `provenance.migration.migrated_at` (462 record leaves over 231 records, counted);
+manifest — `harvest_run_id`, `started_at`, `finished_at`; rejection document — `generated_at`,
+`harvest_run_id` (and `rejected_at` per row where rejections exist). Normalizing precisely those
+makes all three byte-equal. Source-row order does not change published bytes.
+
+**Protected corpus, applied under a temporary root: 231 accepted, 0 rejected**, three files, all
+three validating, manifest ineligible by derivation, exit 0, report printed only after the rename.
+
+**Incident, recorded rather than buried.** While implementing this checkpoint, the S7-4 tests that
+pinned the `--apply` refusal ran against the new implementation. They pass no `--state-root`, so two
+bundles were written into the repository's real `state/taxonomy_harvest/`. That path is gitignored,
+so no tracked file, the 508-file untracked baseline and the 18 protected files were all unaffected —
+verified. Both bundles and the directory were removed, and the class was replaced by
+`TestNoTestEverAppliesToTheDefaultStateRoot`, which asserts the apply helper always injects a state
+root and **scans the suite's own AST** for any other call site passing `--apply` without one. The
+lesson is the general one: retiring a refusal retires the tests that leaned on it, in the same
+checkpoint.
+
+**Validation:** focused `tests/test_taxonomy_migration.sh` **224 assertions**, plus `artifacts` 33,
+`manifest` 52, `cell_artifact` 44, `recovery` 75, `run_cells` 99, `records` 51, `schema` 35,
+`identity` 42, `facets` 34, `eligibility` 48; the S7-1 assessment regenerates byte-identically; then
+the full gate once — **39/39 suites, 2,039 assertions (1,997 unittest + 42 shell)**; then all five
+checkers exit 0. Both protected registries and the override config are byte-identical, no real
+runtime path exists, and no request of any kind was made.
 
 ### S7-6 · Final migration integration
 
