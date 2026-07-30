@@ -34,15 +34,32 @@ stage_7_apply:               works, and is exercised ONLY under injected tempora
                              roots. NO migration runtime bundle is retained:
                              state/taxonomy_harvest/ does not exist. An operational
                              default-root apply needs separate human approval.
-stage_8_plan_of_record:      docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md   S8-0, S8-1 COMPLETE
-stage_8_state:               WIRED, NOT REGRESSED. S8-0 (plan of record) and S8-1 (harness
-                             wiring) are approved and complete. S8-2 (full offline
-                             regression) and S8-C (closeout) are each NOT APPROVED and each
-                             need approval by name with the exact allowed-path set restated.
-                             STAGE 8 IS NOT COMPLETE and CF-4 is NOT closed: the harness is
-                             wired, but `validate_task.sh --all` has NOT been run at any
-                             point, so nothing yet shows the wired gate is green. A green
-                             S8-1 is not that demonstration.
+stage_8_plan_of_record:      docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md   COMPLETED —
+                             STAGE 8 CLOSED
+stage_8_state:               CLOSED. All four checkpoints approved by name and complete:
+                             S8-0 (plan of record), S8-1 (harness wiring), S8-2 (full
+                             offline regression, verification-only, NO COMMIT) and S8-C
+                             (closeout). Closed LOCALLY and UNPUSHED.
+stage_8_0_commit:            0657db8a65e311ea0f20b43a2fbf2c0e811d5ee5   docs(harvest): plan
+                             stage 8 harness wiring — 2 documentation paths
+stage_8_1_commit:            01d2999a3f382d3fcf51ace8f1d7b4fc9445ad6c   feat(harvest): wire
+                             taxonomy into validation harness — 3 paths
+stage_8_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md
+stage_8_2_regression:        bash scripts/validate_task.sh --all — ONE invocation, exit 0 in
+                             736 s, final line "== validate_task.sh: PASS ==". 58/58 wrappers
+                             each exactly once (legacy 19/19 + taxonomy 39/39); ZERO
+                             "WARN - skipping"; matrix "64 passed, 0 failed"; parallel
+                             "62 passed, 0 failed"; no "FAIL - offline" and no FAIL line of
+                             any kind; no runtime-leak and no production-state-change
+                             diagnostic. No separate taxonomy loop was run — after S8-1
+                             --all contains all 39 taxonomy wrappers exactly once, so the
+                             loop would only duplicate them. S8-2 made no commit and edited
+                             nothing. The external log lived outside the repository and was
+                             deleted after verification; no log artifact is retained here.
+cf_4_state:                  CLOSED by the S8-2 regression. scripts/validate_task.sh --all
+                             now exercises the entire taxonomy wrapper set and passes
+                             offline with zero skips. No other carried-forward item is
+                             closed by Stage 8.
 stage_8_1_harness:           scripts/validate_task.sh — ISOLATED[] 19 -> 58 entries (all 39
                              taxonomy wrappers individually, the 19 legacy entries verbatim
                              as a prefix); 50 additive taxonomy case arms / 91 add_test calls
@@ -58,7 +75,11 @@ stage_8_1_validation:        focused only — bash -n; a 39-check static invento
                              zero WARN skips and the expected wrapper set exactly once; and
                              an omission proof that the two unmapped paths route to zero
                              wrappers. domain_throttle deliberately not exercised. The full
-                             taxonomy gate and --all were NOT run.
+                             taxonomy gate and --all were NOT run at S8-1; --all was run
+                             once at S8-2, where domain_throttle passed. That is one
+                             observation, not a resolution: an intermittent domain-throttle
+                             signature stays an unresolved diagnostic, never an accepted
+                             permanent flake.
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
@@ -68,7 +89,18 @@ push_state:                  Stage 7 implementation and closeout through
                              fast-forward from 0d2da64. This records the published Stage 7
                              boundary, not the live status of later documentation-only
                              commits; verify refs before new work.
-assertions:                  see stage_7_gate above for the current figure. At the Stage 6
+                             STAGE 8 IS NOT PUBLISHED. origin/main is still b9a08a3; all
+                             three Stage 8 commits (S8-0, S8-1, S8-C) are local only, and a
+                             push needs its own explicit approval.
+gate_after_stage_8:          `bash scripts/validate_task.sh --all` is now the closing gate
+                             and CONTAINS the taxonomy gate: 58 wrappers (19 legacy + 39
+                             taxonomy), each exactly once, zero skips. The standalone loop
+                             `for t in tests/test_taxonomy_*.sh; do bash "$t"; done` remains
+                             documented for taxonomy-focused development only; running it
+                             alongside --all only duplicates the same 39 wrappers.
+assertions:                  see stage_7_gate above for the current figure — Stage 8 added
+                             no suite and no assertion; it wired the existing 39 into the
+                             harness. At the Stage 6
                              close this line read 38/38 suites — 1,773 unittest + 42 shell
                              = 1,815 total (1,773 across 36 unittest suites; 42 across 2
                              shell suites, config 18 + protected baseline 24). Basis stated
@@ -1401,9 +1433,23 @@ where a substring reading of §11 would wrongly reject 5 (E24).
 
 ## Stage 8 — harness wiring and full offline regression
 
-**Plan of record: `docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md`.** Read it before any Stage 8 work;
-it settles the wiring pattern, the exact `ISOLATED[]` additions, the exact case-table mapping, the
-definition of full offline regression, and what is explicitly not Stage 8.
+**STAGE 8 IS CLOSED** as of 2026-07-31, at the S8-C documentation closeout on top of
+`01d2999a3f382d3fcf51ace8f1d7b4fc9445ad6c` — see
+`docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md` for the commit chain, the delivered
+harness contract, the authoritative S8-2 regression evidence, closure validation, repository state,
+carried-forward findings and successor constraints. `STAGE_8_IMPLEMENTATION_PLAN.md` reads
+`COMPLETED — STAGE 8 CLOSED`; its §8 S8-C section records this documentation-only closeout.
+
+**Closed LOCALLY and UNPUSHED.** `origin/main` is still `b9a08a3`; a push needs its own approval.
+
+Both broad deliverables are met:
+
+- [x] `scripts/validate_task.sh` — new tests in the case table and `ISOLATED[]`
+- [x] `bash scripts/validate_task.sh --all` green, including the 64 unchanged matrix assertions
+
+**Plan of record: `docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md`.** It settles the wiring pattern,
+the exact `ISOLATED[]` additions, the exact case-table mapping, the definition of full offline
+regression, and what is explicitly not Stage 8.
 
 - [x] **S8-0 — plan of record.** Documentation only, own commit, L0 validation only. Settled: all
       39 taxonomy wrappers wired individually (no aggregate gate, no wrapper modified); `ISOLATED[]`
@@ -1424,20 +1470,28 @@ definition of full offline regression, and what is explicitly not Stage 8.
       existing sticky `FAIL=1` and never deletes what it finds. Sequential execution, WARN-skip
       semantics, `--all` argument positioning and the `state/` byte snapshot all preserved.
       Focused validation only — `--all` was **not** run.
-- [ ] **S8-2 — full offline regression. NOT APPROVED.** Verification-only, no write paths, no
-      commit: one unfiltered `bash scripts/validate_task.sh --all`, output redirected outside the
-      repository, exit 0, zero `WARN - skipping`, 58 wrappers each once, the captured matrix summary
-      showing **64 passed, 0 failed**, `tests/test_parallel_harvest.sh` green, protected 18/18,
-      untracked 508/508, all four runtime paths absent.
-- [ ] **S8-C — closeout. NOT APPROVED.** Documentation only: this file, the plan, and one new
-      handoff. `CLAUDE.md` is deliberately not in the set. `--all` is not rerun.
+- [x] **S8-2 — full offline regression. PASSED.** Verification-only: no write paths, **no commit**,
+      no edit. One unfiltered `bash scripts/validate_task.sh --all`, output redirected outside the
+      repository and inspected there. **Exit 0 in 736 s**, final line `== validate_task.sh: PASS ==`;
+      **58/58 wrappers each exactly once** (legacy 19/19 + taxonomy 39/39); **zero
+      `WARN - skipping`**; matrix **64 passed, 0 failed**; parallel **62 passed, 0 failed**; no
+      `FAIL - offline` and no FAIL line of any kind; no runtime-leak and no production-state-change
+      diagnostic, with both harness positive assertions printed. Post-run: protected 18/18,
+      untracked 508/508 drift 0, all four runtime paths absent, worktree byte-identical to
+      `01d2999a`. The expected wrapper list was built from `git ls-files tests/`, not from the log.
+      No separate taxonomy loop was run — `--all` already contains all 39 taxonomy wrappers exactly
+      once. The external log was outside the repository and was deleted after verification; **no
+      log artifact is retained**.
+- [x] **S8-C — closeout.** Documentation only: this file, the plan, and one new handoff.
+      `CLAUDE.md` deliberately not in the set. L0 validation only; `--all` **not** rerun.
 
-**Stage 8 is NOT complete and CF-4 is NOT closed.** The harness is wired, but
-`bash scripts/validate_task.sh --all` has not been run at any point in Stage 8, so nothing yet
-demonstrates that the wired gate is green — and a green S8-1 is not that demonstration. **S8-2 and
-S8-C each remain unapproved** and each require approval by name with the allowed-path set restated.
-A push remains a separate approval after closeout. Stage 8 contains no network access, no
-operational migration apply, no promotion, and no retained runtime output.
+**Stage 8 is closed and CF-4 is closed.** `scripts/validate_task.sh --all` now exercises the entire
+taxonomy wrapper set and passes offline with zero skips, which is exactly what CF-4 asked for.
+**Nothing else is closed by Stage 8** — every other carried-forward item stands at its existing
+status, S6-L remains unexecuted and unauthorized, and Stage 9 is not opened. Stage 8 contained no
+network access, no operational migration apply, no promotion, and no retained runtime output. **A
+push remains a separate approval**, via `safe_push_main.sh --check` then a separately approved
+`--execute`.
 
 ## Stage 9 — bounded deterministic live smoke
 

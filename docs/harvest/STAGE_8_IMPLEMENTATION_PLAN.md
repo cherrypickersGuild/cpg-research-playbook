@@ -1,16 +1,26 @@
 # Stage 8 — harness wiring and full offline regression
 
-**Status: S8-0 and S8-1 APPROVED AND COMPLETE. S8-2 and S8-C are NOT APPROVED.
-STAGE 8 IS NOT COMPLETE, and CF-4 is NOT closed.**
+**COMPLETED — STAGE 8 CLOSED.** All four checkpoints — S8-0, S8-1, S8-2, S8-C — are approved and
+complete. **CF-4 is CLOSED.** Stage 8 is closed **locally and unpushed**; a push remains a separate
+explicit approval.
 
 ```text
 plan_of_record:        docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md   (this file)
-approved_checkpoints:  S8-0 (plan of record) and S8-1 (harness wiring) — both complete
-s8_0_commit:           0657db8a65e311ea0f20b43a2fbf2c0e811d5ee5   docs, two paths
-s8_1_commit:           see §8 S8-1 implementation record
-open:                  S8-2 (full offline regression) and S8-C (closeout) are each
-                       NOT APPROVED and each need approval by name. CF-4 stays OPEN
-                       until S8-2's authoritative --all regression passes.
+completion_handoff:    docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md
+s8_0_commit:           0657db8a65e311ea0f20b43a2fbf2c0e811d5ee5   docs(harvest): plan stage 8
+                                                                  harness wiring — 2 paths
+s8_1_commit:           01d2999a3f382d3fcf51ace8f1d7b4fc9445ad6c   feat(harvest): wire taxonomy
+                                                                  into validation harness — 3 paths
+s8_2:                  verification-only, NO COMMIT. One `validate_task.sh --all` run,
+                       exit 0 in 736 s, 58/58 wrappers each exactly once, zero skips.
+                       See §8 S8-2 result.
+s8_c_commit:           this documentation closeout; per the convention of every prior
+                       closeout its hash is reported in the execution record rather than
+                       written into the files it commits
+cf_4:                  CLOSED by the S8-2 regression. validate_task.sh --all now exercises
+                       the entire taxonomy wrapper set and passes offline with zero skips.
+push_state:            UNPUSHED. origin/main remains at b9a08a3 (the Stage 7 boundary);
+                       every Stage 8 commit is local only.
 start_anchor:          b9a08a33ff215ce226c885a7f70c97cd4974ccad   Stage 7 push-state record
 predecessor:           docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md
 origin:                CF-4, first recorded at STAGE_4_IMPLEMENTATION_PLAN.md §"Carried forward"
@@ -22,17 +32,14 @@ untracked_baseline:    508 files, drift 0 / missing 0 / extra 0 (unchanged by an
 
 ## 0 · What this document approves, and what it does not
 
-**S8-0 and S8-1 are complete and approved. S8-2 and S8-C are not.**
+**All four checkpoints are complete.** Each was approved separately, by name, with its allowed-path
+set restated at approval time — S8-0 (documentation), S8-1 (harness wiring), S8-2 (verification, no
+commit), S8-C (this closeout).
 
-S8-0 was documentation-only: it produced this file and the Stage 8 section of
-`docs/harvest/TODO.md`. S8-1 was subsequently approved by name and executed; it changed
-`scripts/validate_task.sh` and these two documents, and nothing else. Its implementation record is
-§8 S8-1.
-
-**Neither committing this plan nor completing S8-1 approves S8-2 or S8-C.** A plan of record
-describes what Stage 8 *would* do if each of its checkpoints were separately approved. It is a
-specification, not an authorization. The rule that governed every checkpoint of Stages 2.5 through
-7 does not lapse because a plan now exists, and it did not lapse when S8-1 went green:
+**Stage 8's completion authorizes nothing further.** It does not open Stage 9, and it does not
+authorize a push, an operational apply against the repository's default state root, promotion into
+`data/harvested/`, or network access. The rule that governed every checkpoint of Stages 2.5 through
+8 does not lapse at closure:
 
 > **Every stage and every checkpoint needs its own approval by name, with an exact allowed-path set
 > declared up front.** A completed predecessor, an approved plan and a green gate do not together
@@ -41,14 +48,13 @@ specification, not an authorization. The rule that governed every checkpoint of 
 
 Concretely, and stated so no successor session can read this file as permission:
 
-- **S8-2 (full offline regression) is unapproved and unexecuted.** It is verification-only when it
-  is approved: no allowed write paths, no commit. **`bash scripts/validate_task.sh --all` has not
-  been run at any point in Stage 8.**
-- **S8-C (closeout) is unapproved.** No Stage 8 completion handoff has been prepared.
-- **A push is unapproved**, at every point, and remains a separate explicit approval after S8-C.
-- **Stage 8 is not complete, and CF-4 is not closed.** S8-1 wired the harness; only S8-2's
-  authoritative `--all` regression can demonstrate that the wiring achieves what CF-4 asks for. A
-  green S8-1 is not that demonstration and must not be reported as one.
+- **A push is unapproved.** Every Stage 8 commit is local; `origin/main` remains at `b9a08a3`. A
+  push requires `bash scripts/safe_push_main.sh --check` and a separately approved `--execute`.
+- **Stage 9 is not opened by this closure.** Neither is any other successor activity.
+- **S6-L, Stage 6's bounded live smoke, remains unexecuted and unauthorized.**
+- **CF-4 is closed; nothing else is.** CF-4 asked that the stated validation entry point exercise
+  the taxonomy assertions. It now does, proved by the S8-2 regression. Every other carried-forward
+  item — including the Stage 8 items recorded in §11 — remains open at its existing status.
 
 **Stage 8 contains none of the following, at any checkpoint:**
 
@@ -719,7 +725,7 @@ with drift 0 / missing 0 / extra 0 · all four runtime paths absent · nothing u
 **What S8-1 does not establish.** It does not show that `--all` is green, because `--all` was not
 run. **CF-4 remains open** until S8-2's authoritative regression passes.
 
-### S8-2 — full offline regression · NOT APPROVED · verification-only
+### S8-2 — full offline regression · APPROVED · PASSED · verification-only
 
 **Purpose.** The single authoritative closing observation.
 
@@ -761,7 +767,54 @@ instruction**; S8-2 itself never edits.
 
 **Commit boundary.** None. Its result is recorded by S8-C.
 
-### S8-C — closeout · NOT APPROVED
+#### S8-2 result — PASSED
+
+Run once, exactly as specified. **The acceptance contract was met in full.**
+
+```text
+command       bash scripts/validate_task.sh --all
+invocations   exactly one
+exit code     0
+elapsed       736 s
+final line    == validate_task.sh: PASS ==
+wrappers      58/58 executed, each exactly once — legacy 19/19, taxonomy 39/39
+skips         zero "WARN - skipping" lines
+matrix        == test_matrix_harvest.sh: 64 passed, 0 failed ==
+parallel      == test_parallel_harvest.sh: 62 passed, 0 failed ==
+failures      no "FAIL - offline" line; no FAIL line of any kind
+diagnostics   no runtime-leak and no production-state-change diagnostic; the harness
+              printed both positive assertions:
+                ok   - production state/ unchanged
+                ok   - repository runtime paths absent (state/taxonomy_harvest
+                       data/harvested runs LATEST_RUN_ID)
+```
+
+Post-run, verified independently: protected baseline **18/18** · untracked baseline **508/508**,
+drift 0 / missing 0 / extra 0 · all four runtime paths **absent** · tracked worktree and index
+unmodified, byte-identical to `01d2999a` · no temporary output inside the repository.
+
+**No separate taxonomy loop was run**, and none was needed: after S8-1 `--all` contained all 39
+taxonomy wrappers, each exactly once, so the loop would have duplicated them for no additional
+information (D11, §5.3). The zero-skip count is what proves the containment.
+
+The expected wrapper list was built from `git ls-files tests/` — the committed tree — and compared
+against the completed log, rather than being derived from the log itself.
+
+**The S8-1 runtime-containment check fired for the first time under real load** and reported
+absence at the end of a run in which every taxonomy suite executed.
+
+**S8-2 produced no commit and edited nothing.** During it there was no edit, commit, migration
+apply, promotion, memory update, push, fetch, remote query, or network request.
+
+**The external log is not retained.** It lived outside the repository and was deleted after
+verification, because no failure diagnostic required preserving. No log artifact exists in the
+repository, and none is claimed. The figures above are this document's durable record of that run.
+
+`tests/test_taxonomy_domain_throttle.sh` passed in this run. That is one observation, not a
+resolution: D12 stands unchanged — a future failure is an unresolved diagnostic, never an accepted
+permanent flake.
+
+### S8-C — closeout · APPROVED · COMPLETE
 
 **Purpose.** Record the outcome durably and close the stage.
 
@@ -784,10 +837,16 @@ docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_<date>.md  new
 run is the closing gate, and the handoff attributes its figures to that run rather than
 re-measuring them.
 
-**Commit boundary.** Its own commit.
+**Commit boundary.** Its own commit. Following the convention of every prior closeout in this
+pipeline, that commit's hash is reported in the execution record rather than written into the files
+it commits; the durable pointer is
+`docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md`.
 
 **Push.** Remains a separate explicit approval, after closeout, via
 `bash scripts/safe_push_main.sh --check` then `--execute`. It is not authorized by this plan.
+
+**Executed.** S8-C changed exactly the three paths above, ran L0 validation only, and did not rerun
+`--all` or any suite. Stage 8 is closed locally and **unpushed**.
 
 ## 9 · Standing constraints for every Stage 8 checkpoint
 
@@ -892,11 +951,18 @@ callers), **CF-2 / CF-7**, **CF-5 / CF-8 / CF-9**, **CF-6** (§9.2), **CF-11**, 
 
 ## 12 · Closing statement
 
-**S8-0 and S8-1 are complete. Stage 8 is not.** `scripts/validate_task.sh` now wires all 39
-taxonomy wrappers, but **`bash scripts/validate_task.sh --all` has not been run**, so **CF-4
-remains open**: the harness is wired, and nothing yet demonstrates that the wired gate is green.
+**STAGE 8 IS CLOSED.** `scripts/validate_task.sh` wires all 39 taxonomy wrappers individually, and
+`bash scripts/validate_task.sh --all` ran once and passed offline — exit 0, 58/58 wrappers each
+exactly once, zero skips, matrix 64/0, parallel 62/0. **CF-4 is closed**: `CLAUDE.md`'s stated
+validation entry point now exercises the taxonomy pipeline, which is the thing CF-4 said it did
+not.
 
-**S8-2 and S8-C each require separate approval by name**, with the allowed-path set restated at
-approval time. S8-2 is verification-only and writes nothing; S8-C is documentation-only and does
-not include `CLAUDE.md`. A push remains a separate approval after closeout. Stage 8 contains no
-network access, no operational migration apply, no promotion, and no retained runtime output.
+Stage 8 changed exactly one production file across its whole life — `scripts/validate_task.sh` —
+plus its own documentation. No taxonomy wrapper, source module, schema, config file, fixture,
+baseline, protected path or `CLAUDE.md` was touched. No network request, no operational migration
+apply, no promotion, and no retained runtime output, at any checkpoint.
+
+**Stage 8 is closed locally and unpushed.** A push, Stage 9, an operational default-root apply,
+promotion and any live activity each remain unapproved and each need their own explicit approval by
+name. The durable record is
+`docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md`.
