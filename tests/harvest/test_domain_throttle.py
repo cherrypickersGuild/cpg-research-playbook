@@ -40,6 +40,16 @@ from src.harvest.domainlease import (  # noqa: E402
 WORKER = os.path.join(ROOT, "tests", "harvest", "throttle_worker.py")
 
 
+def worker_module():
+    """The worker imported BY PATH, so the import works under `unittest discover`
+    and under a dotted module path alike."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("throttle_worker_under_test", WORKER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class Recorder(BaseHTTPRequestHandler):
     events = []
     pids = []
@@ -598,6 +608,182 @@ class TestEffectiveSettings(unittest.TestCase):
         self.assertEqual(domain_slug("Blogs.Microsoft.COM"), "blogs.microsoft.com")
         self.assertEqual(domain_slug("a/b:c"), "a-b-c")
         self.assertEqual(domain_slug(""), "unknown-host")
+
+
+class TestLeaseTimeoutDiagnostic(unittest.TestCase):
+    """S6-TD: a LeaseTimeout must describe the tree it timed out against.
+
+    Three `domain_throttle` failure signatures have been observed inside full-gate
+    runs, and none reproduced under faithful process-based investigation — six real
+    workers on a fresh root acquired 12/12 with no orphaned slot, capping the poll
+    backoff changed nothing, and artificial CPU load did not reproduce it. What the
+    failures produced was a bare traceback saying a worker waited 30s, which cannot
+    distinguish a held slot from a lost one. This proves the diagnostic path itself,
+    deterministically: the slot is OCCUPIED BY THIS TEST, so nothing depends on
+    scheduler luck and nothing waits 30 seconds.
+
+    It fixes no instability and claims none.
+    """
+
+    HOST = "127.0.0.1"
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def worker(self, *extra, wait_max_sec="0.5", timeout=60):
+        proc = subprocess.Popen(
+            [sys.executable, WORKER, self.tmp, self.HOST, "0", "1", "1", "0.0",
+             "--wait-max-sec=%s" % wait_max_sec, *extra],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=ROOT)
+        out, err = proc.communicate(timeout=timeout)
+        return proc.returncode, out.decode(errors="replace"), err.decode(errors="replace")
+
+    @staticmethod
+    def records(stderr):
+        prefix = "LEASE_TIMEOUT_DIAGNOSTIC "
+        return [json.loads(line[len(prefix):])
+                for line in stderr.splitlines() if line.startswith(prefix)]
+
+    def test_a_worker_denied_the_only_slot_exits_through_the_timeout_path(self):
+        held = DomainLease(self.tmp, self.HOST, max_concurrency=1,
+                           min_interval_sec=0.0)
+        held.acquire(wait_max_sec=5)
+        try:
+            rc, _, err = self.worker()
+        finally:
+            held.release()
+        self.assertNotEqual(rc, 0)
+        self.assertIn("LeaseTimeout", err)
+        self.assertIn("no slot for", err)
+
+    def test_exactly_one_diagnostic_record_is_emitted(self):
+        held = DomainLease(self.tmp, self.HOST, max_concurrency=1,
+                           min_interval_sec=0.0)
+        held.acquire(wait_max_sec=5)
+        try:
+            _, _, err = self.worker()
+        finally:
+            held.release()
+        self.assertEqual(len(self.records(err)), 1)
+
+    def test_the_record_describes_the_occupied_slot_and_its_owner(self):
+        held = DomainLease(self.tmp, self.HOST, max_concurrency=1,
+                           min_interval_sec=0.0)
+        held.acquire(wait_max_sec=5)
+        try:
+            _, _, err = self.worker("--worker-id=probe-7")
+        finally:
+            held.release()
+        record = self.records(err)[0]
+        self.assertEqual(record["worker_id"], "probe-7")
+        self.assertEqual(record["host"], self.HOST)
+        self.assertEqual(record["max_concurrency"], 1)
+        self.assertEqual(record["wait_max_sec"], 0.5)
+        self.assertTrue(record["slots_dir_exists"])
+        self.assertEqual(len(record["slots"]), 1)
+        slot = record["slots"][0]
+        self.assertEqual(slot["slot"], "slots/slot_1.lease")
+        self.assertTrue(slot["exists"])
+        self.assertTrue(slot["owner_present"])
+        # The slot really is held by THIS process — the point of the diagnostic.
+        self.assertEqual(slot["owner_pid"], os.getpid())
+        self.assertIn("pid=%d" % os.getpid(), slot["owner_text"])
+        self.assertIsNotNone(slot["owner_epoch"])
+        self.assertGreaterEqual(slot["age_sec"], 0.0)
+
+    def test_the_record_carries_the_original_error_and_the_wait_it_made(self):
+        held = DomainLease(self.tmp, self.HOST, max_concurrency=1,
+                           min_interval_sec=0.0)
+        held.acquire(wait_max_sec=5)
+        try:
+            _, _, err = self.worker()
+        finally:
+            held.release()
+        record = self.records(err)[0]
+        self.assertIn("no slot for", record["error"])
+        self.assertGreaterEqual(record["waited_sec"], 0.5)
+        self.assertEqual(record["request_index"], 0)
+        self.assertEqual(record["collection_errors"], [])
+
+    def test_the_record_is_one_line_of_parseable_json(self):
+        held = DomainLease(self.tmp, self.HOST, max_concurrency=1,
+                           min_interval_sec=0.0)
+        held.acquire(wait_max_sec=5)
+        try:
+            _, _, err = self.worker()
+        finally:
+            held.release()
+        lines = [l for l in err.splitlines()
+                 if l.startswith("LEASE_TIMEOUT_DIAGNOSTIC ")]
+        self.assertEqual(len(lines), 1)
+        self.assertIsInstance(json.loads(lines[0][len("LEASE_TIMEOUT_DIAGNOSTIC "):]),
+                              dict)
+
+    def test_a_successful_worker_emits_no_diagnostic(self):
+        """The marker's presence in a log is itself the signal, so a healthy
+        worker must never print it."""
+        srv = ThreadingHTTPServer((self.HOST, 0), Recorder)
+        port = srv.server_address[1]
+        thread = threading.Thread(target=srv.serve_forever, daemon=True)
+        thread.start()
+        try:
+            proc = subprocess.Popen(
+                [sys.executable, WORKER, self.tmp, self.HOST, str(port),
+                 "1", "1", "0.0"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=ROOT)
+            out, err = proc.communicate(timeout=60)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        self.assertEqual(proc.returncode, 0, err.decode(errors="replace"))
+        self.assertEqual(self.records(err.decode(errors="replace")), [])
+        self.assertNotIn("LEASE_TIMEOUT_DIAGNOSTIC", err.decode(errors="replace"))
+
+    def test_the_default_wait_limit_is_still_thirty_seconds(self):
+        """The knob is test-only: omitting it must change nothing for the suite's
+        existing callers."""
+        self.assertEqual(worker_module().DEFAULT_WAIT_MAX_SEC, 30.0)
+
+    def test_a_broken_collector_does_not_mask_the_original_timeout(self):
+        """Best-effort collection: the failure it describes always survives."""
+        throttle_worker = worker_module()
+
+        class Hostile:
+            host = "h"
+            max_concurrency = 1
+            min_interval_sec = 0.0
+            lease_stale_sec = 120.0
+
+            @property
+            def dir(self):
+                raise RuntimeError("snapshot exploded")
+
+        class Sink:
+            def __init__(self):
+                self.text = ""
+
+            def write(self, chunk):
+                self.text += chunk
+
+            def flush(self):
+                pass
+
+        sink = Sink()
+        record = throttle_worker.emit_lease_timeout_diagnostic(
+            Hostile(), LeaseTimeout("no slot for h within 0.5s"),
+            worker_id="x", request_index=0, waited_sec=0.5, wait_max_sec=0.5,
+            stream=sink)
+        self.assertIn("no slot for h", record["error"])
+        self.assertTrue(record["collection_errors"])
+        self.assertTrue(sink.text.startswith("LEASE_TIMEOUT_DIAGNOSTIC "))
+
+    def test_the_diagnostic_is_bounded(self):
+        module = worker_module()
+        self.assertLessEqual(module.MAX_OWNER_TEXT, 1024)
+        self.assertLessEqual(module.MAX_COLLECTION_ERRORS, 32)
 
 
 if __name__ == "__main__":

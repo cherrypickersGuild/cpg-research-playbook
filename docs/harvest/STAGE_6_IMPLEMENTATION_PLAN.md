@@ -1145,6 +1145,69 @@ approval, a decision-record checkpoint and a fixture-scope correction before a p
 
 ---
 
+## 14.1 · S6-T / S6-TD — the `domain_throttle` instability, unexplained
+
+Recorded here rather than as a carried-forward finding, because it is not a Stage 6
+design question: it is an unexplained test-suite instability that Stage 6 happened to
+surface, and it must not quietly become an accepted exception.
+
+**Three failure signatures observed, all inside full-gate runs, all in
+`tests/test_taxonomy_domain_throttle.sh`:**
+
+```text
+1  test_minimum_interval_enforced_across_processes
+   0.2970s / 0.2974s against the 0.300s minimum — a sub-1% undershoot     seen 2x
+2  test_cap_of_two_is_respected_and_used
+   "cap of 2 never actually used" — the subprocesses did not overlap      seen 1x
+3  test_six_workers_respect_max_concurrency_one
+   a worker LeaseTimeout after 30s with max_concurrency=1                 seen 1x
+```
+
+**S6-T attempted a diagnosis and found no reproducible production defect.** What was
+measured, so a successor does not repeat it:
+
+- **The faithful process-based reproduction is green.** Six real worker processes, two
+  acquisitions each, `max_concurrency=1`, fresh temp root: **12/12 acquired, 0 timeouts,
+  no orphaned slot and no leftover owner file, across 3 runs.** Acquisition, release and
+  reclamation all behave.
+- **The backoff-starvation hypothesis is disproven.** `acquire`'s jittered backoff
+  escalates to 0.5–1.5s per poll and its attempt counter never resets, which looks like
+  a starvation mechanism. Capping the poll interval at 0.05s changed **nothing**; and in
+  the failing runs the waiters that did succeed had made 0–1 polls with a 0.117s maximum
+  wait, so they were not backing off at all.
+- **Artificial CPU load does not reproduce it.** Twelve busy-looping processes alongside
+  `TestCrossProcessConcurrency`, twice: both green.
+- **Overlap is currently deterministic.** Peak overlap with `max_concurrency=2` measured
+  **2 in 8 of 8 runs**, so signature 2's anti-vacuity assertion is not fragile on an
+  unloaded machine.
+- **One reproduction was obtained and then discarded as an artifact.** A *thread*-based
+  harness starved hard — 40 `LeaseTimeout`s with the slot free ~99% of the time — but
+  threads share one PID, which changes both `release`'s ownership check and
+  `_try_break_stale`'s liveness check, and they contend under the GIL with 2ms holds.
+  The process-based equivalent never starves. It is recorded as a **discarded lead**.
+
+**S6-TD therefore adds failure-only instrumentation instead of a speculative
+correction.** No production file changed: `domainlease.py`, `httpclient.py` and
+`tests/test_taxonomy_domain_throttle.sh` are byte-unchanged. `throttle_worker.py` now
+emits one bounded `LEASE_TIMEOUT_DIAGNOSTIC ` JSON record to stderr **on the
+`LeaseTimeout` path only**, then re-raises, so the exception, the exit status and every
+assertion the suite already makes are unchanged. The record describes the lease tree the
+worker timed out against — each slot's existence, owner text, parsed owner pid and epoch,
+mtime and age, whether anything vanished mid-collection, the pace lock, `next_allowed_at`,
+and any collection error — which is precisely what the three bare tracebacks could not
+say. Collection is best-effort and can never mask the original failure.
+
+A deterministic regression proves the path without waiting 30 seconds and without
+scheduler luck: **the test itself holds the only slot**, and the worker is launched with a
+test-only `--wait-max-sec` whose **default remains 30 seconds**, so every existing caller
+is unaffected.
+
+**The three signatures remain unexplained, and none is an accepted permanent exception.**
+The one-time gate-failure exception granted for S6-3 was exactly that — one time, for one
+checkpoint. Whichever checkpoint next sees a `LeaseTimeout` should read the payload rather
+than reason about the mechanism, and only then decide between a production defect and test
+orchestration. **S6-4 remains unapproved.**
+
 ## 15 · Approval status, and what this approval does not do
 
 Stage 5 §10's conditions 1–9 are met at `bc920b5b…` and evidenced in §3 and §4 of the Stage 5

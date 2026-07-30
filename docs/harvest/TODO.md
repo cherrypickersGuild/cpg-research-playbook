@@ -771,8 +771,40 @@ approval twice — once as a checkpoint and once immediately before it runs.
       public-suffix implementation, no change to `registrable_host`, and Stage 1's URL-identity design is
       not reopened. The same-domain branch is allocated to a **test-local synthetic** S6-3 case with an
       anti-vacuity assertion, not to a new fixture.
-- [ ] **S6-3 … S6-7, S6-L, S6-C** — **not approved, not implemented.** `src/harvest/aliases.py`,
-      `tests/harvest/test_aliases.py` and `tests/test_taxonomy_aliases.sh` are all **absent**.
+- [x] **S6-3** redirect and `rel=canonical` adjudication — `39b709b`
+      (`feat(harvest): add alias adjudication`). `aliases.py`: `adjudicate()` ·
+      `extract_rel_canonical()` · `AliasConflict` · `AliasError` · `CANONICAL_SCAN_BYTES` ·
+      `load_canonicalization()`. Both public functions pure relative to explicit inputs; the cached
+      loader is the one impure function and sits outside them, on the `verify.load_policy` idiom.
+      `urlkey.registrable_host` is the sole host authority. Permanence read from the S6-2 outcome's
+      flag, never inferred from a hop count. `identity_url` compared but never returned;
+      `record_id`/`content_id` unreachable, proved with test-local sentinels across all eight row
+      shapes. Robots arrives as an injected verdict — `False` **and** unknown both decline.
+      **81 assertions.**
+      - **Committed under a one-time gate-failure exception.** The single full-gate run was **red**:
+        32/33 suites green, sole failure `domain_throttle` with a worker `LeaseTimeout` — a **third**
+        signature, not either previously characterized one. The isolated diagnostic was green but did
+        **not** replace the full-gate result. **Not an accepted permanent flaky signature.**
+- [x] **S6-T** attempted throttle diagnosis — **no reproducible production defect found**, and **no
+      file changed**. Measured: the faithful process-based reproduction is green (12/12 acquired, 0
+      timeouts, no orphaned slot, 3 runs); the backoff-starvation hypothesis is **disproven** (capping
+      the poll interval changed nothing); artificial CPU load does not reproduce it; overlap is
+      deterministic (2 in 8/8). One reproduction came from a *thread* harness and was **discarded as an
+      artifact** — threads share a PID, which changes the ownership and liveness checks. Detail in plan
+      §14.1.
+- [x] **S6-TD** lease-timeout diagnostics (`test(harvest): add lease timeout diagnostics`).
+      **Instrumentation, not a fix — the instability is not fixed and is not claimed to be.** No
+      production path changed: `domainlease.py`, `httpclient.py` and
+      `tests/test_taxonomy_domain_throttle.sh` are **byte-unchanged**. `throttle_worker.py` emits one
+      bounded `LEASE_TIMEOUT_DIAGNOSTIC` JSON record to stderr **on the `LeaseTimeout` path only**, then
+      re-raises — same exception, same exit status, same assertions. The record carries the lease tree
+      the worker timed out against: per-slot existence, owner text, parsed pid and epoch, mtime, age,
+      vanished-during-collection flags, the pace lock, `next_allowed_at` and any collection error.
+      Collection is best-effort and never masks the original failure. A deterministic regression holds
+      the only slot from the test process and uses a test-only `--wait-max-sec` whose **default stays
+      30s**, so it neither waits 30 seconds nor depends on scheduler luck. **The three signatures remain
+      unexplained; none is an accepted permanent exception.**
+- [ ] **S6-4 … S6-7, S6-L, S6-C** — **not approved, not implemented.**
       **Live network access remains unauthorized** and no Stage 6 request has been made. **D6-A and D6-B
       remain resolved and unchanged.** See the plan for each checkpoint's exact allowed paths, risk tier
       and focused suite.
