@@ -65,6 +65,7 @@ import io
 import json
 import os
 import random
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -2925,6 +2926,542 @@ class TestApplyPolicyAndCli(unittest.TestCase):
             apply_cli(os.path.join(tmp, "state"))
         self.assertEqual(sha256_file(OVERRIDES), digest)
         self.assertEqual(sha256_file(REGISTRY), sha256_file(REGISTRY))
+
+
+# ====================================== S7-6 · end-to-end Stage 7 integration
+RUN_D = "20260803T101500Z-9001"
+AT_D = "2026-08-03T10:15:00Z"
+
+
+def read_tree(directory):
+    """Every file under `directory`, relative path -> bytes."""
+    tree = {}
+    for base_dir, dirs, files in os.walk(directory):
+        dirs.sort()
+        for name in sorted(files):
+            path = os.path.join(base_dir, name)
+            with open(path, "rb") as handle:
+                tree[os.path.relpath(path, directory).replace(os.sep, "/")] = handle.read()
+    return tree
+
+
+def recursive_diff(left, right):
+    """Every leaf path whose value differs. Shapes must match exactly."""
+    changed = set()
+
+    def walk(a, b, path):
+        if isinstance(a, dict) and isinstance(b, dict):
+            if sorted(a) != sorted(b):
+                changed.add(path + "{keys}")
+                return
+            for key in a:
+                walk(a[key], b[key], path + "." + key)
+        elif isinstance(a, list) and isinstance(b, list):
+            if len(a) != len(b):
+                changed.add(path + "{length}")
+                return
+            for index, (x, y) in enumerate(zip(a, b)):
+                walk(x, y, "%s[%d]" % (path, index))
+        elif a != b:
+            changed.add(path)
+
+    walk(left, right, "")
+    return changed
+
+
+def normalized(document):
+    """Strip exactly the leaves each document family is allowed to move."""
+    document = copy.deepcopy(document)
+    for key in ("harvest_run_id", "generated_at", "started_at", "finished_at"):
+        document.pop(key, None)
+    for record in document.get("records", ()):
+        record.pop("harvest_run_id", None)
+        record["provenance"]["migration"].pop("migrated_at", None)
+    for row in document.get("rejections", ()):
+        row.pop("rejected_at", None)
+    return json.dumps(document, sort_keys=True, ensure_ascii=False).encode("utf-8")
+
+
+class TestStage7EndToEndIntegration(unittest.TestCase):
+    """One workflow, driven through the real wrapper over the protected inputs.
+
+    S7-1 … S7-5 are each proved in isolation above. This is the only place they
+    are proved to be ONE thing: assess, refuse, map, report, publish — same
+    corpus, same CLI, same bytes, with every apply confined to a temporary root
+    that is deleted before a single assertion runs.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.before = {
+            "ax_registry": sha256_file(AX_REGISTRY),
+            "entity_registry": sha256_file(REGISTRY),
+            "overrides": sha256_file(OVERRIDES),
+            "assessment": sha256_file(DOCUMENT),
+        }
+        cls.runtime_before = {p: os.path.exists(os.path.join(ROOT, p))
+                              for p in ("state/taxonomy_harvest", "data/harvested",
+                                        "runs", "LATEST_RUN_ID")}
+
+        # 2 · the assessment, through the wrapper
+        cls.assess_status, cls.assess_out, cls.assess_err = run_wrapper(["entity-assess"])
+
+        # 3 · the dry run, with an explicit run context
+        cls.dry_status, cls.dry_out, cls.dry_err = run_wrapper(
+            ["ax-cases", "--run-id", RUN_A, "--migrated-at", AT_A])
+
+        temp = tempfile.mkdtemp(prefix="s76_integration_")
+        cls.temp_root = temp
+        state_root = os.path.join(temp, "state")
+        try:
+            # 4 · apply the same corpus into a temporary root
+            cls.apply_status, cls.apply_out, cls.apply_err = run_wrapper(
+                ["ax-cases", "--apply", "--state-root", state_root,
+                 "--run-id", RUN_A, "--migrated-at", AT_A])
+            # 6 · the same logical corpus under a second run id and instant
+            cls.second_status, cls.second_out, cls.second_err = run_wrapper(
+                ["ax-cases", "--apply", "--state-root", state_root,
+                 "--run-id", RUN_D, "--migrated-at", AT_D])
+            # 8 · retry the first, completed run id
+            cls.retry_status, cls.retry_out, cls.retry_err = run_wrapper(
+                ["ax-cases", "--apply", "--state-root", state_root,
+                 "--run-id", RUN_A, "--migrated-at", AT_A])
+
+            cls.first_bundle = read_tree(base.bundle_path(state_root, RUN_A))
+            cls.second_bundle = read_tree(base.bundle_path(state_root, RUN_D))
+            cls.state_tree = state_root_paths(state_root)
+            cls.state_root_used = state_root
+        finally:
+            # 10 · remove only the injected temporary root
+            shutil.rmtree(temp, ignore_errors=False)
+
+    # ---------------------------------------------------------------- 1, 9, 10
+    def test_every_protected_input_is_byte_identical_afterwards(self):
+        self.assertEqual(sha256_file(AX_REGISTRY), self.before["ax_registry"])
+        self.assertEqual(sha256_file(REGISTRY), self.before["entity_registry"])
+        self.assertEqual(sha256_file(OVERRIDES), self.before["overrides"])
+        self.assertEqual(sha256_file(DOCUMENT), self.before["assessment"])
+
+    def test_no_repository_runtime_path_appeared(self):
+        after = {p: os.path.exists(os.path.join(ROOT, p))
+                 for p in self.runtime_before}
+        self.assertEqual(after, self.runtime_before)
+        self.assertEqual(set(after.values()), {False})
+
+    def test_the_temporary_root_was_under_a_temp_directory_and_is_gone(self):
+        self.assertTrue(os.path.realpath(self.temp_root).startswith(
+            os.path.realpath(tempfile.gettempdir())),
+            "an apply root escaped the temporary directory")
+        self.assertTrue(os.path.realpath(self.state_root_used).startswith(
+            os.path.realpath(self.temp_root)))
+        self.assertFalse(os.path.exists(self.temp_root),
+                         "the injected temporary root was not removed")
+
+    # -------------------------------------------------------------------- 2
+    def test_entity_assess_reproduces_the_committed_assessment_byte_for_byte(self):
+        self.assertEqual(self.assess_status, 0, self.assess_err)
+        with open(DOCUMENT, "rb") as handle:
+            self.assertEqual(self.assess_out, handle.read())
+        text = self.assess_out.decode("utf-8")
+        self.assertIn("migrates 0 entities", text)
+        self.assertIn("1,161", text)
+
+    # ----------------------------------------------------------------- 3, 4
+    def test_dry_run_and_apply_agree_on_every_reported_fact(self):
+        self.assertEqual(self.dry_status, 0, self.dry_err)
+        self.assertEqual(self.apply_status, 0, self.apply_err)
+        dry = json.loads(self.dry_out)
+        applied = json.loads(self.apply_out)
+        self.assertEqual(sorted(dry), sorted(applied))
+        self.assertEqual(len(dry), 16)
+        for report in (dry, applied):
+            self.assertEqual(report["report_type"], "ax_cases")
+            self.assertEqual(report["report_version"], 1)
+            self.assertEqual(report["operation"], "ax-cases")
+        self.assertTrue(dry["dry_run"])
+        self.assertFalse(applied["dry_run"])
+        self.assertEqual({k for k in dry if dry[k] != applied[k]}, {"dry_run"})
+        for key, value in (("source_count", EXPECTED_AX_CASES),
+                           ("expected_count", EXPECTED_AX_CASES),
+                           ("accepted_count", EXPECTED_AX_CASES),
+                           ("rejected_count", 0),
+                           ("reviewed_admit_count", 0),
+                           ("reviewed_reject_count", 0),
+                           ("unresolved_rejection_count", 0),
+                           ("allow_unmappable", False),
+                           ("rejections", [])):
+            self.assertEqual(applied[key], value, key)
+
+    def test_neither_report_dumps_records_or_machine_paths(self):
+        for payload in (self.dry_out, self.apply_out):
+            text = payload.decode("utf-8")
+            for forbidden in ("record_id", "content_id", "case_facets", "provenance",
+                              "domain_fields", "C:/", "C:\\", "/Users/", ROOT,
+                              "publication_eligible", "ax_cases_dry_run"):
+                self.assertNotIn(forbidden, text)
+
+    def test_the_dry_run_wrote_nothing_and_the_apply_wrote_one_bundle(self):
+        self.assertEqual(tuple(sorted(self.first_bundle)), BUNDLE_FILES)
+        bundle = "migrations/%s__ax_cases" % RUN_A
+        self.assertIn(bundle + "/manifest.json", self.state_tree)
+        # The dry run ran BEFORE any state root existed and created none.
+        self.assertFalse(os.path.exists(os.path.join(ROOT, "state", "taxonomy_harvest")))
+
+    # -------------------------------------------------------------------- 5
+    def test_the_bundle_is_exactly_the_three_approved_files(self):
+        self.assertEqual(tuple(sorted(self.first_bundle)), BUNDLE_FILES)
+        self.assertEqual(tuple(sorted(self.second_bundle)), BUNDLE_FILES)
+        for name in sorted(self.first_bundle):
+            self.assertFalse(name.endswith((".tmp", ".journal", ".sha256", ".log")))
+        for forbidden in ("LATEST_RUN_ID", "runs/", "ledgers/", "coverage",
+                          "topics/", "alias_conflicts", "data/harvested"):
+            self.assertFalse(any(forbidden in path for path in self.state_tree),
+                             forbidden)
+
+    def test_all_three_documents_validate_against_the_committed_schemas(self):
+        for relative, schema_name in (
+                (BUNDLE_FILES[0], "cell_artifact.v1.json"),
+                (BUNDLE_FILES[1], "run_manifest.v1.json"),
+                (BUNDLE_FILES[2], "rejection.v1.json")):
+            schema_mod.validate_or_raise(json.loads(self.first_bundle[relative]),
+                                         schema_name)
+
+    def test_the_documents_and_stdout_reconcile_with_each_other(self):
+        report = json.loads(self.apply_out)
+        artifact = json.loads(self.first_bundle[BUNDLE_FILES[0]])
+        manifest = json.loads(self.first_bundle[BUNDLE_FILES[1]])
+        rejections = json.loads(self.first_bundle[BUNDLE_FILES[2]])
+        cell = manifest["cells"][0]
+
+        # counts agree across all four surfaces
+        self.assertEqual(report["accepted_count"], len(artifact["records"]))
+        self.assertEqual(report["accepted_count"], artifact["metadata"]["total_records"])
+        self.assertEqual(report["accepted_count"], artifact["metadata"]["full_records"])
+        self.assertEqual(report["accepted_count"], cell["accepted"])
+        self.assertEqual(report["rejected_count"], len(rejections["rejections"]))
+        self.assertEqual(report["rejected_count"], artifact["metadata"]["rejected"])
+        self.assertEqual(report["rejected_count"], cell["rejected"])
+        self.assertEqual(report["source_count"], cell["candidates"])
+        self.assertEqual(report["source_count"],
+                         artifact["metadata"]["sources"][0]["candidates"])
+
+        # one run id everywhere
+        run_id = report["harvest_run_id"]
+        self.assertEqual(run_id, RUN_A)
+        self.assertEqual(artifact["harvest_run_id"], run_id)
+        self.assertEqual(rejections["harvest_run_id"], run_id)
+        self.assertEqual(manifest["harvest_run_id"], run_id)
+        self.assertEqual({r["harvest_run_id"] for r in artifact["records"]}, {run_id})
+
+        # one instant everywhere
+        instant = report["migrated_at"]
+        self.assertEqual(instant, AT_A)
+        self.assertEqual(artifact["generated_at"], instant)
+        self.assertEqual(rejections["generated_at"], instant)
+        self.assertEqual(manifest["started_at"], instant)
+        self.assertEqual(manifest["finished_at"], instant)
+        self.assertEqual({r["provenance"]["migration"]["migrated_at"]
+                          for r in artifact["records"]}, {instant})
+
+    def test_the_manifest_is_one_ineligible_migration_cell(self):
+        manifest = json.loads(self.first_bundle[BUNDLE_FILES[1]])
+        self.assertEqual(manifest["mode"], "migration")
+        self.assertEqual(len(manifest["cells"]), 1)
+        self.assertEqual(manifest["cells"][0]["cell_id"], "cases__case-studies")
+        self.assertNotIn("request_accounting", manifest)
+        self.assertFalse(manifest["publication_eligible"])
+        reason = manifest["publication_ineligible_reason"]
+        self.assertIn("%d of %d" % (EXPECTED_AX_CASES, EXPECTED_AX_CASES), reason)
+        self.assertIn("not_checked", reason)
+        artifact = json.loads(self.first_bundle[BUNDLE_FILES[0]])
+        self.assertEqual({r["access_status"] for r in artifact["records"]},
+                         {"not_checked"})
+
+    def test_the_persisted_records_carry_every_stage_7_contract(self):
+        artifact = json.loads(self.first_bundle[BUNDLE_FILES[0]])
+        records = artifact["records"]
+        self.assertEqual(len(records), EXPECTED_AX_CASES)
+        self.assertEqual(len({r["identity_url"] for r in records}), EXPECTED_AX_CASES)
+        self.assertEqual(len({r["content_id"] for r in records}), EXPECTED_AX_CASES)
+        self.assertEqual(len({r["record_id"] for r in records}), EXPECTED_AX_CASES)
+        self.assertEqual(len({r["legacy_ids"][0]["id"] for r in records}), 126)
+        self.assertEqual({r["verification_status"] for r in records}, {"snippet_only"})
+        self.assertEqual(sum(1 for r in records if r["published_at"] is None), 33)
+        for record in records:
+            for field in ("relevance_score", "quality_score",
+                          "audience_fit_score", "freshness_score"):
+                self.assertIsNone(record[field])
+        states = {}
+        for record in records:
+            state = facets_mod.reporting_state(record)
+            states[state] = states.get(state, 0) + 1
+        self.assertEqual(states, {"facet_partial": 112,
+                                  "unmapped_legacy_value": 118,
+                                  "unresolved": 1})
+        checker = check_facets_module()
+        problems = []
+        for record in records:
+            problems += checker.validate_record_facets(record)
+        self.assertEqual(problems, [])
+
+    def test_the_guard_refused_none_of_the_protected_corpus(self):
+        report = json.loads(self.apply_out)
+        self.assertEqual(report["rejected_count"], 0)
+        self.assertEqual(report["unresolved_rejection_count"], 0)
+        with open(AX_REGISTRY, encoding="utf-8") as handle:
+            cases = json.load(handle)["cases"]
+        refused = [c["case_id"] for c in cases
+                   if base.suspicious_url_match(c["source_url"]) is not None]
+        self.assertEqual(refused, [])
+        self.assertEqual(len(cases), EXPECTED_AX_CASES)
+
+    # -------------------------------------------------------------------- 7
+    def test_two_runs_move_exactly_the_permitted_leaves(self):
+        self.assertEqual(self.second_status, 0, self.second_err)
+        candidate = recursive_diff(json.loads(self.first_bundle[BUNDLE_FILES[0]]),
+                                   json.loads(self.second_bundle[BUNDLE_FILES[0]]))
+        record_leaves = {p for p in candidate if p.startswith(".records[")}
+        self.assertEqual(candidate - record_leaves,
+                         {".generated_at", ".harvest_run_id"})
+        self.assertEqual({p.split("]", 1)[1] for p in record_leaves},
+                         {".harvest_run_id", ".provenance.migration.migrated_at"})
+        self.assertEqual(len(record_leaves), EXPECTED_AX_CASES * 2)
+
+        self.assertEqual(recursive_diff(json.loads(self.first_bundle[BUNDLE_FILES[1]]),
+                                        json.loads(self.second_bundle[BUNDLE_FILES[1]])),
+                         {".harvest_run_id", ".started_at", ".finished_at"})
+        self.assertEqual(recursive_diff(json.loads(self.first_bundle[BUNDLE_FILES[2]]),
+                                        json.loads(self.second_bundle[BUNDLE_FILES[2]])),
+                         {".generated_at", ".harvest_run_id"})
+
+    def test_normalizing_those_leaves_makes_the_bundles_byte_equal(self):
+        for relative in BUNDLE_FILES:
+            with self.subTest(relative=relative):
+                self.assertEqual(normalized(json.loads(self.first_bundle[relative])),
+                                 normalized(json.loads(self.second_bundle[relative])))
+
+    # -------------------------------------------------------------------- 8
+    def test_retrying_a_finished_run_id_is_refused_and_changes_nothing(self):
+        self.assertEqual(self.retry_status, 1)
+        self.assertEqual(self.retry_out, b"", "a refused retry printed a report")
+        self.assertIn(b"already exists", self.retry_err)
+        # The captured trees were read AFTER the retry, so equality here is the
+        # proof that the retry disturbed neither bundle.
+        self.assertEqual(tuple(sorted(self.first_bundle)), BUNDLE_FILES)
+        self.assertEqual(tuple(sorted(self.second_bundle)), BUNDLE_FILES)
+        for name in self.state_tree:
+            self.assertNotIn(base.STAGING_PREFIX, name)
+
+    def test_the_refusal_happens_before_the_first_input_read(self):
+        """Same contract as the wrapper run above, observed at the seam."""
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            status, _out, err = apply_cli(root, args)
+            self.assertEqual(status, 0, err)
+            reads = []
+            real_loader = ax_cases.load_json_document
+            with mock.patch.object(
+                    ax_cases, "load_json_document",
+                    lambda path, label: (reads.append(label),
+                                         real_loader(path, label))[1]):
+                status, out, err = apply_cli(root, args)
+            self.assertEqual((status, out), (1, b""))
+            self.assertEqual(reads, [])
+
+
+class TestStage7ReviewMatrixIntegration(unittest.TestCase):
+    """Command in, bundle out, for each of the four review outcomes."""
+
+    SUSPICIOUS = "https://example.test/tag/ai"
+
+    def inputs(self, tmp, rows=()):
+        cases = [a_case(case_id="case-2026-9500", case_key="s|1",
+                        source_url=self.SUSPICIOUS),
+                 a_case(case_id="case-2026-9501", case_key="ok|1",
+                        source_url="https://example.test/cases/ok")]
+        registry = write_json(os.path.join(tmp, "r.json"), a_ax_registry(cases))
+        overrides = write_json(os.path.join(tmp, "o.json"), an_overrides_document(rows))
+        return ["--registry", registry, "--overrides", overrides,
+                "--expect-count", "2"]
+
+    def wrapper_apply(self, tmp, args, extra=()):
+        state_root = os.path.join(tmp, "state")
+        status, out, err = run_wrapper(
+            ["ax-cases", "--apply", "--state-root", state_root,
+             "--run-id", RUN_A, "--migrated-at", AT_A] + list(args) + list(extra))
+        return status, out, err, state_root
+
+    def test_unresolved_without_allow_reports_fully_and_publishes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err, root = self.wrapper_apply(tmp, self.inputs(tmp))
+            self.assertEqual(status, 1)
+            report = json.loads(out)
+            self.assertEqual(report["unresolved_rejection_count"], 1)
+            self.assertEqual(len(report["rejections"]), 1)
+            self.assertEqual(report["rejections"][0]["target_url"], self.SUSPICIOUS)
+            self.assertIn(b"--allow-unmappable", err)
+            self.assertFalse(os.path.exists(root), "a refused apply created a root")
+
+    def test_allow_unmappable_publishes_the_rejection_without_admitting_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err, root = self.wrapper_apply(
+                tmp, self.inputs(tmp), ["--allow-unmappable"])
+            self.assertEqual(status, 0, err)
+            report = json.loads(out)
+            tree = read_tree(base.bundle_path(root, RUN_A))
+            artifact = json.loads(tree[BUNDLE_FILES[0]])
+            persisted = json.loads(tree[BUNDLE_FILES[2]])["rejections"]
+            self.assertEqual(persisted, report["rejections"])
+            self.assertEqual(len(persisted), 1)
+            self.assertEqual(persisted[0]["target_url"], self.SUSPICIOUS)
+            self.assertEqual(len(artifact["records"]), 1)
+            self.assertEqual(artifact["records"][0]["target_url"],
+                             "https://example.test/cases/ok")
+            self.assertNotIn(self.SUSPICIOUS,
+                             {r["target_url"] for r in artifact["records"]})
+
+    def test_a_reviewed_admit_is_published_verbatim_with_its_decision_recorded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err, root = self.wrapper_apply(
+                tmp, self.inputs(tmp, [a_review_row()]))
+            self.assertEqual(status, 0, err)
+            report = json.loads(out)
+            self.assertEqual(report["reviewed_admit_count"], 1)
+            self.assertEqual(report["unresolved_rejection_count"], 0)
+            tree = read_tree(base.bundle_path(root, RUN_A))
+            artifact = json.loads(tree[BUNDLE_FILES[0]])
+            self.assertEqual(len(artifact["records"]), 2)
+            admitted = [r for r in artifact["records"]
+                        if r["target_url"] == self.SUSPICIOUS]
+            self.assertEqual(len(admitted), 1)
+            joined = " ".join(admitted[0]["provenance"]["migration"]["assumptions"])
+            self.assertIn("a reviewer admitted it", joined)
+            self.assertEqual(json.loads(tree[BUNDLE_FILES[2]])["rejections"], [])
+
+    def test_a_reviewed_reject_is_published_as_a_reviewed_rejection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, out, err, root = self.wrapper_apply(
+                tmp, self.inputs(tmp, [a_review_row(decision="reject",
+                                                    note="an index page")]))
+            self.assertEqual(status, 0, err)
+            report = json.loads(out)
+            self.assertEqual(report["reviewed_reject_count"], 1)
+            self.assertEqual(report["unresolved_rejection_count"], 0)
+            tree = read_tree(base.bundle_path(root, RUN_A))
+            rejections = json.loads(tree[BUNDLE_FILES[2]])["rejections"]
+            self.assertEqual(len(rejections), 1)
+            self.assertIn("a reviewer confirmed the rejection", rejections[0]["detail"])
+            self.assertEqual(len(json.loads(tree[BUNDLE_FILES[0]])["records"]), 1)
+
+    def test_reordering_sources_and_reviews_changes_no_published_byte(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [a_case(case_id="c%d" % i, case_key="k|%d" % i, source_url=url)
+                     for i, url in enumerate(("https://example.test/tag/z",
+                                              "https://example.test/blog/feed",
+                                              "https://example.test/cases/ok"))]
+            rows = [a_review_row(case_id="c0",
+                                 legacy_source_url="https://example.test/tag/z",
+                                 matched_rule="index_page", decision="reject",
+                                 note="an index page"),
+                    a_review_row(case_id="c1",
+                                 legacy_source_url="https://example.test/blog/feed",
+                                 matched_rule="feed_path", decision="reject",
+                                 note="a feed")]
+            bundles = []
+            for index, (case_rows, review_rows) in enumerate((
+                    (cases, rows), (list(reversed(cases)), list(reversed(rows))))):
+                registry = write_json(os.path.join(tmp, "r%d.json" % index),
+                                      a_ax_registry(case_rows))
+                overrides = write_json(os.path.join(tmp, "o%d.json" % index),
+                                       an_overrides_document(review_rows))
+                root = os.path.join(tmp, "state%d" % index)
+                status, out, err = run_wrapper(
+                    ["ax-cases", "--apply", "--state-root", root,
+                     "--registry", registry, "--overrides", overrides,
+                     "--expect-count", "3", "--run-id", RUN_A,
+                     "--migrated-at", AT_A])
+                self.assertEqual(status, 0, err.decode("utf-8"))
+                bundles.append(read_tree(base.bundle_path(root, RUN_A)))
+            self.assertEqual(bundles[0], bundles[1])
+            self.assertEqual(len(json.loads(bundles[0][BUNDLE_FILES[2]])["rejections"]),
+                             2)
+
+
+class TestStage7AtomicityIntegration(unittest.TestCase):
+    """One consolidated all-or-nothing proof. The five S7-5 boundaries stand."""
+
+    def test_publication_is_observable_only_as_nothing_or_everything(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            final = base.bundle_path(root, RUN_A)
+            seen = {}
+            real_replace = os.replace
+
+            def observing(src, dst):
+                seen["final_before"] = os.path.exists(final)
+                seen["staged_before"] = tuple(sorted(ax_cases._staged_paths(src)))
+                result = real_replace(src, dst)
+                seen["final_after"] = tuple(sorted(read_tree(final)))
+                seen["staging_after"] = os.path.exists(src)
+                return result
+
+            with mock.patch.object(ax_cases.os, "replace", observing):
+                status, out, err = apply_cli(root, args)
+            self.assertEqual(status, 0, err)
+            self.assertFalse(seen["final_before"], "the destination existed already")
+            self.assertEqual(seen["staged_before"], BUNDLE_FILES)
+            self.assertEqual(seen["final_after"], BUNDLE_FILES)
+            self.assertFalse(seen["staging_after"])
+            self.assertEqual(tuple(sorted(read_tree(final))), BUNDLE_FILES)
+            for name in os.listdir(base.migrations_root(root)):
+                self.assertFalse(name.startswith(base.STAGING_PREFIX),
+                                 "staging residue survived a successful apply")
+
+    def test_a_same_run_retry_leaves_the_published_tree_byte_identical(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = synthetic_inputs(tmp, [a_case()])
+            root = os.path.join(tmp, "state")
+            self.assertEqual(apply_cli(root, args)[0], 0)
+            before = read_tree(base.bundle_path(root, RUN_A))
+            status, out, err = apply_cli(root, args)
+            self.assertEqual((status, out), (1, b""))
+            self.assertIn("already exists", err)
+            self.assertEqual(read_tree(base.bundle_path(root, RUN_A)), before)
+            self.assertEqual(state_root_paths(root),
+                             sorted(["migrations",
+                                     "migrations/%s__ax_cases" % RUN_A,
+                                     "migrations/%s__ax_cases/candidate_output" % RUN_A,
+                                     "migrations/%s__ax_cases/candidate_output/"
+                                     "cases__case-studies__harvest.json" % RUN_A,
+                                     "migrations/%s__ax_cases/manifest.json" % RUN_A,
+                                     "migrations/%s__ax_cases/rejections" % RUN_A,
+                                     "migrations/%s__ax_cases/rejections/"
+                                     "cases__case-studies__rejections.json" % RUN_A]))
+
+
+class TestStage7SuiteLeavesNothingBehind(unittest.TestCase):
+
+    def test_the_repository_has_no_runtime_migration_state(self):
+        for leak in ("state/taxonomy_harvest", "data/harvested", "runs",
+                     "LATEST_RUN_ID"):
+            self.assertFalse(os.path.exists(os.path.join(ROOT, leak)), leak)
+
+    def test_every_apply_root_this_suite_uses_is_a_temporary_one(self):
+        """`apply_cli` and the wrapper calls all name a root under a temp dir."""
+        with open(os.path.abspath(__file__), encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        applies = 0
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.List, ast.Tuple)):
+                continue
+            literals = [e.value for e in node.elts
+                        if isinstance(e, ast.Constant) and isinstance(e.value, str)]
+            if "--apply" in literals:
+                applies += 1
+                self.assertIn("--state-root", literals)
+        self.assertGreaterEqual(applies, 3, "the scan found no apply call sites")
 
 
 if __name__ == "__main__":

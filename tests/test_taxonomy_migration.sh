@@ -1,7 +1,34 @@
 #!/usr/bin/env bash
-# test_taxonomy_migration.sh — Stage 7 migration: the entity assessment (S7-1),
-# the suspicious-URL guard (S7-2), the in-memory AX mapping (S7-3), the dry-run
-# CLI (S7-4) and the atomic apply (S7-5). 224 assertions.
+# test_taxonomy_migration.sh — Stage 7 migration end to end: the entity
+# assessment (S7-1), the suspicious-URL guard (S7-2), the in-memory AX mapping
+# (S7-3), the dry-run CLI (S7-4), the atomic apply (S7-5) and the integration
+# proof (S7-6). 250 assertions.
+#
+# --- S7-6, integration -------------------------------------------------------
+# S7-1 … S7-5 are each proved in isolation below. This is the only place they are
+# proved to be ONE workflow, driven through the real `scripts/harvest/migrate.sh`
+# over the protected committed inputs:
+#   * `entity-assess` reproduces the committed assessment byte for byte;
+#   * a dry run and an apply of the SAME corpus are compared as actual CLI
+#     stdout — not two calls to one renderer — and agree on all sixteen fields
+#     except `dry_run`, at 231 accepted / 0 rejected;
+#   * the published bundle is cross-checked BETWEEN documents rather than
+#     validated in isolation: report counts equal the candidate artifact's rows,
+#     its derived metadata, the rejection document and the manifest cell; one run
+#     id and one migration instant appear in all four; the manifest carries one
+#     ineligible migration cell with no request accounting;
+#   * a second run under a distinct id and instant moves exactly the permitted
+#     leaves per document family, and normalizing precisely those makes the two
+#     bundles byte-equal; reversing source rows AND review rows changes nothing;
+#   * retrying a finished run id is refused before the first input read and
+#     disturbs neither bundle;
+#   * the four review outcomes — unresolved, --allow-unmappable, reviewed admit,
+#     reviewed reject — are proved from command to persisted artifact;
+#   * atomicity is consolidated into one all-or-nothing observation at the rename
+#     boundary; the five detailed S7-5 fault-injection boundaries stand unchanged.
+# Every apply here names an explicit temporary `--state-root`, that root is
+# deleted before the assertions run, and the repository's own runtime paths are
+# proved absent before and after.
 #
 # --- S7-5, atomic publication ------------------------------------------------
 # Apply is the first Stage 7 operation that leaves something behind, so the

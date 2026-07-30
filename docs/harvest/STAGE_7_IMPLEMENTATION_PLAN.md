@@ -1,6 +1,6 @@
 # Stage 7 implementation plan — AX corpus migration
 
-**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-5 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
+**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-6 COMPLETE; STAGE 7 OPEN PENDING S7-C, UNAPPROVED`**
 
 ```text
 plan opened at        0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   Stage 6 closeout
@@ -27,9 +27,12 @@ reports and writes nothing, and **`--apply` is refused**.
 rename, and **every apply in this repository so far has been to an injected temporary root** — the
 real `state/taxonomy_harvest/` does not exist.
 
-**`S7-6` and `S7-C` remain unapproved**, and nothing in this document approves them: the integration
-closeout and the stage closeout are unwritten, and neither may be started until it is approved by
-name.
+**`S7-6`, the integration proof, is complete**; it added no capability and proved S7-1 … S7-5 are one
+offline workflow, with every apply confined to a temporary state root that no longer exists.
+
+**Stage 7 implementation is complete. Stage 7 itself is NOT closed.** `S7-C` remains **unapproved**:
+its exact documentation path set requires its own read-only closeout preflight, and nothing here
+authorizes a closeout, a push, Stage 8 wiring or any live activity.
 
 - **Approving this plan approves no implementation checkpoint.** Not S7-1, not any later one.
 - **Listing a checkpoint's path set here does not authorize that checkpoint.** §9 exists so a
@@ -685,8 +688,8 @@ suspicious-URL hits            0       under the D7-H structural predicates (5 u
 
 ## 9 · Checkpoint decomposition
 
-**S7-1 … S7-5 are complete. None of the remaining checkpoints is approved.** Each requires separate
-approval by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
+**S7-1 … S7-6 are complete. `S7-C` is not approved.** It requires separate approval by name, and is
+limited to the path set established by its own closeout preflight. Every checkpoint includes updates to this
 plan and to `docs/harvest/TODO.md`.
 
 ### S7-1 · Entity assessment — **COMPLETE**
@@ -1104,7 +1107,7 @@ the full gate once — **39/39 suites, 2,039 assertions (1,997 unittest + 42 she
 checkers exit 0. Both protected registries and the override config are byte-identical, no real
 runtime path exists, and no request of any kind was made.
 
-### S7-6 · Final migration integration
+### S7-6 · Final migration integration — **COMPLETE**
 
 ```text
 tests/harvest/test_migration.py
@@ -1125,6 +1128,75 @@ This checkpoint owns, and proves:
 - **no repository runtime leak** — `state/taxonomy_harvest`, `data/harvested`, `runs`,
   `LATEST_RUN_ID` all still absent;
 - the **final focused and full Stage 7 gate**, in one run.
+
+**As shipped — test and documentation only.** S7-6 adds no capability, no format and no semantics.
+It is the only place S7-1 … S7-5 are proved to be **one workflow**, driven through the real
+`scripts/harvest/migrate.sh` over the protected committed inputs.
+
+**The scenario, in one class.** Snapshot the AX registry, the entity registry, the override config,
+the committed assessment and the repository's runtime-path state → run `entity-assess` and compare
+its stdout with the committed document **byte for byte** → run `ax-cases` dry-run with an explicit
+run context → apply the same corpus into a temporary `--state-root` → apply it again under a second
+run id and instant → retry the first, finished run id → read both bundles into memory → **delete the
+temporary root** → and only then assert. Every assertion therefore runs against a repository with no
+runtime state at all.
+
+**Dry-run versus apply, from actual CLI stdout** (not two calls to one renderer): both are exit 0,
+both carry `report_type: "ax_cases"`, `report_version: 1`, `operation: "ax-cases"`, both have the
+same sixteen fields, and **the only differing field is `dry_run`** — true then false. The protected
+result is **231 accepted / 0 rejected**, with reviewed and unresolved counts zero, an empty rejection
+list, no accepted-record payload and no absolute path in either report.
+
+**Cross-document reconciliation, not isolated validation.** Report counts equal the candidate
+artifact's rows, its derived metadata totals, the rejection document's length and the manifest cell's
+`accepted` / `rejected` / `candidates`; one `harvest_run_id` appears in the report, the artifact,
+every record, the rejection document and the manifest; one migration instant appears as the
+artifact's and rejection document's `generated_at`, the manifest's `started_at` and `finished_at`,
+and every record's `provenance.migration.migrated_at`. The manifest carries exactly one migration
+cell, no `request_accounting`, and `publication_eligible: false` whose reason accounts for all
+**231 of 231** records remaining `not_checked` — cross-checked against the records themselves.
+
+**The persisted records carry every Stage 7 contract**, read back from disk: 231 distinct
+`identity_url` / `content_id` / `record_id` over **126 distinct legacy `case_id`s**, all
+`snippet_only` and none `fetched`, 33 null `published_at`, four null scores, facet states
+**112 / 118 / 1**, and `check_facets.py` reporting zero problems. The guard refuses **0 of 231**.
+
+**Distinct runs and ordering.** The recursive diff permits exactly the leaves each family may move —
+candidate: `generated_at`, `harvest_run_id`, and per record `harvest_run_id` and
+`provenance.migration.migrated_at` (462 leaves over 231 records, counted); manifest: three;
+rejections: two — and normalizing precisely those makes the bundles byte-equal. Reversing **both**
+source rows and review rows changes no published byte.
+
+**Review matrix, command to artifact.** Unresolved without `--allow-unmappable` prints the complete
+report, exits 1 and creates no root; `--allow-unmappable` publishes with the suspicious row still
+rejected and absent from the records; a reviewed `admit` is published verbatim with its decision in
+`provenance.migration.assumptions`; a reviewed `reject` persists as a reviewed rejection. Malformed
+review shapes stay owned by S7-3/S7-4 and are not duplicated here.
+
+**Atomicity is consolidated, not duplicated.** One observation at the rename boundary proves the
+destination absent and the staging tree complete immediately before, the complete final tree
+immediately after, no staging residue, and no state with one or two files. **All five detailed S7-5
+fault-injection boundaries are retained unchanged**, and none was found order-dependent or vacuous.
+
+**Default-root safety.** The S7-5 incident note stands as written: two obsolete S7-4 tests briefly
+executed apply against the default repository state root during S7-5 development; the bundles and the
+directory were removed before that commit; no protected, tracked or baseline file changed; the tests
+were corrected before the delivered validation; and the repository contains no runtime migration
+state. S7-6 adds the forward guarantees: every apply call site in the suite is asserted — by an AST
+scan of the suite itself — to name a `--state-root`, all apply roots are descendants of temporary
+directories, the injected root is proved deleted, and the repository's runtime paths are proved
+absent before and after.
+
+**Validation:** focused `tests/test_taxonomy_migration.sh` **250 assertions**, plus `artifacts` 33,
+`manifest` 52, `cell_artifact` 44, `recovery` 75, `run_cells` 99, `records` 51, `schema` 35,
+`identity` 42, `facets` 34, `eligibility` 48; the S7-1 assessment regenerates byte-identically; then
+the full gate once — **39/39 suites, 2,065 assertions (2,023 unittest + 42 shell)**; then all five
+checkers exit 0. Both protected registries and the override config are byte-identical, no temporary
+root remains, no repository runtime path exists, and no request of any kind was made.
+
+**Stage 7 implementation is complete: S7-1 … S7-6 are all delivered. Stage 7 itself remains OPEN**
+pending `S7-C`, which is **unapproved** and whose exact documentation path set requires its own
+read-only closeout preflight.
 
 ### S7-C · Closeout
 

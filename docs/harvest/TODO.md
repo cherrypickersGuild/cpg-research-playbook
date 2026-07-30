@@ -17,10 +17,10 @@ stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
 stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
 stage_6_closeout_commit:     0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   S6-C, PUSHED
 stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   APPROVED plan of record
-                             (S7-0 … S7-5 complete; S7-6 and S7-C unapproved)
-stage_7_gate:                39/39 suites green — 1,997 unittest + 42 shell = 2,039 total
+                             (S7-0 … S7-6 complete; S7-C unapproved; STAGE 7 NOT CLOSED)
+stage_7_gate:                39/39 suites green — 2,023 unittest + 42 shell = 2,065 total
                              (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2 · +62 S7-3
-                              · +42 S7-4 · +49 net S7-5, the migration suite now 224)
+                              · +42 S7-4 · +49 net S7-5 · +26 S7-6; migration suite 250)
 stage_7_ax_mapping:          231 accepted / 0 rejected, in memory only — nothing written.
                              Facet states 112 facet_partial · 118 unmapped_legacy_value
                              · 1 unresolved
@@ -62,16 +62,17 @@ complete, passed, failed or waived anywhere in this file.
 **A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** and is
 synchronized at `0d2da64` — local `main`, `HEAD` and `origin/main` all agree, 0 behind / 0 ahead.
 
-**STAGE 7 IS OPEN. `S7-0` … `S7-5` ARE COMPLETE.**
+**STAGE 7 IS OPEN. `S7-0` … `S7-6` ARE COMPLETE; STAGE 7 IS NOT CLOSED.**
 `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` is the **approved plan of record**; S7-1, the read-only
 entity assessment, **migrated 0 of 1,161 entities**, which is what it was for; S7-2, the
 suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites nothing; S7-3
 maps **231 accepted / 0 rejected in memory and writes nothing at all**; S7-4 adds `migrate.sh` with a
 `ax-cases` and `entity-assess`; S7-5 makes `--apply` publish one three-file bundle by a single
 directory rename, **exercised only under injected temporary roots**.
-**`S7-6` and `S7-C` are unapproved** and **Stage 7 is not complete**: each needs its own approval by
-name, is limited to the exact path set declared in that plan's §9, and a path appearing there is not
-an approval to write it. **The real repository holds no migration bundle —
+S7-6 proves the five checkpoints are one offline workflow, end to end through the wrapper.
+**`S7-C` is unapproved** and **Stage 7 is not closed**: it needs its own approval by name, and its
+documentation path set comes from its own read-only closeout preflight. **The real repository holds
+no migration bundle —
 `state/taxonomy_harvest/` does not exist.** No live request, no promotion and no apply against the
 default state root is authorized. Green tests alone open nothing.
 
@@ -1107,7 +1108,7 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
 - [ ] `tests/test_taxonomy_linkcheck.sh`
 - [ ] `tests/test_taxonomy_promote_txn.sh` — 4 fault-injection points + add/remove/partial modes
 
-## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-5 COMPLETE. S7-6 AND S7-C NOT APPROVED.**
+## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-6 COMPLETE. S7-C NOT APPROVED. STAGE 7 NOT CLOSED.**
 
 **Plan of record:** `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` — **`APPROVED — PLAN OF RECORD;
 S7-0 COMPLETE; NO IMPLEMENTATION CHECKPOINT APPROVED`**. It reconciles and **supersedes**
@@ -1298,16 +1299,45 @@ wiring (Stage 8), calibration (Stage 9), the live smoke, entity migration proper
       protected registries and the override config byte-identical; the S7-1 assessment still
       regenerates byte-identically; no real runtime path; no request of any kind.
 
-**S7-6 and S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the
-exact path set in plan §9. A path appearing in the plan is not an approval to write it; a checkpoint
-that finds it needs another path **stops and requests a plan correction** rather than widening its
-scope. **Stage 7 is not complete.**
+- [x] **S7-6** final migration integration, test and documentation only
+      (`test(harvest): prove migration integration`) — `tests/harvest/test_migration.py`,
+      `tests/test_taxonomy_migration.sh`, plus the plan and this file. Exactly the four paths
+      declared in plan §9; **no production, shell, schema, config, fixture or protected path
+      changed**, and S7-6 adds no capability. It proves S7-1 … S7-5 are **one workflow**, driven
+      through the real `scripts/harvest/migrate.sh` over the protected committed inputs: snapshot →
+      `entity-assess` (stdout equals the committed assessment **byte for byte**) → dry run → apply
+      into a temporary `--state-root` → apply again under a second run id and instant → retry the
+      finished run id → read both bundles into memory → **delete the temporary root** → then assert.
+      **Dry-run and apply are compared as actual CLI stdout**, not two calls to one renderer: same
+      sixteen fields, same `report_type "ax_cases"` / `report_version 1` / `operation "ax-cases"`,
+      differing **only** in `dry_run`, at **231 accepted / 0 rejected**. The bundle is
+      **cross-checked between documents**: report counts equal the candidate rows, its derived
+      metadata, the rejection document and the manifest cell; one run id and one instant appear in
+      all four; the manifest is one migration cell with no request accounting and
+      `publication_eligible: false` whose reason accounts for all 231 records remaining
+      `not_checked`. Records read back from disk carry every contract — 231 distinct identities over
+      126 legacy `case_id`s, all `snippet_only`, 33 null dates, four null scores, facet states
+      **112 / 118 / 1**, `check_facets.py` clean, guard **0/231**. Two runs move exactly the
+      permitted leaves and are byte-equal once normalized; reversing **both** source and review rows
+      changes nothing. The four review outcomes are proved command-to-artifact. Atomicity is
+      consolidated into one all-or-nothing observation at the rename boundary, and **all five
+      detailed S7-5 fault-injection boundaries are retained unchanged**. Every apply names an
+      explicit temporary `--state-root` (asserted by an AST scan of the suite itself), the injected
+      root is proved deleted, and the repository's runtime paths are proved absent before and after.
+      Focused: migration **250**, artifacts 33, manifest 52, cell_artifact 44, recovery 75,
+      run_cells 99, records 51, schema 35, identity 42, facets 34, eligibility 48; full gate
+      **39/39 suites, 2,065 assertions (2,023 unittest + 42 shell)**; five checkers exit 0; both
+      protected registries and the override config byte-identical; the S7-1 assessment still
+      regenerates byte-identically; no temporary root remains; no real runtime path; no request of
+      any kind.
 
-- [ ] **S7-6** integration — apply twice with stable normalized records, exact bundle path set,
-      interruption with no partial publication, protected-source byte identity, no runtime leak,
-      full gate (**39 suites** — `tests/test_taxonomy_migration.sh` joined the gate at S7-1)
-- [ ] **S7-C** closeout — documentation only; its exact path set requires **its own read-only
-      closeout preflight**, and no handoff filename is pre-authorized or guessed
+**Migration implementation and offline integration are COMPLETE (S7-1 … S7-6). STAGE 7 IS NOT
+CLOSED.** **`S7-C` is NOT APPROVED**: it needs its own approval **by name**, and its exact
+documentation path set requires **its own read-only closeout preflight** — no handoff filename is
+pre-authorized or guessed. Nothing here approves a closeout, a push, Stage 8 wiring or any live
+activity. **The real repository holds no migration runtime bundle.**
+
+- [ ] **S7-C** closeout — documentation only; unapproved, path set established by its own preflight
 
 **Measured against the corpus at `0d2da64`, asserted by the checkpoints rather than assumed:** 231
 cases · 231 unique `source_url` → **231 distinct `identity_url`, zero collisions** · `case_key`
