@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target OK Plain</title>\n </head>\n <body>\n  <h1>Target OK Plain</h1>\n  <p>A clean 200 with no canonical link element.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Plan section 4 row 1: a clean fetch with no canonical tag. canonical_url stays identity_url, access_status ok, verification_status fetched. The baseline every other target case is compared against.",
+ "fixture_id": "tgt_ok_plain",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/ok-plain"
+}

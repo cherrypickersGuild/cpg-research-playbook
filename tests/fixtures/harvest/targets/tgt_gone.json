@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9110 section 15.5 (client error)",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Gone</title>\n </head>\n <body>\n  <h1>Target Gone</h1>\n  <p>This target page has been removed permanently.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "410: maps to access_status gone, kept distinct from not_found.",
+ "fixture_id": "tgt_gone",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 410,
+ "url": "https://tgt.harvest.test/gone"
+}

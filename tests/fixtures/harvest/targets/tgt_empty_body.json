@@ -1,0 +1,14 @@
+{
+ "authored_against": "RFC 9110 section 8.6 (Content-Length)",
+ "authored_at": "2026-07-30",
+ "body": "",
+ "contract_intent": "A 200 with a zero-length body: EmptyResponse maps to access_status unreachable, with the exact class surviving verbatim in verification_evidence (CF-16).",
+ "fixture_id": "tgt_empty_body",
+ "headers": {
+  "content-length": "0",
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/empty"
+}

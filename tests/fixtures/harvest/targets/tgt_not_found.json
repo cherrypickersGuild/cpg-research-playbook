@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9110 section 15.5 (client error)",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Not Found</title>\n </head>\n <body>\n  <h1>Target Not Found</h1>\n  <p>This target page does not exist.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "404: ClientError maps to access_status not_found. The accepted record is still written complete and schema-valid; a failed fetch is a status, never a rejection.",
+ "fixture_id": "tgt_not_found",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 404,
+ "url": "https://tgt.harvest.test/not-found"
+}

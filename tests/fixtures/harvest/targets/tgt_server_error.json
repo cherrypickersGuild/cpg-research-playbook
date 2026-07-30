@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9110 section 15.6 (server error)",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Server Error</title>\n </head>\n <body>\n  <h1>Target Server Error</h1>\n  <p>This target page fails on every attempt.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "A terminal 5xx: ServerError maps to access_status server_error. Deliberately NOT a retry test \u2014 what the committed HttpClient does between the first 500 and the raise is its own tested contract, and Stage 6 neither owns nor re-asserts it.",
+ "fixture_id": "tgt_server_error",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 500,
+ "url": "https://tgt.harvest.test/server-error"
+}

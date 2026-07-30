@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Canonical Conflicting</title>\n  <link rel=\"canonical\" href=\"https://tgt.harvest.test/canonical-conflicting-a\">\n  <link rel=\"canonical\" href=\"https://tgt.harvest.test/canonical-conflicting-b\">\n </head>\n <body>\n  <h1>Target Canonical Conflicting</h1>\n  <p>Declares two different canonical URLs.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Two conflicting link rel=canonical elements on one page: alias conflict, no alias. Both hrefs are same-host, so the conflict is the multiplicity itself and not the domain policy.",
+ "fixture_id": "tgt_canonical_conflicting",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/canonical-conflicting"
+}

@@ -1,0 +1,14 @@
+{
+ "authored_against": "RFC 9110 section 15.4 (redirection)",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Redirect Permanent Hop 2</title>\n </head>\n <body>\n  <h1>Target Redirect Permanent Hop 2</h1>\n  <p>Moved permanently again.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Hop 2 of the permanent-only chain: still 301, so permanence survives the hop.",
+ "fixture_id": "tgt_redirect_permanent_2",
+ "headers": {
+  "content-type": "text/html; charset=utf-8",
+  "location": "https://tgt.harvest.test/redirect-permanent-c"
+ },
+ "provenance": "synthetic",
+ "status": 301,
+ "url": "https://tgt.harvest.test/redirect-permanent-b"
+}

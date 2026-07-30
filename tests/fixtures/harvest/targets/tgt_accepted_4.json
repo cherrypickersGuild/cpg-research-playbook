@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Accepted Target 4</title>\n </head>\n <body>\n  <h1>Accepted Target 4</h1>\n  <p>The target page of the 4th accepted candidate in the committed corpus.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "end-to-end enrichment of accepted record 4 \u2014 with all four, every accepted record is checked. This URL is what the committed corpus actually yields through dedupe, extract, classify and verify \u2014 it is not invented here. Plain 200 on purpose: a fully checked run is what proves publication eligibility can honestly become true.",
+ "fixture_id": "tgt_accepted_4",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://github.com/posts/lm-eval-harness-releases-4"
+}

@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 9309",
+ "authored_at": "2026-07-30",
+ "body": "User-agent: *\nDisallow: /\n",
+ "configured_host": false,
+ "headers": {
+  "content-type": "text/plain; charset=utf-8"
+ },
+ "host": "tgt-robots-denied.harvest.test",
+ "policy_intent": "Disallow-all: the one case where the robots response IS the contract, so it gets a host of its own.",
+ "provenance": "synthetic",
+ "status": 200
+}

@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Canonical Circular Hop 2</title>\n  <link rel=\"canonical\" href=\"https://tgt.harvest.test/canonical-circular\">\n </head>\n <body>\n  <h1>Target Canonical Circular Hop 2</h1>\n  <p>Declares a canonical URL that is already in this fetch's redirect chain.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Its canonical names hop 1's URL, already in THIS fetch's redirect chain: alias conflict, no alias. The only circular form Stage 6 can observe, because following a canonical to check it is forbidden.",
+ "fixture_id": "tgt_canonical_circular_2",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/canonical-circular-b"
+}

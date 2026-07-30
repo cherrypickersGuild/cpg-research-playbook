@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Canonical Same Host</title>\n  <link rel=\"canonical\" href=\"https://tgt.harvest.test/canonical-same-host-preferred\">\n </head>\n <body>\n  <h1>Target Canonical Same Host</h1>\n  <p>Declares a canonical URL on its own host.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Same-host rel=canonical, absolute and non-circular: auto-accepted as an alias of kind canonical_tag. The canonical target is never fetched, only robots-checked, so it needs no fixture of its own.",
+ "fixture_id": "tgt_canonical_same_host",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/canonical-same-host"
+}

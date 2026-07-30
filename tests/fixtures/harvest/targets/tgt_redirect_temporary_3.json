@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target Redirect Temporary Terminus</title>\n </head>\n <body>\n  <h1>Target Redirect Temporary Terminus</h1>\n  <p>The end of a chain containing a 302.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Terminus of 301 -> 302 -> 200: the fixture that proves any 302 in the chain prevents permanent alias adoption. permanent_redirect is false, so no alias is created, canonical_url is unchanged, and access_status is ok.",
+ "fixture_id": "tgt_redirect_temporary_3",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/redirect-temporary-c"
+}

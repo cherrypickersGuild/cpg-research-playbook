@@ -1,0 +1,13 @@
+{
+ "authored_against": "RFC 8259",
+ "authored_at": "2026-07-30",
+ "body": "{\n \"id\": \"tgt-item-1\",\n \"note\": \"Synthetic S6-1 target fixture.\",\n \"title\": \"Target Item As JSON\"\n}\n",
+ "contract_intent": "Non-HTML body on a second content type: same contract as the PDF case \u2014 hash the bytes, scan nothing.",
+ "fixture_id": "tgt_non_html_json",
+ "headers": {
+  "content-type": "application/json"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/item.json"
+}

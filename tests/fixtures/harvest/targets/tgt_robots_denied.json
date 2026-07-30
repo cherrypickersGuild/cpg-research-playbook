@@ -1,0 +1,13 @@
+{
+ "authored_against": "HTML Living Standard (link rel=canonical) + RFC 9110",
+ "authored_at": "2026-07-30",
+ "body": "<!doctype html>\n<html lang=\"en\">\n <head>\n  <meta charset=\"utf-8\">\n  <title>Target On A Robots-Denied Host</title>\n </head>\n <body>\n  <h1>Target On A Robots-Denied Host</h1>\n  <p>This body must never be served, because robots.txt disallows the host.</p>\n  <p>Synthetic S6-1 target fixture. Not a copy of any real page.</p>\n </body>\n</html>\n",
+ "contract_intent": "Its host's robots.txt disallows everything, so RobotsDenied is decided BEFORE any request. This fixture exists precisely so a test can assert it was never opened \u2014 proving the denial preceded the fetch rather than followed it.",
+ "fixture_id": "tgt_robots_denied",
+ "headers": {
+  "content-type": "text/html; charset=utf-8"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt-robots-denied.harvest.test/denied"
+}

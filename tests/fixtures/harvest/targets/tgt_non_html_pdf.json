@@ -1,0 +1,13 @@
+{
+ "authored_against": "ISO 32000-1 (PDF 1.7)",
+ "authored_at": "2026-07-30",
+ "body_b64": "JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCAyMDAgMjAwXSA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+PgolJUVPRgo=",
+ "contract_intent": "Non-HTML body: content_hash is computed from the exact bytes and no canonical scan is attempted. Binary, so it travels as body_b64.",
+ "fixture_id": "tgt_non_html_pdf",
+ "headers": {
+  "content-type": "application/pdf"
+ },
+ "provenance": "synthetic",
+ "status": 200,
+ "url": "https://tgt.harvest.test/paper.pdf"
+}

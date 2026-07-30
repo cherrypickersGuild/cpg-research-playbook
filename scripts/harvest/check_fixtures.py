@@ -16,7 +16,13 @@ Fails when:
   * a manifest byte count or SHA-256 does not match the file;
   * a file on disk is missing from the manifest, or vice versa;
   * a synthetic fixture claims `captured_at`, or a recorded one omits it;
-  * any manifest path escapes the fixture tree.
+  * any manifest path escapes the fixture tree;
+  * a target fixture is malformed, duplicated, undeclared, or claims a
+    `source_id` or a transport-simulation key (S6-1).
+
+Target fixtures are a DECLARED SET: `TARGET_FIXTURE_IDS` below is the literal
+corpus, and both an unexpected file and a missing one fail. A directory is not an
+authorization — that is the whole point of listing them here.
 
 Exit 0 and print a one-line summary when everything holds.
 """
@@ -27,9 +33,51 @@ import os
 import sys
 from urllib.parse import urlsplit
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# Imported, never re-listed: the loader that refuses these keys and the checker
+# that reports them must mean exactly the same set, and a second copy could only
+# drift from the first.
+from src.harvest.fixtures import FORBIDDEN_TARGET_KEYS  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIXTURE_ROOT = os.path.join(ROOT, "tests", "fixtures", "harvest")
 TOPICS_DIR = os.path.join(ROOT, "config", "harvest", "topics")
+
+# The literal S6-1 target corpus. Each entry maps one-to-one onto a contract case
+# in STAGE_6_IMPLEMENTATION_PLAN.md section 11; adding a file without adding it
+# here fails, and so does listing one that is not on disk.
+TARGET_FIXTURE_IDS = (
+    "tgt_accepted_1",
+    "tgt_accepted_2",
+    "tgt_accepted_3",
+    "tgt_accepted_4",
+    "tgt_canonical_circular_1",
+    "tgt_canonical_circular_2",
+    "tgt_canonical_conflicting",
+    "tgt_canonical_cross_host",
+    "tgt_canonical_same_host",
+    "tgt_empty_body",
+    "tgt_forbidden",
+    "tgt_gone",
+    "tgt_non_html_json",
+    "tgt_non_html_pdf",
+    "tgt_not_found",
+    "tgt_ok_plain",
+    "tgt_redirect_permanent_1",
+    "tgt_redirect_permanent_2",
+    "tgt_redirect_permanent_3",
+    "tgt_redirect_temporary_1",
+    "tgt_redirect_temporary_2",
+    "tgt_redirect_temporary_3",
+    "tgt_robots_denied",
+    "tgt_server_error",
+)
+
+# The two robots hosts S6-1 adds. Existing robots fixtures are untouched, so this
+# is only the new set, and it is checked for presence rather than exclusivity —
+# earlier stages legitimately added hosts of their own.
+TARGET_ROBOTS_HOSTS = ("tgt-robots-denied.harvest.test", "tgt.harvest.test")
 
 
 def _load(path):
@@ -51,9 +99,10 @@ def check(fixture_root=None, topics_dir=None):
     problems = []
     sources_dir = os.path.join(root, "sources")
     robots_dir = os.path.join(root, "robots")
+    targets_dir = os.path.join(root, "targets")
     manifest_path = os.path.join(root, "MANIFEST.json")
 
-    for needed in (sources_dir, robots_dir, manifest_path):
+    for needed in (sources_dir, robots_dir, targets_dir, manifest_path):
         if not os.path.exists(needed):
             return ["missing %s" % os.path.relpath(needed, ROOT)], {}
 
@@ -125,9 +174,71 @@ def check(fixture_root=None, topics_dir=None):
                 "configured host %r has no robots fixture. Robots policy is "
                 "per origin: a fixture for a parent domain does not cover it." % host)
 
+    for host in TARGET_ROBOTS_HOSTS:
+        if host not in robots:
+            problems.append("S6-1 robots host %r has no fixture at robots/%s.json"
+                            % (host, host))
+
+    # -------------------------------------------------------------- targets
+    # A declared set, checked in both directions: a file nobody declared is as
+    # much a failure as a declared file that is missing.
+    targets, target_urls = {}, {}
+    for path in sorted(glob.glob(os.path.join(targets_dir, "*"))):
+        rel = os.path.relpath(path, root).replace(os.sep, "/")
+        name = os.path.basename(path)
+        if not name.endswith(".json"):
+            problems.append("%s: targets/ holds only declared .json fixtures" % rel)
+            continue
+        fixture = _load(path)
+        fixture_id = fixture.get("fixture_id")
+        stem = name[:-len(".json")]
+        if fixture_id != stem:
+            problems.append("%s: fixture_id %r does not match its filename" % (rel, fixture_id))
+            continue
+        if stem not in TARGET_FIXTURE_IDS:
+            problems.append("%s: undeclared target fixture — add it to "
+                            "TARGET_FIXTURE_IDS with its contract, or remove it" % rel)
+            continue
+        if stem in targets:
+            problems.append("%s: duplicate target fixture_id %r" % (rel, stem))
+            continue
+        targets[stem] = (rel, fixture)
+
+        url = fixture.get("url")
+        if not url:
+            problems.append("%s: no url" % rel)
+        elif url in target_urls:
+            problems.append("%s: url %r is already claimed by %s"
+                            % (rel, url, target_urls[url]))
+        else:
+            target_urls[url] = rel
+            if url in {s["url"] for s in sources}:
+                problems.append("%s: url %r is also a configured source url — one "
+                                "URL cannot be both an index and an item page" % (rel, url))
+        if "source_id" in fixture:
+            problems.append("%s: a target fixture must not claim a source_id" % rel)
+        if not isinstance(fixture.get("status"), int) or isinstance(fixture.get("status"), bool):
+            problems.append("%s: status must be an integer" % rel)
+        if ("body" in fixture) == ("body_b64" in fixture):
+            problems.append("%s: exactly one of body or body_b64 must be present" % rel)
+        if not fixture.get("contract_intent"):
+            problems.append("%s: no contract_intent — a permanent fixture states what "
+                            "contract it exists to hold" % rel)
+        for key in FORBIDDEN_TARGET_KEYS:
+            if key in fixture:
+                problems.append(
+                    "%s: forbidden transport-simulation key %r. Retries, timeouts and "
+                    "the body cap belong to HttpClient and are tested there." % (rel, key))
+
+    for fixture_id in TARGET_FIXTURE_IDS:
+        if fixture_id not in targets:
+            problems.append("declared target fixture %r is missing at targets/%s.json"
+                            % (fixture_id, fixture_id))
+
     # ---------------------------------------------------------- provenance
     all_fixtures = [(rel, f) for rel, f in on_disk.values()]
     all_fixtures += [(rel, f) for rel, f in robots.values()]
+    all_fixtures += [(rel, f) for rel, f in targets.values()]
     for rel, fixture in sorted(all_fixtures):
         provenance = fixture.get("provenance")
         if provenance not in ("synthetic", "recorded"):
@@ -157,7 +268,11 @@ def check(fixture_root=None, topics_dir=None):
         if not os.path.exists(path):
             problems.append("manifest: %s is listed but missing on disk" % rel)
             continue
-        raw = open(path, "rb").read()
+        # Closed explicitly: harmless when this ran once as a script and exited,
+        # but check() is now also called in-process by its own suite, where leaked
+        # handles bury a real failure under hundreds of ResourceWarnings.
+        with open(path, "rb") as fp:
+            raw = fp.read()
         entry = entries[rel]
         if entry.get("bytes") != len(raw):
             problems.append("manifest: %s bytes %r != %d on disk"
@@ -167,7 +282,8 @@ def check(fixture_root=None, topics_dir=None):
             problems.append("manifest: %s sha256 mismatch" % rel)
 
     for path in sorted(glob.glob(os.path.join(sources_dir, "*.json")) +
-                       glob.glob(os.path.join(robots_dir, "*.json"))):
+                       glob.glob(os.path.join(robots_dir, "*.json")) +
+                       glob.glob(os.path.join(targets_dir, "*.json"))):
         rel = os.path.relpath(path, root).replace(os.sep, "/")
         if rel not in entries:
             problems.append("manifest: %s exists on disk but is not listed" % rel)
@@ -177,6 +293,8 @@ def check(fixture_root=None, topics_dir=None):
         "source_fixtures": len(on_disk),
         "configured_hosts": len(configured_hosts),
         "robots_fixtures": len(robots),
+        "target_fixtures": len(targets),
+        "targets_declared": len(TARGET_FIXTURE_IDS),
         "manifest_entries": len(entries),
     }
     return problems, summary
@@ -191,9 +309,11 @@ def main():
         return 1
     print("[fixtures] OK — %d/%d configured sources have a fixture; "
           "%d/%d configured hosts have a robots fixture; "
+          "%d/%d declared target fixtures present; "
           "%d manifest entries all byte- and hash-matched"
           % (summary["source_fixtures"], summary["sources_configured"],
              summary["configured_hosts"], summary["configured_hosts"],
+             summary["target_fixtures"], summary["targets_declared"],
              summary["manifest_entries"]))
     return 0
 
