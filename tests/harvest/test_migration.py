@@ -67,8 +67,16 @@ import tempfile
 import unittest
 from unittest import mock
 
+from src.harvest import aliases as aliases_mod
+from src.harvest import facets as facets_mod
+from src.harvest import records as records_mod
+from src.harvest import schema as schema_mod
+from src.harvest import urlkey
+from src.harvest.migrate import ax_cases
 from src.harvest.migrate import base
 from src.harvest.migrate import entity_assess as ea
+
+CANON = aliases_mod.load_canonicalization()
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 REGISTRY = os.path.join(ROOT, *ea.SOURCE_PATH.split("/"))
@@ -841,6 +849,720 @@ class TestGuardIsPure(unittest.TestCase):
         first = base.suspicious_url_match(url)
         for _ in range(50):
             self.assertEqual(base.suspicious_url_match(url), first)
+
+
+# ========================================================= S7-3 · the AX mapping
+RUN_A = "20260731T000000Z-1234"
+RUN_B = "20260801T111111Z-4321"
+AT_A = "2026-07-31T00:00:00Z"
+AT_B = "2026-08-01T11:11:11Z"
+
+
+def load_ax():
+    with open(AX_REGISTRY, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def canon_bytes(obj):
+    return json.dumps(obj, sort_keys=True, ensure_ascii=False).encode("utf-8")
+
+
+def check_facets_module():
+    """The committed facet checker, loaded from scripts/ by path."""
+    import importlib.util
+    path = os.path.join(ROOT, "scripts", "harvest", "check_facets.py")
+    spec = importlib.util.spec_from_file_location("check_facets_for_tests", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def a_case(**over):
+    case = {
+        "case_id": "case-2026-9001",
+        "company": "Acme",
+        "industry": "retail",
+        "workflow_before": "Manual triage.",
+        "workflow_after": "Assisted triage.",
+        "ai_system_or_tool": "Acme Copilot",
+        "measurable_kpi": "handling time",
+        "kpi_value": "30% lower",
+        "evidence_quote": "Handling time fell by 30%.",
+        "source_url": "https://example.test/cases/acme",
+        "source_title": "How Acme did it",
+        "source_domain": "example.test",
+        "transformation_date": "2025-06",
+        "publication_date": "2026-01-15",
+        "confidence": 0.9,
+        "verification_status": "verified",
+        "case_key": "acme|copilot",
+        "corroboration_count": 1,
+        "conflicting_evidence_log": [],
+        "discovery": {"first_seen_at": "2026-07-14",
+                      "last_corroborated_at": "2026-07-14",
+                      "found_via": [{"hit_id": "hit-1", "platform": "web"}]},
+    }
+    case.update(over)
+    return case
+
+
+def a_ax_registry(cases):
+    return {"schema_version": 1, "last_merged_at": "2026-07-22T03:17:22Z",
+            "cases": cases}
+
+
+def mapped(cases, **kw):
+    kw.setdefault("harvest_run_id", RUN_A)
+    kw.setdefault("migrated_at", AT_A)
+    return ax_cases.map_registry(a_ax_registry(cases), **kw)
+
+
+class TestMapperSurfaceIsPure(unittest.TestCase):
+
+    MODULE_PATH = os.path.join(ROOT, "src", "harvest", "migrate", "ax_cases.py")
+
+    def source(self):
+        with open(self.MODULE_PATH, encoding="utf-8") as handle:
+            return handle.read()
+
+    def called_names(self):
+        """Every dotted name the module actually CALLS — prose is not code."""
+        names = set()
+        for node in ast.walk(ast.parse(self.source())):
+            if not isinstance(node, ast.Call):
+                continue
+            target = node.func
+            parts = []
+            while isinstance(target, ast.Attribute):
+                parts.append(target.attr)
+                target = target.value
+            if isinstance(target, ast.Name):
+                parts.append(target.id)
+            if parts:
+                names.add(".".join(reversed(parts)))
+        return names
+
+    def test_no_clock_no_cli_no_network_no_subprocess_no_environment(self):
+        called = self.called_names()
+        for forbidden in ("records_mod.utcnow", "datetime.now", "datetime.datetime.now",
+                          "time.time", "argparse.ArgumentParser", "subprocess.run",
+                          "socket.socket", "os.environ.get", "open", "input",
+                          "print", "os.makedirs", "os.replace"):
+            self.assertNotIn(forbidden, called, "ax_cases must not call %r" % forbidden)
+        imported = set()
+        for node in ast.walk(ast.parse(self.source())):
+            if isinstance(node, ast.Import):
+                imported.update(alias.name for alias in node.names)
+        for forbidden in ("os", "sys", "time", "datetime", "argparse", "socket",
+                          "subprocess", "json", "urllib.request"):
+            self.assertNotIn(forbidden, imported)
+
+    def test_it_neither_classifies_nor_scores(self):
+        imported = set()
+        for node in ast.walk(ast.parse(self.source())):
+            if isinstance(node, ast.ImportFrom):
+                imported.update(alias.name for alias in node.names)
+        self.assertNotIn("classify", imported)
+        self.assertNotIn("verify", imported)
+        self.assertNotIn("facetassign", imported)
+
+    def test_it_writes_no_file_and_builds_no_artifact(self):
+        source = self.source()
+        for forbidden in ("write_atomic", "write_document", "publish_run",
+                          "serialize(", "os.replace", "makedirs", "mkdir"):
+            self.assertNotIn(forbidden, source)
+
+    def test_the_result_boundary_is_immutable_and_exactly_two_fields(self):
+        result = mapped([a_case()])
+        self.assertEqual(sorted(f.name for f in dataclasses.fields(result)),
+                         ["accepted", "rejected"])
+        self.assertIsInstance(result.accepted, tuple)
+        self.assertIsInstance(result.rejected, tuple)
+        with self.assertRaises(dataclasses.FrozenInstanceError):
+            result.accepted = ()
+
+    def test_the_mapper_requires_an_explicit_clock(self):
+        registry = a_ax_registry([a_case()])
+        with self.assertRaises(TypeError):
+            ax_cases.map_registry(registry)
+        with self.assertRaises(ax_cases.AxMigrationError):
+            ax_cases.map_registry(registry, harvest_run_id="", migrated_at=AT_A)
+        for bad in ("2026-07-31", "2026-07-31T00:00:00", "2026-07-31T00:00:00.500Z",
+                    "2026-07-31T00:00:00+00:00", None, 17):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ax_cases.AxMigrationError):
+                    ax_cases.map_registry(registry, harvest_run_id=RUN_A,
+                                          migrated_at=bad)
+
+    def test_discovered_at_is_always_supplied_so_no_clock_fallback_can_fire(self):
+        record = mapped([a_case()]).accepted[0]
+        self.assertEqual(record["discovered_at"], "2026-07-14T00:00:00Z")
+
+
+class TestProtectedAxCorpusMapping(unittest.TestCase):
+    """The real 231 cases, mapped in memory."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.digest_before = sha256_file(AX_REGISTRY)
+        cls.document = load_ax()
+        cls.result = ax_cases.map_registry(cls.document, harvest_run_id=RUN_A,
+                                           migrated_at=AT_A)
+        cls.records = cls.result.accepted
+
+    def test_the_corpus_is_exactly_231_cases(self):
+        self.assertEqual(len(self.document["cases"]), EXPECTED_AX_CASES)
+
+    def test_231_accepted_and_0_rejected(self):
+        self.assertEqual(len(self.records), EXPECTED_AX_CASES)
+        self.assertEqual(self.result.rejected, ())
+
+    def test_every_record_validates_against_the_committed_schema(self):
+        for record in self.records:
+            schema_mod.validate_or_raise(record, "record.v1.json")
+
+    def test_every_record_passes_the_committed_facet_checker(self):
+        checker = check_facets_module()
+        problems = []
+        for record in self.records:
+            problems += checker.validate_record_facets(record)
+        self.assertEqual(problems, [])
+
+    def test_all_identities_are_distinct(self):
+        for field in ("record_id", "content_id", "identity_url"):
+            values = [r[field] for r in self.records]
+            self.assertEqual(len(set(values)), EXPECTED_AX_CASES, field)
+
+    def test_duplicate_legacy_case_ids_exist_and_do_not_affect_identity(self):
+        case_ids = [r["legacy_ids"][0]["id"] for r in self.records]
+        self.assertLess(len(set(case_ids)), EXPECTED_AX_CASES,
+                        "the corpus is expected to repeat case_id")
+        self.assertEqual(len(set(case_ids)), 126)
+        keys = [r["legacy_ids"][0]["key"] for r in self.records]
+        self.assertEqual(len(set(keys)), EXPECTED_AX_CASES)
+        self.assertEqual(len({r["record_id"] for r in self.records}), EXPECTED_AX_CASES)
+
+    def test_every_record_is_routed_and_classified_by_migration(self):
+        for record in self.records:
+            self.assertEqual(record["topic"], "cases")
+            self.assertEqual(record["primary_category"], "case-studies")
+            self.assertEqual(record["cell_id"], "cases__case-studies")
+            self.assertEqual(record["record_type"], "full")
+            self.assertEqual(record["classification"], {
+                "rule_id": "migration.ax_case_registry.case_study",
+                "rationale": ax_cases.CLASSIFICATION_RATIONALE,
+                "evidence": [{"signal": "legacy_registry",
+                              "matched": "ax_case_harvest_registry"}],
+                "competing_categories": []})
+            self.assertNotEqual(record["classification"]["rule_id"],
+                                "R10_default_by_category")
+
+    def test_url_semantics_are_exact(self):
+        by_key = {c["case_key"]: c for c in self.document["cases"]}
+        for record in self.records:
+            case = by_key[record["legacy_ids"][0]["key"]]
+            self.assertEqual(record["target_url"], case["source_url"])
+            self.assertIsNone(record["source_url"])
+            self.assertEqual(record["canonical_url"], record["identity_url"])
+            self.assertEqual(record["url_aliases"], [])
+            self.assertEqual(record["identity_url"],
+                             urlkey.canonicalize_string(
+                                 case["source_url"],
+                                 **{"tracking_params": CANON.get("tracking_params"),
+                                    "domain_rules": CANON.get("domain_rules")}))
+            self.assertEqual(record["record_id"],
+                             urlkey.record_id("cases", record["identity_url"]))
+            self.assertEqual(record["content_id"],
+                             urlkey.content_id(record["identity_url"]))
+
+    def test_every_record_is_snippet_only_with_its_own_quote(self):
+        by_key = {c["case_key"]: c for c in self.document["cases"]}
+        statuses = {r["verification_status"] for r in self.records}
+        self.assertEqual(statuses, {"snippet_only"})
+        for record in self.records:
+            case = by_key[record["legacy_ids"][0]["key"]]
+            self.assertEqual(record["verification_evidence"], case["evidence_quote"])
+
+    def test_no_record_claims_a_fetch_that_never_happened(self):
+        for record in self.records:
+            self.assertEqual(record["access_status"], "not_checked")
+            self.assertIsNone(record["http_status"])
+            self.assertIsNone(record["content_hash"])
+            self.assertIsNone(record["last_checked_at"])
+            self.assertIsNone(record["updated_at"])
+            self.assertNotEqual(record["verification_status"], "fetched")
+
+    def test_the_33_unknown_publication_dates_become_null(self):
+        unknown = [c for c in self.document["cases"]
+                   if str(c["publication_date"]).strip().lower() == "unknown"]
+        self.assertEqual(len(unknown), 33)
+        nulls = [r for r in self.records if r["published_at"] is None]
+        self.assertEqual(len(nulls), 33)
+        for record in nulls:
+            self.assertEqual(record["provenance"]["raw"]["publication_date"], "unknown")
+
+    def test_legacy_unknowns_survive_verbatim_in_raw_and_domain_fields(self):
+        for record in self.records:
+            raw = record["provenance"]["raw"]
+            self.assertEqual(raw["verification_status"],
+                             record["domain_fields"].get("industry") is not None
+                             and raw["verification_status"] or raw["verification_status"])
+            self.assertIn(raw["verification_status"], ("verified", "snippet-only"))
+            self.assertEqual(record["domain_fields"]["transformation_date"],
+                             raw["transformation_date"])
+
+    def test_all_four_scores_are_null(self):
+        for record in self.records:
+            for field in ("relevance_score", "quality_score",
+                          "audience_fit_score", "freshness_score"):
+                self.assertIsNone(record[field], field)
+
+    def test_provenance_raw_is_the_complete_original_case(self):
+        by_key = {c["case_key"]: c for c in self.document["cases"]}
+        for record in self.records:
+            case = by_key[record["legacy_ids"][0]["key"]]
+            self.assertEqual(record["provenance"]["raw"], case)
+            self.assertIsNot(record["provenance"]["raw"], case)
+            self.assertEqual(record["provenance"]["source_id"], "ax_case_harvest_registry")
+            self.assertEqual(record["provenance"]["source_adapter"], "migration")
+            self.assertIsNone(record["provenance"]["source_tier"])
+            self.assertEqual(record["provenance"]["discovered_via"],
+                             case["discovery"]["found_via"])
+            self.assertIsNot(record["provenance"]["discovered_via"],
+                             case["discovery"]["found_via"])
+            migration = record["provenance"]["migration"]
+            self.assertEqual(sorted(migration), ["adapter", "assumptions", "migrated_at"])
+            self.assertEqual(migration["adapter"], "ax_cases")
+            self.assertEqual(migration["migrated_at"], AT_A)
+            joined = " ".join(migration["assumptions"])
+            for claim in ("own target page", "No HTTP request", "never promoted to",
+                          "migration.ax_case_registry.case_study"):
+                self.assertIn(claim, joined)
+            for leak in ("C:/", "C:\\", "/Users/", ROOT):
+                self.assertNotIn(leak, joined)
+
+    def test_the_domain_block_is_exactly_the_twelve_approved_fields(self):
+        by_key = {c["case_key"]: c for c in self.document["cases"]}
+        for record in self.records:
+            case = by_key[record["legacy_ids"][0]["key"]]
+            self.assertEqual(sorted(record["domain_fields"]),
+                             sorted(ax_cases.DOMAIN_FIELDS))
+            self.assertEqual(len(ax_cases.DOMAIN_FIELDS), 12)
+            for field in ax_cases.DOMAIN_FIELDS:
+                self.assertEqual(record["domain_fields"][field], case[field], field)
+
+    def test_facet_reporting_states_are_exactly_112_118_1(self):
+        states = {}
+        for record in self.records:
+            state = facets_mod.reporting_state(record)
+            states[state] = states.get(state, 0) + 1
+        self.assertEqual(states, {"facet_partial": 112,
+                                  "unmapped_legacy_value": 118,
+                                  "unresolved": 1})
+        self.assertEqual(sum(states.values()), EXPECTED_AX_CASES)
+
+    def test_no_facet_state_withholds_a_report_only_record(self):
+        for record in self.records:
+            self.assertTrue(facets_mod.is_publication_eligible(record))
+            self.assertFalse(facets_mod.is_facet_gated(record))
+
+    def test_the_e27_case_records_its_reviewed_mapping_without_asserting_it(self):
+        e27 = [r for r in self.records
+               if r["provenance"]["raw"]["industry"] == "IT services"]
+        self.assertEqual(len(e27), 1)
+        facets = e27[0]["case_facets"]
+        self.assertIsNone(facets["industry"]["primary"])
+        self.assertEqual(facets["industry"]["evidence"], [])
+        entry = [u for u in facets["unresolved"] if u["axis"] == "industry"][0]
+        self.assertEqual(entry["state"], "insufficient_evidence")
+        self.assertNotEqual(entry["state"], "unmapped_legacy_value")
+        self.assertEqual(entry["term"], "IT services")
+        self.assertIn("technology-software", entry["detail"])
+        self.assertIn("lexical-support", entry["detail"])
+        self.assertEqual(facets_mod.reporting_state(e27[0]), "unresolved")
+
+    def test_no_business_function_or_use_case_is_ever_inferred(self):
+        for record in self.records:
+            facets = record["case_facets"]
+            self.assertEqual(facets["business_functions"], [])
+            self.assertEqual(facets["use_case_types"], [])
+            self.assertEqual(facets["industry"]["secondary"], [])
+            states = {u["axis"]: u["state"] for u in facets["unresolved"]}
+            self.assertEqual(states["business_function"], "insufficient_evidence")
+            self.assertEqual(states["use_case_type"], "insufficient_evidence")
+            self.assertEqual(facets["vocabulary_versions"],
+                             facets_mod.vocabulary_versions())
+            self.assertEqual(facets["facets_version"], facets_mod.FACETS_VERSION)
+            self.assertEqual(facets["classification_state"],
+                             facets_mod.decide_classification_state(facets))
+
+    def test_records_are_returned_in_the_committed_sort_order(self):
+        self.assertEqual(list(self.records),
+                         records_mod.sort_records(list(self.records)))
+
+    def test_the_protected_registry_bytes_are_unchanged(self):
+        self.assertEqual(sha256_file(AX_REGISTRY), self.digest_before)
+        self.assertEqual(self.document, load_ax(),
+                         "mapping mutated the in-memory source document")
+
+    def test_no_runtime_path_is_created(self):
+        for leak in ("state/taxonomy_harvest", "data/harvested", "runs", "LATEST_RUN_ID"):
+            self.assertFalse(os.path.exists(os.path.join(ROOT, leak)), leak)
+
+
+class TestMappingDeterminism(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.document = load_ax()
+        cls.result = ax_cases.map_registry(cls.document, harvest_run_id=RUN_A,
+                                           migrated_at=AT_A)
+
+    def test_mapping_twice_with_the_same_clock_is_byte_identical(self):
+        again = ax_cases.map_registry(load_ax(), harvest_run_id=RUN_A, migrated_at=AT_A)
+        self.assertEqual(again, self.result)
+        self.assertEqual(canon_bytes(list(again.accepted)),
+                         canon_bytes(list(self.result.accepted)))
+
+    def test_source_row_order_does_not_change_the_result(self):
+        reversed_doc = load_ax()
+        reversed_doc["cases"].reverse()
+        self.assertNotEqual(reversed_doc["cases"], self.document["cases"])
+        self.assertEqual(canon_bytes(list(ax_cases.map_registry(
+            reversed_doc, harvest_run_id=RUN_A, migrated_at=AT_A).accepted)),
+            canon_bytes(list(self.result.accepted)))
+        for seed in (3, 11):
+            shuffled = load_ax()
+            random.Random(seed).shuffle(shuffled["cases"])
+            self.assertNotEqual(shuffled["cases"], self.document["cases"])
+            self.assertEqual(canon_bytes(list(ax_cases.map_registry(
+                shuffled, harvest_run_id=RUN_A, migrated_at=AT_A).accepted)),
+                canon_bytes(list(self.result.accepted)), "seed %d" % seed)
+
+    def test_only_the_enumerated_leaves_change_with_the_clock(self):
+        other = ax_cases.map_registry(load_ax(), harvest_run_id=RUN_B, migrated_at=AT_B)
+        changed = set()
+
+        def walk(left, right, path):
+            if isinstance(left, dict):
+                self.assertEqual(sorted(left), sorted(right), path)
+                for key in left:
+                    walk(left[key], right[key], path + "." + key)
+            elif isinstance(left, list):
+                self.assertEqual(len(left), len(right), path)
+                for index, (a, b) in enumerate(zip(left, right)):
+                    walk(a, b, "%s[%d]" % (path, index))
+            elif left != right:
+                changed.add(path)
+
+        self.assertEqual(len(other.accepted), len(self.result.accepted))
+        for old, new in zip(self.result.accepted, other.accepted):
+            walk(old, new, "")
+        self.assertEqual(changed, {".harvest_run_id", ".provenance.migration.migrated_at"})
+
+    def test_rejection_rows_move_only_their_own_two_leaves(self):
+        cases = [a_case(case_id="case-2026-9101", case_key="a|a",
+                        source_url="https://example.test/tag/ai")]
+        first = mapped(cases, allow_unmappable=True).rejected
+        second = ax_cases.map_registry(a_ax_registry(cases), harvest_run_id=RUN_B,
+                                       migrated_at=AT_B, allow_unmappable=True).rejected
+        self.assertEqual(len(first), 1)
+        differing = {k for k in first[0] if first[0][k] != second[0][k]}
+        self.assertEqual(differing, {"rejected_at"})
+
+    def test_review_decision_input_order_does_not_change_the_result(self):
+        cases = [a_case(case_id="c1", case_key="k|1",
+                        source_url="https://example.test/tag/ai"),
+                 a_case(case_id="c2", case_key="k|2",
+                        source_url="https://example.test/blog/feed")]
+        reviews = [{"case_id": "c1", "legacy_source_url": "https://example.test/tag/ai",
+                    "decision": "reject", "note": "index page"},
+                   {"case_id": "c2", "legacy_source_url": "https://example.test/blog/feed",
+                    "decision": "reject", "note": "feed"}]
+        one = mapped(cases, reviewed=reviews)
+        two = mapped(cases, reviewed=list(reversed(reviews)))
+        self.assertEqual(canon_bytes(list(one.rejected)), canon_bytes(list(two.rejected)))
+
+    def test_mapping_does_not_mutate_the_input_and_records_are_independent(self):
+        document = load_ax()
+        before = canon_bytes(document)
+        result = ax_cases.map_registry(document, harvest_run_id=RUN_A, migrated_at=AT_A)
+        self.assertEqual(canon_bytes(document), before)
+        # Mutating the source afterwards cannot reach a finished record.
+        document["cases"][0]["company"] = "MUTATED"
+        document["cases"][0]["discovery"]["found_via"].append({"hit_id": "x",
+                                                               "platform": "y"})
+        for record in result.accepted:
+            self.assertNotEqual(record["provenance"]["raw"].get("company"), "MUTATED")
+            self.assertNotEqual(record["domain_fields"].get("company"), "MUTATED")
+            self.assertLessEqual(len(record["provenance"]["discovered_via"]), 1)
+        # Mutating one record cannot reach another.
+        result.accepted[0]["domain_fields"]["company"] = "TOUCHED"
+        self.assertNotEqual(result.accepted[1]["domain_fields"]["company"], "TOUCHED")
+
+
+class TestMappingRefusesBadInput(unittest.TestCase):
+
+    def assert_refused(self, registry, needle, **kw):
+        kw.setdefault("harvest_run_id", RUN_A)
+        kw.setdefault("migrated_at", AT_A)
+        with self.assertRaises(ax_cases.AxMigrationError) as caught:
+            ax_cases.map_registry(registry, **kw)
+        self.assertIn(needle, str(caught.exception))
+
+    def test_top_level_shape(self):
+        self.assert_refused([], "must be a JSON object")
+        registry = a_ax_registry([a_case()]); del registry["cases"]
+        self.assert_refused(registry, "missing the top-level key 'cases'")
+        registry = a_ax_registry([a_case()]); registry["cases"] = {}
+        self.assert_refused(registry, "`cases` must be an array")
+
+    def test_an_unexpected_registry_schema_version_is_refused(self):
+        registry = a_ax_registry([a_case()]); registry["schema_version"] = 2
+        self.assert_refused(registry, "refuses to guess")
+
+    def test_a_row_missing_a_mapped_field_names_the_row_and_field(self):
+        case = a_case(); del case["kpi_value"]
+        self.assert_refused(a_ax_registry([case]),
+                            "cases[0] is missing the required field 'kpi_value'")
+
+    def test_a_row_that_is_not_an_object(self):
+        registry = a_ax_registry([a_case()]); registry["cases"].append("nope")
+        self.assert_refused(registry, "cases[1] must be an object")
+
+    def test_blank_identity_fields_are_refused(self):
+        for field in ("case_id", "case_key", "source_url"):
+            with self.subTest(field=field):
+                self.assert_refused(a_ax_registry([a_case(**{field: "  "})]),
+                                    "%s must be a non-empty string" % field)
+
+    def test_discovery_shape_and_parseable_first_seen(self):
+        self.assert_refused(a_ax_registry([a_case(discovery=[])]),
+                            "discovery must be an object")
+        case = a_case(); del case["discovery"]["found_via"]
+        self.assert_refused(a_ax_registry([case]), "discovery is missing 'found_via'")
+        case = a_case(); case["discovery"]["first_seen_at"] = "unknown"
+        self.assert_refused(a_ax_registry([case]), "not a parseable date")
+        case = a_case(); case["discovery"]["found_via"] = [{"hit_id": "h", "extra": 1}]
+        self.assert_refused(a_ax_registry([case]), "unrecognised key")
+
+    def test_an_unusable_source_url_is_refused_before_mapping(self):
+        for bad in ("unknown", "example.test/x", "ftp://example.test/x"):
+            with self.subTest(bad=bad):
+                self.assert_refused(a_ax_registry([a_case(source_url=bad)]),
+                                    "source_url is unusable")
+
+    def test_conflicting_evidence_log_must_be_a_list(self):
+        self.assert_refused(a_ax_registry([a_case(conflicting_evidence_log="x")]),
+                            "conflicting_evidence_log must be an array")
+
+    def test_two_cases_sharing_a_target_url_fail_loudly(self):
+        cases = [a_case(case_id="c1", case_key="k|1"),
+                 a_case(case_id="c2", case_key="k|2")]
+        self.assert_refused(a_ax_registry(cases), "share identity_url")
+
+    def test_a_repeated_case_id_alone_stays_legal(self):
+        cases = [a_case(case_id="dup", case_key="k|1",
+                        source_url="https://example.test/a"),
+                 a_case(case_id="dup", case_key="k|2",
+                        source_url="https://example.test/b")]
+        result = mapped(cases)
+        self.assertEqual(len(result.accepted), 2)
+        self.assertEqual({r["legacy_ids"][0]["id"] for r in result.accepted}, {"dup"})
+        self.assertEqual(len({r["record_id"] for r in result.accepted}), 2)
+
+
+class TestSuspiciousUrlReviewSemantics(unittest.TestCase):
+
+    SUSPICIOUS = "https://example.test/tag/ai"
+
+    def a_suspicious_case(self, **over):
+        over.setdefault("source_url", self.SUSPICIOUS)
+        over.setdefault("case_id", "case-2026-9500")
+        over.setdefault("case_key", "sus|one")
+        return a_case(**over)
+
+    def test_unreviewed_suspicious_url_refuses_the_whole_mapping(self):
+        with self.assertRaises(ax_cases.AxMigrationError) as caught:
+            mapped([self.a_suspicious_case()])
+        message = str(caught.exception)
+        self.assertIn("case-2026-9500", message)
+        self.assertIn("allow_unmappable", message)
+
+    def test_allow_unmappable_keeps_the_rejection_and_admits_nothing(self):
+        result = mapped([self.a_suspicious_case(), a_case(case_id="ok", case_key="ok|1")],
+                        allow_unmappable=True)
+        self.assertEqual(len(result.accepted), 1)
+        self.assertEqual(len(result.rejected), 1)
+        row = result.rejected[0]
+        self.assertEqual(row["target_url"], self.SUSPICIOUS)
+        self.assertEqual(row["rejection_reason"], "ambiguous_legacy_url")
+        self.assertIn("case-2026-9500", row["detail"])
+        self.assertIn("index_page", row["detail"])
+        self.assertIsNone(row["scores"])
+        self.assertEqual(row["rejected_at"], AT_A)
+        self.assertEqual(row["source_id"], "ax_case_harvest_registry")
+        self.assertEqual(row["title"], "How Acme did it")
+        self.assertEqual(sorted(row), ["detail", "identity_url", "rejected_at",
+                                       "rejection_reason", "scores", "source_id",
+                                       "target_url", "title"])
+        # The canonical form appears ONLY in the schema-required identity_url.
+        self.assertNotEqual(row["identity_url"], "")
+        self.assertNotIn(row["identity_url"], row["detail"])
+        self.assertEqual(result.accepted[0]["legacy_ids"][0]["id"], "ok")
+
+    def test_the_rejection_row_validates_inside_a_rejection_log(self):
+        result = mapped([self.a_suspicious_case()], allow_unmappable=True)
+        document = {"schema_version": 1, "cell_id": "cases__case-studies",
+                    "harvest_run_id": RUN_A, "generated_at": AT_A,
+                    "rejections": list(result.rejected)}
+        schema_mod.validate_or_raise(document, "rejection.v1.json")
+
+    def test_reviewed_admit_accepts_the_raw_url_verbatim(self):
+        reviews = [{"case_id": "case-2026-9500", "legacy_source_url": self.SUSPICIOUS,
+                    "decision": "admit", "note": "confirmed the case's own page"}]
+        result = mapped([self.a_suspicious_case()], reviewed=reviews)
+        self.assertEqual(len(result.accepted), 1)
+        self.assertEqual(result.rejected, ())
+        record = result.accepted[0]
+        self.assertEqual(record["target_url"], self.SUSPICIOUS)
+        joined = " ".join(record["provenance"]["migration"]["assumptions"])
+        self.assertIn("a reviewer admitted it", joined)
+        self.assertIn("not rewritten", joined)
+
+    def test_reviewed_reject_stays_rejected_and_says_it_was_reviewed(self):
+        reviews = [{"case_id": "case-2026-9500", "legacy_source_url": self.SUSPICIOUS,
+                    "decision": "reject", "note": "an index page"}]
+        result = mapped([self.a_suspicious_case()], reviewed=reviews)
+        self.assertEqual(result.accepted, ())
+        self.assertEqual(len(result.rejected), 1)
+        self.assertIn("a reviewer confirmed the rejection", result.rejected[0]["detail"])
+
+    def test_a_reviewed_admit_is_not_needed_for_an_unsuspicious_url(self):
+        record = mapped([a_case()]).accepted[0]
+        joined = " ".join(record["provenance"]["migration"]["assumptions"])
+        self.assertNotIn("reviewer admitted", joined)
+
+    def test_malformed_and_mismatched_review_rows_are_refused(self):
+        case = self.a_suspicious_case()
+        bad_rows = (
+            ("must be an object", "nope"),
+            ("is missing 'decision'", {"case_id": "case-2026-9500",
+                                       "legacy_source_url": self.SUSPICIOUS}),
+            ("is not one of", {"case_id": "case-2026-9500",
+                               "legacy_source_url": self.SUSPICIOUS,
+                               "decision": "maybe"}),
+            ("not a case in this registry", {"case_id": "ghost",
+                                             "legacy_source_url": self.SUSPICIOUS,
+                                             "decision": "admit"}),
+            ("never a similar one", {"case_id": "case-2026-9500",
+                                     "legacy_source_url": "https://example.test/other",
+                                     "decision": "admit"}),
+            ("unrecognised key", {"case_id": "case-2026-9500",
+                                  "legacy_source_url": self.SUSPICIOUS,
+                                  "decision": "admit", "surprise": 1}),
+        )
+        for needle, row in bad_rows:
+            with self.subTest(needle=needle):
+                with self.assertRaises(ax_cases.AxMigrationError) as caught:
+                    mapped([case], reviewed=[row])
+                self.assertIn(needle, str(caught.exception))
+
+    def test_two_decisions_for_one_case_are_refused(self):
+        rows = [{"case_id": "case-2026-9500", "legacy_source_url": self.SUSPICIOUS,
+                 "decision": "admit"},
+                {"case_id": "case-2026-9500", "legacy_source_url": self.SUSPICIOUS,
+                 "decision": "reject"}]
+        with self.assertRaises(ax_cases.AxMigrationError) as caught:
+            mapped([self.a_suspicious_case()], reviewed=rows)
+        self.assertIn("one case, one decision", str(caught.exception))
+
+    def test_rejection_rows_are_deterministically_ordered(self):
+        cases = [self.a_suspicious_case(case_id="c3", case_key="k|3",
+                                        source_url="https://example.test/tag/z"),
+                 self.a_suspicious_case(case_id="c1", case_key="k|1",
+                                        source_url="https://example.test/tag/a"),
+                 self.a_suspicious_case(case_id="c2", case_key="k|2",
+                                        source_url="https://example.test/blog/feed")]
+        rows = mapped(cases, allow_unmappable=True).rejected
+        self.assertEqual([r["identity_url"] for r in rows],
+                         sorted(r["identity_url"] for r in rows))
+        shuffled = list(reversed(cases))
+        self.assertEqual(canon_bytes(list(mapped(shuffled, allow_unmappable=True).rejected)),
+                         canon_bytes(list(rows)))
+
+
+class TestTemplatesAndTags(unittest.TestCase):
+
+    def test_summary_and_curation_use_the_fixed_template(self):
+        record = mapped([a_case()]).accepted[0]
+        self.assertEqual(record["summary"],
+                         "Before: Manual triage. | After: Assisted triage. | "
+                         "AI system: Acme Copilot")
+        self.assertEqual(record["curation_reason"],
+                         "KPI: handling time | Reported: 30% lower | "
+                         "Evidence: Handling time fell by 30%.")
+
+    def test_a_missing_part_is_omitted_never_rendered_as_unknown(self):
+        record = mapped([a_case(workflow_before="unknown", ai_system_or_tool="  ")]
+                        ).accepted[0]
+        self.assertEqual(record["summary"], "After: Assisted triage.")
+        self.assertNotIn("unknown", record["summary"])
+
+    def test_all_parts_missing_gives_null_not_an_empty_string(self):
+        record = mapped([a_case(workflow_before="unknown", workflow_after="unknown",
+                                ai_system_or_tool="unknown")]).accepted[0]
+        self.assertIsNone(record["summary"])
+
+    def test_tags_drop_unknown_and_blank_and_are_sorted_by_the_builder(self):
+        record = mapped([a_case(industry="unknown")]).accepted[0]
+        self.assertEqual(record["tags"], ["Acme Copilot"])
+        record = mapped([a_case(industry="retail", ai_system_or_tool="retail")]).accepted[0]
+        self.assertEqual(record["tags"], ["retail"])
+
+    def test_unknown_title_publisher_and_quote_become_null(self):
+        record = mapped([a_case(source_title="unknown", source_domain="unknown",
+                                evidence_quote="unknown")]).accepted[0]
+        self.assertIsNone(record["title"])
+        self.assertIsNone(record["publisher"])
+        self.assertIsNone(record["verification_evidence"])
+        self.assertEqual(record["verification_status"], "unverified")
+        self.assertEqual(record["provenance"]["raw"]["source_title"], "unknown")
+
+    def test_honest_constants(self):
+        record = mapped([a_case()]).accepted[0]
+        self.assertEqual(record["content_type"], "other")
+        self.assertIsNone(record["author"])
+        self.assertIsNone(record["language"])
+        self.assertIsNone(record["duplicate_of"])
+        self.assertIsNone(record["rejection_reason"])
+        self.assertNotIn("link_history", record)
+        self.assertNotIn("multi_topic", record)
+
+    def test_facets_for_a_blank_industry_are_insufficient_not_unmapped(self):
+        record = mapped([a_case(industry="   ")]).accepted[0]
+        entry = [u for u in record["case_facets"]["unresolved"]
+                 if u["axis"] == "industry"][0]
+        self.assertEqual(entry["state"], "insufficient_evidence")
+        self.assertIsNone(entry["term"])
+        self.assertEqual(facets_mod.reporting_state(record), "unresolved")
+
+    def test_facets_for_an_unmapped_industry_report_the_exact_term(self):
+        record = mapped([a_case(industry="artisanal widget polishing")]).accepted[0]
+        entry = [u for u in record["case_facets"]["unresolved"]
+                 if u["axis"] == "industry"][0]
+        self.assertEqual(entry["state"], "unmapped_legacy_value")
+        self.assertEqual(entry["term"], "artisanal widget polishing")
+        self.assertIsNone(record["case_facets"]["industry"]["primary"])
+        self.assertEqual(facets_mod.reporting_state(record), "unmapped_legacy_value")
+
+
+class TestS71AssessmentStillIntact(unittest.TestCase):
+
+    def test_the_committed_assessment_still_regenerates_byte_identically(self):
+        _assessment, text = ea.build()
+        with open(DOCUMENT, "rb") as handle:
+            self.assertEqual(handle.read(), text.encode("utf-8"))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Stage 7 implementation plan — AX corpus migration
 
-**Status: `APPROVED — PLAN OF RECORD; S7-0, S7-1 AND S7-2 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
+**Status: `APPROVED — PLAN OF RECORD; S7-0 … S7-3 COMPLETE; NO FURTHER CHECKPOINT APPROVED`**
 
 ```text
 plan opened at        0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   Stage 6 closeout
@@ -19,11 +19,12 @@ live requests         none, ever, by this pipeline
 section of `docs/harvest/TODO.md` — is complete. **`S7-1`, the read-only entity assessment, is
 complete**; it migrated **zero** entities, which is what it was for. **`S7-2`, the suspicious-URL
 guard, is complete**; it refuses URLs and nothing else, and refuses **0 of the 231** protected AX
-case pages.
+case pages. **`S7-3`, the in-memory AX mapping, is complete**; it maps **231 accepted / 0 rejected**
+and writes nothing at all.
 
-**`S7-3` … `S7-C` remain unapproved**, and nothing in this document approves them: no AX mapping, no
-CLI and no apply path exists, and none may be written until the checkpoint that owns it is approved
-by name.
+**`S7-4` … `S7-C` remain unapproved**, and nothing in this document approves them: no CLI, no
+dry-run report, no bundle and no apply path exists, and none may be written until the checkpoint that
+owns it is approved by name.
 
 - **Approving this plan approves no implementation checkpoint.** Not S7-1, not any later one.
 - **Listing a checkpoint's path set here does not authorize that checkpoint.** §9 exists so a
@@ -670,8 +671,8 @@ suspicious-URL hits            0       under the D7-H structural predicates (5 u
 
 ## 9 · Checkpoint decomposition
 
-**S7-1 and S7-2 are complete. None of the remaining checkpoints is approved.** Each requires separate
-approval by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
+**S7-1, S7-2 and S7-3 are complete. None of the remaining checkpoints is approved.** Each requires
+separate approval by name, and each is limited to the exact path set below. Every checkpoint includes updates to this
 plan and to `docs/harvest/TODO.md`.
 
 ### S7-1 · Entity assessment — **COMPLETE**
@@ -799,7 +800,7 @@ plus `identity` 42, `records` 51 and `schema` 35; then the full gate once — **
 still regenerates byte-identically; both protected registries are byte-identical; no runtime path was
 created; no request of any kind was made.
 
-### S7-3 · In-memory AX mapping
+### S7-3 · In-memory AX mapping — **COMPLETE**
 
 The §5 mapping, D7-D…D7-G, validated against `record.v1.json` in memory. **No filesystem output.**
 
@@ -810,6 +811,85 @@ tests/test_taxonomy_migration.sh
 docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md
 docs/harvest/TODO.md
 ```
+
+**As shipped.** Public surface, three names plus the constants the tests pin:
+
+```text
+AxMigrationError    a registry, row or review decision the mapping refuses to paper over
+MappingResult       frozen, value-comparable, exactly two fields: accepted, rejected — both tuples
+map_registry(document, *, harvest_run_id, migrated_at, reviewed=None,
+             allow_unmappable=False, facets_dir=None)
+```
+
+`map_case` and `build_case_facets` exist beside them as the per-case seams the suite exercises
+directly. There is **no registry path default, no file convenience wrapper, no CLI alias, no report
+and no artifact builder** — those are S7-4 and S7-5, and none of them is anticipated here.
+
+**The clock is the caller's.** `harvest_run_id` and `migrated_at` are required, `migrated_at` is
+validated against the committed UTC second-precision pattern, and `discovered_at` is **always**
+passed from the legacy `discovery.first_seen_at`, so `make_full_record` can never reach its
+`utcnow()` fallback. An AST test proves the module calls no clock, no CLI, no socket, no subprocess
+and no `open` — it imports `copy`, `dataclasses`, `re` and the committed harvest modules, and nothing
+else.
+
+**Composition, not reimplementation.** `urlkey.canonicalize_string` / `content_id` / `record_id`,
+`records.make_full_record` / `to_iso8601_utc` / `null_if_unknown` / `sort_records`, the committed
+facet loader, reviewed legacy-industry lookup, lexical-support predicate, vocabulary versions and
+classification-state decision, `aliases.load_canonicalization` for the committed canonicalization
+policy, `base.suspicious_url_match` for the guard, and `schema.validate_or_raise` against
+`record.v1.json`. `classify.py`, `verify.py` and `facetassign.py` are **not imported** — a test
+asserts that, because a migration that re-judged its corpus would not be a migration.
+
+**Measured on the protected corpus: 231 accepted, 0 rejected.**
+
+```text
+identity            231 distinct record_id · 231 content_id · 231 identity_url
+legacy case_id      126 distinct over 231 — repeated by design, and it changes nothing
+legacy case_key     231 distinct
+evidence            231/231 snippet_only; 0 records claim `fetched`, a status, a hash
+                    or a check time
+published_at        33 null, exactly the 33 rows whose publication_date is "unknown"
+facet states        112 facet_partial · 118 unmapped_legacy_value · 1 unresolved  (= 231)
+facet checker       check_facets.validate_record_facets: 0 problems over all 231
+```
+
+**Two contract details S7-3 had to settle inside the approved decisions.**
+
+First, **the lexical-support gate is applied exactly where the committed contract applies it** —
+`facets.LEXICAL_SUPPORT_REQUIRED`, i.e. `technology-software` and `cross-industry`. Applying it to
+every mapped slug was tried and rejected on evidence: it withholds six further reviewed mappings
+(`audio streaming`, `beauty / cosmetics`, `music streaming`, `professional information services
+(legal, tax)`, `semiconductors`, `video hosting / streaming`) that `check_facets.py` itself accepts,
+and it moves the distribution to 106/118/7. For any slug the committed contract does not gate, the
+**reviewed map is the authority**. E27 is therefore exactly one record — `"IT services"` →
+`technology-software` — and it records the reviewed mapping in an `insufficient_evidence` entry
+naming both the slug and the gate, rather than asserting it or mislabelling it `unmapped_legacy_value`.
+
+Second, the §5 rejected-row description said `scores` were "omitted"; the shipped row carries
+**`"scores": null`**. Null states that nothing was scored; absence leaves a reader to infer it. The
+row is otherwise exactly §5: raw legacy URL in `target_url`, the canonical form only in the
+schema-required `identity_url`, `rejection_reason: ambiguous_legacy_url`, and a deterministic
+`detail` naming the legacy `case_id` and the exact guard rule id. The complete row validates inside a
+`rejection.v1.json` document, asserted in the suite.
+
+**Review semantics (D7-H) are in-memory only** — S7-3 opens no override file. Unreviewed suspicious
+URLs **refuse the whole mapping** rather than returning a partial accepted set; `allow_unmappable`
+lets it complete with the rejections intact and admits nothing; a reviewed `admit` takes the raw URL
+verbatim and records that decision in `provenance.migration.assumptions`; a reviewed `reject` stays
+rejected and says it was reviewed. Malformed rows, unknown decisions, duplicate decisions for one
+case, a URL that is not that case's own, and a review of a nonexistent case are each refused by name.
+
+**Determinism.** Accepted records come back in the committed `records.sort_key` order; rejection rows
+are sorted by `(identity_url, detail)`. Source row order (reversed and two seeded shuffles) and
+review-decision order change no byte. Two mappings differing only in run id and migration instant are
+diffed **recursively**, and exactly two leaves move: `harvest_run_id` and
+`provenance.migration.migrated_at` (a rejection row moves `rejected_at` only).
+
+**Validation:** focused `tests/test_taxonomy_migration.sh` **133 assertions (43 + 28 + 62)**, plus
+`records` 51, `schema` 35, `identity` 42, `facets` 34, `eligibility` 48; the S7-1 assessment still
+regenerates byte-identically; then the full gate once — **39/39 suites, 1,948 assertions (1,906
+unittest + 42 shell)**; then all five checkers exit 0. Both protected registries are byte-identical
+under the EOL-aware baseline, no runtime path was created, and no request of any kind was made.
 
 ### S7-4 · CLI and dry-run
 

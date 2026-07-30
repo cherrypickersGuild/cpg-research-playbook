@@ -17,9 +17,12 @@ stage_6_closing_commit:      7aa1ccec439162d238ad87fd00c3b543ed3e8f55   S6-7
 stage_6_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_6_COMPLETE_2026-07-30.md
 stage_6_closeout_commit:     0d2da6454e2ac898094f9b1eebe9a4b6370c79f0   S6-C, PUSHED
 stage_7_plan_of_record:      docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md   APPROVED plan of record
-                             (S7-0, S7-1 and S7-2 complete; S7-3 … S7-C unapproved)
-stage_7_gate:                39/39 suites green — 1,844 unittest + 42 shell = 1,886 total
-                             (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2)
+                             (S7-0 … S7-3 complete; S7-4 … S7-C unapproved)
+stage_7_gate:                39/39 suites green — 1,906 unittest + 42 shell = 1,948 total
+                             (1,815 at Stage 6 close · +43 S7-1 · +28 S7-2 · +62 S7-3)
+stage_7_ax_mapping:          231 accepted / 0 rejected, in memory only — nothing written.
+                             Facet states 112 facet_partial · 118 unmapped_legacy_value
+                             · 1 unresolved
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
@@ -52,14 +55,15 @@ complete, passed, failed or waived anywhere in this file.
 **A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** and is
 synchronized at `0d2da64` — local `main`, `HEAD` and `origin/main` all agree, 0 behind / 0 ahead.
 
-**STAGE 7 IS OPEN. `S7-0`, `S7-1` AND `S7-2` ARE COMPLETE.**
+**STAGE 7 IS OPEN. `S7-0` … `S7-3` ARE COMPLETE.**
 `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` is the **approved plan of record**; S7-1, the read-only
 entity assessment, **migrated 0 of 1,161 entities**, which is what it was for; S7-2, the
-suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites nothing.
-**`S7-3` … `S7-C` are unapproved**: each needs its own approval by name, is limited to the exact path
-set declared in that plan's §9, and a path appearing there is not an approval to write it. No AX
-mapping, CLI or apply path exists. No live request, no promotion and no real runtime migration is
-authorized. Green tests alone open nothing.
+suspicious-URL guard, refuses **0 of the 231** protected AX case pages and rewrites nothing; S7-3
+maps **231 accepted / 0 rejected in memory and writes nothing at all**.
+**`S7-4` … `S7-C` are unapproved**: each needs its own approval by name, is limited to the exact path
+set declared in that plan's §9, and a path appearing there is not an approval to write it. **No CLI,
+no dry-run report, no bundle and no apply path exists.** No live request, no promotion and no real
+runtime migration is authorized. Green tests alone open nothing.
 
 **Baseline at Stage 7 opening**, carried from the Stage 6 closure and re-verified before S7-0 edited
 a line: **38/38 suites · 1,815 counted assertions · protected 18/18 · untracked 508/508 with drift 0,
@@ -1093,7 +1097,7 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
 - [ ] `tests/test_taxonomy_linkcheck.sh`
 - [ ] `tests/test_taxonomy_promote_txn.sh` — 4 fault-injection points + add/remove/partial modes
 
-## Stage 7 — AX corpus migration ⟵ **S7-0, S7-1 AND S7-2 COMPLETE. S7-3 … S7-C NOT APPROVED.**
+## Stage 7 — AX corpus migration ⟵ **S7-0 … S7-3 COMPLETE. S7-4 … S7-C NOT APPROVED.**
 
 **Plan of record:** `docs/harvest/STAGE_7_IMPLEMENTATION_PLAN.md` — **`APPROVED — PLAN OF RECORD;
 S7-0 COMPLETE; NO IMPLEMENTATION CHECKPOINT APPROVED`**. It reconciles and **supersedes**
@@ -1178,11 +1182,42 @@ wiring (Stage 8), calibration (Stage 9), the live smoke, entity migration proper
       + 42 shell)**; five checkers exit 0; both protected registries byte-identical; the S7-1
       assessment still regenerates byte-identically; no runtime path; no request of any kind.
 
-**S7-3 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
+- [x] **S7-3** in-memory AX mapping (`feat(harvest): map AX cases in memory`) —
+      `src/harvest/migrate/ax_cases.py`, `tests/harvest/test_migration.py`,
+      `tests/test_taxonomy_migration.sh`, plus the plan and this file. Exactly the five paths declared
+      in plan §9. **Nothing is written: no file, no bundle, no manifest, no serialization** — the CLI,
+      the dry-run report and the apply path do not exist. Public surface: `AxMigrationError`, the
+      frozen two-tuple `MappingResult`, and
+      `map_registry(document, *, harvest_run_id, migrated_at, reviewed=None, allow_unmappable=False,
+      facets_dir=None)`, which takes an **already-loaded** document and opens no registry or override
+      file. **The clock is the caller's** — both instants are required, `migrated_at` is validated
+      against the committed UTC second-precision pattern, and `discovered_at` is always supplied so
+      `make_full_record` cannot reach its fallback; an AST test proves the module calls no clock, CLI,
+      socket, subprocess or `open`. `classify.py`, `verify.py` and `facetassign.py` are **not
+      imported**: a migration that re-judged its corpus would not be a migration.
+      **Measured: 231 accepted / 0 rejected** · 231 distinct `record_id` / `content_id` /
+      `identity_url` from **126 distinct legacy `case_id`s**, which change nothing because identity is
+      URL-derived · **231/231 `snippet_only`**, none claiming `fetched`, a status, a hash or a check
+      time · **33 `"unknown"` publication dates → null**, the originals intact in `provenance.raw` ·
+      all four scores null · facet states **112 `facet_partial` · 118 `unmapped_legacy_value` ·
+      1 `unresolved`**, and `check_facets.py` reports **0 problems** over all 231. The lexical-support
+      gate is applied exactly where the committed contract applies it — applying it to every mapped
+      slug was tried and rejected on evidence (it withholds six reviewed mappings `check_facets`
+      accepts and moves the distribution to 106/118/7), so **E27 is exactly the one `"IT services"`
+      record**, which records its reviewed mapping instead of asserting it. Review semantics are
+      in-memory: an unreviewed suspicious URL refuses the whole mapping, `allow_unmappable` completes
+      with rejections intact and admits nothing, a reviewed `admit` takes the raw URL verbatim and
+      says so in the migration assumptions, a reviewed `reject` stays rejected. Two mappings differing
+      only in run id and migration instant move **exactly two leaves**, found by recursive diff.
+      Focused: migration **133 (43 + 28 + 62)**, records 51, schema 35, identity 42, facets 34,
+      eligibility 48; full gate **39/39 suites, 1,948 assertions (1,906 unittest + 42 shell)**; five
+      checkers exit 0; both protected registries byte-identical; the S7-1 assessment still regenerates
+      byte-identically; no runtime path; no request of any kind.
+
+**S7-4 … S7-C are NOT APPROVED.** Each needs its own approval **by name** and is limited to the exact
 path set in plan §9. A path appearing in the plan is not an approval to write it; a checkpoint that
 finds it needs another path **stops and requests a plan correction** rather than widening its scope.
 
-- [ ] **S7-3** in-memory AX mapping, schema-validated, no filesystem output
 - [ ] **S7-4** `scripts/harvest/migrate.sh` and the dry-run report
 - [ ] **S7-5** atomic apply and repeated-run semantics, injected temp root only
 - [ ] **S7-6** integration — apply twice with stable normalized records, exact bundle path set,

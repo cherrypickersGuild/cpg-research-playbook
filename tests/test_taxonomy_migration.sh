@@ -1,6 +1,34 @@
 #!/usr/bin/env bash
-# test_taxonomy_migration.sh — Stage 7 migration: the entity assessment (S7-1)
-# and the suspicious-URL guard (S7-2). 71 assertions, 43 + 28.
+# test_taxonomy_migration.sh — Stage 7 migration: the entity assessment (S7-1),
+# the suspicious-URL guard (S7-2) and the in-memory AX mapping (S7-3).
+# 133 assertions, 43 + 28 + 62.
+#
+# --- S7-3, the AX mapping ----------------------------------------------------
+# This is where a legacy row becomes a record a later stage may publish, so the
+# failures worth pinning are the ones that would persist a FALSE CLAIM:
+#   * a record claiming evidence nobody gathered. Migration issues no request, so
+#     every record is asserted `not_checked` with null http_status, content_hash
+#     and last_checked_at, `canonical_url == identity_url`, empty aliases, and
+#     `snippet_only` — never `fetched`, whatever the legacy row called itself;
+#   * an invented identity. Identity is URL-derived through the committed urlkey
+#     helpers; the corpus's 126 distinct `case_id`s over 231 rows are proved NOT
+#     to collapse anything, and two rows sharing a URL fail loudly rather than
+#     being merged away;
+#   * a clock. `harvest_run_id` and `migrated_at` are required inputs and
+#     `discovered_at` is always supplied, so `make_full_record` can never reach
+#     its fallback; an AST test proves the module calls no clock at all;
+#   * a facet inferred from prose. Business function and use-case arrays stay
+#     empty with explicit insufficiency entries, and the corpus's reporting
+#     states are pinned at exactly 112 facet_partial / 118 unmapped_legacy_value
+#     / 1 unresolved — the E27 case records its reviewed mapping instead of
+#     asserting it;
+#   * a mutation crossing the boundary. Mapping cannot change the registry,
+#     changing the registry afterwards cannot change a finished record, and
+#     changing one record cannot reach another;
+#   * a moving field. Two mappings differing only in run id and migration instant
+#     are diffed recursively, and exactly two leaves may move.
+# Every accepted record is validated against `record.v1.json` inside the mapper
+# and against the committed `check_facets.py` here.
 #
 # --- S7-2, the guard ---------------------------------------------------------
 # The guard decides whether a legacy case page is refused, so the failures that
