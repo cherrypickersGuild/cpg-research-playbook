@@ -11,11 +11,14 @@ stage_0_2_implementation:    0edbf50a0d9d7283cf6f1e6cd823ea55d04c8e5e
 stage_2_5_implementation:    46ab67cde36acf4b2b403d17d4bc589eff3d5cb7
 stage_4_closing_commit:      b303d9db1e7433a740960bfbaaf83e82acfd8433   S4-5B
 stage_4_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md
+stage_5_closing_commit:      bc920b5b8b57907165b7a5f8d47239383b974212   S5-7
+stage_5_completion_handoff:  docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026-07-30.md
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
-push_state:                  local only — nothing pushed to origin/main
-assertions:                  940 across 23 suites, all green
-                             (567 prior + 55 S4-1 + 58 S4-2 + 78 S4-3/S4-3A
-                              + 63 S4-4 + 68 S4-5A/S4-5A-C + 51 S4-5B)
+push_state:                  origin/main at e178586 (S5-5); S5-6 and S5-7 local-only, 2 unpushed
+assertions:                  1,324 across 30 suites, all green
+                             (940 at Stage 4 close + 33 S5-1 + 44 S5-2 + 46 S5-3
+                              + 43 S5-4 + 52 S5-5 + 90 S5-6 + 76 S5-7)
+untracked_baseline:          508 files, byte-identical; drift 0
 ```
 
 **STAGE 4 IS CLOSED** as of 2026-07-30 — see
@@ -27,13 +30,17 @@ validation, repository state and successor constraints. `STAGE_4_IMPLEMENTATION_
 
 ## Stage 5 — artifact persistence
 
-**Plan of record:** `docs/harvest/STAGE_5_IMPLEMENTATION_PLAN.md` —
-**`IN PROGRESS — S5-1 … S5-7 COMPLETE; S5-C NOT APPROVED`** (2026-07-30).
+**Plan of record:** `docs/harvest/STAGE_5_IMPLEMENTATION_PLAN.md` — **`COMPLETED — STAGE 5 CLOSED`**
+(2026-07-30).
 
-**A completed predecessor authorizes nothing.** Each of S5-1 … S5-C requires separate approval **by
-name** before any file outside `docs/` changes — a completed predecessor and a green gate do not
-together authorize the next checkpoint. **S5-C is not approved and has not begun**, and neither has
-Stage 6. See §12 of that plan.
+**STAGE 5 IS CLOSED** as of 2026-07-30 at `bc920b5b8b57907165b7a5f8d47239383b974212` — see
+`docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026-07-30.md` for the commit chain, the S5-7
+recovery and re-run contracts, closure validation, repository state and successor constraints.
+
+**A completed stage authorizes nothing in the next one.** All eight checkpoints S5-1 … S5-C were
+approved separately **by name**. **Stage 6 is not open**: its target fetching, live requests,
+publication of verified records, concurrency and the CF-1 correction all remain **unimplemented and
+unapproved**, and green tests alone do not open it (plan §10 condition 10, §12).
 
 Stage 5 turns the completed in-memory Stage 4 pipeline into a deterministic, atomic, idempotent
 artifact tree under `state/taxonomy_harvest/`. It adds no new judgement: no classification, scoring,
@@ -169,9 +176,17 @@ threshold calibration (Stage 9), and concurrent cell execution.
       passed while proving nothing. Now scoped to renames under the artifact root, with an assertion
       that the interruption really was part-way through.
       **76 assertions**, `tests/test_taxonomy_recovery.sh`
-- [ ] **S5-C** Stage 5 closeout, documentation only. Its three allowed paths — including
-      `docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_<date>.md` — are **declared up front**, so the
-      authorization gap hit at Stage 4 closeout cannot recur. **NOT APPROVED; not started**
+- [x] **S5-C** Stage 5 closeout, documentation only —
+      `docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026-07-30.md` plus the plan's status header
+      and this file. Exactly the three paths **declared up front** before Stage 5 wrote a line of
+      code, so the authorization gap hit at Stage 4 closeout **did not recur**: writing the handoff
+      needed no separate path-set approval. L0 validation only — exact three-path diff,
+      `git diff --check`, nothing touched under `src/`, `tests/`, `scripts/`, `config/`, `schemas/`,
+      `state/`, `data/` or any run artifact, protected baseline and the 508-file untracked baseline
+      unchanged. Per its own risk tier the focused suites and the full gate were **not** rerun for a
+      documentation-only change. Records the user's ratification of S5-7's inclusion of
+      `tests/harvest/test_run_cells.py` for its two corrective test changes, with the S5-7
+      implementation commit left unrewritten.
 
 **Carried-forward findings reconciled during Stage 5 planning** (detail in §9 of that plan):
 

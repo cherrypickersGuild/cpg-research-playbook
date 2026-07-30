@@ -1,14 +1,17 @@
 # Stage 5 — artifact persistence: implementation plan
 
 ```text
-Status: IN PROGRESS — S5-1 … S5-7 COMPLETE; S5-C NOT APPROVED
+Status: COMPLETED — STAGE 5 CLOSED
 ```
 
-**Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C requires its
-own separate approval, named explicitly, before any file outside `docs/` changes. **Sequential cell execution and S5-1 … S5-7
-were approved on 2026-07-30**; all seven checkpoints shipped and are marked completed below.
-Every remaining checkpoint is still unapproved — a completed predecessor and a green gate do not
-together authorize the next one. This rule is restated at every checkpoint and in §12.
+**Stage 5 closed on 2026-07-30** at `bc920b5b8b57907165b7a5f8d47239383b974212`. Completion handoff:
+`docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026-07-30.md`.
+
+**Approving this plan approved the *plan*, not any checkpoint.** Each of S5-1 … S5-C required its
+own separate approval, named explicitly, before any file outside `docs/` changed. **Sequential cell
+execution and S5-1 … S5-C were each approved by name on 2026-07-30**; all eight shipped and are
+marked completed below. That rule did not lapse at closure: a completed stage and a green gate do
+**not** open Stage 6, which needs its own explicit approval (§10 condition 10).
 
 **Date:** 2026-07-30 · **Branch:** `main`
 
@@ -717,7 +720,27 @@ still fix CF-1 first.
 - **Risk tier.** L2 +FS.
 - **Depends on.** S5-6.
 
-### S5-C · Stage 5 closeout *(documentation only)*
+### S5-C · Stage 5 closeout *(completed — documentation only)*
+
+**Approved and shipped 2026-07-30.** Handoff committed at
+`docs/harvest/handoffs/HANDOFF_STAGE_5_COMPLETE_2026-07-30.md`, exactly the three paths declared
+below and not one more. **The gap this checkpoint existed to prevent did not recur:** the path set was
+declared before Stage 5 wrote a line of code, so writing the handoff needed no separate
+path-set approval — only the checkpoint approval every checkpoint needs.
+
+L0 validation only, as specified: exact three-path diff · `git diff --check` · no change under
+`src/`, `tests/`, `scripts/`, `config/`, `schemas/`, `state/`, `data/` or any run artifact ·
+protected baseline and the 508-file untracked baseline unchanged. **The focused suites and the full
+gate were not rerun**, per this checkpoint's own risk tier — the closing gate is the one recorded in
+§3 of the handoff, run before the S5-7 commit, with the three suites S5-7 touched re-run green from
+the committed tree afterwards.
+
+**Ratification recorded here, and in §2.4 of the handoff.** The user ratified S5-7's inclusion of
+`tests/harvest/test_run_cells.py` on 2026-07-30, for exactly the two corrective test changes reported
+— deletion of the temporary guard that prohibited S5-7 semantics, and correction of the byte-unchanged
+assertion so it covers the nine Stage 4 modules it claimed to cover rather than Stage 5-owned
+`artifacts.py` and `ledger.py` — with the direction **not** to reopen, amend, revert or rewrite the
+S5-7 implementation commit. It was not rewritten.
 
 **This checkpoint exists so the Stage 4 authorization gap cannot recur.** At Stage 4 closeout, §11
 required a committed handoff but no checkpoint declared a path set for writing one; the gap had to be
@@ -901,6 +924,11 @@ relevance-tuning stage.
 
 ## 10 · Stage 6 opening condition
 
+**Status at closure: conditions 1–9 are met at `bc920b5b…`; condition 10 is NOT given.** Stage 6
+target fetching, live requests, publication of verified records, concurrency and the CF-1 correction
+all remain **unimplemented and unapproved**. Evidence for 1–9 is in §3 and §4 of the completion
+handoff.
+
 Stage 6 planning may begin only when all of the following hold **in one final run**:
 
 1. `tests/test_taxonomy_{artifacts,cell_artifact,ledger,coverage_report,manifest,run_cells,recovery}.sh`
@@ -946,3 +974,9 @@ first introduces concurrent cell execution (§9.1).
 Each checkpoint S5-1 … S5-C must be approved **separately and by name** before any file outside
 `docs/` changes. Green tests, an approved plan, and a completed predecessor checkpoint do **not**
 together authorize the next one.
+
+**This held for all eight checkpoints, and it does not lapse now that Stage 5 is closed.** A closed
+stage authorizes nothing in the next one: Stage 6 needs its own plan and its own explicit approval
+(§10 condition 10). The four allowed-path additions Stage 5 needed were each approved by name at the
+time and are listed together in §2.4 of the completion handoff, including the S5-7 ratification of
+`tests/harvest/test_run_cells.py`.
