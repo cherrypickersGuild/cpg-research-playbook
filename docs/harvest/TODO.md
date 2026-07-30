@@ -39,10 +39,12 @@ stage_8_state:               NOT OPENED and NOT APPROVED. validate_task.sh is un
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
-push_state:                  origin/main at 0d2da64 (Stage 6 closeout). The 7 Stage 7
-                             implementation commits were local-only before S7-C, and ALL
-                             Stage 7 commits — including the S7-C documentation closeout
-                             commit — remain UNPUSHED. Pushing needs its own approval.
+push_state:                  Stage 7 implementation and closeout through
+                             e5dc558234727ea58ffeea269b7d52d6f65a603a were published to
+                             origin/main on 2026-07-31, by safe_push_main.sh --execute as a
+                             fast-forward from 0d2da64. This records the published Stage 7
+                             boundary, not the live status of later documentation-only
+                             commits; verify refs before new work.
 assertions:                  see stage_7_gate above for the current figure. At the Stage 6
                              close this line read 38/38 suites — 1,773 unittest + 42 shell
                              = 1,815 total (1,773 across 36 unittest suites; 42 across 2
@@ -70,8 +72,8 @@ network access was never authorized and no Stage 6 request of any kind was made.
 complete, passed, failed or waived anywhere in this file.
 
 **A completed stage authorizes nothing in the next one.** **Stage 6 remains closed** at `0d2da64`,
-which is also where `origin/main` still points: Stage 6 was the last state pushed, and every Stage 7
-commit is local-only.
+which `origin/main` held until Stage 7 was published on top of it — see `push_state` above for the
+published Stage 7 boundary.
 
 **STAGE 7 IS CLOSED** as of 2026-07-31 at `c3d982c572844cf39787b5b2368e975bfb198986` — see
 `docs/harvest/handoffs/HANDOFF_STAGE_7_COMPLETE_2026-07-31.md` for the commit chain, the delivered
