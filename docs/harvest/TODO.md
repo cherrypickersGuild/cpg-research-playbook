@@ -126,7 +126,38 @@ stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPO
                              count), E9-2 (--state-root is required of state-bearing
                              commands; preflight-sources is the deliberate exception)
                              and E9-3 (bounds belongs to S9-3, atomically with its
-                             enforcement). S9-2 AND EVERY LIVE CHECKPOINT UNAPPROVED.
+                             enforcement), E9-4 (S9-2 accounting 59 -> 60; the cli.py
+                             arm must route to BOTH wrappers — a plan defect,
+                             corrected), E9-5 (preflight retains no state but owns
+                             one transient lease root outside the repository) and
+                             E9-6 (stdout is one bare sorted JSON array of committed
+                             source_preflight rows, no envelope).
+                             S9-L1 AND EVERY LATER CHECKPOINT UNAPPROVED.
+stage_9_2_scope_expansion:   RATIFIED, one path. S9-2's seven-path set could not hold:
+                             three S9-1 registry SNAPSHOTS in tests/harvest/test_cli.py
+                             asserted COMMANDS == {} and a fixed planned set, and
+                             registering an operational command necessarily falsifies
+                             them. The checkpoint STOPPED WITHOUT COMMITTING and
+                             reported; tests/harvest/test_cli.py was then added by
+                             explicit approval, making S9-2 eight paths in ONE atomic
+                             commit. No production workaround; no permanent S9-1
+                             boundary weakened.
+cli_registry_invariant:      DURABLE, replaces two spent snapshots. The Stage 9 surface
+                             is exactly six commands; COMMANDS and PLANNED_COMMANDS are
+                             DISJOINT and their UNION is that surface; every handler is
+                             callable; every planned entry names its owning checkpoint;
+                             help reports both honestly. Stays true as each command
+                             moves across, so S9-3, S9-4 and S9-6 will not re-encounter
+                             this blocker. NO exact registry-size assertion remains in
+                             the permanent CLI suite; per-checkpoint facts live in the
+                             suite that owns the command.
+stage_9_2_validation:        FOCUSED ONLY, 122 assertions green — preflight 65, cli 57 —
+                             plus py_compile x4 and one explicit-mode harness sample at
+                             exit 0 with both wrappers exactly once and zero WARN skips.
+                             `--all` was NOT run. NO outbound request: the only traffic
+                             is a loopback server the suite binds and shuts down, and a
+                             socket-level guard refuses every non-loopback host and is
+                             proved wired by tripping it.
 stage_9_1_scope_expansion:   RATIFIED. S9-1's eight-path set could not hold: three
                              committed progress guards pinned the very interface S9-1
                              was approved to change. The checkpoint STOPPED WITHOUT
@@ -1655,7 +1686,74 @@ a checkpoint, once immediately before the outbound request.
         run_cells and recovery targets). Every target canonical `tests/<name>.sh`; **no future
         wrapper target, no aggregate, no blanket arm** — E9-1 records that **63 is the planned final
         Stage 9 count**, not S9-1's.
-- [ ] **S9-2** source-preflight implementation — code, **no network** — **UNAPPROVED**
+- [x] **S9-2** source-preflight implementation (`feat(harvest): add source preflight command`) —
+      code and offline tests only, **no outbound request**, **no retained state**, **no real source
+      contacted**. Eight paths after a **ratified expansion**: `src/harvest/preflight.py` ·
+      `src/harvest/cli.py` · `tests/harvest/test_preflight.py` · `tests/test_taxonomy_preflight.sh` ·
+      `scripts/validate_task.sh` · `tests/harvest/test_cli.py` · the plan · this file.
+      - **`preflight-sources` is the first operational Stage 9 command.** All **25** configured
+        sources resolve through the committed `run_cells.configured_cells()` reader — no second
+        interpretation of the topic files — sorted by `source_id` and probed **exactly once** each.
+        Selection strips whitespace, and **refuses** an empty id, a duplicate id (never
+        deduplicates), unknown ids as a set, and an empty selection — **every refusal before the
+        first request**, proved by counting probes afterwards. Reversing the configuration order
+        changes no serialized byte.
+      - **A failure is a ROW, never an exception.** `HttpClient.preflight()` never raises and neither
+        does assembly: a dead source keeps its committed reason and every other selected source is
+        still probed and reported, so "25 rows all ok" can never be confused with "3 rows all ok".
+        `source_id` is stamped from **configuration** — the probe is handed a URL and has no notion
+        of identity — while the classification, reason and every measurement are the probe's,
+        **copied verbatim**.
+      - **E9-6 output:** one bare **JSON array** of committed `source_preflight[]` rows, sorted, with
+        **no envelope, count, timestamp or second schema**, serialized by `artifacts.serialize`. It
+        is therefore directly reusable as a future manifest's `source_preflight` value. Exit **0**
+        all-ok · **1** any failure *after* printing the complete array · **2** bad arguments with
+        **empty stdout and no probe**. No retry-until-green.
+      - **`--timeout-sec` through the one committed seam.** `HttpClient(policy, …)` reads its
+        timeouts from `policy["budgets"]`; `preflight()` takes no per-call timeout and emulating one
+        would be a second HTTP implementation. Numeric, finite, positive, and **bounded above by the
+        configured `request_timeout_sec` (20)** — narrowed, never widened — with connect and read
+        **clamped down** so a `--timeout-sec 2` is not defeated by the configured 15 s read timeout.
+        The committed policy document is not mutated.
+      - **E9-5, the transient lease root.** The command creates no run and writes nothing in the
+        repository, but the committed HTTP stack coordinates through a filesystem lease tree, so it
+        owns **one temporary root outside the repository** and removes it on success, on a reported
+        source failure and on an injected `KeyboardInterrupt`. That is infrastructure scratch, **not**
+        a retained Stage 9 state root; **no `--state-root` is accepted or required**, and D9-A is
+        unweakened for every state-bearing command.
+      - **`httpclient.py`, `run_cells.py`, `harvest.sh`, every config and every schema are
+        byte-unchanged**, asserted in-suite against `fddbbb7`. Rows are validated against the
+        **committed** `run_manifest.v1.json` item read from the schema file, `additionalProperties:
+        false` included — no second schema was created.
+      - **Three spent S9-1 registry snapshots replaced by a durable invariant.** S9-2's seven-path
+        set could not hold: registering an operational command necessarily makes `COMMANDS != {}`.
+        The checkpoint **stopped without committing and reported**; the one-path expansion was then
+        ratified. **No production workaround** — leaving the command in `PLANNED_COMMANDS` while
+        registering it would have kept two guards green and put a false statement in `--help`.
+        `test_no_subcommand_is_registered_at_s9_1` was **deleted** and deliberately **not** replaced
+        by an exact one-command count, which would expire again at S9-3; the live-transport guard now
+        protects **non-operational and refused paths** (import, parser, `--help`, unknown command,
+        planned commands, bad arguments) instead of forbidding every operational caller, since
+        S9-3 and S9-6 will add two more approved ones; and the planned-set snapshot became
+        **`COMMANDS ∩ PLANNED = ∅`, `COMMANDS ∪ PLANNED = the six-command surface`**, with callable
+        handlers, declared owning checkpoints and honest help. That **stays true as each command
+        moves across**, so S9-3, S9-4 and S9-6 do not meet this blocker again. **No exact registry
+        size assertion remains in the permanent CLI suite**; the S9-2-specific fact lives in the
+        preflight suite.
+      - **Focused validation only, 122 assertions green:** preflight **65** · cli **57**; plus
+        `py_compile` ×4 and one explicit-mode harness sample
+        (`validate_task.sh src/harvest/preflight.py src/harvest/cli.py`) at **exit 0**, both wrappers
+        **exactly once**, **zero `WARN - skipping`**, zero FAIL, runtime paths absent. **`--all` was
+        NOT run.**
+      - **Harness: 59 → 60 wrappers** (19 legacy + **41** taxonomy), `ISOLATED[]` 59 → 60 with the
+        committed 59 byte-identical as an **ordered prefix**; `preflight.py` routes only to the
+        preflight wrapper and `cli.py` routes to **both** (E9-4 corrects the plan's omission). No
+        future-wrapper target, no aggregate, no blanket arm.
+      - **Outbound refusal, non-vacuous:** a socket-level guard refuses every non-loopback host and
+        is **proved wired by tripping it**. The only traffic is a `ThreadingHTTPServer` the suite
+        binds on `127.0.0.1:0` and shuts down itself, used to drive the **real** client so
+        `robots_allowed`, `crawl_delay_sec`, `http_status` and the failure classification
+        demonstrably originate in committed code.
 - [ ] **S9-2** source-preflight implementation — code, **no network**
 - [ ] **S9-L1** live source-preflight execution — **NETWORK**, verification-only, no commit
 - [ ] **S9-3** smoke and `validate --run-id` implementation — code, **no network**
@@ -1668,11 +1766,12 @@ a checkpoint, once immediately before the outbound request.
 - [ ] **S9-L4** bounded live linkcheck execution — **NETWORK**, no commit
 - [ ] **S9-C** Stage 9 closeout — documentation only; push and memory sync remain separate approvals
 
-**S9-0 and S9-1 are complete. Stage 9 is NOT complete.** **S9-2 and every `S9-L*` checkpoint remain
-unapproved**, no live command is operational, no outbound request has ever been made, no retained
-external Stage 9 state root exists or has been selected, and **M2 is unmet**. Each remaining
-checkpoint needs its own approval by name with its exact allowed-path set; every live execution needs
-approval twice, the second immediately before the outbound request.
+**S9-0, S9-1 and S9-2 are complete. Stage 9 is NOT complete.** **S9-L1 and every later checkpoint
+remain unapproved.** `preflight-sources` is implemented but **has never contacted a real source**; no
+outbound request has ever been made by this pipeline; no retained external Stage 9 state root exists
+or has been selected; **live operation remains zero and M2 is unmet**. Each remaining checkpoint needs
+its own approval by name with its exact allowed-path set; every live execution needs approval twice,
+the second immediately before the outbound request.
 
 ## Stage 10 — final report ⟵ **NOT OPEN.**
 

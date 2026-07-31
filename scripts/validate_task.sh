@@ -82,6 +82,13 @@ ISOLATED=(
   # a `mktemp -d` the suite removes. It selects NO external Stage 9 state root
   # and creates none — validate_state_root refuses and never creates.
   test_taxonomy_cli.sh
+  # --- Stage 9, S9-2: the configured-source preflight ----------------------
+  # Same criterion. Its only traffic is a ThreadingHTTPServer this suite binds
+  # on 127.0.0.1:0 and shuts down itself; a socket-level guard refuses every
+  # non-loopback host and is proved wired by tripping it. Every other probe goes
+  # through a stub client. Lease roots are `mktemp -d` and removed on every exit
+  # path; no --state-root is accepted and no retained Stage 9 root is created.
+  test_taxonomy_preflight.sh
 )
 is_isolated() {
   local b; b="$(basename "$1")"
@@ -171,9 +178,10 @@ for f in "${FILES[@]:-}"; do
     src/harvest/ledger.py)                        add_test tests/test_taxonomy_ledger.sh ;;
     src/harvest/migrate/*.py)                     add_test tests/test_taxonomy_migration.sh ;;
     src/harvest/pool.py)                          add_test tests/test_taxonomy_pool.sh ;;
+    src/harvest/preflight.py)                     add_test tests/test_taxonomy_preflight.sh ;;
     src/harvest/records.py)                       add_test tests/test_taxonomy_records.sh; add_test tests/test_taxonomy_schema.sh ;;
     src/harvest/request_key.py)                   add_test tests/test_taxonomy_pool.sh; add_test tests/test_taxonomy_dedupe.sh ;;
-    src/harvest/cli.py)                           add_test tests/test_taxonomy_cli.sh ;;
+    src/harvest/cli.py)                           add_test tests/test_taxonomy_cli.sh; add_test tests/test_taxonomy_preflight.sh ;;
     src/harvest/run_cells.py)                     add_test tests/test_taxonomy_run_cells.sh; add_test tests/test_taxonomy_recovery.sh; add_test tests/test_taxonomy_cli.sh ;;
     src/harvest/schema.py)                        add_test tests/test_taxonomy_schema.sh; add_test tests/test_taxonomy_records.sh ;;
     src/harvest/slug.py)                          add_test tests/test_taxonomy_facet_identity.sh; add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_config.sh ;;

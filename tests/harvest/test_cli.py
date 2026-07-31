@@ -43,9 +43,11 @@ external Stage 9 state root — S9-1 selects none.
 Run via tests/test_taxonomy_cli.sh.
 """
 import ast
+import contextlib
 import dataclasses
 import datetime
 import inspect
+import io
 import json
 import os
 import shutil
@@ -433,10 +435,65 @@ class TestLiveTransportConstruction(TempRoots):
         with self.assertRaises(cli.CliError):
             cli.live_transport(os.path.join(ROOT, "state", "taxonomy_harvest"))
 
-    def test_no_operational_command_calls_it(self):
-        self.assertEqual(cli.COMMANDS, {},
-                         "S9-1 registers no subcommand; a live constructor with "
-                         "a caller would be an operational command")
+    def test_the_live_transport_is_inert_until_an_operational_handler_calls_it(self):
+        """No non-operational path may reach the network decision.
+
+        This was `test_no_operational_command_calls_it` until S9-2, and it
+        asserted `cli.COMMANDS == {}` — a snapshot of a checkpoint where nothing
+        was implemented yet, and therefore spent the moment `preflight-sources`
+        was registered. Forbidding *every* operational caller was always the
+        wrong claim: an operational command reaching the network is the point of
+        the constructor, and S9-3 and S9-6 will add two more approved callers.
+
+        The permanent property is the complement, and it is what this now proves:
+        importing the module, building a parser, asking for help, naming an
+        unimplemented command or passing a bad argument must ALL leave the
+        constructor untouched. Only a handler that has been approved and
+        registered may call it, and deliberately.
+
+        That the valid `preflight-sources` path really does use the live
+        transport, and really does clean up its lease root, is proved by
+        `test_preflight.py`, which owns that command.
+        """
+        # Import time: proved statically, because a behavioural probe cannot
+        # observe an import that already happened. No module-level statement may
+        # call the constructor.
+        with open(CLI_PATH, encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        for node in tree.body:
+            for inner in ast.walk(node):
+                if isinstance(inner, ast.Call):
+                    name = getattr(inner.func, "id", None) or getattr(
+                        inner.func, "attr", None)
+                    self.assertNotEqual(
+                        name, "live_transport",
+                        "importing cli.py must not construct a transport")
+
+        calls = []
+        real = cli.live_transport
+        cli.live_transport = lambda *a, **kw: (calls.append(a), real(*a, **kw))[1]
+        self.addCleanup(setattr, cli, "live_transport", real)
+
+        # Parser construction.
+        cli.add_state_root_argument(cli.build_parser("smoke", "x"))
+
+        # Help, an unknown command, every command still declared planned, and an
+        # operational command whose arguments are refused. Help legitimately
+        # succeeds; the rest legitimately do not. Either way none of them may
+        # construct a transport, which is what the final assertion checks.
+        quiet = io.StringIO()
+        with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet):
+            self.assertEqual(cli.main(["--help"]), 0)
+            self.assertEqual(cli.main(["-h"]), 0)
+            for argv in ([], ["definitely-not-a-command"],
+                         ["preflight-sources", "--sources", "nope"],
+                         *[[name] for name in sorted(cli.PLANNED_COMMANDS)]):
+                self.assertEqual(cli.main(list(argv)), 2,
+                                 "%r must be refused with exit 2" % (argv,))
+
+        self.assertEqual(calls, [],
+                         "a non-operational or refused path constructed a live "
+                         "transport: %r" % (calls,))
 
 
 # ----------------------------------------------------------- no-network proof
@@ -509,14 +566,61 @@ class TestCliSurface(unittest.TestCase):
                 "%r must not exit 0: it is not implemented" % name)
             self.assertIn("NOT implemented", proc.stderr)
 
-    def test_no_subcommand_is_registered_at_s9_1(self):
-        self.assertEqual(cli.COMMANDS, {})
+    def test_registered_and_planned_commands_partition_the_stage_9_surface(self):
+        """The durable registry contract, valid at every Stage 9 checkpoint.
 
-    def test_planned_commands_name_the_full_stage_9_set(self):
-        self.assertEqual(
-            sorted(cli.PLANNED_COMMANDS),
-            ["compare-runs", "diff", "linkcheck", "preflight-sources", "smoke",
-             "validate"])
+        This replaces two S9-1 snapshots — `COMMANDS == {}` and a fixed
+        `PLANNED_COMMANDS` list — both of which were spent the moment S9-2
+        registered its first command, and both of which would have been spent
+        again at S9-3, S9-4 and S9-6. Neither is replaced by a new count: an
+        assertion that exactly one command is registered is the same mistake with
+        a different number.
+
+        What is permanently true is a PARTITION. Every Stage 9 command is either
+        implemented or planned, never both and never neither, and no seventh
+        command exists. That statement survives each command moving from one side
+        to the other, and it still fails loudly on the two things worth catching:
+        a command registered without a plan entry, and an approved command that
+        quietly vanishes from both registries.
+
+        Which commands are on which side at a given checkpoint is a
+        checkpoint-specific fact, and it belongs to the suite that owns that
+        checkpoint — `test_preflight.py` proves `preflight-sources` is
+        operational at S9-2.
+        """
+        surface = {"preflight-sources", "smoke", "validate", "compare-runs",
+                   "diff", "linkcheck"}
+        registered = set(cli.COMMANDS)
+        planned = set(cli.PLANNED_COMMANDS)
+
+        self.assertEqual(registered & planned, set(),
+                         "a command cannot be both implemented and planned")
+        self.assertEqual(registered | planned, surface)
+        self.assertEqual(surface - (registered | planned), set(),
+                         "an approved Stage 9 command disappeared from both "
+                         "registries")
+        self.assertEqual(registered - surface, set(),
+                         "an unplanned command was registered")
+
+        for name, handler in cli.COMMANDS.items():
+            self.assertTrue(callable(handler),
+                            "%r is registered but is not callable" % name)
+        for name, owner in cli.PLANNED_COMMANDS.items():
+            self.assertTrue(isinstance(owner, str) and owner.strip(),
+                            "%r is planned but names no owning checkpoint" % name)
+
+    def test_help_reports_implemented_and_planned_status_honestly(self):
+        proc = run_cli("--help")
+        self.assertEqual(proc.returncode, 0)
+        for name in cli.COMMANDS:
+            self.assertIn(name, proc.stdout,
+                          "%r is implemented but absent from help" % name)
+        for name, owner in cli.PLANNED_COMMANDS.items():
+            self.assertIn(name, proc.stdout,
+                          "%r is planned but absent from help" % name)
+            self.assertIn(owner, proc.stdout,
+                          "help must name the checkpoint that owns %r" % name)
+        self.assertIn("NOT implemented", proc.stdout)
 
     def test_parser_helpers_exist_for_later_checkpoints(self):
         parser = cli.add_state_root_argument(cli.build_parser("smoke", "x"))
