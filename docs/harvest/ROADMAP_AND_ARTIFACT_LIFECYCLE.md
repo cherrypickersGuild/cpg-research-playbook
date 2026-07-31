@@ -88,7 +88,7 @@ comparable to one another and must never be averaged.
 | **Live operational validation** | Any single live request | **0 of 1 = 0 %** | No request has ever been made |
 | **Production publication** | 16 expected stable published JSON files (§6.3) | **0 of 16 = 0 %** | `data/harvested/` absent |
 
-The gap between 75 % and 15 % is the single most important fact in this document: **stage completion
+The gap between 83 % and 15 % is the single most important fact in this document: **stage completion
 measures approved-and-verified checkpoints, not operable commands.** Stages 0–8 built a
 comprehensively tested library. They did not build a program a human can run.
 
