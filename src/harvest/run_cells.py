@@ -121,6 +121,20 @@ MAX_TARGET_FETCHES_PER_CELL = 25
 # reader can check against the schema, not three strings inside a loop.
 LEDGER_TARGET_EVIDENCE_FIELDS = ("http_status", "content_hash", "last_checked_at")
 
+# S9-5C2. The in-run candidate-sighting counters, in reporting order. Named once
+# so the producer, the row builder, the schema and the tests cannot drift apart,
+# and so a PARTIAL tuple is detectable rather than merely unlikely: the four are
+# one measurement, and three of them are a claim nobody made.
+#
+# The first three are the arithmetic; the fourth is counted BESIDE them. An
+# uncanonicalizable item never became an observation and never became a group
+# (`dedupe.group` skips it before `merged`), so folding it into the sum would
+# break an invariant that otherwise holds by construction.
+SIGHTING_FIELDS = ("candidate_observations",
+                   "unique_candidate_keys",
+                   "repeated_candidate_observations",
+                   "uncanonicalizable_candidate_observations")
+
 
 # ------------------------------------------------------------------ transport
 def _no_pacing(seconds):
@@ -234,6 +248,63 @@ class RunBounds:
     def remaining_run_sec(self):
         """What is left of the command-wide budget for the run phase."""
         return self.smoke_budget_sec - self.elapsed_before_run_sec
+
+
+def _sighting_counts(deduped):
+    """The four sighting counters, READ from S4-1's own result. Nothing is re-derived.
+
+    `dedupe.group` already computes every one of these and then, until now, threw
+    them away: the `DedupeResult` was bound to a local, handed to
+    `extract.normalize_all`, and collected. This reads the values it produced. It
+    does not recount, and it must not — a second derivation here could disagree
+    with the one the grouping actually performed.
+
+    What each number is, precisely, because three of the four are easy to misread:
+
+      * `candidate_observations` counts DISTINCT SOURCE ITEMS with a canonicalizable
+        target, identified by `(source_id, position, target_url)` — a property of
+        the ITEM. Repeated delivery of one source snapshot to several lanes is
+        merged into sorted provenance before anything is counted, so three lanes
+        sharing a feed contribute one observation, not three. It is a sighting
+        count, not a feed-row count.
+      * `unique_candidate_keys` counts distinct canonical GROUPING KEYS. It is not
+        `cells[].candidates`, which is the post-cap processed count beside it.
+      * `repeated_candidate_observations` counts observations beyond the first for
+        their canonical key — the in-run repeat evidence S9-5 found unrecoverable.
+      * `uncanonicalizable_candidate_observations` counts distinct source items whose
+        target URL would not canonicalize AT THE DEDUPE BOUNDARY. It is not a later
+        extraction issue: a candidate that merely lost a title or a parseable date
+        still becomes a candidate, and its problem is recorded as a
+        `NormalizationIssue` instead.
+
+    The invariant is asserted rather than assumed. `dedupe.py` computes
+    `duplicate_observation_count` as `observation_count - len(groups)`, so it holds
+    by construction today; checking it here means a future change on either side of
+    that boundary fails loudly at the producer rather than publishing arithmetic
+    that does not add up.
+    """
+    counts = {
+        "candidate_observations": deduped.observation_count,
+        "unique_candidate_keys": deduped.group_count,
+        "repeated_candidate_observations": deduped.duplicate_observation_count,
+        "uncanonicalizable_candidate_observations": len(deduped.unusable),
+    }
+    for name in SIGHTING_FIELDS:
+        value = counts[name]
+        # Booleans are ints in Python and a True count is never intended.
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise RunCellsError(
+                "%s must be a non-negative int, got %r" % (name, value))
+    total = (counts["unique_candidate_keys"]
+             + counts["repeated_candidate_observations"])
+    if counts["candidate_observations"] != total:
+        raise RunCellsError(
+            "candidate sightings do not add up: %d observations != %d unique keys "
+            "+ %d repeats. Every observation is either the first for its canonical "
+            "key or a repeat of one, so this cannot be reported as measured."
+            % (counts["candidate_observations"], counts["unique_candidate_keys"],
+               counts["repeated_candidate_observations"]))
+    return counts
 
 
 def _apply_candidate_cap(extraction, cap):
@@ -514,11 +585,17 @@ class CellRun:
     """One cell's raw outcome, before anything is routed or written."""
 
     __slots__ = ("cell", "sources", "extracted", "classifications", "verdicts",
-                 "assignments", "failures", "fetch_outcomes", "adjudications")
+                 "assignments", "failures", "fetch_outcomes", "adjudications",
+                 "sightings")
 
     def __init__(self, cell):
         self.cell = cell
         self.sources = []          # metadata.sources[] rows, sorted by source_id
+        # S9-5C2. The complete four-key sighting measurement, or None for a cell
+        # that has not been measured. ONE attribute rather than four, so a partial
+        # tuple cannot be assembled a field at a time: it is written once, from one
+        # place, and `None` means "nobody measured" — never "measured as zero".
+        self.sightings = None
         self.extracted = ()        # tuple of ExtractedCandidate, by candidate_key
         self.classifications = {}  # candidate_key -> Classification
         self.verdicts = {}         # candidate_key -> Verdict
@@ -727,6 +804,16 @@ def _run_one_cell(cell, *, cache, client, budget, policy, clock, pool=None,
         deliveries = [dedupe_mod.delivery("cell__" + cell["cell_id"], result)
                       for result in results]
         grouped = dedupe_mod.group(deliveries, sources=source_map)
+
+        # S9-5C2, and it can only be read HERE. `_apply_candidate_cap` below
+        # replaces `extraction.candidates` with a prefix and `_accepted_prefix`
+        # narrows it again, after which the pre-cap cardinality is unrecoverable —
+        # nothing downstream records what was discovered before judgement began.
+        # Read before BOTH caps, so the denominator describes the corpus rather
+        # than the bound: a repeat rate measured after a cap would be a
+        # measurement of `max_candidates_per_cell`, not of the sources.
+        run.sightings = _sighting_counts(grouped)
+
         extraction = extract_mod.normalize_all(grouped)
 
         # S9-3, first cap. Sliced HERE — before any judgement — so a candidate
@@ -827,6 +914,16 @@ def _cell_row(run, artifact_records, *, elapsed_sec=None):
     timed it. It is the run's DURATION evidence and is unrelated to
     `metadata.sources[].elapsed_sec` in the cell artifact, which is per-source
     fetch timing and is not touched here.
+
+    `run.sightings` (S9-5C2) is the four-key PRE-CAP sighting measurement, or
+    `None` for a cell nobody measured. All four are written or none are: a subset
+    would let a reader compute a repeat rate from a denominator that was never
+    recorded. `candidates` beside them stays POST-cap and keeps its meaning; the
+    two describe different moments, and this row does not relate them. In
+    particular NOTHING here says which cap truncated a cell —
+    `_apply_candidate_cap` and `_accepted_prefix` both narrow `candidates`, and
+    the manifest cannot attribute the difference to either. The S9-5 finding
+    stands: the caps remain provisional and are not fully observable.
     """
     accepted = run.accepted
     row = {
@@ -839,6 +936,19 @@ def _cell_row(run, artifact_records, *, elapsed_sec=None):
     }
     if elapsed_sec is not None:
         row["elapsed_sec"] = elapsed_sec
+    if run.sightings is not None:
+        # All-or-none, CHECKED rather than trusted. `_sighting_counts` builds the
+        # complete dict in one place, so a mismatch here means something else
+        # wrote the attribute - and a partial tuple must fail at the producer
+        # rather than reach a manifest whose schema would reject it at write
+        # time, after eleven other cells had already been written.
+        if sorted(run.sightings) != sorted(SIGHTING_FIELDS):
+            raise RunCellsError(
+                "cell %s carries a partial sighting measurement %r; the four "
+                "counters are ONE measurement and are reported together or not "
+                "at all" % (run.cell_id, sorted(run.sightings)))
+        for name in SIGHTING_FIELDS:
+            row[name] = run.sightings[name]
 
     if accepted or artifact_records:
         row["status"] = STATUS_OK

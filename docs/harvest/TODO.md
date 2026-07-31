@@ -162,8 +162,8 @@ stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPO
                              and S9-5 is COMPLETE. **M2 AND M3 ACHIEVED; M4 UNMET.**
                              STILL OWED: the 63/63 gate after S9-6, one bounded
                              linkcheck run, and the completion handoff.
-                             S9-6, S9-L4, closeout AND the proposed S9-5C ARE ALL
-                             UNAPPROVED.
+                             S9-5C1 and S9-5C2 are now COMPLETE; S9-6, S9-L4,
+                             closeout AND S9-5C3 REMAIN UNAPPROVED.
 stage_9_l2_l3_execution:     BOTH COMPLETE — **M2 AND M3 ACHIEVED**.
                              S9-L2 smoke ONCE, rc 0, run 20260731T113526Z-23992;
                              S9-L3 smoke ONCE, rc 0, run 20260731T120702Z-20188.
@@ -202,12 +202,19 @@ stage_9_5c_preflight:        COMPLETE, read-only. Split the three S9-5 observabi
                              corrections into C1 (timing) / C2 (duplicate
                              observability) / C3 (rejection-history layout),
                              PROVEN not assumed: no two share a production owner,
-                             a schema or a recovery concern. C2 needs
-                             request_accounting additionalProperties:false relaxed;
+                             a schema or a recovery concern.
+                             CORRECTED BY THE C2 AUDIT: the preflight's C2 finding
+                             ("CandidatePool is the owner; relax
+                             request_accounting additionalProperties:false") was
+                             WRONG ON BOTH COUNTS and is superseded by
+                             stage_9_5c2_sightings below. Keep the correction
+                             attached: pool.add_candidate runs only under
+                             enrich=True, so it was NEVER CALLED in either live
+                             smoke, and request_accounting is an owners-vs-attempts
+                             key space that a sighting count does not belong in.
                              C3 needs comparator scope, the runvalidate
                              run-directory guard and the 18/24/42/60 arithmetic all
-                             decided first. C2 AND C3 REMAIN UNAPPROVED AND
-                             UNSTARTED.
+                             decided first. C3 REMAINS UNAPPROVED AND UNSTARTED.
 stage_9_5c1_timing:          COMPLETE. FIVE paths: src/harvest/run_cells.py,
                              tests/harvest/test_run_cells.py,
                              tests/harvest/test_cli.py, the plan, this file.
@@ -268,6 +275,141 @@ stage_9_5c1_validation:      FOCUSED ONLY, all green — run_cells 115 (incl. 16
                              migration or backfill (manifests lacking
                              cells[].elapsed_sec stay schema-valid); NO fresh live
                              smoke pair required.
+stage_9_5c2_sightings:       COMPLETE. EIGHT paths: src/harvest/run_cells.py,
+                             src/harvest/runvalidate.py,
+                             schemas/harvest/run_manifest.v1.json,
+                             tests/harvest/test_run_cells.py,
+                             tests/harvest/test_manifest.py,
+                             tests/harvest/test_smoke.py, the plan, this file.
+                             CONTRACT: four integers on run_manifest.cells[],
+                             captured in _run_one_cell at the DedupeResult seam
+                             BEFORE BOTH caps —
+                               candidate_observations  (= observation_count)
+                               unique_candidate_keys   (= group_count)
+                               repeated_candidate_observations
+                                                       (= duplicate_observation_count)
+                               uncanonicalizable_candidate_observations
+                                                       (= len(unusable))
+                             candidate_observations == unique_candidate_keys +
+                             repeated_candidate_observations. The fourth is
+                             counted BESIDE the three and is EXCLUDED from the
+                             sum: an uncanonicalizable item never became an
+                             observation and never became a group. It means
+                             failure of target canonicalization AT THE DEDUPE
+                             BOUNDARY — not a later extraction issue, which is a
+                             NormalizationIssue and still yields a candidate.
+                             The denominator is AFTER repeated source-snapshot
+                             delivery to multiple lanes has been merged: three
+                             lanes sharing one feed are ONE observation, not
+                             three. unique_candidate_keys is canonical GROUPING
+                             KEYS, NOT the post-cap cells[].candidates beside it.
+                             NO RATE IS STORED — it is derived as
+                             repeated/observations and is undefined at zero, so
+                             there is no zero-denominator representation to get
+                             wrong. NO fifth count, no run() parameter, no clock
+                             read, no network. not_run and raised cells carry
+                             NOTHING (the C1 elapsed_sec distinction); a
+                             zero-observation completed cell emits integer
+                             zeroes; a partial tuple is refused at the producer.
+                             pool.py, dedupe.py, extract.py, artifacts.py and
+                             compare.py are BYTE-UNCHANGED.
+stage_9_5c2_ownership:       THE PREFLIGHT WAS WRONG ON BOTH COUNTS; keep the
+                             correction attached. (1) CandidatePool is NOT the
+                             owner: pool.add_candidate is reached only via
+                             _fetch_targets, and run_cells passes
+                             `pool=pool if enrich else None`, so with --no-enrich
+                             it was NEVER CALLED ONCE in either live smoke — a
+                             pool-owned metric would have read 0 sightings across
+                             both achieved milestones while 127 candidates were
+                             processed. Its input is also the accepted,
+                             twice-capped set. (2) request_accounting is NOT the
+                             location: that block is owners-vs-attempts in two
+                             separate key spaces, and it is run-level.
+                             dedupe.group() ALREADY computes all three numbers
+                             with the invariant holding by construction at
+                             dedupe.py:407 — C2 is WIRING, NOT MEASUREMENT — and
+                             dedupe/extract/pool are byte-frozen, so reading the
+                             existing DedupeResult from run_cells.py is the only
+                             owner that breaks no guard.
+stage_9_5c2_cap_retraction:  THE FIRST AUDIT'S `iff` CAP CLAIM IS RETRACTED, and
+                             NOT for the reason first suspected. Extraction does
+                             NOT reduce cardinality: normalize_all is a total,
+                             non-filtering map, so DedupeResult.group_count ==
+                             len(ExtractionResult.candidates) pre-cap — already
+                             proved by test_extract.py's
+                             test_one_candidate_per_valid_group and
+                             test_a_malformed_optional_field_never_removes_a_candidate.
+                             The real defect: TWO caps sit between the
+                             measurement and cells[].candidates —
+                             _apply_candidate_cap AND _accepted_prefix, the
+                             latter proved to move that number by
+                             test_smoke.py's
+                             test_the_accepted_cap_binds_on_a_deterministic_prefix.
+                             WHICH cap truncated a cell is NOT ATTRIBUTABLE. C2
+                             claims nothing about it and adds no fifth count.
+                             **The S9-5 conclusion stands: the 12/5 caps remain
+                             PROVISIONAL and NOT FULLY OBSERVABLE.**
+stage_9_5c2_enforcement:     THREE-WAY SPLIT (E9-19), stated exactly because the
+                             halves are not interchangeable.
+                             SCHEMA owns all-or-none presence + integer type +
+                             minimum 0, via four-direction dependentRequired on
+                             cells[] — in EVERY mode and AT WRITE TIME, since
+                             artifacts.write_document validates before writing.
+                             RUNVALIDATE owns the ARITHMETIC only, conditional on
+                             all three being present, and is SMOKE-ONLY:
+                             validate_run already requires mode=="smoke" and
+                             config.enrich==false, and C2 does NOT widen it.
+                             PRODUCER TESTS own correct capture, independent of
+                             whether a validator ever looks.
+                             JSON Schema CANNOT express the arithmetic (no
+                             cross-property arithmetic keyword in 2020-12), so the
+                             split is FORCED, not chosen. The schema also cannot
+                             tell a newly completed row from a pre-C2 completed
+                             row, so MANDATORY PRESENCE ON NEW WORK stays a
+                             producer contract in run_cells._cell_row.
+                             Precedent: _check_counts (total_records !=
+                             full_records + cross_references) and the topic
+                             by_category sum are both conditional cross-field
+                             arithmetic on optional fields. The check imports
+                             nothing, recomputes nothing and uses no bare assert —
+                             asserted by AST scan, because the docstring names
+                             `dedupe` to record the boundary and `candidate_key`
+                             is a substring of `unique_candidate_keys`.
+                             compare.py NEEDED NO CHANGE: CONTENT_FIELDS is
+                             derived from the committed schemas.
+stage_9_5c2_compatibility:   NO migration, NO backfill, NO schema_version bump
+                             (stays 1). dependentRequired fires only when a key is
+                             PRESENT, so every pre-C2 manifest and every not_run
+                             row stays valid untouched. The retained M2/M3 runs
+                             remain authoritative evidence and simply carry no C2
+                             fields — the honest record, since the numbers were
+                             never measured. NO fresh live smoke pair required.
+                             ANTI-VACUITY NEEDED SYNTHETIC INPUT: the committed
+                             fixture corpus has NO repeated sighting and NO
+                             uncanonicalizable target (all 12 cells report 0 and
+                             0), and the corpus is byte-frozen, so the repeat
+                             cases are built in-test from the real AdapterResult /
+                             RawCandidate through the real dedupe.group — the S6-7
+                             technique.
+stage_9_5c2_validation:      FOCUSED ONLY, all green, each command run EXACTLY
+                             ONCE — run_cells 137 (was 115; +22 new sighting
+                             tests), recovery 74 (unchanged), cli 58 (unchanged),
+                             smoke 62 (was 56; +6 validator tests), manifest 63
+                             (was 52; +11 schema tests) — plus py_compile over the
+                             five changed Python modules and `jq empty` on the
+                             schema. ONE explicit-mode harness invocation over
+                             src/harvest/run_cells.py + src/harvest/runvalidate.py
+                             + schemas/harvest/run_manifest.v1.json: EXIT 0, PASS,
+                             the union of run_cells/recovery/cli/smoke/manifest
+                             routed and each executed EXACTLY ONCE, zero
+                             WARN-skipping, zero FAIL, runtime paths absent before
+                             and after, production state/ unchanged. NO routing
+                             edit and NO new wrapper: inventory stays 62.
+                             `--all` was NOT run — the 63/63 gate owed before
+                             S9-L4 will cover C1 and C2, and covers C3 ONLY if C3
+                             is separately approved and landed before it. NO
+                             network, NO live smoke rerun. Wrapper paths are
+                             tests/test_taxonomy_*.sh (NOT tests/harvest/*.sh).
 stage_9_5_calibration:       COMPLETE, documentation only, two paths (this file + the plan).
                              PRIMARY DECISION: **THRESHOLDS STAY PROVISIONAL**.
                              Evidence: 2 runs ~32 min apart, ONE reproduced corpus =

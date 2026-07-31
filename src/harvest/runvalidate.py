@@ -175,6 +175,44 @@ def _check_counts(label, document, errors):
                           % (label, declared_total))
 
 
+def _check_sightings(rows, errors):
+    """S9-5C2. A measured sighting tuple must add up. Conditional by necessity.
+
+    The same shape as `_check_counts` above and as the topic `by_category` check
+    below: an OPTIONAL block, guarded on presence, whose declared numbers must
+    agree with each other. A manifest written before S9-5C2 carries none of these
+    keys, so it is skipped rather than failed - the fields were never measured,
+    and reporting that as an error would call the M2/M3 evidence broken.
+
+    Only the integers already on the row are read. Nothing is recounted: this
+    module must not import `dedupe`, and re-deriving the numbers from anything
+    would make the validator a second producer that could disagree with the first.
+
+    Presence itself is NOT enforced here. All-or-none is the committed schema's
+    `dependentRequired` on `cells[]`, which fires in every mode and at write time;
+    that a completed cell must carry the tuple at all is the producer's contract,
+    owned by `run_cells._cell_row` and its suite. This check owns the arithmetic
+    and only the arithmetic.
+    """
+    triple = run_cells.SIGHTING_FIELDS[:3]
+    for row in rows:
+        values = [row.get(name) for name in triple]
+        if any(value is None for value in values):
+            continue
+        if any(not isinstance(value, int) or isinstance(value, bool)
+               for value in values):
+            continue                  # a type problem; the schema already said so
+        observations, unique, repeated = values
+        if observations != unique + repeated:
+            errors.append(
+                "manifest.json: cell %s reports %d candidate_observations but "
+                "%d unique_candidate_keys + %d repeated_candidate_observations "
+                "= %d; every observation is either the first for its canonical "
+                "key or a repeat of one"
+                % (row.get("cell_id"), observations, unique, repeated,
+                   unique + repeated))
+
+
 def validate_run(root, run_id):
     """Validate the LATEST complete run in `root`. Returns the report document.
 
@@ -319,6 +357,7 @@ def validate_run(root, run_id):
             if row.get("status") == artifacts.STATUS_NOT_RUN:
                 errors.append("manifest.json: cell %s is not_run; a full smoke "
                               "runs every configured cell" % row.get("cell_id"))
+        _check_sightings(rows, errors)
 
         if manifest.get("mode") != "smoke":
             errors.append("manifest.json: mode is %r, expected 'smoke'"

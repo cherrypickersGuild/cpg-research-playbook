@@ -1430,5 +1430,334 @@ class TestActualRunTiming(RunCase):
                 artifacts.run_manifest_path(root, run_id)))
 
 
+class TestInRunCandidateSightings(RunCase):
+    """S9-5C2 - the run records how often it saw the same candidate twice.
+
+    S9-5 could not compute an in-run duplicate rate from the retained artifacts:
+    `dedupe.group` produced the numerator and the denominator, `run_cells` bound
+    the result to a local, handed it to `extract.normalize_all`, and the numbers
+    were collected. The 95.4% figure the calibration DID have was a CROSS-RUN
+    repeat-sighting rate from the cumulative ledgers, which is a different
+    measurement of a different thing.
+
+    What this suite defends, and each is a way the metric could be quietly wrong:
+
+      * A LANE-INFLATED DENOMINATOR. Three lanes sharing one cached source snapshot
+        must contribute ONE observation. Counting deliveries would make every cell
+        that shares a feed look duplicate-heavy purely because of scheduling.
+      * A POST-CAP DENOMINATOR. Measured after `_apply_candidate_cap` the rate
+        would describe `max_candidates_per_cell`, not the sources.
+      * A PARTIAL TUPLE. Four numbers are one measurement. Three of them let a
+        reader compute a rate against a denominator nobody recorded.
+      * A FABRICATED ZERO. A cell nobody measured must carry NO tuple, not zeroes -
+        the same distinction C1 drew for `elapsed_sec`.
+      * A SWALLOWED UNCANONICALIZABLE ITEM. An item whose target will not
+        canonicalize never became an observation and never became a group. Folded
+        into the sum it would break the invariant; dropped entirely it would
+        vanish. It is counted BESIDE the three.
+      * A CAP ATTRIBUTION. `candidates` is narrowed by TWO caps, so a difference
+        against `unique_candidate_keys` cannot be attributed to either. Nothing
+        here claims it can, and S9-5's "caps stay provisional" is untouched.
+
+    Anti-vacuity needs synthetic input: the committed fixture corpus contains no
+    repeated sighting and no uncanonicalizable target (verified - all twelve cells
+    report 0 and 0). The corpus is byte-frozen, so the repeat cases are built here
+    from the REAL `AdapterResult` / `RawCandidate` through the REAL `dedupe.group`,
+    exactly as S6-7 proved a shared identity with test-local candidates.
+    """
+
+    SOURCES = {
+        "openai-news": {"source_id": "openai-news", "topic_slug": "cases",
+                        "category_slug": "case-studies", "adapter": "feed",
+                        "role": "discovery"},
+        "anthropic-customers": {"source_id": "anthropic-customers",
+                                "topic_slug": "cases",
+                                "category_slug": "case-studies", "adapter": "seed",
+                                "role": "validation_seed"},
+    }
+    PAGE = "https://openai.com/index/acme-support-automation/"
+    OTHER = "https://openai.com/index/beta-logistics/"
+
+    def counts(self, deliveries):
+        """The four counters for a synthetic ingest, through the real modules."""
+        from src.harvest import dedupe as dd
+        return run_cells._sighting_counts(dd.group(deliveries, sources=self.SOURCES))
+
+    def raw(self, url, position=0, source_id="openai-news", adapter="feed"):
+        from src.harvest.adapters.base import RawCandidate
+        return RawCandidate(target_url=url, source_id=source_id, adapter=adapter,
+                            position=position)
+
+    def result(self, source_id, candidates):
+        from src.harvest.adapters.base import AdapterResult
+        return AdapterResult(source_id=source_id,
+                             adapter=self.SOURCES[source_id]["adapter"],
+                             result="ok", candidates=tuple(candidates))
+
+    def delivery(self, lane, res):
+        from src.harvest import dedupe as dd
+        return dd.delivery(lane, res)
+
+    # ------------------------------------------------------------- the names
+    def test_the_four_field_names_are_exact_and_ordered(self):
+        self.assertEqual(run_cells.SIGHTING_FIELDS,
+                         ("candidate_observations",
+                          "unique_candidate_keys",
+                          "repeated_candidate_observations",
+                          "uncanonicalizable_candidate_observations"))
+
+    def test_the_committed_schema_declares_exactly_these_four(self):
+        """The producer and the schema must name the same fields."""
+        properties = (schema.load_schema("run_manifest.v1.json")["properties"]
+                      ["cells"]["items"]["properties"])
+        for name in run_cells.SIGHTING_FIELDS:
+            with self.subTest(name):
+                self.assertEqual(properties[name]["type"], "integer")
+                self.assertEqual(properties[name]["minimum"], 0)
+
+    # ------------------------------------------------------- counting itself
+    def test_a_single_sighting_is_one_observation_and_no_repeat(self):
+        counts = self.counts([self.delivery(
+            "cell__cases__case-studies", self.result("openai-news",
+                                                     [self.raw(self.PAGE)]))])
+        self.assertEqual(counts["candidate_observations"], 1)
+        self.assertEqual(counts["unique_candidate_keys"], 1)
+        self.assertEqual(counts["repeated_candidate_observations"], 0)
+        self.assertEqual(counts["uncanonicalizable_candidate_observations"], 0)
+
+    def test_two_sources_seeing_one_page_produce_a_repeat(self):
+        """ANTI-VACUITY: the numerator is non-zero, so the metric can move."""
+        counts = self.counts([
+            self.delivery("cell__cases__case-studies",
+                          self.result("openai-news", [self.raw(self.PAGE)])),
+            self.delivery("cell__cases__case-studies",
+                          self.result("anthropic-customers",
+                                      [self.raw(self.PAGE, 0,
+                                                source_id="anthropic-customers",
+                                                adapter="seed")])),
+        ])
+        self.assertEqual(counts["candidate_observations"], 2)
+        self.assertEqual(counts["unique_candidate_keys"], 1)
+        self.assertEqual(counts["repeated_candidate_observations"], 1,
+                         "two distinct source items on one canonical key is one "
+                         "repeated observation")
+
+    def test_url_variants_of_one_page_collapse_to_one_key(self):
+        """Distinct source items resolving to the SAME canonical key."""
+        counts = self.counts([self.delivery(
+            "cell__cases__case-studies",
+            self.result("openai-news", [
+                self.raw(self.PAGE, 0),
+                self.raw(self.PAGE + "?utm_source=x", 1),
+                self.raw(self.PAGE.replace("openai.com", "OPENAI.com"), 2),
+            ]))])
+        self.assertEqual(counts["candidate_observations"], 3)
+        self.assertEqual(counts["unique_candidate_keys"], 1)
+        self.assertEqual(counts["repeated_candidate_observations"], 2)
+
+    def test_three_lanes_sharing_one_snapshot_do_not_inflate_the_denominator(self):
+        """Source-snapshot reuse is provenance, never a sighting."""
+        shared = self.result("openai-news",
+                             [self.raw(self.PAGE, 0), self.raw(self.OTHER, 1)])
+        counts = self.counts([
+            self.delivery("cell__cases__case-studies", shared),
+            self.delivery("gap__business_function__marketing", shared),
+            self.delivery("gap__industry__healthcare-life-sciences", shared),
+        ])
+        self.assertEqual(counts["candidate_observations"], 2,
+                         "three deliveries of one snapshot are two observations")
+        self.assertEqual(counts["unique_candidate_keys"], 2)
+        self.assertEqual(counts["repeated_candidate_observations"], 0,
+                         "lane reuse must not be reported as a repeat sighting")
+
+    def test_an_uncanonicalizable_item_is_counted_apart_from_the_invariant(self):
+        counts = self.counts([self.delivery(
+            "cell__cases__case-studies",
+            self.result("openai-news", [
+                self.raw(self.PAGE, 0),
+                self.raw("not-a-url", 1),
+                self.raw("ftp://openai.com/x", 2),
+            ]))])
+        self.assertEqual(counts["uncanonicalizable_candidate_observations"], 2)
+        self.assertEqual(counts["candidate_observations"], 1,
+                         "an uncanonicalizable item never became an observation")
+        self.assertEqual(counts["unique_candidate_keys"], 1)
+        self.assertEqual(counts["repeated_candidate_observations"], 0)
+        self.assertEqual(counts["candidate_observations"],
+                         counts["unique_candidate_keys"]
+                         + counts["repeated_candidate_observations"])
+
+    def test_no_delivery_is_four_zeroes_not_an_absent_tuple(self):
+        counts = self.counts([])
+        for name in run_cells.SIGHTING_FIELDS:
+            with self.subTest(name):
+                self.assertEqual(counts[name], 0)
+
+    def test_incoherent_arithmetic_is_refused_at_the_producer(self):
+        """The invariant is asserted, not assumed, so a future drift fails loudly."""
+        from src.harvest import dedupe as dd
+        broken = dd.DedupeResult(groups=(), observation_count=5,
+                                 duplicate_observation_count=0, unusable=())
+        with self.assertRaises(run_cells.RunCellsError):
+            run_cells._sighting_counts(broken)
+
+    def test_a_negative_count_is_refused(self):
+        from src.harvest import dedupe as dd
+        broken = dd.DedupeResult(groups=(), observation_count=-1,
+                                 duplicate_observation_count=-1, unusable=())
+        with self.assertRaises(run_cells.RunCellsError):
+            run_cells._sighting_counts(broken)
+
+    # -------------------------------------------------------------- the row
+    def test_every_measured_cell_reports_all_four(self):
+        root, result = baseline()
+        rows = [r for r in result.manifest["cells"]
+                if r["status"] != artifacts.STATUS_NOT_RUN]
+        self.assertTrue(rows)
+        for row in rows:
+            for name in run_cells.SIGHTING_FIELDS:
+                with self.subTest(cell=row["cell_id"], field=name):
+                    self.assertIn(name, row)
+                    self.assertIsInstance(row[name], int)
+                    self.assertNotIsInstance(row[name], bool)
+                    self.assertGreaterEqual(row[name], 0)
+
+    def test_the_invariant_holds_on_every_published_row(self):
+        _root, result = baseline()
+        for row in result.manifest["cells"]:
+            if "candidate_observations" not in row:
+                continue
+            with self.subTest(row["cell_id"]):
+                self.assertEqual(
+                    row["candidate_observations"],
+                    row["unique_candidate_keys"]
+                    + row["repeated_candidate_observations"])
+
+    def test_a_not_run_cell_carries_no_tuple_at_all(self):
+        root = self.temp_root("s95c2_notrun_")
+        result = run_cells.run(root, cells=["cases__case-studies"],
+                               clock=lambda: NOW)
+        not_run = [r for r in result.manifest["cells"]
+                   if r["status"] == artifacts.STATUS_NOT_RUN]
+        self.assertTrue(not_run)
+        for row in not_run:
+            for name in run_cells.SIGHTING_FIELDS:
+                with self.subTest(cell=row["cell_id"], field=name):
+                    self.assertNotIn(name, row,
+                                     "an unmeasured cell must not carry a zero")
+
+    def test_a_raised_cell_publishes_no_manifest_and_so_no_counts(self):
+        """A fabricated tuple cannot exist for a cell that never completed."""
+        root = self.temp_root("s95c2_raised_")
+        real = run_cells._run_one_cell
+
+        def explode(*args, **kwargs):
+            raise run_cells.RunCellsError("cell exploded")
+        run_cells._run_one_cell = explode
+        self.addCleanup(setattr, run_cells, "_run_one_cell", real)
+        with self.assertRaises(run_cells.RunCellsError):
+            run_cells.run(root, clock=lambda: NOW)
+        runs_dir = os.path.join(root, "runs")
+        for run_id in (os.listdir(runs_dir) if os.path.isdir(runs_dir) else []):
+            self.assertFalse(os.path.exists(
+                artifacts.run_manifest_path(root, run_id)))
+
+    def test_a_partial_tuple_is_refused_by_the_row_builder(self):
+        run = run_cells.CellRun({"cell_id": "cases__case-studies"})
+        run.extracted = ()
+        run.verdicts = {}
+        run.sightings = {"candidate_observations": 1, "unique_candidate_keys": 1}
+        with self.assertRaises(run_cells.RunCellsError):
+            run_cells._cell_row(run, [])
+
+    def test_an_unmeasured_cell_row_omits_the_tuple(self):
+        run = run_cells.CellRun({"cell_id": "cases__case-studies"})
+        run.extracted = ()
+        run.verdicts = {}
+        row = run_cells._cell_row(run, [])
+        for name in run_cells.SIGHTING_FIELDS:
+            with self.subTest(name):
+                self.assertNotIn(name, row)
+
+    # -------------------------------------------------------- the cap boundary
+    def test_the_counts_are_taken_before_both_caps(self):
+        """A bounded run must still report what it DISCOVERED, not what it kept."""
+        root = self.temp_root("s95c2_precap_")
+        bounds = run_cells.RunBounds(3, 2, 1800)
+        result = run_cells.run(root, clock=lambda: NOW, mode="smoke", enrich=False,
+                               bounds=bounds, source_preflight=())
+        wider = baseline()[1]
+        by_id = {r["cell_id"]: r for r in wider.manifest["cells"]}
+        moved = False
+        for row in result.manifest["cells"]:
+            if row["status"] == artifacts.STATUS_NOT_RUN:
+                continue
+            with self.subTest(row["cell_id"]):
+                self.assertLessEqual(row["candidates"], 3,
+                                     "the cap must bind the processed count")
+                # The measurement is unchanged BY the cap: it equals the
+                # uncapped run's, because both read the same pre-cap result.
+                self.assertEqual(row["candidate_observations"],
+                                 by_id[row["cell_id"]]["candidate_observations"])
+                self.assertGreaterEqual(row["unique_candidate_keys"],
+                                        row["candidates"])
+            if row["unique_candidate_keys"] > row["candidates"]:
+                moved = True
+        self.assertTrue(moved,
+                        "ANTI-VACUITY: the cap must actually have truncated "
+                        "something for this comparison to mean anything")
+
+    def test_no_cap_attribution_field_is_published(self):
+        """C2 adds NO fifth count and makes no claim about which cap truncated."""
+        _root, result = baseline()
+        for row in result.manifest["cells"]:
+            for forbidden in ("truncated", "truncated_by", "capped",
+                              "cap_bound", "pre_cap_candidates",
+                              "candidates_pre_cap", "discarded_candidates"):
+                with self.subTest(cell=row["cell_id"], field=forbidden):
+                    self.assertNotIn(forbidden, row)
+
+    def test_no_rate_is_stored_anywhere_in_the_manifest(self):
+        """The rate is DERIVED by a reader. Storing it would freeze a division."""
+        _root, result = baseline()
+        rendered = json.dumps(result.manifest, sort_keys=True)
+        for forbidden in ("duplicate_rate", "repeat_rate", "sighting_rate",
+                          "duplication_rate"):
+            with self.subTest(forbidden):
+                self.assertNotIn('"%s"' % forbidden, rendered)
+
+    # ------------------------------------------------------------- boundaries
+    def test_the_byte_frozen_modules_did_not_move(self):
+        """C2 reads what S4-1 already computed; it does not edit S4-1."""
+        import subprocess
+        for path in ("src/harvest/dedupe.py", "src/harvest/extract.py",
+                     "src/harvest/pool.py", "src/harvest/artifacts.py",
+                     "src/harvest/compare.py"):
+            with self.subTest(path):
+                rc = subprocess.call(["git", "diff", "--exit-code", "--quiet",
+                                      "HEAD", "--", path], cwd=ROOT)
+                self.assertEqual(rc, 0, path)
+
+    def test_the_driver_reads_the_counts_and_never_recounts_them(self):
+        """The values come off the DedupeResult, not from a second derivation."""
+        source = code_only(inspect.getsource(run_cells._sighting_counts))
+        for attribute in ("observation_count", "group_count",
+                          "duplicate_observation_count", "unusable"):
+            with self.subTest(attribute):
+                self.assertIn(attribute, source)
+        for reimplementation in ("candidate_key(", "canonicalize", "set(", "Counter"):
+            with self.subTest(reimplementation):
+                self.assertNotIn(reimplementation, source)
+
+    def test_no_new_run_parameter_was_added(self):
+        names = list(inspect.signature(run_cells.run).parameters)
+        self.assertEqual(names[:5],
+                         ["root", "cells", "clock", "fixtures_dir", "max_cells"])
+        for absent in ("sightings", "count_sightings", "duplicate_rate",
+                       "observability"):
+            with self.subTest(absent):
+                self.assertNotIn(absent, names)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

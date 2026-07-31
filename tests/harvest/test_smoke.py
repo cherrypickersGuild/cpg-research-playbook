@@ -724,5 +724,124 @@ class TestOwnershipBoundaries(unittest.TestCase):
         self.assertEqual(runvalidate.TOTAL_PATHS, 43)
 
 
+# ------------------------------------------------------- S9-5C2 sighting math
+class TestSightingArithmetic(Base):
+    """S9-5C2 - the validator checks that a measured tuple adds up.
+
+    The enforcement is deliberately split three ways, and this class owns exactly
+    one third of it:
+
+      * the SCHEMA owns all-or-none presence, integer type and non-negativity, in
+        every mode and at write time (`tests/harvest/test_manifest.py`);
+      * THIS check owns the arithmetic, and only for smoke manifests, because
+        `validate_run` refuses every non-smoke mode by design and C2 does not
+        widen it;
+      * the PRODUCER owns correct capture, independent of whether a validator ever
+        looks (`tests/harvest/test_run_cells.py`).
+
+    Conditional by necessity: a pre-C2 manifest carries none of these keys, and
+    failing it would call the retained M2/M3 evidence broken.
+    """
+
+    def rewrite_manifest(self, root, run_id, mutate):
+        """Edit one manifest on disk. The test is the writer here, never the code."""
+        path = os.path.join(root, "runs", run_id, "manifest.json")
+        with open(path, encoding="utf-8") as handle:
+            doc = json.load(handle)
+        mutate(doc)
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(doc, handle)
+        return doc
+
+    def test_a_real_smoke_carries_a_consistent_tuple_and_stays_valid(self):
+        root = self.valid_root()
+        manifest = manifest_of(root, RUN_A)
+        measured = [row for row in manifest["cells"]
+                    if "candidate_observations" in row]
+        self.assertTrue(measured, "a completed smoke must publish the tuple")
+        for row in measured:
+            with self.subTest(row["cell_id"]):
+                self.assertEqual(row["candidate_observations"],
+                                 row["unique_candidate_keys"]
+                                 + row["repeated_candidate_observations"])
+        self.assertTrue(runvalidate.validate_run(root, RUN_A)["valid"])
+
+    def test_an_inconsistent_tuple_is_reported(self):
+        root = self.valid_root()
+        target = {}
+
+        def break_one(doc):
+            for row in doc["cells"]:
+                if "candidate_observations" in row:
+                    target["cell_id"] = row["cell_id"]
+                    row["repeated_candidate_observations"] += 1
+                    return
+        self.rewrite_manifest(root, RUN_A, break_one)
+        self.assertTrue(target, "no measured row was available to perturb")
+        report = runvalidate.validate_run(root, RUN_A)
+        self.assertFalse(report["valid"])
+        self.assertTrue(
+            any("candidate_observations" in e and target["cell_id"] in e
+                for e in report["errors"]),
+            report["errors"])
+
+    def test_a_manifest_with_no_tuple_at_all_remains_valid(self):
+        """The pre-C2 shape. Absence is not an error; it is an unmeasured run."""
+        root = self.valid_root()
+
+        def strip(doc):
+            for row in doc["cells"]:
+                for name in run_cells.SIGHTING_FIELDS:
+                    row.pop(name, None)
+        self.rewrite_manifest(root, RUN_A, strip)
+        report = runvalidate.validate_run(root, RUN_A)
+        self.assertTrue(report["valid"], report["errors"])
+
+    def test_the_check_reads_only_the_row_and_recomputes_nothing(self):
+        """Arithmetic on three integers. No second derivation, no re-grouping.
+
+        Scanned through the AST, not as a substring: the docstring NAMES `dedupe`
+        in order to record the boundary, and `candidate_key` is a substring of the
+        field `unique_candidate_keys`. A raw text scan would be permanently red on
+        the very sentence that states the guarantee - the reason `test_run_cells.py`
+        carries `code_only`. This reads what the function CALLS.
+        """
+        import inspect
+        tree = ast.parse(inspect.getsource(runvalidate._check_sightings))
+        referenced = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute):
+                referenced.add(node.attr)
+                if isinstance(node.value, ast.Name):
+                    referenced.add(node.value.id)
+            elif isinstance(node, ast.Name):
+                referenced.add(node.id)
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                self.fail("the check must import nothing of its own")
+        for forbidden in ("dedupe", "extract", "pool", "targetfetch", "classify",
+                          "verify", "candidate_key", "canonicalize", "group",
+                          "normalize_all", "observation_count",
+                          "duplicate_observation_count", "open", "json"):
+            with self.subTest(forbidden):
+                self.assertNotIn(forbidden, referenced)
+
+    def test_the_validator_uses_no_bare_assert(self):
+        """Errors are COLLECTED in this module's style, never raised by assert."""
+        import inspect
+        tree = ast.parse(inspect.getsource(runvalidate._check_sightings))
+        self.assertEqual([n for n in ast.walk(tree) if isinstance(n, ast.Assert)],
+                         [])
+
+    def test_validate_run_is_still_smoke_only(self):
+        """C2 did not broaden the validator to production modes."""
+        root = self.valid_root()
+        self.rewrite_manifest(
+            root, RUN_A, lambda doc: doc.__setitem__("mode", "harvest"))
+        report = runvalidate.validate_run(root, RUN_A)
+        self.assertFalse(report["valid"])
+        self.assertTrue(any("expected 'smoke'" in e for e in report["errors"]),
+                        report["errors"])
+
+
 if __name__ == "__main__":
     unittest.main()

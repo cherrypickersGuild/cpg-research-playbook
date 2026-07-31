@@ -416,5 +416,109 @@ class TestBoundary(unittest.TestCase):
             self.assertTrue(hasattr(artifacts, name), name)
 
 
+class TestSightingCounterSchema(unittest.TestCase):
+    """S9-5C2 - the four sighting counters are ONE schema-level tuple.
+
+    The producer decides whether a completed cell is measured; the SCHEMA decides
+    that a measurement is never partial. That split matters because the schema
+    cannot tell a newly completed row from a pre-C2 completed row - both are just
+    rows - so mandatory presence on new work stays a producer contract, owned by
+    `run_cells._cell_row` and its suite, while all-or-none is enforced here in
+    every mode and at write time (`artifacts.write_document` validates first).
+
+    `dependentRequired` is the exact tool: it fires only when a key is PRESENT, so
+    every pre-C2 manifest and every `not_run` row stays valid untouched. That is
+    what makes C2 need no migration, no backfill and no schema-version bump.
+    """
+
+    FIELDS = ("candidate_observations", "unique_candidate_keys",
+              "repeated_candidate_observations",
+              "uncanonicalizable_candidate_observations")
+
+    def row(self, **over):
+        """One measured cell row, complete unless a test removes something."""
+        cell_id = configured_cell_ids()[0]
+        base = {"cell_id": cell_id, "status": "ok", "candidates": 4,
+                "accepted": 1, "rejected": 3,
+                "candidate_observations": 10, "unique_candidate_keys": 7,
+                "repeated_candidate_observations": 3,
+                "uncanonicalizable_candidate_observations": 2}
+        base.update(over)
+        return base
+
+    def validate(self, row):
+        return schema.validate(manifest(cells=[row]), "run_manifest.v1.json")
+
+    def test_a_complete_tuple_is_accepted(self):
+        self.assertEqual(self.validate(self.row()), [])
+
+    def test_a_manifest_omitting_all_four_remains_valid(self):
+        """Every M2/M3 manifest is this shape. C2 must not invalidate them."""
+        row = self.row()
+        for name in self.FIELDS:
+            del row[name]
+        self.assertEqual(self.validate(row), [])
+
+    def test_removing_any_one_of_the_four_is_refused(self):
+        for name in self.FIELDS:
+            with self.subTest(missing=name):
+                row = self.row()
+                del row[name]
+                self.assertNotEqual(
+                    self.validate(row), [],
+                    "a partial tuple must be refused; %s was dropped" % name)
+
+    def test_each_field_alone_is_refused(self):
+        """All four directions of the dependency, proved from the other side."""
+        for name in self.FIELDS:
+            with self.subTest(only=name):
+                row = self.row()
+                for other in self.FIELDS:
+                    if other != name:
+                        del row[other]
+                self.assertNotEqual(self.validate(row), [])
+
+    def test_a_negative_count_is_refused(self):
+        for name in self.FIELDS:
+            with self.subTest(name):
+                self.assertNotEqual(self.validate(self.row(**{name: -1})), [])
+
+    def test_a_non_integer_count_is_refused(self):
+        for bad in (1.5, "3", None, True, [3], {"n": 3}):
+            with self.subTest(repr(bad)):
+                self.assertNotEqual(
+                    self.validate(self.row(candidate_observations=bad)), [])
+
+    def test_zero_is_a_legitimate_measurement(self):
+        row = self.row(**{name: 0 for name in self.FIELDS})
+        self.assertEqual(self.validate(row), [])
+
+    def test_the_dependency_is_declared_in_all_four_directions(self):
+        items = (schema.load_schema("run_manifest.v1.json")["properties"]
+                 ["cells"]["items"])
+        dependent = items["dependentRequired"]
+        for name in self.FIELDS:
+            with self.subTest(name):
+                self.assertEqual(sorted(dependent[name]),
+                                 sorted(f for f in self.FIELDS if f != name))
+
+    def test_the_row_still_refuses_an_invented_field(self):
+        """`additionalProperties: false` survives the addition."""
+        self.assertNotEqual(self.validate(self.row(invented_counter=1)), [])
+
+    def test_the_schema_version_is_unchanged(self):
+        """Additive optional properties do not bump the version."""
+        doc = schema.load_schema("run_manifest.v1.json")
+        self.assertEqual(doc["properties"]["schema_version"]["const"], 1)
+        self.assertEqual(manifest()["schema_version"], 1)
+
+    def test_no_rate_property_was_added_to_a_cell_row(self):
+        properties = (schema.load_schema("run_manifest.v1.json")["properties"]
+                      ["cells"]["items"]["properties"])
+        for forbidden in ("duplicate_rate", "repeat_rate", "sighting_rate"):
+            with self.subTest(forbidden):
+                self.assertNotIn(forbidden, properties)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

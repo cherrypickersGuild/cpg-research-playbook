@@ -92,13 +92,24 @@
                      "robots_denied", "http_timeout", "http_5xx", "dns_failure",
                      "lease_timeout", "budget_exhausted", "circuit_open", "preflight_failed"]
           },
-          "candidates": { "type": "integer", "minimum": 0 },
+          "candidates": { "type": "integer", "minimum": 0, "description": "What the cell PROCESSED, after both smoke caps. Not a discovery count: compare unique_candidate_keys, which is measured before either cap. The difference is not attributable to one cap." },
           "accepted": { "type": "integer", "minimum": 0 },
           "rejected": { "type": "integer", "minimum": 0 },
           "requests_made": { "type": "integer", "minimum": 0 },
           "elapsed_sec": { "type": "number", "minimum": 0 },
           "adapters_used": { "type": "array", "items": { "type": "string" } },
-          "promoted": { "type": "boolean", "description": "false when the worker died before promotion; merge ignores unpromoted cells." }
+          "promoted": { "type": "boolean", "description": "false when the worker died before promotion; merge ignores unpromoted cells." },
+
+          "candidate_observations": { "type": "integer", "minimum": 0, "description": "S9-5C2 denominator. Distinct source items with a canonicalizable target that this cell ingested, measured BEFORE both processing caps. Identity is (source_id, position, target_url), a property of the item: repeated delivery of one source snapshot to several lanes is merged into provenance first and does NOT inflate this. A sighting count, not a feed-row count." },
+          "unique_candidate_keys": { "type": "integer", "minimum": 0, "description": "S9-5C2. Distinct canonical candidate GROUPING KEYS among those observations, before both caps. This is not the post-cap `candidates` field above." },
+          "repeated_candidate_observations": { "type": "integer", "minimum": 0, "description": "S9-5C2 numerator. Observations beyond the first for their canonical candidate key. The in-run repeat rate is derived as repeated_candidate_observations / candidate_observations; no rate is stored, and it is undefined when the denominator is 0." },
+          "uncanonicalizable_candidate_observations": { "type": "integer", "minimum": 0, "description": "S9-5C2. Distinct source items whose target URL failed canonicalization AT THE DEDUPE BOUNDARY. Same unit as candidate_observations but EXCLUDED from it and from the three-term arithmetic: such an item never became an observation and never became a group. Not a later extraction issue - a candidate missing a title or a parseable date still becomes a candidate." }
+        },
+        "dependentRequired": {
+          "candidate_observations": ["unique_candidate_keys", "repeated_candidate_observations", "uncanonicalizable_candidate_observations"],
+          "unique_candidate_keys": ["candidate_observations", "repeated_candidate_observations", "uncanonicalizable_candidate_observations"],
+          "repeated_candidate_observations": ["candidate_observations", "unique_candidate_keys", "uncanonicalizable_candidate_observations"],
+          "uncanonicalizable_candidate_observations": ["candidate_observations", "unique_candidate_keys", "repeated_candidate_observations"]
         }
       }
     },

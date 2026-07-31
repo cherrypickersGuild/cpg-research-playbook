@@ -1744,6 +1744,114 @@ Five paths: `src/harvest/run_cells.py` · `tests/harvest/test_run_cells.py` ·
 decision; **the retained M2/M3 runs remain valid without migration or backfill**, since manifests
 without `cells[].elapsed_sec` stay schema-valid; and **no fresh live smoke pair is required**.
 
+---
+
+## S9-5C2 AS EXECUTED — in-run candidate sightings · **COMPLETE**
+
+S9-5 could not compute an in-run duplicate rate: the numerator and denominator existed for the
+length of one local variable and were then collected. C2 records them. It is **evidence-only** —
+no verdict, threshold, ordering, cap, source, robots, artifact-identity or publication decision
+moved.
+
+### The corrected ownership finding
+
+The S9-5C scope preflight proposed **`CandidatePool` as owner and `request_accounting` as the
+location**. A read-only correction audit overturned both, and the record is kept because the
+reasoning matters more than the conclusion:
+
+- **`CandidatePool` is not the owner.** `pool.add_candidate` is reached only through
+  `_fetch_targets`, and `run_cells.py` passes `pool=pool if enrich else None`. Both live smokes ran
+  `--no-enrich`, so **`add_candidate` was never called once** in either. A pool-owned metric would
+  have reported **0 sightings across both achieved milestones** while 127 candidates were processed.
+  Its input is also the *accepted, twice-capped* set, so its denominator would be a survivor count.
+- **`request_accounting` is not the location.** That block's contract is *logical owners asserted,
+  HTTP attempts observed*, in two deliberately separate key spaces. A candidate sighting is neither.
+  It is also run-level, which would force either a run-wide "unique" number that is really a sum of
+  per-cell uniques, or a second per-cell copy that can drift.
+- **`dedupe.group()` already computes all three numbers**, with the invariant holding by
+  construction at `dedupe.py:407`. C2 is **wiring, not measurement** — and `dedupe.py`, `extract.py`
+  and `pool.py` are byte-frozen by committed guards, so reading the existing `DedupeResult` from
+  `run_cells.py` is the only owner that breaks nothing.
+
+**The `iff` cap claim in the first audit was RETRACTED**, and not for the reason first suspected.
+Extraction does **not** reduce cardinality: `normalize_all` is a total, non-filtering map, so
+`DedupeResult.group_count == len(ExtractionResult.candidates)` before the cap — already proved by
+`test_extract.py::test_one_candidate_per_valid_group` and
+`test_a_malformed_optional_field_never_removes_a_candidate`. The real defect was that **two** caps
+sit between the measurement and `cells[].candidates`: `_apply_candidate_cap` **and**
+`_accepted_prefix`, the latter proved to move that number by
+`test_smoke.py::test_the_accepted_cap_binds_on_a_deterministic_prefix`. **Which cap truncated a cell
+is therefore not attributable, C2 claims nothing about it, and the S9-5 conclusion stands: the
+12/5 caps remain provisional and NOT FULLY OBSERVABLE.**
+
+### The contract
+
+Four integers on `run_manifest.cells[]`, captured in `_run_one_cell` at the `DedupeResult` seam,
+**before both processing caps**:
+
+| Field | Source | Meaning |
+|---|---|---|
+| `candidate_observations` | `observation_count` | **Denominator.** Distinct source items with a canonicalizable target, identity `(source_id, position, target_url)`. Repeated delivery of one source snapshot to several lanes is merged first and does **not** inflate it. A sighting count, not a feed-row count. |
+| `unique_candidate_keys` | `group_count` | Distinct canonical **grouping keys**. Not the post-cap `cells[].candidates`. |
+| `repeated_candidate_observations` | `duplicate_observation_count` | **Numerator.** Observations beyond the first for their canonical key. |
+| `uncanonicalizable_candidate_observations` | `len(unusable)` | Distinct source items whose target URL failed canonicalization **at the dedupe boundary**. Same unit as the denominator, **excluded** from it and from the arithmetic — such an item never became an observation and never became a group. **Not** a later extraction issue: a candidate missing a title or a parseable date still becomes a candidate, and its problem is a `NormalizationIssue`. |
+
+```text
+candidate_observations == unique_candidate_keys + repeated_candidate_observations
+```
+
+**No rate is stored.** It is derived as `repeated_candidate_observations /
+candidate_observations`, and is simply undefined when the denominator is 0 — so there is no
+zero-denominator representation to get wrong. **No fifth count**, no `run()` parameter, no clock
+read, no network operation. A zero-observation completed cell emits integer zeroes; `not_run` cells
+and cells whose `_run_one_cell` raised carry **nothing**, the same distinction C1 drew for
+`elapsed_sec`. A partial tuple is refused at the producer.
+
+### E9-19 — the three-way enforcement split, stated exactly
+
+| Enforced | Owner | Scope |
+|---|---|---|
+| All-or-none presence, `integer`, `minimum: 0` | **schema** `dependentRequired` on `cells[]`, all four directions | **every mode**, and at write time — `artifacts.write_document` validates before writing |
+| The arithmetic relationship | **`runvalidate._check_sightings`**, conditional on all three being present | **smoke manifests only** — `validate_run` already requires `mode == "smoke"` and `config.enrich == false`, and C2 does **not** widen it |
+| Correct capture and construction | **`tests/harvest/test_run_cells.py`** | the producer, independent of whether a validator ever looks |
+
+Two consequences worth stating rather than glossing:
+
+- **JSON Schema cannot express the arithmetic** — there is no cross-property arithmetic keyword in
+  2020-12 — so the split is forced, not chosen.
+- **The schema cannot tell a newly completed row from a pre-C2 completed row.** Both are just rows.
+  So *mandatory presence on newly completed cells* stays a **producer** contract owned by
+  `run_cells._cell_row`; the schema owns only that a measurement is never partial.
+
+The validator check follows the committed precedent exactly: `_check_counts` (`total_records !=
+full_records + cross_references`) and the topic `by_category` sum are both conditional cross-field
+arithmetic on optional fields, guarded on presence. It imports nothing, recomputes nothing, and uses
+no bare `assert` — asserted by an AST scan, because the docstring names `dedupe` to record the
+boundary and `candidate_key` is a substring of `unique_candidate_keys`.
+
+### Compatibility
+
+**No migration, no backfill, no `schema_version` bump.** `dependentRequired` fires only when a key
+is present, so every pre-C2 manifest and every `not_run` row stays valid untouched. The retained
+M2/M3 runs remain authoritative evidence and simply carry no C2 fields — which is the honest
+record, since the numbers were never measured. **No fresh live smoke pair is required**, and
+`compare.py` needed no change: `CONTENT_FIELDS` is derived from the committed schemas, so the new
+properties are classified as content automatically.
+
+### As delivered
+
+Eight paths: `src/harvest/run_cells.py` · `src/harvest/runvalidate.py` ·
+`schemas/harvest/run_manifest.v1.json` · `tests/harvest/test_run_cells.py` ·
+`tests/harvest/test_manifest.py` · `tests/harvest/test_smoke.py` · this plan · `TODO.md`.
+
+**Anti-vacuity required synthetic input.** The committed fixture corpus contains **no** repeated
+sighting and **no** uncanonicalizable target — all twelve cells report 0 and 0. The corpus is
+byte-frozen, so the repeat cases are built in-test from the real `AdapterResult` / `RawCandidate`
+through the real `dedupe.group`, the same technique S6-7 used to prove a shared identity.
+
+**C3 remains UNAPPROVED and UNSTARTED. S9-6 remains unstarted.** The `63/63` gate owed before
+S9-L4 will cover C1 and C2; **it covers C3 only if C3 is separately approved and landed before it.**
+
 ### S9-6 — linkcheck implementation
 
 | Field | Value |
