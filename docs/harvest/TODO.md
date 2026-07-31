@@ -117,7 +117,8 @@ roadmap:                     docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md — 
                              milestones M1-M7, remaining-checkpoint forecast, and the gap
                              register G1-G17. Read it before scoping Stage 9.
 stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPOSED —
-                             S9-0 AND S9-1 APPROVED AND COMPLETE. Settles D9-A (external
+                             S9-0, S9-1, S9-2, S9-3 AND S9-4 APPROVED AND COMPLETE;
+                             S9-L1 EXECUTED AND COMPLETE. Settles D9-A (external
                              retained state root) and D9-B (harvest.sh + cli.py;
                              run_cells.run() generalized, no new engine; one atomic
                              Transport seam), every command contract, the wrapper plan
@@ -140,8 +141,69 @@ stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPO
                              a 2nd run adds 18 and updates the same 24) and E9-12
                              (explicit run_id_value seam, pattern read from the
                              committed schema).
-                             S9-L1 MANDATORY AND UNAPPROVED; S9-4 AND EVERY LATER
-                             CHECKPOINT UNAPPROVED.
+                             E9-13 (S9-4 is NINE paths; two spent registry snapshots
+                             retired, partition invariants intact), E9-14 (--normalize
+                             REMOVED, never implemented; three-class partition; the
+                             content class is DERIVED from the committed schemas so an
+                             unenumerated field fails loudly), E9-15 (comparison covers
+                             the 18 selected-run documents ONLY — the 24 shared ones are
+                             updated in place and are never presented as historical A/B
+                             snapshots; both runs may be historical and runvalidate is
+                             NOT weakened) and E9-16 (metadata counts: an invariant
+                             WITHIN a run, a content change BETWEEN runs), E9-17 (S9-4
+                             accounting 61 -> 62; the pre-S9-L2 authoritative gate
+                             expects 62/62, and 63/63 is a SECOND gate owed before
+                             S9-L4).
+                             S9-L2 AND EVERY LATER CHECKPOINT UNAPPROVED. NEITHER
+                             AUTHORITATIVE FULL GATE HAS RUN.
+stage_9_l1_execution:        COMPLETE. `preflight-sources --timeout-sec 20` executed
+                             EXACTLY ONCE at 2026-07-31T08:21:16Z, all 25 configured
+                             sources, no --sources subset, exit code 1 (complete JSON,
+                             at least one source failed — not a crash). 25 unique rows
+                             sorted by source_id: 19 ok, 0 adapter_error, 6
+                             infrastructure_error, ALL SIX robots_denied
+                             (lm-eval-harness-releases, netflix-techblog,
+                             openai-evals-releases, oss-langchain-releases,
+                             oss-mcp-servers-releases, oss-ollama-releases — five share
+                             the GitHub releases.atom pattern). microsoft-blogs reports
+                             crawl_delay_sec 10.0. stderr empty; NO retry and no second
+                             invocation; no lease root leaked; no commit. Logs retained
+                             OUTSIDE the repository at
+                             ../scratchpad/s9_l1_preflight_20260731T082116Z_540.{stdout.json,stderr.log,rc}.
+                             THE FIRST OUTBOUND TRAFFIC THIS PIPELINE HAS EVER MADE.
+                             The six denied rows are PRESERVED OBSERVATIONS, not
+                             approved corrections: no source, policy, timeout or robots
+                             config was changed, and none may be changed to improve a
+                             live result. Disposition belongs to S9-5 calibration.
+stage_9_4_scope_expansion:   RATIFIED, one path (eight -> NINE). A read-only scan before
+                             editing found a SECOND spent S9-3 registry census outside
+                             the approved set —
+                             test_smoke.py::test_compare_diff_and_linkcheck_remain_unimplemented
+                             — asserting compare-runs and diff must remain PLANNED, which
+                             registering them necessarily falsifies. The checkpoint
+                             STOPPED WITHOUT COMMITTING and reported; tests/harvest/
+                             test_smoke.py was then added by explicit approval, making
+                             S9-4 nine paths in ONE atomic commit. Both spent guards
+                             were RETIRED, not weakened: no replacement census, no
+                             "linkcheck must stay planned" guard, and no smoke
+                             behaviour, bounds, recovery, validation,
+                             publication-ineligibility or no-network assertion touched.
+                             THIRD consecutive checkpoint to hit E9-9's problem.
+stage_9_4_harness:           61 -> 62 wrappers (19 legacy + 43 taxonomy); ISOLATED[]
+                             61 -> 62 with the committed 61 byte-identical as an ordered
+                             prefix; exactly one wrapper appended; one routing arm added
+                             (compare.py) and one extended (cli.py); every target
+                             canonical tests/<name>.sh; no future-wrapper target, no
+                             aggregate, no blanket arm.
+stage_9_4_validation:        FOCUSED ONLY, 162 assertions green — compare 48, cli 58,
+                             smoke 56 — plus py_compile x5, bash -n x2 and one
+                             explicit-mode harness run over compare.py and cli.py at
+                             exit 0 with four wrappers each exactly once and zero WARN
+                             skips. `--all` was NOT run: §8.2 places the authoritative
+                             full gate at the final code baseline before the first live
+                             smoke, and E9-17 corrects its expectation to 62/62. NO
+                             network request of any kind; data/harvested/ was looked at
+                             by `diff` and REMAINS ABSENT.
 stage_9_3_scope_expansion:   RATIFIED, one path. E9-9 anticipated the duplicated
                              `bounds` snapshot in test_run_cells.py but MISSED the
                              same guard in test_cli.py, whose live-transport AST scan
@@ -172,10 +234,16 @@ cli_registry_invariant:      DURABLE, replaces two spent snapshots. The Stage 9 
                              DISJOINT and their UNION is that surface; every handler is
                              callable; every planned entry names its owning checkpoint;
                              help reports both honestly. Stays true as each command
-                             moves across, so S9-3, S9-4 and S9-6 will not re-encounter
-                             this blocker. NO exact registry-size assertion remains in
+                             moves across. NO exact registry-size assertion remains in
                              the permanent CLI suite; per-checkpoint facts live in the
                              suite that owns the command.
+                             CORRECTED at S9-4: this block previously claimed S9-3, S9-4
+                             and S9-6 "will not re-encounter this blocker". S9-4 DID —
+                             not in test_cli.py, whose invariant held exactly as
+                             designed, but via a DUPLICATE census S9-3 wrote into
+                             test_smoke.py. The invariant only protects the file that
+                             holds it; a checkpoint census written into any other suite
+                             is still spent by the next checkpoint (E9-13).
 stage_9_2_validation:        FOCUSED ONLY, 122 assertions green — preflight 65, cli 57 —
                              plus py_compile x4 and one explicit-mode harness sample at
                              exit 0 with both wrappers exactly once and zero WARN skips.
@@ -1290,7 +1358,9 @@ and 2 are unchanged, items 3 and 4 are updated at closure)*:
       this is not a deferred task with work owing, it is an authorized-and-declined option. It is not
       recorded as passed, failed, waived or complete. **D6-A and D6-B remain resolved and both are
       delivered.**
-- [ ] `scripts/harvest/{refresh,linkcheck,promote,diff,compare-runs}` subcommands
+- [ ] `scripts/harvest/{refresh,linkcheck,promote}` subcommands — **`diff` and `compare-runs` were
+      reassigned to Stage 9 and implemented at S9-4**; `linkcheck` is owned by S9-6; `refresh` and
+      `promote` remain descoped by E11 with no owner
 - [ ] Transaction journal, before-images, per-operation commit record, rollback, resume
 - [ ] `--publication-root` for isolated testing
 - [ ] `tests/test_taxonomy_linkcheck.sh`

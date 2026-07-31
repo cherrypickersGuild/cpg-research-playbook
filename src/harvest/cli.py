@@ -33,7 +33,8 @@ E9-2 narrows the rule the plan stated broadly: an external `--state-root` is
 required by every command that reads or writes a retained run (smoke, validate,
 compare-runs, diff, linkcheck). `preflight-sources` is the deliberate exception —
 it creates no run, reads none, writes no state, and uses a temporary lease root
-that is removed when it exits. None of those commands exists yet.
+that is removed when it exits. `linkcheck` is the only one that does not yet
+exist.
 """
 import argparse
 import os
@@ -43,6 +44,7 @@ import tempfile
 import time
 
 from . import artifacts
+from . import compare as compare_mod
 from . import httpclient
 from . import preflight as preflight_mod
 from . import run_cells
@@ -77,8 +79,6 @@ PROHIBITED_RUNTIME_PATHS = (
 # to find out why it is missing. Membership here confers nothing, and an entry is
 # removed only by the checkpoint that implements it.
 PLANNED_COMMANDS = {
-    "compare-runs": "S9-4",
-    "diff": "S9-4",
     "linkcheck": "S9-6 (implementation) then S9-L4 (live execution)",
 }
 
@@ -451,12 +451,87 @@ def cmd_validate(argv):
     return 0 if report["valid"] else 1
 
 
+# ------------------------------------------------- compare-runs, diff (S9-4)
+def cmd_compare_runs(argv):
+    """Compare two runs under one state root. Offline, read-only.
+
+    `--run-id` is given exactly twice. Both runs may be historical: comparison
+    asks whether two runs agree, not whether either is the run the pointer names,
+    so this does NOT go through `runvalidate.validate_run()` and does not require
+    or move `LATEST_RUN_ID`.
+
+    Exit 0 when every invariant holds — content changes present or not — and 1
+    when an invariant was violated or a field moved that no committed schema
+    class covers. The complete report is printed either way.
+    """
+    parser = build_parser(
+        "compare-runs",
+        "Compare two runs' 18 selected documents. Offline, read-only.")
+    add_state_root_argument(parser)
+    parser.add_argument("--run-id", action="append", default=None, metavar="ID",
+                        help="give exactly twice: the two runs to compare")
+    args = parser.parse_args(argv)
+
+    state_root = validate_state_root(args.state_root)
+    run_ids = list(args.run_id or [])
+    if len(run_ids) != 2:
+        raise CliError(
+            "compare-runs needs exactly two --run-id values, got %d. A comparison "
+            "has two sides." % len(run_ids))
+    run_a, run_b = (runvalidate.validate_run_id(value) for value in run_ids)
+    if not os.path.isdir(state_root):
+        raise CliError("--state-root %s does not exist or is not a directory"
+                       % state_root)
+
+    report = compare_mod.compare_runs(state_root, run_a, run_b)
+    sys.stdout.buffer.write(artifacts.serialize(report))
+    sys.stdout.buffer.flush()
+    return 0 if report["idempotent"] else 1
+
+
+def cmd_diff(argv):
+    """Compare one staged run with the publication root. Offline, read-only.
+
+    The default publication root is the repository's `data/harvested/`, which
+    Stage 9 expects to be ABSENT — reported exactly as that, which is a real
+    answer and not an empty diff. Nothing is created, staged or promoted, so this
+    always exits 0 once it has read: `diff` describes a difference and has no
+    authority to act on one.
+    """
+    parser = build_parser(
+        "diff",
+        "Compare one run with the publication root. Offline, read-only.")
+    add_state_root_argument(parser)
+    parser.add_argument("--run-id", required=True, metavar="ID",
+                        help="the staged run to compare")
+    parser.add_argument("--publication-root", default=None, metavar="DIR",
+                        help="default: the repository's data/harvested/")
+    args = parser.parse_args(argv)
+
+    state_root = validate_state_root(args.state_root)
+    run_id = runvalidate.validate_run_id(args.run_id)
+    if not os.path.isdir(state_root):
+        raise CliError("--state-root %s does not exist or is not a directory"
+                       % state_root)
+
+    publication_root = args.publication_root
+    if publication_root is None:
+        publication_root = os.path.join(repository_root(), "data", "harvested")
+
+    report = compare_mod.diff_publication(state_root, run_id, publication_root)
+    sys.stdout.buffer.write(artifacts.serialize(report))
+    sys.stdout.buffer.flush()
+    return 0
+
+
 # Registered subcommands: name -> callable(argv) -> exit code. A command appears
 # here only in the checkpoint that implements it.
 COMMANDS = {
     "preflight-sources": cmd_preflight_sources,
     "smoke": cmd_smoke,
     "validate": cmd_validate,
+    "compare-runs": cmd_compare_runs,
+    "diff": cmd_diff,
 }
 
 
@@ -480,6 +555,15 @@ commands:
                       sound. Offline, read-only, repairs nothing.
                       --state-root PATH --run-id ID
                       exit 0 when valid, 1 when not.
+  compare-runs        compare two runs' 18 selected documents and classify every
+                      difference as permitted, content or invariant. Offline,
+                      read-only; either run may be historical.
+                      --state-root PATH --run-id A --run-id B
+                      exit 0 when every invariant holds, 1 when one does not.
+  diff                compare one run with the publication root. Offline,
+                      read-only; writes, stages and promotes nothing.
+                      --state-root PATH --run-id ID [--publication-root DIR]
+                      exit 0 once read; an absent publication root is a result.
   --help, -h          show this text
 
 Planned and NOT implemented. Stage 9 registers each in the checkpoint that
@@ -526,7 +610,8 @@ def main(argv=None):
         # observers agree.
         return 2 if exc.code is None else int(exc.code)
     except (CliError, preflight_mod.PreflightError,
-            runvalidate.RunValidateError, run_cells.RunCellsError) as exc:
+            runvalidate.RunValidateError, run_cells.RunCellsError,
+            compare_mod.CompareError) as exc:
         # A refused argument or a refused configuration. Exit 2 — the same code
         # argparse uses for a usage error — and print to stderr, so stdout stays
         # JSON-only and a caller parsing it is never handed prose. Nothing has

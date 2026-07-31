@@ -190,6 +190,120 @@ second regex — refused before any artifact write when invalid, refused before 
 integrated preflight when it already names a finished run, and passed unchanged to
 every artifact and pointer owner.
 
+### E9-13 — S9-4 scope is NINE paths, because two registry snapshots were spent
+
+S9-4 was approved with an eight-path set. A read-only scan before editing found a **second** spent
+S9-3 registry census outside it, and the checkpoint stopped and reported rather than widening itself.
+
+Two committed snapshots asserted that `compare-runs` and `diff` must remain **planned**, and both
+became false the moment S9-4 registered them:
+
+```text
+tests/harvest/test_cli.py     `for name in ("compare-runs", "diff", "linkcheck"): assertIn(name, planned)`
+tests/harvest/test_smoke.py   test_compare_diff_and_linkcheck_remain_unimplemented   (the one outside the eight)
+```
+
+Both were **retired, not weakened**: the spent membership assertion was deleted, no replacement
+census was written, and **no guard that `linkcheck` must remain planned** was added — that would be
+the same mistake with a smaller number. The **durable registry-partition invariants remain intact**
+in both files: implemented and planned stay disjoint, their union stays the exact six-command
+surface, and every registered handler stays callable. `tests/harvest/test_compare.py` now owns the
+durable fact that `compare-runs` and `diff` are registered and operational.
+
+**Final approved S9-4 path set — nine:** `src/harvest/compare.py` (new) · `src/harvest/cli.py` ·
+`tests/harvest/test_compare.py` (new) · `tests/test_taxonomy_compare.sh` (new) ·
+`tests/harvest/test_cli.py` · `tests/harvest/test_smoke.py` · `scripts/validate_task.sh` · this plan ·
+`TODO.md`.
+
+This is the **third** consecutive checkpoint to hit E9-9's anticipated spent-guard problem (S9-1,
+S9-2, now S9-4). The lesson stands: a checkpoint census written into a suite that does not own the
+registry will be spent by the next checkpoint.
+
+### E9-14 — `--normalize` is REMOVED, not deferred
+
+§6.4 offered `compare-runs [--normalize]` and never settled what it would fold. **The option is
+removed from the plan and was not implemented.** Comparison always enumerates and classifies the
+actual differing JSON paths.
+
+The reason is the committed S5-7/S6-7 rule: **a normalizer forgives every field it was not told
+about**, so the day a sixth field starts moving it passes silently. There is therefore no
+timestamp-name pattern, no wildcard deletion, no recursive "ignore these key names everywhere" and no
+unknown-field normalization anywhere in `compare.py`.
+
+Its replacement is a **three-class partition** in which every difference lands in exactly one section:
+
+```text
+permitted_changes     clock-derived, ENUMERATED EXACTLY (9 fields, below)
+content_changes       legitimate editorial/content movement
+invariant_violations  identity/idempotency breaches AND unclassified fields
+```
+
+The permitted set is the §6.4 contract **restricted to fields that actually occur in the 18
+selected-run documents**: `harvest_run_id` · `generated_at` · `discovered_at` · `freshness_score` ·
+`last_checked_at` · `started_at` · `finished_at` · `observed_at` · `detected_at`. The plan's
+`rejected_at` and the ledger's four are deliberately **absent** — they live in the 24 shared
+documents, which are not compared, so permitting them would permit movement nowhere real.
+
+`content_changes` is **derived from the committed schemas**, not hand-typed: every property name the
+six selected-run schemas declare, minus the permitted and invariant classes. The consequence is the
+point — **a field present on disk but in no committed schema belongs to no class and is reported as
+`unclassified_field`, an invariant violation.** An unenumerated moving field fails loudly instead of
+disappearing.
+
+### E9-15 — historical comparison covers the 18 SELECTED-RUN documents only
+
+`compare-runs` compares the **18 selected-run documents** under each `runs/<run-id>/` — 12 cell
+artifacts, 3 topic artifacts, coverage, alias conflicts, manifest.
+
+**The 24 shared documents (12 ledgers, 12 rejection logs) are NOT compared, and must never be
+presented as historical A/B snapshots.** By E9-11 they are updated **in place** and are not
+per-run snapshots, so no historical pair exists to compare; reading today's copy twice and calling it
+a comparison of two runs would be a fabricated result. The report states the exclusion as a number
+and a sentence rather than as an empty section.
+
+**Both runs may be historical.** `runvalidate.validate_run()` is **not weakened, not called and not
+consulted** for pointer agreement: it still requires its run to be the one `LATEST_RUN_ID` names,
+because it answers "is the run this root points at sound?". S9-4 owns a separate historical-run
+reader, and a test asserts the `validate` contract still holds.
+
+### E9-16 — within-run versus between-run metadata counts
+
+§6.4 listed "every metadata count" as an identity invariant while §6.4's own content class listed a
+changed count as reportable. Resolved as two different questions:
+
+```text
+WITHIN one run    metadata counts MUST agree with that run's own records   -> invariant violation
+BETWEEN runs      a count that CHANGED is a content change                 -> reported, not a failure
+```
+
+Two live runs minutes apart legitimately see different feed windows, so a differing `total_records`
+between them is evidence of the corpus moving, not of identity breaking. A count that disagrees with
+the records **beside it** is a broken document either way. The intra-run half **reuses the committed
+`runvalidate` count check** rather than restating it, so "a count agrees with its records" has
+exactly one definition in the tree.
+
+### E9-17 — S9-4 wrapper accounting and the corrected gate sequence
+
+```text
+before S9-4             61   19 legacy + 42 taxonomy
+S9-4 adds              + 1   tests/test_taxonomy_compare.sh
+after S9-4              62   19 legacy + 43 taxonomy
+planned Stage 9 final   63   after S9-6
+```
+
+**62 is an inventory, not a gate result.** The corrected sequence:
+
+| When | Gate | Expects |
+|---|---|---|
+| S9-4 itself | **Focused validation only** — the three owned suites plus explicit-mode harness routing | no `--all` |
+| after S9-4 review, before S9-L2 | the **authoritative** `bash scripts/validate_task.sh --all`, separately approved | **62/62**, each exactly once, zero `WARN - skipping`, exit 0 |
+| S9-6 | adds the final wrapper | inventory becomes 63 |
+| before S9-L4 | a **new** authoritative full gate | **63/63** |
+
+§8.2's single authoritative `--all` therefore expects **62/62**, not 63/63: it runs at the final code
+baseline before the first live smoke, which is after S9-4 and before S9-6. The 63/63 run is a
+**second** authoritative gate, owed before S9-L4.
+
 ### E9-3 — the D9-B signature is cumulative across checkpoints
 
 §4.3's target signature describes Stage 9 **at its end**, not S9-1. S9-1 implements the `transport`,
@@ -199,11 +313,12 @@ and ignored would let a manifest report a cap that never bound anything — the 
 established for `config.enrich`. A test asserts `bounds` is absent from `run()` at S9-1.
 
 **Writing this plan, and committing it, approved no implementation and no live command.** S9-0 was
-the only approved checkpoint when it was written; **S9-1, S9-2 and S9-3 have since each been
-separately approved by name, implemented and completed** (§7). **S9-L1 remains mandatory and
-unapproved**, and **S9-4 and every later checkpoint remain unapproved**; nothing else below is
-scheduled. `preflight-sources`, `smoke` and `validate` are implemented and **none has ever been
-pointed at a real source**.
+the only approved checkpoint when it was written; **S9-1, S9-2, S9-3 and S9-4 have since each been
+separately approved by name, implemented and completed, and the operational checkpoint S9-L1 has
+been approved, executed exactly once and completed** (§7). **S9-L2 and every later checkpoint remain
+unapproved**; nothing else below is scheduled. `preflight-sources`, `smoke`, `validate`,
+`compare-runs` and `diff` are implemented; **only `preflight-sources` has ever been pointed at a real
+source**, once, at S9-L1.
 
 **Every later checkpoint requires its own separate approval by name, with its exact allowed-path set
 declared up front.** If a path outside that set turns out to be required, the checkpoint stops and
@@ -593,11 +708,17 @@ Offline. **No network request. Writes nothing, anywhere.** Reads one retained ru
 This is the command that turns "the smoke exited 0" into "the dataset is real". **It runs after every
 live execution**, offline, in the same checkpoint.
 
-### 6.4 `harvest.sh compare-runs` — **NOT IMPLEMENTED** (S9-4)
+### 6.4 `harvest.sh compare-runs` — **IMPLEMENTED** (S9-4)
 
 ```text
-bash scripts/harvest/harvest.sh compare-runs --state-root PATH --run-id A --run-id B [--normalize]
+bash scripts/harvest/harvest.sh compare-runs --state-root PATH --run-id A --run-id B
 ```
+
+> **As delivered, this section is amended by E9-14, E9-15 and E9-16.** `--normalize` was **removed
+> and never implemented**; comparison covers the **18 selected-run documents only**, never the 24
+> shared ones; and metadata counts are an invariant **within** a run and a content change **between**
+> runs. The two field classes below stand as written, with the permitted list restricted to fields
+> that actually occur in the selected-run documents.
 
 Offline; both runs under the same external state root. Deterministic JSON on binary stdout via
 `artifacts.serialize`. **No new runtime JSON** — Stage 9 establishes no schema and no lifecycle for a
@@ -619,7 +740,7 @@ see different feed windows.
 (content changes present or not); non-zero when an invariant is violated or an unenumerated field
 moved.
 
-### 6.5 `harvest.sh diff --run-id` — **NOT IMPLEMENTED** (S9-4) · contradiction resolved
+### 6.5 `harvest.sh diff --run-id` — **IMPLEMENTED** (S9-4) · contradiction resolved
 
 **The contradiction:** `IMPLEMENTATION_PLAN.md` §14 and `TODO.md`'s Stage 6 heading both list a
 `diff` subcommand (alongside `refresh`/`linkcheck`/`promote`/`compare-runs`); Stage 6's plan §14
@@ -646,6 +767,17 @@ bash scripts/harvest/harvest.sh diff --state-root PATH --run-id ID
 
 An absent publication root is a **first-class, distinguishable answer**, not an error and not "no
 changes".
+
+**As delivered**, `diff` reports **four** distinguishable states — `absent`, `empty`, `differs`,
+`identical` — and exits **0** once it has read, in every one of them: it describes a difference and
+has no authority to act on one. The expected publication set is the **16 committed paths** of
+ROADMAP §6.3 (12 category files + 3 topic aggregates + `publication_manifest.json`). Only the
+**layout** is committed — no projection from a run to publication bytes exists anywhere in the tree —
+so `diff` reports publication-side **paths** and **never fabricates content** for them, and a file
+present on both sides is listed as present-and-not-compared rather than diffed against invented
+bytes. Inventing a projection here would be writing the promotion S9-4 is forbidden to write. The
+default publication root is the repository's `data/harvested/`, which `diff` **looks at and never
+creates** — a test asserts it is still absent afterwards.
 
 ### 6.6 `harvest.sh linkcheck` — **NOT IMPLEMENTED** (S9-6)
 
@@ -1175,13 +1307,13 @@ and reviewed before S9-L2. S9-4 and every later checkpoint remain unapproved.
 `smoke` and `validate` have never been used against a real source. Live operation
 remains zero and M2 is unmet.**
 
-### S9-4 — run comparison and publication-diff implementation
+### S9-4 — run comparison and publication-diff implementation · **COMPLETE**
 
 | Field | Value |
 |---|---|
 | Purpose | `compare-runs` and `diff --run-id`, offline-tested |
 | Owns | Identity/idempotency invariants versus reportable content changes · deterministic stdout report · `diff --run-id` · proof that a live smoke does not alter the publication path |
-| Allowed paths | `src/harvest/compare.py` (new) · `src/harvest/cli.py` · `tests/harvest/test_compare.py` (new) · `tests/test_taxonomy_compare.sh` (new) · `scripts/validate_task.sh` · this plan · `TODO.md` |
+| Allowed paths | **NINE, per E9-13**: `src/harvest/compare.py` (new) · `src/harvest/cli.py` · `tests/harvest/test_compare.py` (new) · `tests/test_taxonomy_compare.sh` (new) · `tests/harvest/test_cli.py` · `tests/harvest/test_smoke.py` · `scripts/validate_task.sh` · this plan · `TODO.md` |
 | Risk tier | Code — additive |
 | Validation | Focused suite over synthetic run pairs; a proof that an **unenumerated** moving field fails rather than being normalized away; a proof that `diff` reports an **absent** publication root distinguishably from an empty one |
 | `--all`? | No |
@@ -1191,6 +1323,19 @@ remains zero and M2 is unmet.**
 | Entry | S9-3 complete; S9-4 separately approved |
 | Exit | Two runs can be compared before two runs exist |
 | Why separate | Writing the comparator *after* seeing the live data invites tuning it to pass |
+
+**As delivered.** `src/harvest/compare.py` owns every comparison and publication-diff judgement;
+`cli.py` parses, dispatches and serializes and does nothing else. Both commands are read-only and
+offline: an AST scan asserts the module opens nothing for writing and names no writer, socket,
+transport or sleep API, and a test asserts neither command constructs a live transport. Errata
+**E9-13** (nine paths, two spent guards retired), **E9-14** (`--normalize` removed; three-class
+partition; schema-derived content class), **E9-15** (18 selected documents only; both runs may be
+historical; `runvalidate` not weakened) and **E9-16** (within- versus between-run counts) record the
+four contract corrections. Focused validation: `test_taxonomy_compare.sh` **48**,
+`test_taxonomy_cli.sh` **58**, `test_taxonomy_smoke.sh` **56**, all green, plus explicit-mode harness
+routing over `compare.py` and `cli.py`. Inventory **62 = 19 legacy + 43 taxonomy** (E9-17). **No
+`--all` was run**, no network request was made, no external retained root was selected, and
+`data/harvested/` remains absent.
 
 ### S9-L2 — first bounded live smoke · **NETWORK** · **M2**
 
@@ -1327,10 +1472,13 @@ Applies to: S9-0, S9-5, S9-C.
   a log; every wrapper routed exactly once; zero unrouted new paths.
 - A **no-socket assertion** on every offline suite.
 - **One** full `bash scripts/validate_task.sh --all`, at the **final code baseline before the first
-  live smoke** — i.e. after S9-4 and before S9-L2 — expecting **63/63 wrappers each exactly once,
-  zero `WARN - skipping`, exit 0**, no runtime leak, no production-state change. A later corrective
-  code commit (S9-5C, S9-6) requires a **new** authoritative run before the next live execution that
-  depends on it.
+  live smoke** — i.e. after S9-4 and before S9-L2 — expecting **62/62 wrappers each exactly once,
+  zero `WARN - skipping`, exit 0**, no runtime leak, no production-state change (**corrected by
+  E9-17**: 62 is the inventory at that baseline; 63 arrives only with S9-6). A later corrective code
+  commit (S9-5C, S9-6) requires a **new** authoritative run before the next live execution that
+  depends on it — and the post-S9-6 run, owed before S9-L4, expects **63/63**.
+
+  **Neither authoritative run has happened.** As of S9-4 the full gate has not been run at all.
 
 **The full gate is not rerun after every small code checkpoint merely to restate existing evidence.**
 That was Stage 8's own conclusion and it holds.
@@ -1368,7 +1516,8 @@ Stage 9 may close only when **all** of the following hold:
 
 1. Live CLI and transport seam implemented and offline-tested.
 2. Every new wrapper wired into `scripts/validate_task.sh`.
-3. The authoritative offline harness run is green — **63/63, zero skips, exit 0**.
+3. The authoritative offline harness runs are green — **62/62 before S9-L2, then 63/63 after S9-6
+   and before S9-L4** (E9-17). Two runs, not one; neither has happened yet.
 4. Live source preflight executed **once** and reviewed.
 5. The first real 12-cell staged run exists in the external retained root **and validates**.
 6. A second staged run exists **and validates**.

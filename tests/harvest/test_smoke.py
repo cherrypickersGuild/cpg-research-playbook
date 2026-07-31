@@ -717,11 +717,6 @@ class TestOwnershipBoundaries(unittest.TestCase):
         self.assertEqual(registered & planned, set())
         self.assertEqual(registered | planned, surface)
 
-    def test_compare_diff_and_linkcheck_remain_unimplemented(self):
-        for name in ("compare-runs", "diff", "linkcheck"):
-            self.assertIn(name, cli.PLANNED_COMMANDS)
-            self.assertNotIn(name, cli.COMMANDS)
-
     def test_the_path_accounting_constants_decompose(self):
         self.assertEqual(runvalidate.SELECTED_RUN_JSON, 18)
         self.assertEqual(runvalidate.SHARED_JSON, 24)

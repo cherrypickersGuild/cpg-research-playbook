@@ -552,8 +552,6 @@ class TestLiveTransportConstruction(TempRoots):
                          "no unregistered seventh command may be dispatchable")
         self.assertIn("smoke", registered)
         self.assertIn("validate", registered)
-        for name in ("compare-runs", "diff", "linkcheck"):
-            self.assertIn(name, planned)
         for handler in cli.COMMANDS.values():
             self.assertTrue(callable(handler))
 
