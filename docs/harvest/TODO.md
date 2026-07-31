@@ -117,11 +117,36 @@ roadmap:                     docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md — 
                              milestones M1-M7, remaining-checkpoint forecast, and the gap
                              register G1-G17. Read it before scoping Stage 9.
 stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPOSED —
-                             S9-0 ONLY APPROVED. Settles D9-A (external retained state
-                             root) and D9-B (harvest.sh + cli.py; run_cells.run()
-                             generalized, no new engine; one atomic Transport seam),
-                             every command contract, wrappers 58 -> 63, and the exit
-                             criteria. STAGE 9 IS NOT OPEN FOR IMPLEMENTATION.
+                             S9-0 AND S9-1 APPROVED AND COMPLETE. Settles D9-A (external
+                             retained state root) and D9-B (harvest.sh + cli.py;
+                             run_cells.run() generalized, no new engine; one atomic
+                             Transport seam), every command contract, the wrapper plan
+                             and the exit criteria. Errata E9-1 (wrapper accounting is
+                             per checkpoint: 58 -> 59 at S9-1; 63 is the PLANNED FINAL
+                             count), E9-2 (--state-root is required of state-bearing
+                             commands; preflight-sources is the deliberate exception)
+                             and E9-3 (bounds belongs to S9-3, atomically with its
+                             enforcement). S9-2 AND EVERY LIVE CHECKPOINT UNAPPROVED.
+stage_9_1_scope_expansion:   RATIFIED. S9-1's eight-path set could not hold: three
+                             committed progress guards pinned the very interface S9-1
+                             was approved to change. The checkpoint STOPPED WITHOUT
+                             COMMITTING and reported; tests/harvest/test_run_cells.py
+                             and tests/harvest/test_recovery.py were then added by
+                             explicit approval, making S9-1 ten paths in ONE atomic
+                             commit. No production code was shaped to satisfy a source
+                             scan; no behavioural or recovery assertion was weakened.
+stage_9_1_harness:           58 -> 59 wrappers (19 legacy + 40 taxonomy); ISOLATED[]
+                             58 -> 59 with the committed 58 byte-identical as an ordered
+                             prefix; three routing arms added/extended; every target
+                             canonical tests/<name>.sh; no future-wrapper target, no
+                             aggregate, no blanket arm.
+stage_9_1_validation:        FOCUSED ONLY, 366 assertions green — cli 57, run_cells 99,
+                             recovery 74, eligibility 48, target_determinism 88 — plus
+                             bash -n, py_compile and one explicit-mode harness sample at
+                             exit 0 with test_taxonomy_cli.sh run exactly once and zero
+                             WARN skips. `--all` was NOT run: §8.2 places the
+                             authoritative full gate at the final code baseline before
+                             the first live smoke. NO network request of any kind.
 ```
 
 ## Progress dashboard
@@ -1569,7 +1594,68 @@ a checkpoint, once immediately before the outbound request.
 - [x] **S9-0** plan of record, documentation only (`docs(harvest): plan stage 9 live validation`) —
       `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md` plus this section. Exactly the two paths declared
       up front. L0 validation only. **Approves nothing further.**
-- [ ] **S9-1** live execution seam and CLI foundation — code, **no network**
+- [x] **S9-1** live execution seam and CLI foundation
+      (`feat(harvest): add live transport seam and CLI foundation`) — code and offline tests only,
+      **no network**, **no retained external state root**, **no live command**. Ten paths after a
+      **ratified expansion**: `scripts/harvest/harvest.sh` · `src/harvest/cli.py` ·
+      `src/harvest/run_cells.py` · `tests/harvest/test_cli.py` · `tests/test_taxonomy_cli.sh` ·
+      `scripts/validate_task.sh` · `tests/harvest/test_run_cells.py` ·
+      `tests/harvest/test_recovery.py` · the plan · this file.
+      - **`run_cells.Transport` is one frozen `(opener, sleep, lease_root)`**, and `run()` takes one
+        transport rather than three independent parameters, so a live opener can never inherit the
+        fixture's suppressed pacing — a test asserts that half-live API does not exist. `run()`'s
+        four new seams are keyword-only and `None`-defaulted on the D6-A / S6-6A idiom: omitted,
+        every one reproduces the behaviour committed at `720f114c` **byte-for-byte**, proved by
+        running the old call shape and the explicit all-`None` shape at one pinned clock and
+        comparing all **43 paths file by file** — non-vacuously, over a record-bearing tree.
+      - `transport=None` rebuilds the fixture transport over `fixtures_dir` and sweeps only the
+        temporary lease root it created; **a supplied lease root is the caller's** and is never
+        replaced or deleted. `mode="smoke"` is publication-ineligible through the **committed**
+        derivation — **no new predicate**, asserted. `enrich=False` fetches no target page and leaves
+        the three `target_*` accounting keys **ABSENT rather than zero**, because "the lane did not
+        run" and "the lane ran and found nothing" are different answers (S6-6A's sentinel).
+        **No `bounds` parameter** — E9-3 gives it to S9-3, atomically with its enforcement.
+      - `cli.py` registers **no subcommand**: all six planned commands exit **2** naming the
+        checkpoint that owns them, and none falsely exits 0. `validate_state_root` refuses empty,
+        non-absolute, the repository root, any repository descendant, the four prohibited runtime
+        paths and `..`-traversal back inside; it **creates nothing and deletes nothing**.
+        `live_transport` is the only place `default_opener` and `time.sleep` are named together;
+        constructing one makes no directory and issues no request, and **nothing calls it.**
+        An AST scan proves `cli.py` owns no vocabulary and defines no matcher, canonicalizer,
+        serializer, scorer or classifier. `harvest.sh` is 20 lines of `exec` — no `eval`, no parsing,
+        no Git, no network, no temp file, and no second usage document.
+      - **No-network proof, non-vacuous:** a sentinel supplied as a transport opener **is** reached,
+        which is what makes the other half meaningful — the same sentinel installed over
+        `httpclient.default_opener` records **zero** calls during a default run, and `time.sleep`
+        records zero.
+      - **Three spent progress guards retired, and the expansion that required it.** S9-1's original
+        eight-path set could not hold: `test_run_cells.py` pinned `run()`'s parameter list to a
+        **closed** five-name list and pinned `FixtureOpener` to a **source location** inside `run()`,
+        and `test_recovery.py` repeated the same closed list. The checkpoint **stopped without
+        committing and reported** rather than widening itself; the two-path expansion was then
+        ratified explicitly. **No production code was shaped to keep a source scan green** — keeping
+        the literal inside `run()` was available and was rejected on the S6-4 / S6-6A / S5-4
+        precedent. Before the correction those two suites were **171 of 174 green**: all three
+        failures were a signature list and a source substring, never a behavioural regression. The
+        opener guard was **narrowed** from implementation location to the permanent
+        ownership/offline boundary and asserted behaviourally; the signature guard was **rewritten**
+        as an omission-compatible prefix contract; the recovery guard was **deleted outright**
+        because it asserted no recovery property, and every genuine recovery assertion beside it is
+        untouched and green. Detail in plan §7.1a.
+      - **Focused validation only, 366 assertions green:** cli **57** · run_cells **99** · recovery
+        **74** (75 → 74, the deleted guard) · eligibility **48** · target_determinism **88**; plus
+        `bash -n`, `py_compile`, and one explicit-mode harness sample
+        (`validate_task.sh scripts/harvest/harvest.sh src/harvest/cli.py`) at **exit 0**, with
+        `test_taxonomy_cli.sh` run **exactly once** despite two mapped files, **zero
+        `WARN - skipping`**, no FAIL line and no runtime leak. **`--all` was NOT run** — §8.2 places
+        the authoritative full gate at the final code baseline before the first live smoke.
+      - **Harness: 58 → 59 wrappers** (19 legacy + **40** taxonomy), `ISOLATED[]` 58 → 59 with the
+        committed 58 byte-identical as an **ordered prefix**; three routing arms
+        (`harvest.sh` → cli, `cli.py` → cli, and `run_cells.py` extended with cli beside its existing
+        run_cells and recovery targets). Every target canonical `tests/<name>.sh`; **no future
+        wrapper target, no aggregate, no blanket arm** — E9-1 records that **63 is the planned final
+        Stage 9 count**, not S9-1's.
+- [ ] **S9-2** source-preflight implementation — code, **no network** — **UNAPPROVED**
 - [ ] **S9-2** source-preflight implementation — code, **no network**
 - [ ] **S9-L1** live source-preflight execution — **NETWORK**, verification-only, no commit
 - [ ] **S9-3** smoke and `validate --run-id` implementation — code, **no network**
@@ -1582,8 +1668,11 @@ a checkpoint, once immediately before the outbound request.
 - [ ] **S9-L4** bounded live linkcheck execution — **NETWORK**, no commit
 - [ ] **S9-C** Stage 9 closeout — documentation only; push and memory sync remain separate approvals
 
-**Stage 9 is not open for implementation.** S9-0 is complete; **S9-1 and every live checkpoint remain
-unapproved.**
+**S9-0 and S9-1 are complete. Stage 9 is NOT complete.** **S9-2 and every `S9-L*` checkpoint remain
+unapproved**, no live command is operational, no outbound request has ever been made, no retained
+external Stage 9 state root exists or has been selected, and **M2 is unmet**. Each remaining
+checkpoint needs its own approval by name with its exact allowed-path set; every live execution needs
+approval twice, the second immediately before the outbound request.
 
 ## Stage 10 — final report ⟵ **NOT OPEN.**
 

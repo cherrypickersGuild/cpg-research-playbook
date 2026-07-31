@@ -837,10 +837,16 @@ class TestBoundary(unittest.TestCase):
                      "verify_latest_run_id"):
             self.assertTrue(hasattr(artifacts, name), name)
 
-    def test_the_driver_signature_did_not_change(self):
-        params = inspect.signature(run_cells.run).parameters
-        self.assertEqual(list(params), ["root", "cells", "clock", "fixtures_dir",
-                                        "max_cells"])
+    # `test_the_driver_signature_did_not_change` lived here until S9-1 and was
+    # DELETED, not replaced. It pinned `run()`'s parameter list to exactly the
+    # five Stage 5 names, which is not a recovery property: this suite owns
+    # repeat refusal, journal ownership, interruption cleanup and pointer
+    # ordering, and every one of those assertions is untouched below and green.
+    # The S9-1 interface contract has two proper owners — `test_cli.py` and
+    # `test_run_cells.py::TestBoundary::test_the_entry_point_stays_omission_
+    # compatible` — so restating it here only duplicated a guard in a file with
+    # no claim to it. No replacement signature or progress guard was added, on
+    # the S6-4 / S6-5 precedent for retiring a spent guard outright.
 
     def test_the_repeat_refusal_precedes_every_write(self):
         # Order is the whole contract, so it is asserted on the source too: the

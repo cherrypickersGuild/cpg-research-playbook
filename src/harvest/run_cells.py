@@ -26,12 +26,30 @@ Three properties hold this together:
     other cell's artifact is written complete and valid. A failed cell is
     reported, never omitted.
 
-Offline by construction: the opener is `fixtures.FixtureOpener`, so no request
-leaves the machine. `HttpClient` is still the real client — the robots cache, the
-RFC 9309 matcher, retries, redirects, content-type and byte-cap checks and DV-8
-accounting all run unmodified above the injected opener, exactly as in the Stage 3
-suite. Only pacing sleeps are suppressed: a fixture is a local file and there is
-no remote host to be polite to.
+Offline by DEFAULT, and offline by construction until a caller says otherwise:
+`transport=None` builds the committed `fixtures.FixtureOpener` transport, so no
+request leaves the machine. `HttpClient` is still the real client — the robots
+cache, the RFC 9309 matcher, retries, redirects, content-type and byte-cap checks
+and DV-8 accounting all run unmodified above the injected opener, exactly as in
+the Stage 3 suite. Under the fixture transport pacing sleeps are suppressed: a
+fixture is a local file and there is no remote host to be polite to.
+
+S9-1 added the transport SEAM, and only the seam. `Transport` is one frozen value
+carrying the opener, the sleep function and the lease root together, because those
+three are one decision: a live opener paired with a no-op sleep would issue real
+requests against hosts that mandate a crawl-delay, and that combination must be
+unrepresentable rather than merely discouraged. This module owns the FIXTURE
+constructor and no other — there is no live constructor here, and this file never
+names the live opener at all. A live transport can only be built by `cli.py`,
+which is the single reviewable owner of that decision, and a test asserts the
+absence rather than trusting this sentence.
+
+`mode`, `enrich` and `source_preflight` became omission-compatible seams in the
+same checkpoint: omitted, every one of them reproduces the committed behaviour
+byte-for-byte, on the D6-A / S6-6A sentinel idiom. S9-1 added no bound, no cap and
+no probing — `bounds` belongs to S9-3 and row assembly to S9-2, and neither is
+accepted here, because a parameter that is taken and ignored is worse than one
+that does not exist.
 
 S5-7 added the run's relationship with time and with itself. A `run_id` that
 already has a manifest in this root is refused BEFORE the first byte is written,
@@ -44,6 +62,7 @@ run's artifacts and `LATEST_RUN_ID` exactly as it found them.
 Not here: target-page fetching and live requests (Stage 6), promotion,
 concurrency.
 """
+import dataclasses
 import datetime
 import glob
 import json
@@ -97,6 +116,60 @@ MAX_TARGET_FETCHES_PER_CELL = 25
 # Named here rather than spelled out at the call site so the set is one thing a
 # reader can check against the schema, not three strings inside a loop.
 LEDGER_TARGET_EVIDENCE_FIELDS = ("http_status", "content_hash", "last_checked_at")
+
+
+# ------------------------------------------------------------------ transport
+def _no_pacing(seconds):
+    """The fixture sleep. A local file has no host to be polite to.
+
+    Named rather than written as a lambda so a test can assert by identity which
+    sleep a transport carries, and so a reader can see that suppressing pacing is
+    a property of the FIXTURE transport specifically — not of the driver.
+    """
+    return None
+
+
+@dataclasses.dataclass(frozen=True)
+class Transport:
+    """Where a request goes, how fast, and where the leases live — as ONE value.
+
+    Frozen and atomic on purpose. Split into three independent `run()` parameters
+    these could be set half-way: a live `opener` inherited alongside the fixture's
+    no-op `sleep` would issue real requests with pacing disabled, against hosts
+    that mandate a crawl-delay. One value makes that unrepresentable.
+
+    `lease_root` is the caller's. `run()` never replaces it and never deletes it;
+    only the temporary root `run()` creates for itself is swept, and only by
+    `run()`.
+    """
+
+    opener: object
+    sleep: object
+    lease_root: str
+
+
+def fixture_transport(lease_root, *, fixtures_dir=None):
+    """The committed offline transport, reconstructed from a fixture directory.
+
+    This is the only transport constructor in this module, and it cannot reach a
+    network: `FixtureOpener` answers from disk. `fixtures_dir` is honoured here
+    rather than captured in a module-level singleton, because `run(fixtures_dir=…)`
+    is a committed contract and several suites compose their own corpora.
+    """
+    fixture_root = fixtures_dir or fixtures_mod.FIXTURE_ROOT
+    opener = fixtures_mod.FixtureOpener(
+        sources=fixtures_mod.load_source_fixtures(
+            os.path.join(fixture_root, "sources")),
+        robots=fixtures_mod.load_robots_fixtures(
+            os.path.join(fixture_root, "robots")),
+        # S6-5: the target corpus, so an accepted candidate's own page is
+        # answerable. Without it every target fetch would fail as `unreachable` —
+        # a true statement about a missing fixture, and a useless one about the
+        # page. The opener keeps ONE URL index, so a target is indistinguishable
+        # from a source to everything above it.
+        targets=fixtures_mod.load_target_fixtures(
+            os.path.join(fixture_root, "targets")))
+    return Transport(opener=opener, sleep=_no_pacing, lease_root=lease_root)
 
 # The artifact timestamp format the cell and topic schemas pin with a pattern.
 STAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -735,7 +808,8 @@ def _dedupe_records(rows):
 
 
 # -------------------------------------------------------------------- run
-def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS):
+def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
+        transport=None, mode=None, enrich=None, source_preflight=None):
     """Run the configured cells sequentially and emit one run's artifacts.
 
     `root` is the artifact root — every byte this writes lands under it. `cells`
@@ -749,6 +823,28 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
     Re-run semantics (S5-7): a `run_id` that already has a manifest in this root
     is refused **before the first byte is written**, and every write of the run is
     journalled so an interruption sweeps its own temp files and nothing else.
+
+    S9-1 seams, every one omission-compatible — omit them all and this function
+    behaves byte-for-byte as it did at `720f114c`:
+
+      * `transport` — one frozen `Transport`. `None` builds the committed fixture
+        transport over `fixtures_dir` and a temporary lease root that this call
+        creates and, on the way out, removes. A SUPPLIED transport is used
+        verbatim: its lease root is neither replaced nor deleted, because it is
+        the caller's.
+      * `mode` — `None` means the committed `artifacts.MODE_HARVEST`. The value is
+        reported; no eligibility predicate is added, and none is needed —
+        `derive_publication_eligibility` already refuses every non-`harvest` mode.
+      * `enrich` — `None` means the committed `True`. Bound ONCE below and used
+        for both the target-fetch phase and `config.enrich`, so the reported fact
+        and the behaviour cannot disagree.
+      * `source_preflight` — `None` means the committed empty array. Rows are
+        passed through to the manifest builder; nothing is probed and no row is
+        assembled here. That is S9-2's, and it does not exist yet.
+
+    Deliberately NOT here: smoke bounds. `bounds` is S9-3's contract and is added
+    with its enforcement, atomically. A parameter accepted and ignored would let a
+    manifest report a cap that never bound anything.
     """
     now = (clock() if clock is not None else _default_clock())
     stamp = now.strftime(STAMP_FORMAT)
@@ -768,6 +864,14 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
 
     def verify_clock():
         return stamp
+
+    # The three reported facts, each bound ONCE, here, before anything can read
+    # them. `enrich` in particular drives both the target-fetch phase and
+    # `config.enrich`; binding it in one place is what keeps the manifest's claim
+    # and the run's behaviour from drifting apart (S6-5).
+    run_mode = artifacts.MODE_HARVEST if mode is None else mode
+    enrich = True if enrich is None else bool(enrich)
+    preflight_rows = () if source_preflight is None else tuple(source_preflight)
 
     configured = configured_cells()
     by_id = {cell["cell_id"]: cell for cell in configured}
@@ -791,41 +895,31 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         selected = selected[:int(max_cells)]
 
     policy = _run_policy()
-    fixture_root = fixtures_dir or fixtures_mod.FIXTURE_ROOT
-    opener = fixtures_mod.FixtureOpener(
-        sources=fixtures_mod.load_source_fixtures(
-            os.path.join(fixture_root, "sources")),
-        robots=fixtures_mod.load_robots_fixtures(
-            os.path.join(fixture_root, "robots")),
-        # S6-5: the target corpus, so an accepted candidate's own page is
-        # answerable. Without it every target fetch would fail as `unreachable` —
-        # a true statement about a missing fixture, and a useless one about the
-        # page. The opener keeps ONE URL index, so a target is indistinguishable
-        # from a source to everything above it.
-        targets=fixtures_mod.load_target_fixtures(
-            os.path.join(fixture_root, "targets")))
 
-    # The lease tree is HttpClient's coordination scratch, not an artifact. It
-    # lives in its own temp directory so `root` holds exactly the committed
-    # layout and nothing else — §2.1 names no `locks/` for Stage 5.
-    lease_root = tempfile.mkdtemp(prefix="harvest_leases_")
+    # The lease tree is HttpClient's coordination scratch, not an artifact. When
+    # this call builds its own transport the tree lives in its own temp directory,
+    # so `root` holds exactly the committed layout and nothing else — §2.1 names
+    # no `locks/` for Stage 5. A SUPPLIED transport brings its own lease root, and
+    # that one belongs to the caller: it is used as given and never swept here.
+    owned_lease_root = None
+    if transport is None:
+        owned_lease_root = tempfile.mkdtemp(prefix="harvest_leases_")
+        transport = fixture_transport(owned_lease_root, fixtures_dir=fixtures_dir)
     try:
         client = httpclient_mod.HttpClient(
-            policy, lease_root=lease_root, opener=opener,
-            # A fixture is a local file. Pacing exists to protect a remote host,
-            # and there is none; the crawl-delay is still READ and honoured by
-            # every other code path, it simply has nothing to wait for.
-            sleep=lambda seconds: None)
+            policy, lease_root=transport.lease_root, opener=transport.opener,
+            # Under the fixture transport this is `_no_pacing`: a fixture is a
+            # local file, pacing exists to protect a remote host, and there is
+            # none; the crawl-delay is still READ and honoured by every other code
+            # path, it simply has nothing to wait for. A live transport supplies a
+            # real sleep, which is why the two travel together.
+            sleep=transport.sleep)
         pool = pool_mod.CandidatePool(harvest_run_id)
         cache = sourcecache_mod.SourceFetchCache(pool, clock=lambda: stamp)
         budget = RequestBudget()
 
         # ---------------------------------------------------- sequential drive
         runs = []
-        # The run's enrichment decision, bound ONCE and used for both the fetch
-        # phase and the manifest's `config.enrich`, so the reported fact and the
-        # behaviour cannot disagree.
-        enrich = True
         # RUN-scoped, not cell-scoped: this is what makes one canonical target
         # identity a single fetch across every cell and every topic in the run.
         # The pool already owns the ownership gate; this map holds the one outcome
@@ -841,7 +935,12 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
                                       outcomes=target_outcomes if enrich else None,
                                       canon_policy=canon_policy))
     finally:
-        shutil.rmtree(lease_root, ignore_errors=True)
+        # Only what this call created. A caller-supplied lease root is the
+        # caller's to keep — a live run's leases outlive the command that made
+        # them, and deleting another owner's coordination tree is exactly the
+        # mistake the S5-7 sweeper exists to refuse.
+        if owned_lease_root is not None:
+            shutil.rmtree(owned_lease_root, ignore_errors=True)
 
     ran = {run_.cell_id for run_ in runs}
 
@@ -1043,11 +1142,13 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
         accounting = pool.accounting()
         manifest = artifacts.build_run_manifest(
             harvest_run_id=harvest_run_id, started_at=stamp, finished_at=stamp,
-            cells=rows, mode=artifacts.MODE_HARVEST,
+            cells=rows, mode=run_mode,
             config=_config_block(configured, max_cells, enrich=enrich),
-            # A preflight is a bounded re-check of live sources at the start of a live
-            # run. Nothing is live here, so the honest value is "none performed".
-            source_preflight=(),
+            # A preflight is a bounded re-check of live sources at the start of a
+            # live run. Omitted — the fixture default — the honest value stays
+            # "none performed". Rows only ever arrive from a caller that actually
+            # probed; this driver assembles none and probes nothing.
+            source_preflight=preflight_rows,
             classification_decisions=decisions,
             request_accounting=accounting,
             target_fetch_owners=accounting.get("target_fetch_owners", 0),
@@ -1058,8 +1159,14 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS)
             # no target number is ever caller-asserted. Sorted for a deterministic
             # summation order — the total is order-independent, but the argument
             # should not depend on dict insertion order either.
-            target_outcomes=[target_outcomes[key]
-                             for key in sorted(target_outcomes)],
+            # S9-1: omission and zero stay different answers. With enrichment
+            # DISABLED the target lane never ran, so the honest report is the
+            # committed `None` sentinel and the three `target_*` keys are ABSENT.
+            # Passing an empty list would say "the lane ran and found nothing",
+            # which is a claim this run has not earned.
+            target_outcomes=([target_outcomes[key]
+                              for key in sorted(target_outcomes)]
+                             if enrich else None),
             # Passed so eligibility is derived from what the records actually say,
             # not from the owner count alone: acquiring one target-fetch owner must
             # not make a run publishable while its records still say not_checked.

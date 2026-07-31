@@ -1,17 +1,67 @@
 # Stage 9 — bounded live validation: plan of record
 
 ```text
-Status                    PROPOSED — S9-0 ONLY APPROVED
-Authoritative baseline    2bbc236a43bf76dc4aa241c8384911d8e5fda6dd
+Status                    PROPOSED — S9-0 AND S9-1 APPROVED AND COMPLETE
+                          S9-2 and every S9-L* checkpoint remain UNAPPROVED
+Plan baseline             2bbc236a43bf76dc4aa241c8384911d8e5fda6dd
                           docs(harvest): correct roadmap stage percentage
-                          local main = local origin/main = remote main, 0 behind / 0 ahead
-Next product milestone    M2 — the first real staged taxonomy dataset
+S9-0 published at         720f114c6c3a840ab790935a2faaecec5762edd5
+                          docs(harvest): plan stage 9 live validation
+Next product milestone    M2 — the first real staged taxonomy dataset, UNMET
+Live requests to date     ZERO. No live command is operational
 Roadmap authority         docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md
 Prior stage authority     docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md
 ```
 
-**Writing this plan, and committing it, approves no implementation and no live command.** S9-0 — the
-plan of record — is the only approved checkpoint. Nothing below is scheduled.
+## 0 · Errata
+
+Recorded against this plan as implementation met it. Each corrects the plan; none widens a
+checkpoint, and none is authorization for anything.
+
+### E9-1 — wrapper accounting is per checkpoint, not per stage
+
+The S9-1 validation row originally asked for a **63**-wrapper inventory. 63 is the **planned final**
+Stage 9 count, reachable only once all five planned wrappers exist. Per checkpoint:
+
+```text
+before S9-1     58 wrappers   19 legacy + 39 taxonomy   ISOLATED[] 58
+S9-1 adds     +  1            tests/test_taxonomy_cli.sh, and nothing else
+after S9-1      59 wrappers   19 legacy + 40 taxonomy   ISOLATED[] 59
+...
+planned final   63 wrappers   after S9-2, S9-3, S9-4 and S9-6 each add their own
+```
+
+**No placeholder wrapper was created, and no route names a wrapper that does not exist**, to make an
+inventory hit a number. A checkpoint's inventory proof asserts the count that checkpoint actually
+produces.
+
+### E9-2 — `--state-root` is required of state-bearing commands, not of all of them
+
+D9-A §3.2 said "`--state-root` is required for every Stage 9 live execution", which over-reaches
+against §6.1's own `preflight-sources` contract. The corrected rule:
+
+- **Required** by every command that reads or writes a retained Stage 9 run — `smoke`, `validate`,
+  `compare-runs`, `diff`, `linkcheck`.
+- **`preflight-sources` is the deliberate exception**: it creates no run, reads no retained run,
+  writes no state, and uses a temporary lease root removed when it exits. Requiring a retained root
+  of a command that cannot use one would be an ignored option, which §6.1 already refuses on the
+  committed `migrate.sh` precedent.
+
+**The external retained-root decision is not weakened for any state-bearing command**, and D9-A's
+other requirements stand unchanged. S9-1 selected no external root.
+
+### E9-3 — the D9-B signature is cumulative across checkpoints
+
+§4.3's target signature describes Stage 9 **at its end**, not S9-1. S9-1 implements the `transport`,
+`mode`, `enrich` and `source_preflight` seams and **does not implement, claim or accept smoke
+bounds**. `bounds` arrives in **S9-3, atomically with its enforcement**, because a parameter accepted
+and ignored would let a manifest report a cap that never bound anything — the same honesty S6-5
+established for `config.enrich`. A test asserts `bounds` is absent from `run()` at S9-1.
+
+**Writing this plan, and committing it, approved no implementation and no live command.** S9-0 was
+the only approved checkpoint when it was written; **S9-1 has since been separately approved by name,
+implemented and completed** (§7, S9-1). **S9-2 and every `S9-L*` checkpoint remain unapproved**, and
+nothing else below is scheduled.
 
 **Every later checkpoint requires its own separate approval by name, with its exact allowed-path set
 declared up front.** If a path outside that set turns out to be required, the checkpoint stops and
@@ -512,22 +562,141 @@ plan.
 | Exit | This file committed; `TODO.md` carries the decomposition; **no implementation checkpoint approved** |
 | Why separate | A plan that arrives with code has already made its decisions unreviewably |
 
-### S9-1 — live execution seam and CLI foundation
+### S9-1 — live execution seam and CLI foundation · **COMPLETE**
 
 | Field | Value |
 |---|---|
 | Purpose | Make a live run *possible*; do not make one *happen* |
 | Owns | `harvest.sh` dispatcher · `cli.py` · the `Transport` seam · required `--state-root` · transport injection · real pacing · `--no-enrich` · honest mode/`config` reporting · harness wiring for `test_taxonomy_cli.sh` |
-| Allowed paths | `scripts/harvest/harvest.sh` (new) · `src/harvest/cli.py` (new) · `src/harvest/run_cells.py` · `tests/harvest/test_cli.py` (new) · `tests/test_taxonomy_cli.sh` (new) · `scripts/validate_task.sh` · this plan · `TODO.md` |
+| Allowed paths | **TEN, after a ratified expansion** (§7.1a): `scripts/harvest/harvest.sh` (new) · `src/harvest/cli.py` (new) · `src/harvest/run_cells.py` · `tests/harvest/test_cli.py` (new) · `tests/test_taxonomy_cli.sh` (new) · `scripts/validate_task.sh` · **`tests/harvest/test_run_cells.py`** · **`tests/harvest/test_recovery.py`** · this plan · `TODO.md` |
 | Risk tier | Code — production module modified (`run_cells.py`) |
-| Validation | `bash -n`; the new focused suite; **`test_taxonomy_run_cells.sh`, `test_taxonomy_recovery.sh`, `test_taxonomy_eligibility.sh`, `test_taxonomy_target_determinism.sh`** (the direct dependants of `run()`); a harness inventory proof (63 wrappers, each routed exactly once); a **no-socket assertion**; a byte-identity proof that `transport=None` reproduces today's tree exactly |
+| Validation | `bash -n`; `py_compile`; the new focused suite; **`test_taxonomy_run_cells.sh`, `test_taxonomy_recovery.sh`, `test_taxonomy_eligibility.sh`, `test_taxonomy_target_determinism.sh`** (the direct dependants of `run()`); a harness inventory proof (**59** wrappers — see E9-1 — each routed exactly once); a **no-socket assertion**; a byte-identity proof that `transport=None` reproduces today's tree exactly |
 | `--all`? | **No** — deferred to the final code baseline (§8.2) |
 | Network | **No.** The live path exists and is not exercised |
 | External state written | **No** |
-| Commit | Own commit |
+| Commit | Own commit, `feat(harvest): add live transport seam and CLI foundation` |
 | Entry | S9-0 committed; S9-1 separately approved by name |
 | Exit | A live run is *constructible* and provably not *constructed*; fixture callers byte-unchanged |
 | Why separate | The single largest under-estimated item in the roadmap (G1). It deserves its own review, and it must land before anything can even be preflighted |
+
+#### §7.1a — the ratified two-path expansion, and why it was needed
+
+S9-1's original eight-path set was **insufficient, and the shortfall was structural rather than an
+oversight in scoping**. Three committed assertions pinned the very interface S9-1 was approved to
+change:
+
+| Guard | Home | What it pinned | Why S9-1 falsified it |
+|---|---|---|---|
+| `test_the_entry_point_has_the_planned_signature` | `test_run_cells.py::TestBoundary` | `list(params) == ["root","cells","clock","fixtures_dir","max_cells"]` — a **closed** list | Any added seam trips it. Unavoidable under every implementation of the approved interface |
+| `test_the_opener_is_the_fixture_opener` | `test_run_cells.py::TestOffline` | `"FixtureOpener" in inspect.getsource(run_cells.run)` — an implementation **location** | §5 requires a named factory that honours `fixtures_dir`, so construction moved out of `run()`'s own source text |
+| `test_the_driver_signature_did_not_change` | `test_recovery.py::TestBoundary` | the same closed five-name list | Same as the first |
+
+The checkpoint **stopped without committing and reported**, rather than widening its own scope — the
+rule that has held since Stage 4's closeout. The expansion to ten paths was then **ratified
+explicitly**, and it is an expansion of S9-1, not a new checkpoint and not authorization for S9-2.
+
+**No production code was shaped to keep a source scan green.** That was available — keeping the
+literal `FixtureOpener` inside `run()` would have kept guard 2 passing — and it was rejected on the
+committed precedent: S6-4 refused to rename a pool method to dodge a token scan, and S6-6A refused
+to rename three accounting keys to keep a guard green, both citing S5-4. The transport factory was
+neither renamed nor duplicated to fool an assertion.
+
+**All three were spent progress guards, not behavioural regressions.** Before the correction the two
+suites ran **171 of 174 assertions green**, and the three failures were a signature list and a source
+substring. The byte-compatibility proof in `test_cli.py` independently establishes that the artifact
+tree did not move.
+
+Treatment, one line each:
+
+- **`test_the_opener_is_the_fixture_opener` → `test_the_default_transport_is_fixture_only_and_live_is_not_owned_here`.**
+  The implementation-location assertion is **removed**. What remains is the permanent boundary, and
+  it is now asserted behaviourally rather than textually: the fixture transport really carries a
+  `FixtureOpener` and a non-pacing sleep, and `run_cells.py` still does not name the live opener at
+  all — that pairing belongs to `cli.py`. The complete transport contract is **not** duplicated here;
+  `test_cli.py` owns it, and the existing no-socket test is untouched.
+- **`test_the_entry_point_has_the_planned_signature` → `test_the_entry_point_stays_omission_compatible`.**
+  Rewritten from immutability to **omission compatibility**, which is what committed callers actually
+  depend on: the five Stage 5 parameters keep their **order as a prefix** and their defaults; the
+  four S9-1 seams follow, each keyword-only and `None`-defaulted; `bounds` is asserted **absent**
+  (E9-3); and no independent `opener` / `sleep` / `lease_root` parameter exists. It names no future
+  S9-3 parameter and adds no "later Stage file must not exist" guard.
+- **`test_the_driver_signature_did_not_change` — DELETED outright, not replaced.** It asserted no
+  recovery property. Recovery is owned by the surrounding assertions in that file — repeat refusal
+  before writes, journal ownership, interruption cleanup, manifest-before-pointer ordering, pointer
+  consistency — every one of which is **unmodified and green**. The S9-1 interface has two proper
+  owners now, and restating it in a recovery suite only duplicated a guard in a file with no claim to
+  it. No replacement signature or progress guard was added, on the S6-4 / S6-5 precedent.
+
+**No genuine behavioural or recovery assertion was weakened, removed, or narrowed.** The expanded
+S9-1 commit remains **atomic**: ten paths, one commit.
+
+#### S9-1 as delivered — the actual contract
+
+`run_cells.Transport` is a **frozen** dataclass of exactly `(opener, sleep, lease_root)`. `run()`
+takes **one** transport, never three independent parameters, so a live opener can never inherit the
+fixture's suppressed pacing — a test asserts that half-live API does not exist.
+
+- `transport=None` → `fixture_transport(temp_lease_root, fixtures_dir=…)`, the committed behaviour
+  reconstructed exactly, including `fixtures_dir` injection. The temporary lease root is created by
+  `run()` and swept by `run()`. **A supplied lease root is the caller's**: used verbatim, never
+  replaced, never deleted.
+- `mode=None` → `MODE_HARVEST`. A `mode="smoke"` run is publication-ineligible through the
+  **committed** `derive_publication_eligibility` — **no new predicate was added**, and a test asserts
+  `run_cells.py` never passes `publication_eligible` or its reason at all.
+- `enrich=None` → `True`, bound **once** and used for both the fetch phase and `config.enrich`. With
+  `enrich=False` no target page is fetched, source discovery still runs, records keep the committed
+  honest no-enrichment values, and the three `target_*` accounting keys are **ABSENT rather than
+  zero** — the S6-6A sentinel, because "the lane did not run" and "the lane ran and found nothing"
+  are different answers.
+- `source_preflight=None` → `()`. Supplied rows reach the manifest unchanged; nothing is probed here
+  and no row is assembled. `HttpClient.preflight()` is **byte-unchanged** and unused by this module.
+- **No `bounds` parameter** (E9-3).
+
+`cli.py` is parser construction, root resolution, `validate_state_root`, `live_transport` and
+deterministic usage — and nothing else. `COMMANDS` is **empty**; all six planned commands exit **2**
+naming the checkpoint that owns them. `validate_state_root` refuses empty, non-absolute,
+repository-root, any repository descendant, the four prohibited runtime paths, and `..`-traversal
+back inside; it creates nothing and deletes nothing. `live_transport` is the only place
+`httpclient.default_opener` and `time.sleep` are named together; constructing one makes no directory
+and issues no request, and **nothing calls it from an operational command, because there is none.**
+
+`harvest.sh` is 20 lines: `set -euo pipefail`, repository root, `exec python -m src.harvest.cli "$@"`.
+No `eval`, no option parsing, no Git, no network, no temp file, no state-root selection, no retry —
+and **no second usage document**, which is why the zero-argument case is forwarded rather than
+intercepted.
+
+#### S9-1 focused results, as actually run
+
+```text
+bash -n scripts/harvest/harvest.sh                      ok
+py_compile cli.py · run_cells.py · test_cli.py          ok
+bash tests/test_taxonomy_cli.sh                         57 tests   OK
+bash tests/test_taxonomy_run_cells.sh                   99 tests   OK
+bash tests/test_taxonomy_recovery.sh                    74 tests   OK   (75 -> 74: one spent guard deleted)
+bash tests/test_taxonomy_eligibility.sh                 48 tests   OK
+bash tests/test_taxonomy_target_determinism.sh          88 tests   OK
+                                                       ---------
+                                                        366 assertions, all green
+
+bash scripts/validate_task.sh scripts/harvest/harvest.sh src/harvest/cli.py
+    exit 0 · PASS · test_taxonomy_cli.sh run EXACTLY ONCE despite two mapped
+    files · zero "WARN - skipping" · no FAIL line · runtime paths absent · no
+    production-state change
+
+harness inventory   59 wrappers = 19 legacy + 40 taxonomy; ISOLATED[] 59 unique;
+                    allowlist == file set both directions; the 58 committed
+                    entries byte-identical as an ORDERED PREFIX against 720f114c;
+                    exactly one appended entry; all 59 targets canonical
+                    tests/<name>.sh; zero future-wrapper targets; no blanket or
+                    aggregate arm
+```
+
+**`validate_task.sh --all` was NOT run**, per §8.2: the authoritative full offline gate belongs at the
+final code baseline before the first live smoke. **No network request of any kind was made.** No
+retained external Stage 9 state root exists, and none was selected.
+
+**S9-2 and every `S9-L*` checkpoint remain unapproved. No live command is operational, and M2 is
+unmet.**
 
 ### S9-2 — source-preflight implementation
 

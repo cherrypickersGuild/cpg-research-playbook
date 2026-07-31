@@ -667,9 +667,27 @@ class TestOffline(RunCase):
         self.addCleanup(setattr, socket, "socket", real)
         run_cells.run(self.temp_root("s5_run_cells_offline_"), clock=lambda: NOW)
 
-    def test_the_opener_is_the_fixture_opener(self):
-        src = inspect.getsource(run_cells.run)
-        self.assertIn("FixtureOpener", src)
+    def test_the_default_transport_is_fixture_only_and_live_is_not_owned_here(self):
+        """The permanent boundary, stated without pinning an implementation site.
+
+        This was `test_the_opener_is_the_fixture_opener` until S9-1, and it
+        asserted that the literal `FixtureOpener` appeared inside the source text
+        of `run_cells.run`. That was a Stage 5 *implementation location*, not a
+        contract: S9-1 moved construction into the named `fixture_transport`
+        factory so `run(fixtures_dir=…)` could still be honoured while the
+        transport became one atomic value. The location assertion was spent, and
+        it is gone rather than worked around — the production code was NOT shaped
+        to keep a source scan green.
+
+        What survives is what actually matters, and all of it is still true:
+        an omitted transport is fixture-backed and offline, and the live opener
+        is not this module's to name. `cli.live_transport` is the single owner of
+        that decision, so a live pairing cannot appear here by accident.
+        """
+        transport = run_cells.fixture_transport(self.temp_root("s5_fixture_tr_"))
+        self.assertIsInstance(transport.opener,
+                              run_cells.fixtures_mod.FixtureOpener)
+        self.assertIsNone(transport.sleep(1234), "the fixture sleep must not pace")
         self.assertNotIn("default_opener", inspect.getsource(run_cells))
 
     def test_nothing_is_written_outside_the_injected_root(self):
@@ -1002,14 +1020,51 @@ class TestBoundary(unittest.TestCase):
                      "configured_cells"):
             self.assertTrue(hasattr(run_cells, name), name)
 
-    def test_the_entry_point_has_the_planned_signature(self):
+    def test_the_entry_point_stays_omission_compatible(self):
+        """The committed interface is a PREFIX, not a closed list.
+
+        This was `test_the_entry_point_has_the_planned_signature` until S9-1, and
+        it pinned the parameter list to exactly the five Stage 5 names. That made
+        the interface unable to evolve at all, which is a stronger claim than the
+        contract needs: what every committed caller actually depends on is that
+        the five keep their order and their defaults, so a call written at Stage 5
+        still means what it meant. S9-1 added four keyword-only seams behind them,
+        each defaulting to `None` and each reproducing the committed behaviour on
+        omission — the D6-A / S6-6A sentinel idiom.
+
+        So this now guards **omission compatibility** rather than immutability,
+        and it still fails loudly on the two mistakes that would matter: a
+        reordered or re-defaulted prefix, and a seam that stops defaulting to
+        omission.
+        """
         params = inspect.signature(run_cells.run).parameters
-        self.assertEqual(list(params), ["root", "cells", "clock", "fixtures_dir",
-                                        "max_cells"])
+        names = list(params)
+
+        committed = ["root", "cells", "clock", "fixtures_dir", "max_cells"]
+        self.assertEqual(names[:len(committed)], committed,
+                         "the Stage 5 parameters must keep their order")
         self.assertIsNone(params["cells"].default)
         self.assertIsNone(params["clock"].default)
         self.assertIsNone(params["fixtures_dir"].default)
         self.assertEqual(params["max_cells"].default, run_cells.MAX_CELLS)
+
+        # The S9-1 seams. Keyword-only and `None`-defaulted is what makes every
+        # committed call site byte-identically unaffected.
+        for seam in ("transport", "mode", "enrich", "source_preflight"):
+            self.assertIn(seam, params)
+            self.assertEqual(params[seam].kind, inspect.Parameter.KEYWORD_ONLY)
+            self.assertIsNone(params[seam].default)
+
+        # E9-3: `bounds` belongs to S9-3 and arrives WITH its enforcement. A
+        # parameter accepted and ignored would let a manifest report a cap that
+        # never bound anything.
+        self.assertNotIn("bounds", params)
+
+        # The transport is one atomic value. Separate parameters could be set
+        # half-way — a live opener inheriting the fixture's suppressed pacing,
+        # against hosts that mandate a crawl-delay.
+        for split in ("opener", "sleep", "lease_root"):
+            self.assertNotIn(split, params)
 
     def test_the_stage_4_modules_are_byte_unchanged(self):
         # S5-6 composes Stage 4; if it had to edit it, it was not composition.

@@ -75,6 +75,13 @@ ISOLATED=(
   test_taxonomy_target_evidence.sh       test_taxonomy_target_fetch.sh
   test_taxonomy_target_fixtures.sh       test_taxonomy_target_ownership.sh
   test_taxonomy_verify.sh
+  # --- Stage 9, S9-1: the live execution seam and CLI foundation -----------
+  # Same criterion as the 39 above. Offline: every run goes through the fixture
+  # transport or an injected test-local one, a sentinel at the transport
+  # boundary proves default_opener is never reached, and every byte lands under
+  # a `mktemp -d` the suite removes. It selects NO external Stage 9 state root
+  # and creates none — validate_state_root refuses and never creates.
+  test_taxonomy_cli.sh
 )
 is_isolated() {
   local b; b="$(basename "$1")"
@@ -166,7 +173,8 @@ for f in "${FILES[@]:-}"; do
     src/harvest/pool.py)                          add_test tests/test_taxonomy_pool.sh ;;
     src/harvest/records.py)                       add_test tests/test_taxonomy_records.sh; add_test tests/test_taxonomy_schema.sh ;;
     src/harvest/request_key.py)                   add_test tests/test_taxonomy_pool.sh; add_test tests/test_taxonomy_dedupe.sh ;;
-    src/harvest/run_cells.py)                     add_test tests/test_taxonomy_run_cells.sh; add_test tests/test_taxonomy_recovery.sh ;;
+    src/harvest/cli.py)                           add_test tests/test_taxonomy_cli.sh ;;
+    src/harvest/run_cells.py)                     add_test tests/test_taxonomy_run_cells.sh; add_test tests/test_taxonomy_recovery.sh; add_test tests/test_taxonomy_cli.sh ;;
     src/harvest/schema.py)                        add_test tests/test_taxonomy_schema.sh; add_test tests/test_taxonomy_records.sh ;;
     src/harvest/slug.py)                          add_test tests/test_taxonomy_facet_identity.sh; add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_config.sh ;;
     src/harvest/sourcecache.py)                   add_test tests/test_taxonomy_source_cache.sh ;;
@@ -175,6 +183,7 @@ for f in "${FILES[@]:-}"; do
     src/harvest/verify.py)                        add_test tests/test_taxonomy_verify.sh ;;
 
     # -- scripts/harvest/** : CLI and checkers
+    scripts/harvest/harvest.sh)                   add_test tests/test_taxonomy_cli.sh ;;
     scripts/harvest/migrate.sh)                   add_test tests/test_taxonomy_migration.sh ;;
     scripts/harvest/check_config.py)              add_test tests/test_taxonomy_config.sh ;;
     scripts/harvest/check_facets.py)              add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_migration.sh ;;
