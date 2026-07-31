@@ -31,6 +31,7 @@ reason, this suite fails instead of a live cell reporting the wrong reason.
 Run via tests/test_taxonomy_run_cells.sh.
 """
 import ast
+import dataclasses
 import datetime
 import hashlib
 import inspect
@@ -1055,16 +1056,27 @@ class TestBoundary(unittest.TestCase):
             self.assertEqual(params[seam].kind, inspect.Parameter.KEYWORD_ONLY)
             self.assertIsNone(params[seam].default)
 
-        # E9-3: `bounds` belongs to S9-3 and arrives WITH its enforcement. A
-        # parameter accepted and ignored would let a manifest report a cap that
-        # never bound anything.
-        self.assertNotIn("bounds", params)
+        # The S9-3 seams. E9-3 held that `bounds` must arrive WITH its
+        # enforcement rather than be accepted and ignored, and S9-3 is the
+        # checkpoint that brought both — so the assertion changed from "absent"
+        # to "present, keyword-only and omission-compatible", which is the
+        # property that actually protects every committed caller.
+        for seam in ("bounds", "run_id_value"):
+            self.assertIn(seam, params)
+            self.assertEqual(params[seam].kind, inspect.Parameter.KEYWORD_ONLY)
+            self.assertIsNone(params[seam].default)
 
-        # The transport is one atomic value. Separate parameters could be set
-        # half-way — a live opener inheriting the fixture's suppressed pacing,
-        # against hosts that mandate a crawl-delay.
-        for split in ("opener", "sleep", "lease_root"):
+        # Both compound values stay atomic. Separate parameters could be set
+        # half-way — a live opener inheriting the fixture's suppressed pacing
+        # against hosts that mandate a crawl-delay, or an accepted cap above the
+        # candidate cap, which is not a bound but a bug that never binds.
+        for split in ("opener", "sleep", "lease_root",
+                      "max_candidates", "max_accepted", "smoke_budget"):
             self.assertNotIn(split, params)
+        self.assertTrue(dataclasses.is_dataclass(run_cells.RunBounds))
+        bounds = run_cells.RunBounds(12, 5, 1800)
+        with self.assertRaises(dataclasses.FrozenInstanceError):
+            bounds.max_accepted_per_cell = 99
 
     def test_the_stage_4_modules_are_byte_unchanged(self):
         # S5-6 composes Stage 4; if it had to edit it, it was not composition.

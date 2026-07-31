@@ -164,9 +164,17 @@ class TestTransportContract(TempRoots):
                           "%r must default to None so omission is compatible" % seam)
             self.assertEqual(params[seam].kind, inspect.Parameter.KEYWORD_ONLY)
 
-    def test_bounds_is_not_accepted_at_s9_1(self):
-        """E9-3: a parameter taken and ignored is worse than one absent."""
-        self.assertNotIn("bounds", inspect.signature(run_cells.run).parameters)
+    # `test_bounds_is_not_accepted_at_s9_1` lived here until S9-3 and was DELETED,
+    # not replaced. It asserted `bounds` was absent from `run()` — a duplicate of
+    # a contract `tests/harvest/test_run_cells.py` already owns, and S9-3 added
+    # `bounds` with its enforcement exactly as E9-3 required. Two copies of one
+    # signature contract are two authorities that expire independently, and the
+    # CLI suite's job is how COMMANDS USE the driver, not restating the driver's
+    # full signature. No replacement was added — not a current parameter list, not
+    # "only the S9-3 seams exist", not a future-stage absence guard; each of those
+    # is the same spent-snapshot mistake wearing a later date. The permanent
+    # contract, including the atomic absence of split transport and split bound
+    # parameters, is asserted once, in the run-cells suite.
 
     def test_fixture_transport_uses_the_fixture_opener_and_no_pacing(self):
         transport = run_cells.fixture_transport(self.temp())
@@ -451,23 +459,40 @@ class TestLiveTransportConstruction(TempRoots):
         constructor untouched. Only a handler that has been approved and
         registered may call it, and deliberately.
 
-        That the valid `preflight-sources` path really does use the live
-        transport, and really does clean up its lease root, is proved by
-        `test_preflight.py`, which owns that command.
+        That a valid `preflight-sources` or `smoke` invocation really does use the
+        live-transport seam under an injected offline transport, and really does
+        clean up after itself, is proved by `test_preflight.py` and
+        `test_smoke.py` — the suites that own those commands. Neither is
+        duplicated here.
+
+        **Its static half was over-broad until S9-3.** It walked `tree.body`
+        meaning "no module-level executable statement", but `ast.walk` descends
+        into every function body, so it also rejected calls inside function
+        DEFINITIONS. That was already wrong at S9-1 and only became visible when
+        `cmd_smoke` — an approved, registered handler — legitimately called the
+        constructor. Defining a function that contains a call is not executing
+        one; the scan now excludes function and class bodies and says what it
+        always meant.
         """
-        # Import time: proved statically, because a behavioural probe cannot
-        # observe an import that already happened. No module-level statement may
-        # call the constructor.
+        # Import time, proved statically: a behavioural probe cannot observe an
+        # import that already happened. Only genuinely module-level executable
+        # statements count — a `def` or a `class` is a definition, not a call.
         with open(CLI_PATH, encoding="utf-8") as handle:
             tree = ast.parse(handle.read())
+        forbidden_at_import = {"live_transport", "run", *cli.COMMANDS,
+                               *(h.__name__ for h in cli.COMMANDS.values())}
         for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
+                                 ast.ClassDef)):
+                continue                      # a definition executes no call
             for inner in ast.walk(node):
                 if isinstance(inner, ast.Call):
-                    name = getattr(inner.func, "id", None) or getattr(
-                        inner.func, "attr", None)
-                    self.assertNotEqual(
-                        name, "live_transport",
-                        "importing cli.py must not construct a transport")
+                    name = (getattr(inner.func, "id", None)
+                            or getattr(inner.func, "attr", None))
+                    self.assertNotIn(
+                        name, forbidden_at_import,
+                        "importing cli.py must execute no transport construction, "
+                        "run driver or command handler")
 
         calls = []
         real = cli.live_transport
@@ -477,23 +502,91 @@ class TestLiveTransportConstruction(TempRoots):
         # Parser construction.
         cli.add_state_root_argument(cli.build_parser("smoke", "x"))
 
-        # Help, an unknown command, every command still declared planned, and an
-        # operational command whose arguments are refused. Help legitimately
-        # succeeds; the rest legitimately do not. Either way none of them may
-        # construct a transport, which is what the final assertion checks.
+        # Every inert or refused path. Help legitimately succeeds; the rest
+        # legitimately do not. What matters is that none of them constructs a
+        # transport — including an operational command whose arguments are bad,
+        # because a refusal must land before the network decision, not after it.
+        refused = [
+            [],
+            ["definitely-not-a-command"],
+            ["preflight-sources", "--sources", "nope"],
+            ["smoke"],                                    # missing --state-root
+            ["smoke", "--state-root", os.path.join(ROOT, "state")],
+            ["smoke", "--state-root", "relative/path"],
+            ["smoke", "--state-root", tempfile.gettempdir(),
+             "--max-candidates", "0"],
+            ["smoke", "--state-root", tempfile.gettempdir(),
+             "--max-accepted", "99999"],
+            ["smoke", "--state-root", tempfile.gettempdir(), "--run-id", "nope"],
+            ["validate", "--state-root", tempfile.gettempdir(),
+             "--run-id", "nope"],
+            *[[name] for name in sorted(cli.PLANNED_COMMANDS)],
+        ]
         quiet = io.StringIO()
         with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet):
             self.assertEqual(cli.main(["--help"]), 0)
             self.assertEqual(cli.main(["-h"]), 0)
-            for argv in ([], ["definitely-not-a-command"],
-                         ["preflight-sources", "--sources", "nope"],
-                         *[[name] for name in sorted(cli.PLANNED_COMMANDS)]):
+            for argv in refused:
                 self.assertEqual(cli.main(list(argv)), 2,
                                  "%r must be refused with exit 2" % (argv,))
 
         self.assertEqual(calls, [],
                          "a non-operational or refused path constructed a live "
                          "transport: %r" % (calls,))
+
+    def test_only_registered_handlers_are_dispatchable(self):
+        """The boundary that replaces "no function may call it".
+
+        An approved operational handler reaching the network is the constructor's
+        purpose. What must stay true is that dispatch can only reach a handler the
+        registry names, that the registry partitions the declared surface, and
+        that an OFFLINE command never builds a live transport however valid its
+        arguments are.
+        """
+        surface = {"preflight-sources", "smoke", "validate", "compare-runs",
+                   "diff", "linkcheck"}
+        registered, planned = set(cli.COMMANDS), set(cli.PLANNED_COMMANDS)
+        self.assertEqual(registered & planned, set())
+        self.assertEqual(registered | planned, surface)
+        self.assertEqual(registered - surface, set(),
+                         "no unregistered seventh command may be dispatchable")
+        self.assertIn("smoke", registered)
+        self.assertIn("validate", registered)
+        for name in ("compare-runs", "diff", "linkcheck"):
+            self.assertIn(name, planned)
+        for handler in cli.COMMANDS.values():
+            self.assertTrue(callable(handler))
+
+    def test_the_offline_validate_command_never_builds_a_live_transport(self):
+        """`validate` reads a tree. It has no business reaching the network."""
+        calls = []
+        real = cli.live_transport
+        cli.live_transport = lambda *a, **kw: (calls.append(a), real(*a, **kw))[1]
+        self.addCleanup(setattr, cli, "live_transport", real)
+
+        # `validate` writes deterministic BYTES to `sys.stdout.buffer`, the
+        # committed idiom, so a plain StringIO cannot stand in for stdout.
+        class Bytes:
+            def __init__(self):
+                self.buffer = io.BytesIO()
+
+            def write(self, text):
+                self.buffer.write(text.encode("utf-8"))
+
+            def flush(self):
+                pass
+
+        external = self.temp("outside_")
+        real_out, real_err = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = Bytes(), io.StringIO()
+        try:
+            # A well-formed invocation against an empty root: valid arguments,
+            # so it reaches the handler, and still must not go near a transport.
+            cli.main(["validate", "--state-root", external,
+                      "--run-id", "20260730T120000Z-1"])
+        finally:
+            sys.stdout, sys.stderr = real_out, real_err
+        self.assertEqual(calls, [])
 
 
 # ----------------------------------------------------------- no-network proof

@@ -460,16 +460,20 @@ def run_cli(*args):
 
 
 class TestCommandSurface(NoOutboundNetwork):
-    def test_it_is_the_only_operational_command_at_s9_2(self):
-        """The checkpoint-specific half of the registry contract.
+    def test_this_suite_owns_the_preflight_command(self):
+        """Ownership, not a census.
 
-        `test_cli.py` owns the DURABLE invariant — implemented and planned
-        partition the six-command surface — which stays true as each checkpoint
-        moves one command across. Which side each command is on at S9-2 is a fact
-        about S9-2, so it is asserted here, by the suite that owns this command.
+        This asserted `sorted(COMMANDS) == ["preflight-sources"]` until S9-3,
+        which registered `smoke` and `validate` and made that a spent snapshot —
+        and would have spent it again at S9-4 and S9-6. The count of registered
+        commands is not this suite's business: `test_cli.py` owns the durable
+        partition invariant, and each command's own suite owns its behaviour.
+        What is permanently true here is that `preflight-sources` stays
+        registered, and stays bound to the handler this suite tests.
         """
-        self.assertEqual(sorted(cli.COMMANDS), ["preflight-sources"])
-        self.assertTrue(callable(cli.COMMANDS["preflight-sources"]))
+        self.assertIn("preflight-sources", cli.COMMANDS)
+        self.assertIs(cli.COMMANDS["preflight-sources"], cli.cmd_preflight_sources)
+        self.assertNotIn("preflight-sources", cli.PLANNED_COMMANDS)
 
     def test_invoking_it_reaches_its_handler(self):
         reached = []
@@ -481,9 +485,17 @@ class TestCommandSurface(NoOutboundNetwork):
                                    "producthunt"]), 0)
         self.assertEqual(reached, [["--sources", "producthunt"]])
 
-    def test_the_other_planned_commands_still_exit_two(self):
-        for name in ("smoke", "validate", "compare-runs", "diff", "linkcheck"):
-            self.assertIn(name, cli.PLANNED_COMMANDS)
+    def test_whatever_is_still_planned_exits_two(self):
+        """Read from the registry, not from a list that expires each checkpoint.
+
+        This named a fixed five-command tuple until S9-3 implemented `smoke` and
+        `validate`. Iterating `PLANNED_COMMANDS` instead keeps the property —
+        nothing merely planned may exit 0 — true at every checkpoint, while the
+        durable partition invariant in `test_cli.py` keeps that registry honest.
+        """
+        self.assertTrue(cli.PLANNED_COMMANDS, "something must still be planned")
+        for name in sorted(cli.PLANNED_COMMANDS):
+            self.assertNotIn(name, cli.COMMANDS)
             proc = run_cli(name)
             self.assertEqual(proc.returncode, 2, name)
             self.assertIn(b"NOT implemented", proc.stderr)
@@ -660,10 +672,21 @@ class TestTransientLeaseOwnership(NoOutboundNetwork):
         self.assertEqual(self.leaked(), [])
         self.assertFalse(os.path.exists(os.path.join(ROOT, "..", "stage9")))
 
-    def test_the_command_never_invokes_the_run_driver(self):
+    def test_the_preflight_handler_never_invokes_the_run_driver(self):
+        """Scoped to THIS handler, because `smoke` legitimately drives runs.
+
+        Until S9-3 this scanned the whole of `cli.py`, which was true only while
+        no command drove a run. `smoke` now does, so the file-wide scan was spent.
+        The permanent property is narrower and is the one that matters here: a
+        preflight creates no run, so ITS handler must never reach the driver.
+        """
         with open(CLI_PATH, encoding="utf-8") as handle:
-            src = handle.read()
-        self.assertNotIn("run_cells.run(", src)
+            tree = ast.parse(handle.read())
+        handler = [node for node in ast.walk(tree)
+                   if isinstance(node, ast.FunctionDef)
+                   and node.name == "cmd_preflight_sources"]
+        self.assertEqual(len(handler), 1)
+        self.assertNotIn("run_cells.run(", ast.unparse(handler[0]))
 
 
 # --------------------------------------------------------- S9-1 CLI regression
@@ -703,7 +726,20 @@ class TestS91BoundariesHold(unittest.TestCase):
         self.assertFalse(os.path.exists(outside))
 
     def test_no_hidden_generic_run_command_exists(self):
-        self.assertEqual(sorted(cli.COMMANDS), ["preflight-sources"])
+        """No command outside the declared Stage 9 surface, however named.
+
+        This asserted the registry held exactly `["preflight-sources"]` until
+        S9-3 registered `smoke` and `validate` — a census, and spent. The
+        permanent property is that nothing UNDECLARED is reachable: a generic
+        "run whatever I say" command would have to appear here, and would not be
+        one of the six the plan names.
+        """
+        surface = {"preflight-sources", "smoke", "validate", "compare-runs",
+                   "diff", "linkcheck"}
+        self.assertEqual(set(cli.COMMANDS) - surface, set())
+        for name in cli.COMMANDS:
+            self.assertNotIn("run", name.split("-"),
+                             "%r reads as a generic run command" % name)
 
 
 if __name__ == "__main__":

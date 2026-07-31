@@ -89,6 +89,12 @@ ISOLATED=(
   # through a stub client. Lease roots are `mktemp -d` and removed on every exit
   # path; no --state-root is accepted and no retained Stage 9 root is created.
   test_taxonomy_preflight.sh
+  # --- Stage 9, S9-3: bounded smoke and read-only run validation -----------
+  # Same criterion. Every smoke it drives uses the FIXTURE transport, a
+  # socket-level guard refuses every non-loopback host and is proved wired by
+  # tripping it, and the external state roots it hands the CLI are `mktemp -d`
+  # directories it removes itself. The validator writes nothing at all.
+  test_taxonomy_smoke.sh
 )
 is_isolated() {
   local b; b="$(basename "$1")"
@@ -179,10 +185,11 @@ for f in "${FILES[@]:-}"; do
     src/harvest/migrate/*.py)                     add_test tests/test_taxonomy_migration.sh ;;
     src/harvest/pool.py)                          add_test tests/test_taxonomy_pool.sh ;;
     src/harvest/preflight.py)                     add_test tests/test_taxonomy_preflight.sh ;;
+    src/harvest/runvalidate.py)                   add_test tests/test_taxonomy_smoke.sh ;;
     src/harvest/records.py)                       add_test tests/test_taxonomy_records.sh; add_test tests/test_taxonomy_schema.sh ;;
     src/harvest/request_key.py)                   add_test tests/test_taxonomy_pool.sh; add_test tests/test_taxonomy_dedupe.sh ;;
-    src/harvest/cli.py)                           add_test tests/test_taxonomy_cli.sh; add_test tests/test_taxonomy_preflight.sh ;;
-    src/harvest/run_cells.py)                     add_test tests/test_taxonomy_run_cells.sh; add_test tests/test_taxonomy_recovery.sh; add_test tests/test_taxonomy_cli.sh ;;
+    src/harvest/cli.py)                           add_test tests/test_taxonomy_cli.sh; add_test tests/test_taxonomy_preflight.sh; add_test tests/test_taxonomy_smoke.sh ;;
+    src/harvest/run_cells.py)                     add_test tests/test_taxonomy_run_cells.sh; add_test tests/test_taxonomy_recovery.sh; add_test tests/test_taxonomy_cli.sh; add_test tests/test_taxonomy_smoke.sh ;;
     src/harvest/schema.py)                        add_test tests/test_taxonomy_schema.sh; add_test tests/test_taxonomy_records.sh ;;
     src/harvest/slug.py)                          add_test tests/test_taxonomy_facet_identity.sh; add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_config.sh ;;
     src/harvest/sourcecache.py)                   add_test tests/test_taxonomy_source_cache.sh ;;

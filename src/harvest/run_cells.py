@@ -62,11 +62,13 @@ run's artifacts and `LATEST_RUN_ID` exactly as it found them.
 Not here: target-page fetching and live requests (Stage 6), promotion,
 concurrency.
 """
+import contextlib
 import dataclasses
 import datetime
 import glob
 import json
 import os
+import re
 import shutil
 import tempfile
 
@@ -84,6 +86,7 @@ from . import pool as pool_mod
 from . import records as records_mod
 from . import request_key as request_key_mod
 from . import scheduler
+from . import schema as schema_mod
 from . import sourcecache as sourcecache_mod
 from . import targetfetch as targetfetch_mod
 from . import urlkey
@@ -146,6 +149,126 @@ class Transport:
     opener: object
     sleep: object
     lease_root: str
+
+
+# ---------------------------------------------------------------- run bounds
+# The one place a run id is validated. Read from the COMMITTED manifest schema
+# rather than retyped, so `smoke --run-id` and `validate --run-id` cannot drift
+# from each other or from the document they will be written into. It lives here,
+# not in `runvalidate.py`, because `runvalidate` imports this module for the
+# configured cell and topic sets and the dependency cannot run both ways.
+_RUN_ID_RE = None
+
+
+def run_id_pattern():
+    """The committed `harvest_run_id` pattern, from the schema itself."""
+    global _RUN_ID_RE
+    if _RUN_ID_RE is None:
+        doc = schema_mod.load_schema("run_manifest.v1.json")
+        _RUN_ID_RE = re.compile(doc["properties"]["harvest_run_id"]["pattern"])
+    return _RUN_ID_RE
+
+
+def validate_run_id_value(value):
+    """Return `value` if the committed schema would accept it, else raise."""
+    if not isinstance(value, str) or not run_id_pattern().match(value):
+        raise RunCellsError(
+            "%r is not a committed run id. The manifest schema requires %s, so a "
+            "run id that would be refused at write time is refused here instead — "
+            "before a single artifact exists."
+            % (value, run_id_pattern().pattern))
+    return value
+
+
+@dataclasses.dataclass(frozen=True)
+class RunBounds:
+    """The bounded-smoke limits, as ONE immutable value.
+
+    Independent `max_candidates` / `max_accepted` / `smoke_budget` parameters on
+    `run()` could be set inconsistently — an accepted cap above the candidate cap
+    is not a bound, it is a bug that never binds. One frozen value validated at
+    construction makes the incoherent combinations unrepresentable, exactly as
+    `Transport` does for the network decision.
+
+    `elapsed_before_run_sec` is the wall clock the CALLER already spent before the
+    run phase began — the integrated source preflight. The smoke budget is
+    command-wide, so that time is subtracted here rather than silently forgiven.
+    It is deliberately NOT reported in `config.bounds`: the configured budget is a
+    stable fact about the run, and how much of it preflight happened to consume is
+    not.
+    """
+
+    max_candidates_per_cell: int
+    max_accepted_per_cell: int
+    smoke_budget_sec: float
+    elapsed_before_run_sec: float = 0.0
+
+    def __post_init__(self):
+        for name in ("max_candidates_per_cell", "max_accepted_per_cell"):
+            value = getattr(self, name)
+            # Booleans are ints in Python and a `True` cap is never intended.
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise RunCellsError("%s must be an int, got %r" % (name, value))
+            if value < 1:
+                raise RunCellsError("%s must be >= 1, got %r" % (name, value))
+        if self.max_accepted_per_cell > self.max_candidates_per_cell:
+            raise RunCellsError(
+                "max_accepted_per_cell (%d) may not exceed max_candidates_per_cell "
+                "(%d): a cap that can never bind is not a bound."
+                % (self.max_accepted_per_cell, self.max_candidates_per_cell))
+        for name in ("smoke_budget_sec", "elapsed_before_run_sec"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise RunCellsError("%s must be a number, got %r" % (name, value))
+            if value != value or value in (float("inf"), float("-inf")):
+                raise RunCellsError("%s must be finite, got %r" % (name, value))
+        if self.smoke_budget_sec <= 0:
+            raise RunCellsError("smoke_budget_sec must be > 0, got %r"
+                                % (self.smoke_budget_sec,))
+        if self.elapsed_before_run_sec < 0:
+            raise RunCellsError("elapsed_before_run_sec must be >= 0, got %r"
+                                % (self.elapsed_before_run_sec,))
+
+    @property
+    def remaining_run_sec(self):
+        """What is left of the command-wide budget for the run phase."""
+        return self.smoke_budget_sec - self.elapsed_before_run_sec
+
+
+def _apply_candidate_cap(extraction, cap):
+    """Keep the first `cap` candidates in the committed deterministic order.
+
+    `ExtractionResult.candidates` is already sorted by `candidate_key`, which is
+    content-derived, so the prefix is a function of what was discovered and never
+    of when it arrived. Sliced BEFORE classification, so a candidate outside the
+    cap genuinely receives no classification, no facets and no record — it is
+    unprocessed, which is a different thing from rejected, and it appears in no
+    rejection log.
+    """
+    if cap is None or len(extraction.candidates) <= cap:
+        return extraction
+    return dataclasses.replace(extraction,
+                               candidates=tuple(extraction.candidates[:cap]))
+
+
+def _accepted_prefix(candidates, verdicts, cap):
+    """The prefix ending at the `cap`-th accepted candidate, or all of them.
+
+    Deterministic and verdict-preserving: nothing is relabelled, no rejection
+    reason is invented, and the retained rejected candidates keep the verdicts
+    the committed gate gave them. `accepted + rejected == candidates` still holds
+    over the retained set, because the retained set is a prefix and every member
+    of it has a verdict.
+    """
+    if cap is None:
+        return candidates
+    seen = 0
+    for index, candidate in enumerate(candidates):
+        if verdicts[candidate.candidate_key].accepted:
+            seen += 1
+            if seen >= cap:
+                return tuple(candidates[:index + 1])
+    return candidates
 
 
 def fixture_transport(lease_root, *, fixtures_dir=None):
@@ -298,7 +421,7 @@ def _run_policy():
         return json.load(handle)
 
 
-def _config_block(cells, max_cells, *, enrich):
+def _config_block(cells, max_cells, *, enrich, bounds=None):
     """The config facts this run used. `enrich` is REQUIRED, not defaulted.
 
     S6-5 brought this one field forward from S6-6, because S6-5 is what first makes
@@ -326,9 +449,22 @@ def _config_block(cells, max_cells, *, enrich):
         "cross_topic_policy": precedence.get("cross_topic_policy"),
         "enrich": bool(enrich),
         # Every bound this run actually enforced, so a capped run is visible in the
-        # manifest rather than only in the code. S6-6.
-        "bounds": {"max_cells": max_cells,
-                   "max_target_fetches_per_cell": MAX_TARGET_FETCHES_PER_CELL},
+        # manifest rather than only in the code. S6-6, extended by S9-3.
+        #
+        # The three smoke keys appear ONLY when bounds were supplied and therefore
+        # enforced. Reporting them at their policy defaults on an unbounded run
+        # would claim a cap that never bound anything — the same dishonesty
+        # `config.enrich` was created to avoid. `elapsed_before_run_sec` is
+        # deliberately absent: the configured budget is a stable fact, how much of
+        # it preflight consumed is not.
+        "bounds": ({"max_cells": max_cells,
+                    "max_target_fetches_per_cell": MAX_TARGET_FETCHES_PER_CELL}
+                   if bounds is None else
+                   {"max_cells": max_cells,
+                    "max_target_fetches_per_cell": MAX_TARGET_FETCHES_PER_CELL,
+                    "max_candidates_per_cell": bounds.max_candidates_per_cell,
+                    "max_accepted_per_cell": bounds.max_accepted_per_cell,
+                    "smoke_budget_sec": bounds.smoke_budget_sec}),
     }
 
 
@@ -508,13 +644,18 @@ def _fetch_targets(run, *, client, budget, pool, outcomes, clock, canon_policy):
 
 
 def _run_one_cell(cell, *, cache, client, budget, policy, clock, pool=None,
-                  outcomes=None, canon_policy=None):
+                  outcomes=None, canon_policy=None, bounds=None):
     """Discover, dedupe, extract, classify, verify, assign — all committed calls.
 
     `pool`, `outcomes` and `canon_policy` enable the S6-4 target-fetch phase. They
     default to None so every existing caller — and every Stage 5 test — keeps the
     metadata-only behaviour it was written against: without a pool there is no
     ownership gate to acquire, so no target is fetched.
+
+    `bounds` (S9-3) caps what this cell PROCESSES; it never caps what it asks the
+    configured sources for. Discovery and the committed request budgets are
+    untouched, so a bounded smoke still exercises every source exactly as a full
+    run would — the bound limits judgement, not traffic.
     """
     run = CellRun(cell)
     source_map = {source["source_id"]: source for source in cell["sources"]}
@@ -547,8 +688,32 @@ def _run_one_cell(cell, *, cache, client, budget, policy, clock, pool=None,
         grouped = dedupe_mod.group(deliveries, sources=source_map)
         extraction = extract_mod.normalize_all(grouped)
 
+        # S9-3, first cap. Sliced HERE — before any judgement — so a candidate
+        # outside the cap is genuinely unprocessed: no classification, no facets,
+        # no record, and no rejection row claiming it was considered and refused.
+        if bounds is not None:
+            extraction = _apply_candidate_cap(extraction,
+                                              bounds.max_candidates_per_cell)
+
         classifications = classify_mod.classify_all(extraction)
         verdicts = verify_mod.verify_all(extraction, classifications, clock=clock)
+
+        # S9-3, second cap. The boundary cannot be known without verdicts — that
+        # is what "the Nth ACCEPTED candidate" means — so the committed batch gate
+        # runs over the candidate-capped set and the prefix is taken from its
+        # results. Nothing past the boundary produces a facet, a record, a
+        # rejection row or a count; no verdict is changed and no reason invented.
+        if bounds is not None:
+            by_key = {v.candidate_key: v for v in verdicts}
+            kept = _accepted_prefix(extraction.candidates, by_key,
+                                    bounds.max_accepted_per_cell)
+            if len(kept) != len(extraction.candidates):
+                keys = {candidate.candidate_key for candidate in kept}
+                extraction = dataclasses.replace(extraction, candidates=kept)
+                classifications = [c for c in classifications
+                                   if c.candidate_key in keys]
+                verdicts = [v for v in verdicts if v.candidate_key in keys]
+
         assignments = facetassign_mod.assign_all(extraction, classifications)
 
         run.extracted = extraction.candidates
@@ -809,7 +974,8 @@ def _dedupe_records(rows):
 
 # -------------------------------------------------------------------- run
 def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
-        transport=None, mode=None, enrich=None, source_preflight=None):
+        transport=None, mode=None, enrich=None, source_preflight=None,
+        bounds=None, run_id_value=None):
     """Run the configured cells sequentially and emit one run's artifacts.
 
     `root` is the artifact root — every byte this writes lands under it. `cells`
@@ -842,13 +1008,23 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
         passed through to the manifest builder; nothing is probed and no row is
         assembled here. That is S9-2's, and it does not exist yet.
 
-    Deliberately NOT here: smoke bounds. `bounds` is S9-3's contract and is added
-    with its enforcement, atomically. A parameter accepted and ignored would let a
-    manifest report a cap that never bound anything.
+    S9-3 seams, also omission-compatible:
+
+      * `bounds` — one frozen `RunBounds`. `None` means unbounded, byte-for-byte
+        as before. Supplied, it caps candidates and accepted records PER CELL and
+        gives the run phase a wall-clock scope; every cap it enforces is echoed
+        into `config.bounds`, so a bounded run cannot be mistaken for a full one.
+        It never caps discovery: the committed request budgets still decide how
+        much traffic a cell may generate.
+      * `run_id_value` — `None` keeps the committed clock-derived id. Supplied, it
+        is validated against the COMMITTED manifest schema pattern and refused
+        before a single byte is written, so an id the manifest would reject can
+        never reach an artifact.
     """
     now = (clock() if clock is not None else _default_clock())
     stamp = now.strftime(STAMP_FORMAT)
-    harvest_run_id = artifacts.run_id(clock=lambda: now)
+    harvest_run_id = (artifacts.run_id(clock=lambda: now) if run_id_value is None
+                      else validate_run_id_value(run_id_value))
 
     # Refused HERE, not at publication. A finished run's artifacts are immutable;
     # discovering the clash after the cells had run would mean the cross-run
@@ -927,13 +1103,29 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
         # re-fetching the same page.
         target_outcomes = {}
         canon_policy = aliases_mod.load_canonicalization()
-        for cell in selected:                       # one cell at a time. See §9.1.
-            runs.append(_run_one_cell(cell, cache=cache, client=client,
-                                      budget=budget, policy=policy,
-                                      clock=verify_clock,
-                                      pool=pool if enrich else None,
-                                      outcomes=target_outcomes if enrich else None,
-                                      canon_policy=canon_policy))
+        # S9-3. The command-wide smoke budget, as a committed `run` time scope
+        # over the whole cell phase — not a new timeout implementation. It is
+        # checked BEFORE and AFTER each cell, so an expiry is discovered at a cell
+        # boundary and raises out of this block before the artifact-writing phase
+        # is reached: a run that ran out of time publishes no manifest and does
+        # not move the pointer. `remaining_run_sec` is what the caller's preflight
+        # left of it.
+        run_scope = (budget.scope("run", None, bounds.remaining_run_sec)
+                     if bounds is not None else contextlib.nullcontext())
+        with run_scope:
+            for cell in selected:                   # one cell at a time. See §9.1.
+                if bounds is not None:
+                    budget.check_time()
+                runs.append(_run_one_cell(cell, cache=cache, client=client,
+                                          budget=budget, policy=policy,
+                                          clock=verify_clock,
+                                          pool=pool if enrich else None,
+                                          outcomes=(target_outcomes if enrich
+                                                    else None),
+                                          canon_policy=canon_policy,
+                                          bounds=bounds))
+                if bounds is not None:
+                    budget.check_time()
     finally:
         # Only what this call created. A caller-supplied lease root is the
         # caller's to keep — a live run's leases outlive the command that made
@@ -1143,7 +1335,8 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
         manifest = artifacts.build_run_manifest(
             harvest_run_id=harvest_run_id, started_at=stamp, finished_at=stamp,
             cells=rows, mode=run_mode,
-            config=_config_block(configured, max_cells, enrich=enrich),
+            config=_config_block(configured, max_cells, enrich=enrich,
+                                 bounds=bounds),
             # A preflight is a bounded re-check of live sources at the start of a
             # live run. Omitted — the fixture default — the honest value stays
             # "none performed". Rows only ever arrive from a caller that actually

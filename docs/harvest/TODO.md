@@ -132,7 +132,32 @@ stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPO
                              one transient lease root outside the repository) and
                              E9-6 (stdout is one bare sorted JSON array of committed
                              source_preflight rows, no envelope).
-                             S9-L1 AND EVERY LATER CHECKPOINT UNAPPROVED.
+                             E9-7 (offline-first order: S9-3 may precede S9-L1,
+                             which stays MANDATORY before S9-L2), E9-8 (runvalidate.py
+                             is the read-only validation owner), E9-9 (anticipated
+                             spent guards), E9-10 (S9-3 accounting 60 -> 61; 63 is
+                             post-S9-6), E9-11 (42 JSON = 18 selected-run + 24 shared;
+                             a 2nd run adds 18 and updates the same 24) and E9-12
+                             (explicit run_id_value seam, pattern read from the
+                             committed schema).
+                             S9-L1 MANDATORY AND UNAPPROVED; S9-4 AND EVERY LATER
+                             CHECKPOINT UNAPPROVED.
+stage_9_3_scope_expansion:   RATIFIED, one path. E9-9 anticipated the duplicated
+                             `bounds` snapshot in test_run_cells.py but MISSED the
+                             same guard in test_cli.py, whose live-transport AST scan
+                             was also over-broad (ast.walk descends into function
+                             bodies, so it rejected calls inside DEFINITIONS). The
+                             checkpoint STOPPED WITHOUT COMMITTING and reported;
+                             tests/harvest/test_cli.py was then added by explicit
+                             approval, keeping S9-3 ELEVEN paths in ONE atomic commit.
+                             No production workaround for either scan.
+stage_9_3_validation:        FOCUSED ONLY, 453 assertions green — smoke 57, cli 58,
+                             preflight 65, run_cells 99, recovery 74, manifest 52,
+                             eligibility 48 — plus py_compile x7 and one explicit-mode
+                             harness sample at exit 0 with five wrappers each exactly
+                             once and zero WARN skips. `--all` was NOT run. NO
+                             configured source contacted; every smoke used the fixture
+                             transport under a socket guard proved wired by tripping it.
 stage_9_2_scope_expansion:   RATIFIED, one path. S9-2's seven-path set could not hold:
                              three S9-1 registry SNAPSHOTS in tests/harvest/test_cli.py
                              asserted COMMANDS == {} and a fixed planned set, and
@@ -1755,8 +1780,78 @@ a checkpoint, once immediately before the outbound request.
         `robots_allowed`, `crawl_delay_sec`, `http_status` and the failure classification
         demonstrably originate in committed code.
 - [ ] **S9-2** source-preflight implementation — code, **no network**
-- [ ] **S9-L1** live source-preflight execution — **NETWORK**, verification-only, no commit
-- [ ] **S9-3** smoke and `validate --run-id` implementation — code, **no network**
+- [ ] **S9-L1** live source-preflight execution — **NETWORK**, verification-only, no commit —
+      **UNAPPROVED and MANDATORY.** **E9-7** made the sequence offline-first: S9-3 (and S9-4) may
+      precede it, but it must be **completed and reviewed before S9-L2 is approved** and before any
+      real smoke runs. No offline checkpoint authorizes it.
+- [x] **S9-3** bounded smoke and read-only run validation
+      (`feat(harvest): add bounded smoke and run validation`) — code and offline tests only, **no
+      outbound request**, **no real source contacted**, **no retained live root**. Eleven paths after
+      a **ratified expansion**: `src/harvest/runvalidate.py` · `src/harvest/cli.py` ·
+      `src/harvest/run_cells.py` · `tests/harvest/test_smoke.py` · `tests/test_taxonomy_smoke.sh` ·
+      `tests/harvest/test_run_cells.py` · `tests/harvest/test_preflight.py` ·
+      `tests/harvest/test_cli.py` · `scripts/validate_task.sh` · the plan · this file.
+      - **`RunBounds` is frozen and validated at construction** — int caps ≥ 1 (a `bool` is refused),
+        accepted ≤ candidates, finite positive budget. `run()` gains **only** `bounds=None` and
+        `run_id_value=None`, keyword-only; there is no independent `max_candidates`, `max_accepted`
+        or `smoke_budget` parameter, just as there is none for opener/sleep/lease-root.
+      - **The candidate cap slices before classification**, so a capped-out candidate gets no
+        classification, no facets, no record and **no rejection row** — unprocessed is not rejected.
+        It caps judgement, never traffic: discovery and the committed request budgets are untouched.
+        **The accepted cap keeps the deterministic prefix** ending at the Nth accepted candidate;
+        verdicts are preserved, nothing relabelled, no reason invented, and
+        `accepted + rejected == candidates` holds over the processed set. Measured: the uncapped cell
+        accepts 4; capped to 2 it reports 2 accepted with **fewer** rejections, never more.
+      - **The smoke budget is command-wide.** `time.monotonic()` starts before the integrated
+        preflight, the elapsed time is subtracted, and the run phase gets only the remainder as a
+        committed `run` time scope checked **before and after every cell**. Expiry aborts before the
+        write phase: **no manifest, no pointer movement, previous runs untouched.** A preflight that
+        consumes the whole budget is refused before the run starts. No new timeout was implemented.
+      - **`config.bounds` carries the three smoke keys only when they were enforced**; omitted bounds
+        reproduce the committed two-key block byte-for-byte, and `elapsed_before_run_sec` is never
+        reported — the configured budget is a stable fact, how much preflight used is not.
+      - **`smoke --state-root PATH [--no-enrich] [--max-candidates N] [--max-accepted N]
+        [--run-id ID]`** — caps may only **narrow** the policy values; every argument, the external
+        root and a finished-run clash are decided **before any transport is built**. Prints one
+        deterministic timestamp-free summary; exit **0** only on complete publication (42 JSON with
+        the pointer naming the run), non-zero otherwise, **2** on argument misuse. A failed run
+        publishes no manifest and partial artifacts are left as **evidence**, not deleted.
+      - **`validate --state-root PATH --run-id ID`** — offline, read-only, repairs nothing.
+        `runvalidate.py` (**E9-8**, the read-only owner: cli parses, run_cells writes, runvalidate
+        validates) imports no HTTP/adapter/judgement owner, has no write or repair call, and opens
+        every file read-only — all AST-asserted. Enforces **E9-11**: 42 JSON = **18 selected-run + 24
+        shared**, so a second run adds 18 and updates the same 24 rather than making 84. Checks all
+        42 schemas, run-id agreement, count relations, `alias_conflicts_count`, mode/enrich/bounds/
+        eligibility, 25 sorted preflight rows, pointer consistency, and `.tmp_*` debris anywhere.
+        Exit **0** valid, **1** invalid after printing the report, **2** on argument misuse.
+      - **Two production defects found by these tests and fixed:** `RunValidateError` and
+        `RunCellsError` escaped `main()` as tracebacks instead of exit 2, and `argparse`'s
+        `SystemExit` escaped, breaking `main()`'s promise to return an exit code rather than raise.
+      - **Four spent snapshots retired across three suites.** E9-9 anticipated two
+        (`test_run_cells.py`'s `bounds`-absent guard, `test_preflight.py`'s S9-2 registry snapshots)
+        and **missed the same `bounds` guard duplicated in `test_cli.py`** — the checkpoint stopped
+        without committing and reported, and the one-path expansion was ratified so S9-3 stays **one
+        atomic commit** instead of splitting production from the guard corrections it forces. The
+        duplicate was **deleted**, not replaced: the permanent `run()` contract belongs to
+        `test_run_cells.py` alone. `test_cli.py`'s live-transport AST scan was **over-broad since
+        S9-1** — it walked `tree.body` meaning "module-level execution" but `ast.walk` descends into
+        function bodies, so it rejected calls inside function *definitions*, which is not execution.
+        Corrected to distinguish module-level execution · inert and refused paths (including refused
+        `smoke`/`validate` arguments, which must fail **before** the network decision) · approved
+        registered handlers. **No production code was altered to fool either scan**, no handler was
+        hidden outside `COMMANDS`, and **no exact command-count snapshot was introduced.**
+      - **One defect in the S9-3 suite itself, fixed:** `TestFullOfflineSmoke` stranded a whole
+        43-path run tree in the system temp directory when `setUpClass` failed partway, since
+        `tearDownClass` does not run then. Switched to `addClassCleanup`, and the wrapper now fails
+        on any leaked `s93_*` root — a guard the suite owns cannot catch the suite crashing.
+      - **Focused validation only, 453 assertions green:** smoke **57** · cli **58** · preflight
+        **65** · run_cells **99** · recovery **74** · manifest **52** · eligibility **48**; plus
+        `py_compile` ×7 and one explicit-mode harness sample at **exit 0** with **five wrappers each
+        exactly once**, **zero `WARN - skipping`**, zero FAIL. **`--all` was NOT run.**
+      - **Harness: 60 → 61 wrappers** (19 legacy + **42** taxonomy), `ISOLATED[]` 60 → 61 with the
+        committed 60 byte-identical as an **ordered prefix** (**E9-10**; 63 remains the post-S9-6
+        figure). `runvalidate.py` → smoke; `cli.py` → cli + preflight + smoke; `run_cells.py` →
+        run_cells + recovery + cli + smoke. No future-wrapper target, no aggregate, no blanket arm.
 - [ ] **S9-4** `compare-runs` and `diff --run-id` implementation — code, **no network**
 - [ ] **S9-L2** first bounded live smoke — **NETWORK**, verification-only, no commit · **this is M2**
 - [ ] **S9-L3** second bounded live smoke + normalized comparison — **NETWORK**, no commit
@@ -1766,10 +1861,12 @@ a checkpoint, once immediately before the outbound request.
 - [ ] **S9-L4** bounded live linkcheck execution — **NETWORK**, no commit
 - [ ] **S9-C** Stage 9 closeout — documentation only; push and memory sync remain separate approvals
 
-**S9-0, S9-1 and S9-2 are complete. Stage 9 is NOT complete.** **S9-L1 and every later checkpoint
-remain unapproved.** `preflight-sources` is implemented but **has never contacted a real source**; no
-outbound request has ever been made by this pipeline; no retained external Stage 9 state root exists
-or has been selected; **live operation remains zero and M2 is unmet**. Each remaining checkpoint needs
+**S9-0, S9-1, S9-2 and S9-3 are complete. Stage 9 is NOT complete.** **S9-L1 remains mandatory and
+unapproved** — **E9-7** reorders it after S9-3/S9-4 but it still gates S9-L2 — and **S9-4 and every
+later checkpoint remain unapproved.** `preflight-sources`, `smoke` and `validate` are implemented but
+**none has ever contacted a real source**; no outbound request has ever been made by this pipeline;
+no retained external Stage 9 state root exists or has been selected; **live operation remains zero
+and M2 is unmet**. Each remaining checkpoint needs
 its own approval by name with its exact allowed-path set; every live execution needs approval twice,
 the second immediately before the outbound request.
 

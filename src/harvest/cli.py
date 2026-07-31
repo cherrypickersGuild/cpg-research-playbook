@@ -46,6 +46,7 @@ from . import artifacts
 from . import httpclient
 from . import preflight as preflight_mod
 from . import run_cells
+from . import runvalidate
 
 # `<repo>/src/harvest/cli.py` -> `<repo>`. Resolved from this file rather than
 # from the working directory, so the answer does not depend on where the shell
@@ -76,8 +77,6 @@ PROHIBITED_RUNTIME_PATHS = (
 # to find out why it is missing. Membership here confers nothing, and an entry is
 # removed only by the checkpoint that implements it.
 PLANNED_COMMANDS = {
-    "smoke": "S9-3 (implementation) then S9-L2 (live execution)",
-    "validate": "S9-3",
     "compare-runs": "S9-4",
     "diff": "S9-4",
     "linkcheck": "S9-6 (implementation) then S9-L4 (live execution)",
@@ -315,10 +314,149 @@ def cmd_preflight_sources(argv):
     return 0 if preflight_mod.all_ok(rows) else 1
 
 
+# ------------------------------------------------------------- smoke (S9-3)
+def _positive_int(name, raw, ceiling):
+    """A cap the caller may only NARROW. Validated before anything is built."""
+    try:
+        value = int(str(raw), 10)
+    except (TypeError, ValueError):
+        raise CliError("%s must be a positive integer, got %r" % (name, raw))
+    if value < 1:
+        raise CliError("%s must be >= 1, got %r" % (name, raw))
+    if value > ceiling:
+        raise CliError(
+            "%s %d exceeds the configured smoke cap of %d. A smoke bound may be "
+            "narrowed, never widened — widening it would make the run something "
+            "the policy never approved." % (name, value, ceiling))
+    return value
+
+
+def cmd_smoke(argv):
+    """One bounded, enrichment-free, 12-cell run into an external state root.
+
+    Everything decidable without traffic is decided first — the state root, both
+    caps, the run id — so a typo costs no request. Only then is a live transport
+    built, the configured sources preflighted once each, and `run_cells.run()`
+    called EXACTLY ONCE. There is no automatic retry: a failed smoke is evidence.
+
+    A smoke is `mode="smoke"` with enrichment off, which makes it
+    `publication_eligible: false` through the COMMITTED derivation — this adds no
+    predicate, and target-page fetching is unreachable with enrichment false.
+    """
+    parser = build_parser(
+        "smoke",
+        "One bounded 12-cell run into an external state root. Never publishes.")
+    add_state_root_argument(parser)
+    parser.add_argument("--no-enrich", action="store_true", default=True,
+                        help="disable target-page fetching (the only mode)")
+    parser.add_argument("--max-candidates", default=None, metavar="N",
+                        help="narrow the per-cell candidate cap")
+    parser.add_argument("--max-accepted", default=None, metavar="N",
+                        help="narrow the per-cell accepted cap")
+    parser.add_argument("--run-id", default=None, metavar="ID",
+                        help="use this run id instead of a clock-derived one")
+    args = parser.parse_args(argv)
+
+    state_root = validate_state_root(args.state_root)
+    policy = run_cells._run_policy()
+    smoke = policy.get("smoke", {})
+    max_candidates = smoke.get("max_candidates_per_cell")
+    max_accepted = smoke.get("max_accepted_per_cell")
+    if args.max_candidates is not None:
+        max_candidates = _positive_int("--max-candidates", args.max_candidates,
+                                       max_candidates)
+    if args.max_accepted is not None:
+        max_accepted = _positive_int("--max-accepted", args.max_accepted,
+                                     max_accepted)
+    if max_accepted > max_candidates:
+        raise CliError(
+            "--max-accepted %d exceeds --max-candidates %d: a cap that can never "
+            "bind is not a bound." % (max_accepted, max_candidates))
+
+    run_id_value = None
+    if args.run_id is not None:
+        run_id_value = runvalidate.validate_run_id(args.run_id)
+        if artifacts.run_is_finished(state_root, run_id_value):
+            raise CliError(
+                "run %s already finished in %s. A finished run's artifacts are "
+                "immutable, and this is refused BEFORE the preflight so a repeat "
+                "costs no request." % (run_id_value, state_root))
+
+    budget_sec = policy.get("budgets", {}).get("smoke_budget_sec")
+
+    # The command-wide clock starts HERE, immediately before the first request.
+    started = time.monotonic()
+    transport = live_transport(state_root)
+    client = httpclient.HttpClient(policy, lease_root=transport.lease_root,
+                                   opener=transport.opener, sleep=transport.sleep)
+    rows = preflight_mod.preflight_sources(client)
+    elapsed = time.monotonic() - started
+
+    bounds = run_cells.RunBounds(
+        max_candidates_per_cell=max_candidates,
+        max_accepted_per_cell=max_accepted,
+        smoke_budget_sec=budget_sec,
+        elapsed_before_run_sec=elapsed)
+    if bounds.remaining_run_sec <= 0:
+        raise CliError(
+            "the source preflight consumed the whole %ss smoke budget (%.1fs); "
+            "refusing to start a run with no time left rather than writing a tree "
+            "that cannot finish." % (budget_sec, elapsed))
+
+    result = run_cells.run(state_root, transport=transport, mode="smoke",
+                           enrich=False, source_preflight=rows, bounds=bounds,
+                           run_id_value=run_id_value, max_cells=run_cells.MAX_CELLS)
+
+    written = [path for path in result.paths if path.endswith(".json")]
+    pointer = artifacts.read_latest_run_id(state_root)
+    if len(written) != runvalidate.TOTAL_JSON or pointer != result.run_id:
+        sys.stderr.write(
+            "%s: smoke did not publish completely — %d JSON artifacts (expected "
+            "%d) and LATEST_RUN_ID names %r. Nothing was removed; the tree is "
+            "evidence.\n" % (PROG, len(written), runvalidate.TOTAL_JSON, pointer))
+        return 1
+
+    sys.stdout.buffer.write(artifacts.serialize({
+        "run_id": result.run_id,
+        "mode": "smoke",
+        "json_artifacts": len(written),
+        "pointer": artifacts.LATEST_RUN_ID_NAME,
+        "source_preflight_rows": len(rows),
+        "publication_eligible": False,
+    }))
+    sys.stdout.buffer.flush()
+    return 0
+
+
+# ---------------------------------------------------------- validate (S9-3)
+def cmd_validate(argv):
+    """Read one completed run and report whether it is sound. Writes nothing."""
+    parser = build_parser(
+        "validate",
+        "Validate the latest complete run in a state root. Read-only, offline.")
+    add_state_root_argument(parser)
+    parser.add_argument("--run-id", required=True, metavar="ID",
+                        help="the run to validate; must be the one LATEST_RUN_ID names")
+    args = parser.parse_args(argv)
+
+    state_root = validate_state_root(args.state_root)
+    run_id = runvalidate.validate_run_id(args.run_id)
+    if not os.path.isdir(state_root):
+        raise CliError("--state-root %s does not exist or is not a directory"
+                       % state_root)
+
+    report = runvalidate.validate_run(state_root, run_id)
+    sys.stdout.buffer.write(artifacts.serialize(report))
+    sys.stdout.buffer.flush()
+    return 0 if report["valid"] else 1
+
+
 # Registered subcommands: name -> callable(argv) -> exit code. A command appears
 # here only in the checkpoint that implements it.
 COMMANDS = {
     "preflight-sources": cmd_preflight_sources,
+    "smoke": cmd_smoke,
+    "validate": cmd_validate,
 }
 
 
@@ -332,6 +470,16 @@ commands:
                       Creates no run and retains nothing.
                       [--sources ID[,ID...]] [--timeout-sec N]
                       exit 0 when every row is ok, 1 when any is not.
+  smoke               one bounded, enrichment-free 12-cell run into an external
+                      state root. Publishes 42 JSON artifacts and the pointer;
+                      never publication-eligible.
+                      --state-root PATH [--no-enrich] [--max-candidates N]
+                      [--max-accepted N] [--run-id ID]
+                      exit 0 on complete publication, non-zero otherwise.
+  validate            read the latest complete run and report whether it is
+                      sound. Offline, read-only, repairs nothing.
+                      --state-root PATH --run-id ID
+                      exit 0 when valid, 1 when not.
   --help, -h          show this text
 
 Planned and NOT implemented. Stage 9 registers each in the checkpoint that
@@ -370,7 +518,15 @@ def main(argv=None):
 
     try:
         return handler(args[1:])
-    except (CliError, preflight_mod.PreflightError) as exc:
+    except SystemExit as exc:
+        # `argparse` reports a usage error by RAISING SystemExit(2). Letting that
+        # escape would break this function's one promise — it returns an exit
+        # code and raises nothing — and would make an in-process caller see an
+        # exception where the shell sees a clean 2. Normalized here, so both
+        # observers agree.
+        return 2 if exc.code is None else int(exc.code)
+    except (CliError, preflight_mod.PreflightError,
+            runvalidate.RunValidateError, run_cells.RunCellsError) as exc:
         # A refused argument or a refused configuration. Exit 2 — the same code
         # argparse uses for a usage error — and print to stderr, so stdout stays
         # JSON-only and a caller parsing it is never handed prose. Nothing has
