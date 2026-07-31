@@ -36,10 +36,10 @@ stage_7_apply:               works, and is exercised ONLY under injected tempora
                              default-root apply needs separate human approval.
 stage_8_plan_of_record:      docs/harvest/STAGE_8_IMPLEMENTATION_PLAN.md   COMPLETED —
                              STAGE 8 CLOSED
-stage_8_state:               CLOSED. All four checkpoints approved by name and complete:
-                             S8-0 (plan of record), S8-1 (harness wiring), S8-2 (full
-                             offline regression, verification-only, NO COMMIT) and S8-C
-                             (closeout). Closed LOCALLY and UNPUSHED.
+stage_8_state:               CLOSED AND PUBLISHED. All four checkpoints approved by name and
+                             complete: S8-0 (plan of record), S8-1 (harness wiring), S8-2
+                             (full offline regression, verification-only, NO COMMIT) and
+                             S8-C (closeout). Published tip bf067303a01fa80d1421f9eef7030cbadf805733.
 stage_8_0_commit:            0657db8a65e311ea0f20b43a2fbf2c0e811d5ee5   docs(harvest): plan
                              stage 8 harness wiring — 2 documentation paths
 stage_8_1_commit:            01d2999a3f382d3fcf51ace8f1d7b4fc9445ad6c   feat(harvest): wire
@@ -83,15 +83,18 @@ stage_8_1_validation:        focused only — bash -n; a 39-check static invento
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
-push_state:                  Stage 7 implementation and closeout through
+push_state:                  SYNCHRONIZED. HEAD = local main = local origin/main =
+                             bf067303a01fa80d1421f9eef7030cbadf805733, 0 behind / 0 ahead.
+                             Stage 7 implementation and closeout through
                              e5dc558234727ea58ffeea269b7d52d6f65a603a were published to
-                             origin/main on 2026-07-31, by safe_push_main.sh --execute as a
-                             fast-forward from 0d2da64. This records the published Stage 7
-                             boundary, not the live status of later documentation-only
-                             commits; verify refs before new work.
-                             STAGE 8 IS NOT PUBLISHED. origin/main is still b9a08a3; all
-                             three Stage 8 commits (S8-0, S8-1, S8-C) are local only, and a
-                             push needs its own explicit approval.
+                             origin/main on 2026-07-31 by safe_push_main.sh --execute as a
+                             fast-forward from 0d2da64; all three Stage 8 commits (S8-0,
+                             S8-1, S8-C) were published on top of that on the same day, and
+                             bf067303 is the published Stage 8 tip. This records the state
+                             at the 2026-07-31 roadmap checkpoint, not the live status of
+                             any later commit; verify refs with local refs before new work.
+                             Every future push still needs its own explicit approval, via
+                             safe_push_main.sh --check then a separately approved --execute.
 gate_after_stage_8:          `bash scripts/validate_task.sh --all` is now the closing gate
                              and CONTAINS the taxonomy gate: 58 wrappers (19 legacy + 39
                              taxonomy), each exactly once, zero skips. The standalone loop
@@ -108,7 +111,33 @@ assertions:                  see stage_7_gate above for the current figure — S
                              across 30 suites included the shell suites, the interim Stage 6
                              figures did not. Stage 7 added exactly one suite.
 untracked_baseline:          508 files, byte-identical; drift 0, missing 0, extra 0
+roadmap:                     docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md — the durable
+                             cross-stage map: artifact lifecycle and JSON catalog, exact
+                             file-set accounting, command-to-artifact matrix, product
+                             milestones M1-M7, remaining-checkpoint forecast, and the gap
+                             register G1-G17. Read it before scoping Stage 9.
 ```
+
+## Progress dashboard
+
+Five **independent** dimensions. They are not stages, and a high number in one says nothing about
+the others. Detail, evidence and denominators in `ROADMAP_AND_ARTIFACT_LIFECYCLE.md` §1 and §3.
+
+| Dimension | State | Evidence |
+|---|---|---|
+| **Implementation** | Stages 0-8 closed (10 of the 12 named stage labels). But only **2 of the 13** commands/producers the master plan names actually exist: the run driver — as a **Python function with no CLI** — and `migrate.sh` | `validate_task.sh --all` exit 0, 58/58 wrappers, zero skips (S8-2) |
+| **Live staging** | **NONE.** Zero network requests have ever been made by this pipeline. `run_cells.run()` builds its opener unconditionally as `fixtures.FixtureOpener`, so a live run is **not currently possible without new production code** | `state/taxonomy_harvest/`, `runs/`, `LATEST_RUN_ID` all absent |
+| **Production candidate** | **NONE**, and **unowned.** Stage 9 produces `--no-enrich` smokes, which `IMPLEMENTATION_PLAN.md` §7.1 explicitly disqualifies from promotion. No stage owns the enriched production run, and human review has no artifact, schema or acceptance process | roadmap G4, G9 |
+| **Publication** | **NONE.** `data/harvested/` absent. `promotion_receipt`, `promotion_journal`, `publication_manifest`, `promote_staging`, `promote_rollback` and `--publication-root` have **zero occurrences** anywhere in the tree | roadmap §5.4, G7 |
+| **Website integration** | **NONE, unscoped, unowned.** No interface contract, no consumer code, no cadence | roadmap G10 |
+
+**Stage 9 and Stage 10 are NOT the last two steps before publication.** Stage 9 is a bounded live
+smoke; **Stage 10 is two markdown documents and creates no JSON and publishes nothing.** Closing the
+described Stage 0-10 plan takes an estimated **13-18 checkpoints** and ends at a live smoke plus a
+link check. A reviewed production candidate, a promotion implementation, an actual publication into
+`data/harvested/`, and a consuming website are a further estimated **21-30 checkpoints**, and they
+are **additional production milestones** — mostly undesigned and currently unowned. See
+`ROADMAP_AND_ARTIFACT_LIFECYCLE.md` §4.
 
 **STAGE 4 IS CLOSED** as of 2026-07-30 — see
 `docs/harvest/handoffs/HANDOFF_STAGE_4_COMPLETE_2026-07-30.md` for the commit chain, closure
@@ -1440,7 +1469,9 @@ harness contract, the authoritative S8-2 regression evidence, closure validation
 carried-forward findings and successor constraints. `STAGE_8_IMPLEMENTATION_PLAN.md` reads
 `COMPLETED — STAGE 8 CLOSED`; its §8 S8-C section records this documentation-only closeout.
 
-**Closed LOCALLY and UNPUSHED.** `origin/main` is still `b9a08a3`; a push needs its own approval.
+**CLOSED AND PUBLISHED** at `bf067303a01fa80d1421f9eef7030cbadf805733`; HEAD, local `main` and local
+`origin/main` are synchronized, **0 behind / 0 ahead**. Every future push still needs its own
+approval.
 
 Both broad deliverables are met:
 
@@ -1493,18 +1524,67 @@ network access, no operational migration apply, no promotion, and no retained ru
 push remains a separate approval**, via `safe_push_main.sh --check` then a separately approved
 `--execute`.
 
-## Stage 9 — bounded deterministic live smoke
+## Stage 9 — bounded deterministic live smoke ⟵ **NOT OPEN, NOT APPROVED.**
 
-- [ ] `scripts/harvest/{smoke,smoke_model}.sh` + `preflight-sources`
-- [ ] 12-category smoke, `--no-enrich`, twice, + `compare-runs --normalize`
-- [ ] `linkcheck --sample 20`
-- [ ] **Requires explicit user confirmation** — outbound requests and production runtime state
+**No `STAGE_9_IMPLEMENTATION_PLAN.md` exists.** Stage 8's closure opens nothing here; a green gate
+and a published stage do not, separately or together, authorize the next stage. Nothing below is
+scheduled, and no checkpoint name below is approved.
 
-## Stage 10 — final report
+**Read `ROADMAP_AND_ARTIFACT_LIFECYCLE.md` §9-§10 before scoping this stage.** Two audited facts
+change what Stage 9 *is*:
+
+1. **There is no command that runs the pipeline** (roadmap G1). `run_cells.run()` is a Python
+   function; `src/harvest/run_cells.py` has no `__main__` and no `argparse`, and no shell script
+   invokes it. `scripts/harvest/harvest.sh` — which the master plan's acceptance commands invoke
+   about ten times — **does not exist**.
+2. **`run()` cannot reach the network.** It builds its opener unconditionally as
+   `fixtures.FixtureOpener` (`run_cells.py:794-806`); there is no opener parameter, mode switch or
+   live branch. A live request therefore needs **new production code first**, not merely approval.
+
+`compare-runs` and `preflight-sources` have **zero occurrences** anywhere in the tree; `smoke`,
+`smoke_model`, `refresh` and `linkcheck` exist only as `run_manifest.v1.json` `mode` enum values and
+prose. The `model_search` adapter raises a typed `AdapterNotImplemented`. None of these has a
+producer.
+
+- [ ] `scripts/harvest/{smoke,smoke_model}.sh` + `preflight-sources` — **none implemented**
+- [ ] 12-category smoke, `--no-enrich`, twice, + `compare-runs --normalize` — **no producer for
+      `compare-runs`, and its output form is undefined**
+- [ ] `linkcheck --sample 20` — **not implemented**
+- [ ] Threshold calibration deferred from S4-4A — will collide with **CF-6**, now grown to 33 of 39
+      wrappers asserting `config/` is unmodified
+- [ ] **Requires explicit user confirmation** — outbound requests and production runtime state.
+      **Every live execution needs approval twice**: once as a checkpoint, once immediately before
+      the outbound request
+
+The roadmap recommends decomposing this into **S9-0 · S9-1 · S9-2 · S9-3 · S9-4 · S9-5 · S9-6 ·
+S9-C**, alternating code checkpoints with network executions (§10). **That is a recommendation only
+and approves nothing.**
+
+## Stage 10 — final report ⟵ **NOT OPEN.**
+
+**Stage 10 creates no JSON and publishes nothing.** It is two markdown documents. "Stage 10 — final"
+does not mean "final delivery".
 
 - [ ] `docs/harvest/IMPLEMENTATION_REPORT.md` — every file created/changed, exact commands, results
 - [ ] `docs/harvest/CONVERGENCE_NOTE.md` — 5 gates before matrix unification is reconsidered
 - [ ] Unresolved issues, limitations, blocked sources, recommended follow-up
+
+## After Stage 10 — additional production milestones, none opened or owned
+
+Closing Stages 9 and 10 does **not** produce a published dataset. These four are separate
+post-Stage-9 milestones, mostly undesigned; see `ROADMAP_AND_ARTIFACT_LIFECYCLE.md` §3 and §10.
+
+- [ ] **M5 — production enriched run and human review.** Unowned (roadmap G4, G9). Stage 9's
+      `--no-enrich` smoke output is explicitly disqualified from promotion by
+      `IMPLEMENTATION_PLAN.md` §7.1, and human review has no artifact, schema or acceptance process
+- [ ] **M6 — production promotion into `data/harvested/`.** Unowned (roadmap G7). Designed in detail
+      in `IMPLEMENTATION_PLAN.md` §7; **zero lines implemented**. Listed above under Stage 6, where
+      plan §14 erratum E11 descoped it. Expected stable published set: **16 JSON files** (12 category
+      + 3 topic aggregates + 1 publication manifest) — **none of which exist**
+- [ ] **M7a — website / downstream consumer integration.** Unowned, unscoped, outside this
+      repository (roadmap G10)
+- [ ] **M7b — recurring scheduling / refresh operation.** Undesigned; note the name collision with
+      the legacy AX pipeline's `scripts/refresh.sh` (roadmap G6)
 
 ---
 
