@@ -154,8 +154,109 @@ stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPO
                              accounting 61 -> 62; the pre-S9-L2 authoritative gate
                              expects 62/62, and 63/63 is a SECOND gate owed before
                              S9-L4).
-                             S9-L2 AND EVERY LATER CHECKPOINT UNAPPROVED. NEITHER
-                             AUTHORITATIVE FULL GATE HAS RUN.
+                             S9-0..S9-4 PUBLISHED at 238df98; the pre-S9-L2
+                             AUTHORITATIVE GATE RAN ONCE AND PASSED 62/62 exit 0
+                             (62 wrappers each exactly once, 19 legacy + 43 taxonomy,
+                             0 FAIL, 0 WARN-skipping); the external retained root is
+                             SELECTED and VERIFIED; S9-L1, S9-L2 and S9-L3 are COMPLETE
+                             and S9-5 is COMPLETE. **M2 AND M3 ACHIEVED; M4 UNMET.**
+                             STILL OWED: the 63/63 gate after S9-6, one bounded
+                             linkcheck run, and the completion handoff.
+                             S9-6, S9-L4, closeout AND the proposed S9-5C ARE ALL
+                             UNAPPROVED.
+stage_9_l2_l3_execution:     BOTH COMPLETE — **M2 AND M3 ACHIEVED**.
+                             S9-L2 smoke ONCE, rc 0, run 20260731T113526Z-23992;
+                             S9-L3 smoke ONCE, rc 0, run 20260731T120702Z-20188.
+                             No retry, no third smoke. Each stdout carried exactly
+                             json_artifacts 42 / mode smoke / pointer LATEST_RUN_ID /
+                             publication_eligible false / source_preflight_rows 25 /
+                             its own run id; both stderr empty.
+                             Retained root now holds TWO runs: 18 + 18 selected JSON,
+                             24 shared updated IN PLACE, = 60 JSON + 1 pointer naming
+                             run 2. NOT 84 (E9-11). locks/ (58 entries, 19 hosts,
+                             slots/ + next_allowed_at) is SEPARATE infrastructure —
+                             never say the root holds only 43 entries.
+                             Run 1's 18-document aggregate
+                             58e55eee47e601841a16a5908ca98d6fda1fccd67aeb556458d6f74a35756e8f
+                             held before the 2nd smoke, after it, and after validation
+                             and comparison. Shared docs, the pointer and locks/ are the
+                             MUTABLE half and did change — do not claim otherwise.
+                             Each run validated ONCE, offline: rc 0, valid true,
+                             errors [], json_documents_checked 42, paths_checked 43 —
+                             42/43 scopes to the NAMED run; historical runs are
+                             permitted but NOT added to that count.
+                             compare-runs ran ONCE, offline: rc 0, run_a=run1,
+                             run_b=run2, documents_compared 18, documents_expected 18,
+                             shared_documents_excluded 24, errors [], invariant
+                             violations 0, idempotent true. diff was NOT run.
+                             Validation and comparison changed ZERO retained bytes
+                             (80-file hash manifests identical before/after).
+                             Both runs are smoke-mode: NOT production candidates, NOT
+                             publication-eligible, NOT promoted, NOT consumed by any
+                             website. Publication and promotion remain ZERO.
+                             OPEN: manifests do not retain live duration —
+                             started_at == finished_at and cell elapsed_sec is None, so
+                             the ~54.7 s (run 1) wall clock survives only in the
+                             external command logs.
+stage_9_5_calibration:       COMPLETE, documentation only, two paths (this file + the plan).
+                             PRIMARY DECISION: **THRESHOLDS STAY PROVISIONAL**.
+                             Evidence: 2 runs ~32 min apart, ONE reproduced corpus =
+                             19 accepted full records + 13 cross-references (NOT 64;
+                             the runs are not independent samples). Both validate;
+                             comparison 197 permitted / 23 content / 0 violations,
+                             idempotent — and all 23 content changes were manifest
+                             source_preflight[].elapsed_ms. Corpus reproduced exactly.
+                             CELLS/CAPS: 10 of 12 cells at candidate cap 12, 2 at
+                             accepted cap 5; two cells BELOW the cap (community 3,
+                             benchmark-and-datasets 4). Truncation is UNPROVABLE —
+                             cap-outside candidates are never logged. Caps NOT FULLY
+                             OBSERVABLE. accepted+rejected==candidates in every cell.
+                             Manifest `accepted` != artifact record count per cell
+                             (cross-topic ownership relocates records) but reconciles
+                             globally 19==19.
+                             SCORES: relevance min 0.453 vs 0.35 (+0.1033), 4 distinct
+                             values. quality AND audience_fit are SATURATED at 1.000
+                             across all 19 — one distinct value each, margins +0.70 and
+                             +0.80, and they rejected NOTHING. Analytical composite
+                             (recomputed from committed weights, NOT stored) min 0.7621
+                             vs 0.40. No per-cell threshold override exists.
+                             REJECTIONS (run 2 ONLY — run 2 overwrote the logs; run-1
+                             per-reason history is UNAVAILABLE): 108 entries reconcile
+                             exactly per cell and globally. Two reasons only: off_topic
+                             89 (detail: "no required term for <cell> matched") and
+                             below_relevance_threshold 19. quality/audience_fit/
+                             composite gates NEVER fired. Closest failure 0.3333 vs 0.35
+                             = -0.0167 (microsoft-blogs); all others <= 0.2267.
+                             SOURCES: 5 GitHub releases.atom denials persistent across
+                             all three probes; netflix-techblog denied at S9-L1 but
+                             PERMITTED in both smokes — robots is TIME-VARYING, and it
+                             matters: netflix is the #2 contributor (4 of 19). Only
+                             8 of 25 sources produced any accepted record; 12 reachable
+                             sources produced rejections only (producthunt 12->0,
+                             techcrunch-ai 12->0). Attribution = provenance.source_id,
+                             corroborated by field_variants 19/19 single-source.
+                             REPEAT SIGHTINGS: ledgers cumulative, 130 identities,
+                             seen_count==2 for 124 (95.4%). This is CROSS-RUN
+                             repeat-sighting, NOT an in-run duplicate rate — that rate
+                             is NOT recoverable from retained artifacts.
+                             COVERAGE: 2 zero-result cells (both all_below_relevance_
+                             threshold); 5 cells hold no full record; 2 supported only
+                             by cross-references; research-and-models holds 12 of 19
+                             (63%). alias_conflicts 0 and stable; 7 classification
+                             decisions identical; coverage report identical apart from
+                             clock fields.
+                             AUXILIARY DECISIONS: caps STAY PROVISIONAL; source roster
+                             and robots entries STAY PROVISIONAL (no change approved);
+                             timing evidence NEEDS CORRECTION; rejection-history
+                             retention NEEDS CORRECTION; duplicate-rate observability
+                             NEEDS CORRECTION. ALL THREE corrections are
+                             EVIDENCE/OBSERVABILITY-ONLY, none verdict-affecting, so
+                             NONE would require a fresh pair of live smokes.
+                             S9-5C PROPOSED ONLY — not approved, not started; its exact
+                             path set could NOT be established read-only, so a SEPARATE
+                             SCOPE PREFLIGHT is required before it can be approved.
+                             NO config, schema, code, retained-root byte or operational
+                             log was changed.
 stage_9_l1_execution:        COMPLETE. `preflight-sources --timeout-sec 20` executed
                              EXACTLY ONCE at 2026-07-31T08:21:16Z, all 25 configured
                              sources, no --sources subset, exit code 1 (complete JSON,

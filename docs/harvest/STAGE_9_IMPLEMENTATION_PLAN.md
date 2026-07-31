@@ -313,12 +313,15 @@ and ignored would let a manifest report a cap that never bound anything — the 
 established for `config.enrich`. A test asserts `bounds` is absent from `run()` at S9-1.
 
 **Writing this plan, and committing it, approved no implementation and no live command.** S9-0 was
-the only approved checkpoint when it was written; **S9-1, S9-2, S9-3 and S9-4 have since each been
-separately approved by name, implemented and completed, and the operational checkpoint S9-L1 has
-been approved, executed exactly once and completed** (§7). **S9-L2 and every later checkpoint remain
-unapproved**; nothing else below is scheduled. `preflight-sources`, `smoke`, `validate`,
-`compare-runs` and `diff` are implemented; **only `preflight-sources` has ever been pointed at a real
-source**, once, at S9-L1.
+the only approved checkpoint when it was written; **S9-1, S9-2, S9-3 and S9-4 have since each been separately approved by name, implemented,
+completed and PUBLISHED (tip `238df98`), the authoritative pre-S9-L2 offline gate has run once and
+PASSED 62/62 at exit 0, the external retained root
+`C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4_stage9_retained` has been selected and
+verified, and the operational checkpoints S9-L1, S9-L2 and S9-L3 have each been approved, executed
+exactly once and completed — achieving M2 and M3. S9-5 is COMPLETE (§S9-5 AS EXECUTED). S9-6, S9-L4
+and closeout remain unapproved**; nothing else below is scheduled. `preflight-sources`, `smoke`,
+`validate`, `compare-runs` and `diff` are implemented; **`diff` has never been run against real
+data**. **M4 is UNMET, and publication and promotion remain zero.**
 
 **Every later checkpoint requires its own separate approval by name, with its exact allowed-path set
 declared up front.** If a path outside that set turns out to be required, the checkpoint stops and
@@ -1404,6 +1407,272 @@ policy change is recommended:
 5. **Require a fresh pair of live smoke runs** — and their own approvals — **only if** the change can
    alter live verdicts. A comment or a version bump cannot; a relevance term or a threshold can.
 
+---
+
+## S9-5 AS EXECUTED — live-corpus calibration · **COMPLETE**
+
+Offline, documentation-only. Read the two retained runs and the retained logs; **changed no code,
+config, schema, retained-root byte or operational log**, and created no analysis artifact.
+
+### 5.1 Evidence basis
+
+| Item | Value |
+|---|---|
+| Runs | `20260731T113526Z-23992` (S9-L2) · `20260731T120702Z-20188` (S9-L3) |
+| Separation | ≈ **32 minutes** (11:35:26Z → 12:07:02Z) |
+| Output records | **32** in each run — **19 full + 13 cross-reference** |
+| Cells | **10 `ok` + 2 `zero_result`** in each run |
+| Validation | both runs exit 0, `valid: true`, 0 errors |
+| Comparison | exit 0 · **197** permitted · **23** content · **0** invariant violations · `idempotent: true` |
+| Content movement | **every one of the 23 was a `manifest.json` `source_preflight[].elapsed_ms`** |
+| Corpus | **reproduced identically** — same 19 `record_id`s, all non-clock fields equal |
+
+**Analysis sample is ONE copy of the reproduced corpus: 19 accepted full records.** The two runs are
+not independent samples and 64 is not the sample size. Cross-references carry no scores (0 of 13) and
+are excluded from every threshold distribution.
+
+**Limits, stated before the findings:** only **two** runs · **close together in time** · **same
+policy, configuration and source roster** · the 12 rejection logs preserve **run 2 only** (run 2
+overwrote them) · the ledgers are **cumulative, not per-run snapshots** · manifests do **not** retain
+live duration (`started_at == finished_at`, cell `elapsed_sec: None`) · **candidates outside a cap
+are never logged**, so a count sitting at a cap does not prove how many were excluded.
+
+### 5.2 Cell-level calibration
+
+Both runs agree on **every non-clock manifest cell field** (verified field by field), so one table is
+valid for both.
+
+```text
+cell                                          status       cand  acc  rej   zero_reason                     recs full xref
+cases__case-studies                           ok             12    0   12   -                                  3    3    0
+cases__domain-applications                    ok             12    1   11   -                                  1    1    0
+cases__product-discovery                      zero_result    12    0   12   all_below_relevance_threshold      0    0    0
+discourse__big-tech-trends                    ok             12    1   11   -                                  0    0    0
+discourse__community                          zero_result     3    0    3   all_below_relevance_threshold      0    0    0
+discourse__insights-and-opinions              ok             12    3    9   -                                  3    0    3
+discourse__market-and-investment              ok             12    0   12   -                                  1    0    1
+discourse__regulations-policy-compliance      ok             12    1   11   -                                  1    1    0
+discourse__technical-deep-dives               ok             12    5    7   -                                  6    2    4
+research-and-models__benchmark-and-datasets   ok              4    3    1   -                                  5    5    0
+research-and-models__model-updates            ok             12    0   12   -                                  6    3    3
+research-and-models__papers                   ok             12    5    7   -                                  6    4    2
+TOTAL                                                       127   19  108                                     32   19   13
+```
+
+`accepted + rejected == candidates` holds in **every** cell.
+
+**Manifest `accepted` and artifact record count are different quantities and neither substitutes for
+the other.** Per cell they diverge — `cases__case-studies` shows `accepted 0` yet holds 3 full
+records; `discourse__big-tech-trends` shows `accepted 1` yet holds none. **Globally they reconcile
+exactly: 19 accepted = 19 full records.** The cause is committed cross-topic ownership: a candidate
+accepted while processing one cell is filed under the cell its `owner_topic` names. This is expected
+behaviour, not a defect, and it is why a per-cell acceptance rate read off the manifest alone would
+be wrong.
+
+**Cap classification** — "reached", never "proved to have truncated":
+
+- **candidate cap reached (count == 12): 10 of 12 cells.**
+- **accepted cap reached (count == 5): 2 of 12 cells** (`technical-deep-dives`, `papers`).
+- Two cells sat **below** the candidate cap — `discourse__community` (3) and
+  `benchmark-and-datasets` (4) — so their sources supplied fewer than 12 candidates.
+- **Retained evidence cannot prove actual truncation.** Candidates sliced off before judgement are
+  never written anywhere: no count, no rejection row, no ledger entry. The number of excluded
+  candidates and the acceptances that might have followed are **not recoverable**.
+
+**Verdict on the caps: NOT FULLY OBSERVABLE.** Ten of twelve cells sitting exactly at 12 is
+consistent with a binding cap and equally consistent with feeds that happened to offer ≥ 12 items —
+the retained artifacts cannot distinguish them.
+
+### 5.3 Accepted-record score calibration
+
+Committed thresholds: `min_relevance 0.35` · `min_quality 0.30` · `min_audience_fit 0.20` ·
+`accept_composite 0.40`. Weights: relevance 0.40 · quality 0.25 · audience_fit 0.20 · freshness 0.15.
+**No per-cell threshold override exists** in policy or topic configs, so the global thresholds apply
+to every cell.
+
+```text
+score                 n     min     p25     med     p75     max   threshold   min margin
+relevance_score      19   0.453   0.453   0.560   0.680   0.893   0.35        +0.1033
+quality_score        19   1.000   1.000   1.000   1.000   1.000   0.30        +0.7000
+audience_fit_score   19   1.000   1.000   1.000   1.000   1.000   0.20        +0.8000
+freshness_score      19   0.782   0.943   0.996   0.998   0.998   (none)      n/a, 0 nulls
+composite(analytic)  19   0.7621  0.7810  0.8233  0.8712  0.9246  0.40        +0.3621
+```
+
+**Composite is NOT a stored artifact field.** The row above is a **deterministic analytical
+recomputation** from the committed weights, renormalized over the dimensions actually present on each
+record. It is labelled as analysis, and nothing was written back.
+
+**Two of the four editorial gates are saturated.** `quality_score` and `audience_fit_score` each take
+**exactly one distinct value — 1.000 — across all 19 accepted records**. Neither gate discriminated
+between any two accepted records, and the closest accepted case sits **+0.70** and **+0.80** above
+its threshold. `relevance_score` takes 4 distinct values and is the only editorial gate doing visible
+work; the analytical composite takes 13.
+
+Closest accepted cases to each gate:
+
+```text
+relevance   +0.1033  0d0f7366494d8751  research-and-models__benchmark-and-datasets  0.453 vs 0.35
+relevance   +0.1033  131c3f45f225f311  cases__domain-applications                   0.453 vs 0.35
+relevance   +0.1033  1450ba3920f855f8  discourse__technical-deep-dives              0.453 vs 0.35
+composite   +0.3621  1450ba3920f855f8  discourse__technical-deep-dives              0.7621 vs 0.40
+```
+
+### 5.4 Rejection calibration — **run 2 only**
+
+All 12 rejection logs name `20260731T120702Z-20188`, and the entries reconcile **exactly** with the
+run-2 manifest `rejected` counts **per cell and globally (108 = 108, zero discrepancies)**.
+
+**Run-1 per-reason rejection history is unavailable from the retained root** — run 2 overwrote the
+logs in place. That is the committed design (they are cross-run documents), not a fault, but it means
+rejection calibration here rests on a **single run**.
+
+```text
+reason                       n     concentration
+off_topic                    89    every cell except benchmark-and-datasets and papers
+below_relevance_threshold    19    papers 7 · regulations 3 · domain-applications 2 · big-tech 2 · …
+```
+
+By source: `producthunt` 12 and `techcrunch-ai` 12 lead, then `arxiv-cs-ai` 7 — but the reason
+differs sharply. `producthunt` is 12/12 `off_topic`; `arxiv-cs-ai` is 7/7 `below_relevance_threshold`.
+
+**The retained `detail` field is the authoritative gate, not the log's location.** Every entry
+carries an exact statement — `relevance 0.2267 < min_relevance 0.3500` — and every `off_topic` entry
+reads `no required term for <cell> matched`. Separating the contract's gates against what the
+evidence actually shows:
+
+```text
+category exclusion                    absent from the retained vocabulary
+no required-term match                PRESENT, recorded as `off_topic` (89) — the detail names it
+insufficient title/summary evidence   absent
+below relevance threshold             PRESENT (19)
+below quality threshold               NEVER OBSERVED
+below audience-fit threshold          NEVER OBSERVED
+below composite threshold             NEVER OBSERVED
+```
+
+**Only two of the possible gates ever fired.** The quality, audience-fit and composite gates rejected
+nothing — consistent with §5.3, where they discriminated nothing either.
+
+Numeric distribution of the 19 relevance failures (all carry stored scores): min 0.2267 · median
+0.2267 · max **0.3333**. The single closest failure is **`0.3333`, a gap of −0.0167** — a
+`microsoft-blogs` item in `discourse__big-tech-trends`. Every other failure sits at 0.2267 or below,
+so the relevance gate is currently **bimodal**: one near-miss and a cluster far below.
+
+### 5.5 Source and robots calibration
+
+Of 25 configured sources: **20 reachable, 5 robots-denied in all three probes** — the GitHub
+`releases.atom` set (`lm-eval-harness-releases`, `openai-evals-releases`, `oss-langchain-releases`,
+`oss-mcp-servers-releases`, `oss-ollama-releases`).
+
+**`netflix-techblog` was denied at S9-L1 (08:21Z) and permitted in both smokes (11:35Z, 12:07Z).
+Robots state is time-varying.** This is not cosmetic: `netflix-techblog` is the **second-largest
+contributor** of accepted records. Had all three probes agreed with S9-L1, coverage would have been
+materially smaller.
+
+Accepted full records by source (attribution from `provenance.source_id`, corroborated exactly by
+`provenance.raw.field_variants` — 19 of 19 credited to a single source; **cross-references are not
+counted**):
+
+```text
+arxiv-cs-ai          5      nvidia-blog          1
+netflix-techblog     4      federal-register-ai  1
+simonwillison        3      meta-engineering     1
+arxiv-cs-lg          3      microsoft-blogs      1
+```
+
+**8 of 25 sources produced every accepted record; 12 reachable sources produced rejections only**
+(`producthunt` 12→0, `techcrunch-ai` 12→0, `anthropic-customers` 6→0, `aws-ml-blog` 6→0,
+`google-blog` 6→0, `google-ai-blog` 6→0, `hf-blog` 6→0, `nist-news` 6→0, `oneusefulthing` 6→0,
+`cloudflare-blog` 4→0, `hn-algolia` 3→0, `openai-news` 6→0). The five denied sources contributed no
+candidate evidence at all — **blocked observations, not evidence that those sources lack editorial
+value**.
+
+**No robots bypass, source removal, URL replacement or policy edit is approved or performed.**
+
+### 5.6 Repeat-sighting evidence
+
+From the **cumulative** ledgers: **130 entries, 130 distinct identities** (one entry per identity),
+terminal outcomes **19 accepted / 111 rejected**.
+
+```text
+seen_count = 2   124 identities   95.4%
+seen_count = 1     6 identities    4.6%
+```
+
+**This is CROSS-RUN REPEAT-SIGHTING evidence, not an in-run duplicate-suppression rate.** 95.4% of
+identities were seen in both runs — a statement about feed stability over 32 minutes. It says nothing
+about how often a single run encounters the same identity twice.
+
+**An in-run duplicate rate is NOT recoverable from the retained artifacts**: no retained numerator
+and denominator encode it. If it becomes a product requirement it needs additional instrumentation.
+
+Note also that ledger `rejected` (111) exceeds the run-2 rejection-log total (108): the ledger is
+cumulative and identity-deduplicated across both runs, the log is per-run. The two are not
+comparable, and neither is wrong.
+
+### 5.7 Coverage and stability
+
+- **Two zero-result cells**, both with the committed reason `all_below_relevance_threshold`:
+  `cases__product-discovery` (12 candidates, all rejected) and `discourse__community` (only 3
+  candidates offered).
+- **Five cells hold no full record**: `cases__product-discovery`, `discourse__big-tech-trends`,
+  `discourse__community`, `discourse__insights-and-opinions`, `discourse__market-and-investment`.
+- **Two are supported only by cross-references**: `discourse__insights-and-opinions` (3) and
+  `discourse__market-and-investment` (1) — visible in a topic aggregate, but contributing no full
+  record of their own.
+- **Topic concentration is heavy**: `research-and-models` holds **12 of 19** full records (63%),
+  `cases` 4, `discourse` 3.
+- **Alias conflicts: 0 in both runs, stable.** **Classification decisions: 7 in both runs, identical
+  content** — same 7 content ids, same owner topics, same policy and reason strings.
+- **The coverage report is identical between runs once clock fields are removed.**
+
+**Stability conclusion, stated precisely:** selected-corpus reproducibility is **strong for these two
+runs** — only preflight latency moved. That demonstrates **short-horizon repeatability**. It does
+**not** establish long-horizon source stability, production readiness, or threshold optimality.
+
+### 5.8 Calibration decisions
+
+**PRIMARY — editorial thresholds: `STAY PROVISIONAL`.**
+
+The evidence does not support `ACCEPTED`: two of four editorial gates (`quality`, `audience_fit`) are
+**saturated at 1.000 across every accepted record** and rejected nothing, so live evidence has not
+exercised them at all; the sample is **19 records from one reproduced corpus over a 32-minute
+horizon**; and the cap position is not fully observable. Nor does it support `NEEDS CORRECTION` for
+the thresholds themselves: nothing shows a wrong verdict, no rejection sits implausibly close to a
+gate except one at −0.0167, coverage is thin but explainable, and the direction a correction should
+take is **not** supported by this evidence. A saturated gate may mean a mis-scaled scorer or simply
+that the accepted set is genuinely high quality — 19 records cannot tell those apart.
+
+Auxiliary decisions:
+
+| Subject | Decision | Class |
+|---|---|---|
+| 12 / 5 smoke caps | **STAY PROVISIONAL** — 10 of 12 cells at the candidate cap, truncation unprovable | evidence/observability-only |
+| Source roster and robots-denied entries | **STAY PROVISIONAL** — no change approved; denials are blocked observations | — |
+| Timing evidence | **NEEDS CORRECTION** — `started_at == finished_at`, cell `elapsed_sec: None`; live duration survives only in external logs | evidence/observability-only |
+| Rejection-history retention | **NEEDS CORRECTION** — run-2 overwrite makes per-run rejection history unrecoverable | evidence/observability-only |
+| Duplicate-rate observability | **NEEDS CORRECTION** — no retained numerator/denominator encodes an in-run rate | evidence/observability-only |
+
+**Every recommended correction is evidence/observability-only. None is verdict-affecting.** None
+changes a threshold, vocabulary, source or scoring rule, so **none would require a fresh pair of live
+smokes** — the existing runs stay valid as calibration evidence. Were a verdict-affecting change ever
+proposed (a relevance term, a threshold), a fresh pair of live smokes **and their own approvals**
+would be mandatory.
+
+**This decision applies to the present staged calibration only. It is not a claim of production
+readiness.**
+
+### 5.9 Proposed `S9-5C` — NOT approved, NOT started
+
+A corrective checkpoint is **warranted** for the three observability gaps above. It is recorded here
+as a **proposal only**.
+
+**Its exact path set could not be established read-only within S9-5**: retaining per-run rejection
+history and preserving live duration touch writer and schema surfaces whose full extent cannot be
+determined without opening the change, and a partial guess is exactly the failure mode E9-13 records.
+**A separate scope preflight is required before `S9-5C` can be approved.**
+
 ### S9-6 — linkcheck implementation
 
 | Field | Value |
@@ -1512,27 +1781,35 @@ observation**, never a resolution. No permanent-flake status may be granted. **N
 
 ## 9 · Stage 9 exit criteria
 
-Stage 9 may close only when **all** of the following hold:
+Stage 9 may close only when **all** of the following hold. **Status as of S9-5:**
 
-1. Live CLI and transport seam implemented and offline-tested.
-2. Every new wrapper wired into `scripts/validate_task.sh`.
-3. The authoritative offline harness runs are green — **62/62 before S9-L2, then 63/63 after S9-6
-   and before S9-L4** (E9-17). Two runs, not one; neither has happened yet.
-4. Live source preflight executed **once** and reviewed.
-5. The first real 12-cell staged run exists in the external retained root **and validates**.
-6. A second staged run exists **and validates**.
-7. Comparison passes the identity/idempotency invariants.
-8. Content changes are reported **separately** from invariant violations.
-9. The calibration decision is **documented**.
-10. One bounded linkcheck run exists **and validates**.
-11. The repository publication path remains **absent or byte-unchanged**.
-12. **No production promotion occurred.**
-13. **No website integration occurred.**
-14. The external live root's **disposition is recorded**.
-15. **Every** network execution was separately approved, immediately before its request.
-16. The completion handoff exists.
-17. M2-M4 status updated **honestly**.
-18. **M5 remains unopened.**
+1. **MET** — live CLI and transport seam implemented and offline-tested (S9-1).
+2. **MET** — every new wrapper wired into `scripts/validate_task.sh` (62; 63 after S9-6).
+3. **PARTLY MET** — the authoritative offline harness runs are green: **62/62 before S9-L2 PASSED at
+   exit 0**; the **63/63 run after S9-6 and before S9-L4 is still OWED** (E9-17). Two runs, not one.
+4. **MET** — live source preflight executed **once** (S9-L1, rc 1, 19 ok / 6 robots-denied) and
+   reviewed.
+5. **MET** — the first real 12-cell staged run `20260731T113526Z-23992` exists in the external
+   retained root **and validates** (M2).
+6. **MET** — a second staged run `20260731T120702Z-20188` exists **and validates**.
+7. **MET** — comparison passes the identity/idempotency invariants: 0 violations, `idempotent: true`.
+8. **MET** — content changes reported **separately**: 197 permitted, 23 content, 0 violations.
+9. **MET** — the calibration decision is **documented**: **STAY PROVISIONAL** (§S9-5 AS EXECUTED).
+10. **OPEN** — one bounded linkcheck run exists **and validates** (needs S9-6 then S9-L4).
+11. **MET so far** — `data/harvested/` remains **absent**; `diff` has never been run against it.
+12. **MET** — no production promotion occurred.
+13. **MET** — no website integration occurred.
+14. **MET** — the external live root is recorded: path, D9-A verification, and its two-run contents.
+15. **MET** — every network execution (S9-L1, S9-L2, S9-L3) was separately approved immediately
+    before its request, ran **exactly once**, and was never retried.
+16. **OPEN** — the completion handoff does not exist.
+17. **MET as of S9-5** — **M2 ACHIEVED · M3 ACHIEVED · M4 UNMET**.
+18. **MET** — M5 remains unopened.
+
+**Stage 9 therefore remains OPEN.** The outstanding criteria are **3** (the 63/63 gate), **10**
+(linkcheck), and **16** (the handoff). The next checkpoint is **S9-6, unapproved** — or, if the
+observability corrections are taken first, the **proposed `S9-5C`**, which is likewise unapproved and
+needs a separate scope preflight before it can even be scoped (§5.9).
 
 ### 9.1 What Stage 9 completion must NOT claim
 
