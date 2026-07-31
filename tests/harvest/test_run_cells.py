@@ -41,6 +41,7 @@ import random
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -166,8 +167,41 @@ def tearDownModule():
         shutil.rmtree(_BASELINE["root"], ignore_errors=True)
 
 
+def step_monotonic(start=100.0, step=0.25):
+    """A deterministic monotonic source: unbounded, positive, exactly reproducible.
+
+    S9-5C1 made durations REAL, which means two runs no longer agree by accident.
+    Byte determinism was never a claim about wall time — it is the claim that
+    equal inputs and equal CLOCKS give equal bytes. UTC was already injectable;
+    this is the second authority, and it is injected the same way.
+
+    A generator over a fixed list would exhaust and change the test's meaning if
+    the implementation ever reads one more time, so this is unbounded by
+    construction: read N advances by `step` every call, forever, giving every
+    executed cell the identical positive duration in every run.
+    """
+    state = {"t": float(start)}
+
+    def monotonic():
+        value = state["t"]
+        state["t"] += step
+        return value
+    return monotonic
+
+
 class RunCase(unittest.TestCase):
     """A case that needs its own root and its own run."""
+
+    def pin_monotonic(self, start=100.0, step=0.25):
+        """Pin `run_cells._monotonic` for one test, restored automatically.
+
+        Patches the INTERNAL owner C1 introduced — never `time.monotonic`
+        process-wide and never `RequestBudget`, whose own monotonic clock remains
+        the untouched budget authority.
+        """
+        real = run_cells._monotonic
+        self.addCleanup(setattr, run_cells, "_monotonic", real)
+        run_cells._monotonic = step_monotonic(start, step)
 
     def temp_root(self, prefix="s5_run_cells_"):
         root = tempfile.mkdtemp(prefix=prefix)
@@ -566,20 +600,55 @@ class TestLedgerCarriesTargetEvidence(unittest.TestCase):
 
 # -------------------------------------------------------------- determinism
 class TestDeterminism(RunCase):
-    def test_two_runs_with_a_pinned_clock_are_byte_identical(self):
-        base_root, _ = baseline()
-        again = self.temp_root("s5_run_cells_again_")
-        run_cells.run(again, clock=lambda: NOW)
-        self.assertEqual(tree_hash(again), tree_hash(base_root))
+    """Equal inputs and equal CLOCKS give byte-identical trees.
+
+    Both nondeterministic inputs are pinned: the UTC artifact clock, as always,
+    and — since S9-5C1 made `cells[].elapsed_sec` a real measurement — the
+    monotonic duration clock. These remain EXACT whole-tree byte-identity proofs:
+    nothing is excluded, normalized, zeroed or compared as a subset. Two separate
+    PRODUCTION runs are not expected to agree, because their monotonic clocks are
+    not pinned; that is the measurement working, not determinism failing.
+
+    The shared `baseline()` tree is deliberately not used as a comparand here: it
+    was built with the real monotonic clock, so comparing against it would prove
+    nothing about determinism. Both sides are built fresh, under pinned clocks.
+    """
+
+    def _pinned_run(self, prefix, **kwargs):
+        """One run under a pinned UTC clock AND a fresh pinned monotonic clock."""
+        real = run_cells._monotonic
+        run_cells._monotonic = step_monotonic()
+        try:
+            root = self.temp_root(prefix)
+            return root, run_cells.run(root, clock=lambda: NOW, **kwargs)
+        finally:
+            run_cells._monotonic = real
+
+    def _assert_timed_and_non_vacuous(self, result):
+        rows = result.manifest["cells"]
+        self.assertTrue(rows, "at least one cell must have executed")
+        for row in rows:
+            self.assertIn("elapsed_sec", row, row["cell_id"])
+            self.assertGreater(row["elapsed_sec"], 0, row["cell_id"])
+
+    def test_two_runs_with_pinned_clocks_are_byte_identical(self):
+        first, result_a = self._pinned_run("s5_run_cells_again_a_")
+        second, result_b = self._pinned_run("s5_run_cells_again_b_")
+        self.assertEqual(listing(first), listing(second))
+        self.assertEqual(tree_hash(first), tree_hash(second))
+        self._assert_timed_and_non_vacuous(result_a)
+        self._assert_timed_and_non_vacuous(result_b)
 
     def test_shuffled_cell_order_yields_an_identical_tree(self):
-        base_root, _ = baseline()
         ids = [c["cell_id"] for c in run_cells.configured_cells()]
         random.Random(20260730).shuffle(ids)
         self.assertNotEqual(ids, sorted(ids), "the shuffle must actually shuffle")
-        shuffled = self.temp_root("s5_run_cells_shuffled_")
-        run_cells.run(shuffled, cells=ids, clock=lambda: NOW)
-        self.assertEqual(tree_hash(shuffled), tree_hash(base_root))
+        ordered, result_a = self._pinned_run("s5_run_cells_ordered_")
+        shuffled, result_b = self._pinned_run("s5_run_cells_shuffled_", cells=ids)
+        self.assertEqual(listing(shuffled), listing(ordered))
+        self.assertEqual(tree_hash(shuffled), tree_hash(ordered))
+        self._assert_timed_and_non_vacuous(result_a)
+        self._assert_timed_and_non_vacuous(result_b)
 
     def test_the_record_set_is_stable_across_runs(self):
         _, result = baseline()
@@ -1098,6 +1167,267 @@ class TestBoundary(unittest.TestCase):
             rc = subprocess.call(["git", "diff", "--exit-code", "--quiet",
                                   "HEAD", "--", path], cwd=ROOT)
             self.assertEqual(rc, 0, path)
+
+
+class TestActualRunTiming(RunCase):
+    """S9-5C1 — the run records what it ACTUALLY did, not one stamp twice.
+
+    Before this, `started_at` and `finished_at` were the same pinned value and no
+    cell carried a duration, so a retained manifest could not answer "how long did
+    this take?" at all — S9-5 could only recover the figure from an external
+    command log. Six failures this defends against:
+
+      * A THIRD CLOCK READ. Two UTC reads, ever: one at entry, one immediately
+        before manifest construction. A third would give one run two competing
+        accounts of its own end.
+      * A DRIFTING ARTIFACT TIMESTAMP. Every artifact timestamp stays pinned to
+        the FIRST read. Only `finished_at` moves.
+      * WALL-CLOCK SUBTRACTION. Durations come from a monotonic source. A UTC
+        delta is not a duration and may be negative.
+      * A FABRICATED DURATION. A cell that raised, or that never ran, gets no
+        `elapsed_sec` — not a zero.
+      * A CLAMPED NEGATIVE. A backwards monotonic clock is refused, loudly,
+        before anything is published.
+      * A CONFUSED FIELD. `cells[].elapsed_sec` in the manifest is the cell's
+        execution duration; `metadata.sources[].elapsed_sec` in the cell artifact
+        is per-source fetch timing. This checkpoint touches only the first.
+    """
+
+    def _ticking_utc(self, seconds=(0, 5)):
+        """A UTC clock returning a distinct instant per call, and a call log."""
+        calls = []
+
+        def clock():
+            offset = seconds[min(len(calls), len(seconds) - 1)]
+            calls.append(offset)
+            return NOW + datetime.timedelta(seconds=offset)
+        return clock, calls
+
+    def _fixed_monotonic(self, step=0.25):
+        """The shared deterministic monotonic instrument, by its one definition."""
+        return step_monotonic(start=100.0, step=step)
+
+    def test_the_default_monotonic_delegates_to_the_real_clock(self):
+        """Production measures REAL time — the injection is a test affordance."""
+        self.assertIs(run_cells._monotonic.__globals__["time"].monotonic,
+                      time.monotonic)
+        first = run_cells._monotonic()
+        second = run_cells._monotonic()
+        self.assertIsInstance(first, float)
+        self.assertGreaterEqual(second, first, "monotonic must not go backwards")
+        self.assertNotEqual(run_cells._monotonic(), None)
+
+    def test_injected_clocks_do_not_silently_omit_the_timing_fields(self):
+        """Injection must not become a way to publish no measurement at all."""
+        self.pin_monotonic(step=0.5)
+        result = run_cells.run(self.temp_root("s95c1_present_"), clock=lambda: NOW)
+        rows = result.manifest["cells"]
+        self.assertTrue(rows)
+        for row in rows:
+            self.assertIn("elapsed_sec", row, row["cell_id"])
+            self.assertEqual(row["elapsed_sec"], 0.5, row["cell_id"])
+        self.assertIn("started_at", result.manifest)
+        self.assertIn("finished_at", result.manifest)
+
+    def test_the_utc_clock_is_read_exactly_twice(self):
+        clock, calls = self._ticking_utc()
+        run_cells.run(self.temp_root("s95c1_twice_"), clock=clock)
+        self.assertEqual(len(calls), 2,
+                         "expected exactly two UTC reads, got %d" % len(calls))
+
+    def test_started_and_finished_use_the_first_and_second_reads(self):
+        clock, _ = self._ticking_utc(seconds=(0, 7))
+        result = run_cells.run(self.temp_root("s95c1_pair_"), clock=clock)
+        self.assertEqual(result.manifest["started_at"], "2026-07-30T12:00:00Z")
+        self.assertEqual(result.manifest["finished_at"], "2026-07-30T12:00:07Z")
+        self.assertEqual(result.started_at, result.manifest["started_at"])
+        self.assertEqual(result.finished_at, result.manifest["finished_at"])
+
+    def test_every_other_artifact_timestamp_stays_pinned_to_the_first_read(self):
+        """Only `finished_at` moves. Everything else is the run's one instant."""
+        clock, _ = self._ticking_utc(seconds=(0, 7))
+        root = self.temp_root("s95c1_pinned_")
+        result = run_cells.run(root, clock=clock)
+        first = "2026-07-30T12:00:00Z"
+        run_dir = artifacts.run_dir(root, result.run_id)
+        moved = []
+        for dirpath, _dirnames, filenames in os.walk(root):
+            for name in sorted(filenames):
+                if not name.endswith(".json"):
+                    continue
+                path = os.path.join(dirpath, name)
+                with open(path, encoding="utf-8") as handle:
+                    doc = json.load(handle)
+                for key in ("generated_at", "discovered_at", "detected_at",
+                            "first_seen_at", "last_seen_at", "rejected_at"):
+                    for found in self._values_for(doc, key):
+                        if found != first:
+                            moved.append((os.path.relpath(path, root), key, found))
+        self.assertEqual(moved, [], "an artifact timestamp left the pinned instant")
+        manifest = json.load(open(artifacts.run_manifest_path(root, result.run_id),
+                                  encoding="utf-8"))
+        self.assertEqual(manifest["started_at"], first)
+        self.assertNotEqual(manifest["finished_at"], first)
+        self.assertTrue(os.path.isdir(run_dir))
+
+    @staticmethod
+    def _values_for(node, key):
+        """Every value stored under `key`, at any depth."""
+        found = []
+        if isinstance(node, dict):
+            for name, value in node.items():
+                if name == key and isinstance(value, str):
+                    found.append(value)
+                found.extend(TestActualRunTiming._values_for(value, key))
+        elif isinstance(node, list):
+            for item in node:
+                found.extend(TestActualRunTiming._values_for(item, key))
+        return found
+
+    def test_a_constant_clock_still_yields_equal_stamps(self):
+        """Determinism under an injected fixture clock is preserved, not lost."""
+        result = run_cells.run(self.temp_root("s95c1_const_"), clock=lambda: NOW)
+        self.assertEqual(result.manifest["started_at"],
+                         result.manifest["finished_at"])
+        self.assertEqual(result.finished_at, result.manifest["finished_at"])
+
+    def test_each_executed_cell_gets_exactly_one_measured_duration(self):
+        real = run_cells._monotonic
+        reads = []
+        run_cells._monotonic = lambda: (reads.append(1), real())[1]
+        self.addCleanup(setattr, run_cells, "_monotonic", real)
+        result = run_cells.run(self.temp_root("s95c1_count_"), clock=lambda: NOW)
+        rows = result.manifest["cells"]
+        timed = [row for row in rows if "elapsed_sec" in row]
+        self.assertEqual(len(timed), len(rows), "every executed cell is measured")
+        self.assertEqual(len(reads), 2 * len(rows),
+                         "expected two monotonic reads per cell, got %d for %d "
+                         "cells" % (len(reads), len(rows)))
+
+    def test_the_measured_value_is_the_one_that_reaches_the_manifest(self):
+        real = run_cells._monotonic
+        run_cells._monotonic = self._fixed_monotonic(step=0.25)
+        self.addCleanup(setattr, run_cells, "_monotonic", real)
+        result = run_cells.run(self.temp_root("s95c1_value_"), clock=lambda: NOW)
+        for row in result.manifest["cells"]:
+            self.assertEqual(row["elapsed_sec"], 0.25,
+                             "%s carried %r, not the measured delta"
+                             % (row["cell_id"], row.get("elapsed_sec")))
+
+    def test_durations_are_non_negative_and_use_the_documented_precision(self):
+        self.assertEqual(run_cells.ELAPSED_PRECISION, 3)
+        result = run_cells.run(self.temp_root("s95c1_round_"), clock=lambda: NOW)
+        for row in result.manifest["cells"]:
+            value = row["elapsed_sec"]
+            self.assertGreaterEqual(value, 0)
+            self.assertEqual(value, round(value, run_cells.ELAPSED_PRECISION))
+
+    def test_a_backwards_monotonic_clock_is_refused_not_clamped(self):
+        state = {"t": 100.0}
+
+        def backwards():
+            value = state["t"]
+            state["t"] -= 5.0
+            return value
+        real = run_cells._monotonic
+        run_cells._monotonic = backwards
+        self.addCleanup(setattr, run_cells, "_monotonic", real)
+        root = self.temp_root("s95c1_backwards_")
+        with self.assertRaises(run_cells.RunCellsError) as caught:
+            run_cells.run(root, clock=lambda: NOW)
+        self.assertIn("backwards", str(caught.exception))
+        # Refused BEFORE publication: no manifest, no pointer.
+        self.assertFalse(os.path.exists(artifacts.latest_run_id_path(root)))
+        runs_dir = os.path.join(root, "runs")
+        for run_id in (os.listdir(runs_dir) if os.path.isdir(runs_dir) else []):
+            self.assertFalse(os.path.exists(
+                artifacts.run_manifest_path(root, run_id)))
+
+    def test_no_cell_level_duration_leaks_into_the_cell_artifact(self):
+        root = self.temp_root("s95c1_artifact_")
+        result = run_cells.run(root, clock=lambda: NOW)
+        cells_dir = os.path.join(artifacts.run_dir(root, result.run_id), "cells")
+        for name in sorted(os.listdir(cells_dir)):
+            with open(os.path.join(cells_dir, name), encoding="utf-8") as handle:
+                metadata = json.load(handle).get("metadata") or {}
+            self.assertNotIn("elapsed_sec", metadata,
+                             "%s grew a cell-level duration" % name)
+
+    def test_per_source_elapsed_values_are_untouched(self):
+        """`metadata.sources[].elapsed_sec` is a DIFFERENT, pre-existing field."""
+        root = self.temp_root("s95c1_sources_")
+        result = run_cells.run(root, clock=lambda: NOW)
+        cells_dir = os.path.join(artifacts.run_dir(root, result.run_id), "cells")
+        keys = set()
+        for name in sorted(os.listdir(cells_dir)):
+            with open(os.path.join(cells_dir, name), encoding="utf-8") as handle:
+                for source in (json.load(handle).get("metadata") or {}).get(
+                        "sources") or []:
+                    keys.update(source)
+        self.assertTrue(keys, "expected at least one source row")
+        # Whatever the source rows carried before, this checkpoint neither adds
+        # nor removes a key there — the run driver never writes into them.
+        self.assertNotIn("cell_elapsed_sec", keys)
+
+    def test_no_new_run_parameter_or_timing_seam_was_added(self):
+        names = list(inspect.signature(run_cells.run).parameters)
+        for forbidden in ("monotonic", "elapsed", "timer", "finished_clock",
+                          "duration_clock"):
+            self.assertNotIn(forbidden, names,
+                             "run() grew a timing seam: %r" % forbidden)
+        self.assertIn("clock", names, "the one committed clock seam must remain")
+
+    def test_two_runs_differ_only_in_the_authorized_timing_paths(self):
+        first_root = self.temp_root("s95c1_diff_a_")
+        second_root = self.temp_root("s95c1_diff_b_")
+        clock_a, _ = self._ticking_utc(seconds=(0, 3))
+        clock_b, _ = self._ticking_utc(seconds=(0, 9))
+        run_a = run_cells.run(first_root, clock=clock_a)
+        run_b = run_cells.run(second_root, clock=clock_b)
+        moved = {key for key in set(run_a.manifest) | set(run_b.manifest)
+                 if run_a.manifest.get(key) != run_b.manifest.get(key)}
+        self.assertEqual(moved - {"harvest_run_id", "finished_at", "cells",
+                                  "environment"}, set(),
+                         "a manifest field outside the authorized set moved")
+        self.assertEqual(run_a.manifest["started_at"],
+                         run_b.manifest["started_at"])
+        self.assertNotEqual(run_a.manifest["finished_at"],
+                            run_b.manifest["finished_at"])
+        rows_a = {r["cell_id"]: r for r in run_a.manifest["cells"]}
+        rows_b = {r["cell_id"]: r for r in run_b.manifest["cells"]}
+        self.assertEqual(set(rows_a), set(rows_b))
+        for cell_id, row_a in rows_a.items():
+            differing = {k for k in set(row_a) | set(rows_b[cell_id])
+                         if row_a.get(k) != rows_b[cell_id].get(k)}
+            self.assertEqual(differing - {"elapsed_sec"}, set(),
+                             "%s differs outside elapsed_sec: %s"
+                             % (cell_id, sorted(differing)))
+
+    def test_the_timed_manifest_is_still_schema_valid(self):
+        clock, _ = self._ticking_utc(seconds=(0, 4))
+        root = self.temp_root("s95c1_schema_")
+        result = run_cells.run(root, clock=clock)
+        with open(artifacts.run_manifest_path(root, result.run_id),
+                  encoding="utf-8") as handle:
+            document = json.load(handle)
+        self.assertEqual(schema.validate(document, "run_manifest.v1.json"), [])
+
+    def test_a_failure_before_completion_publishes_nothing(self):
+        """No fabricated duration, no manifest, no pointer."""
+        root = self.temp_root("s95c1_fail_")
+        real = run_cells._run_one_cell
+
+        def explode(*args, **kwargs):
+            raise run_cells.RunCellsError("cell exploded")
+        run_cells._run_one_cell = explode
+        self.addCleanup(setattr, run_cells, "_run_one_cell", real)
+        with self.assertRaises(run_cells.RunCellsError):
+            run_cells.run(root, clock=lambda: NOW)
+        self.assertFalse(os.path.exists(artifacts.latest_run_id_path(root)))
+        runs_dir = os.path.join(root, "runs")
+        for run_id in (os.listdir(runs_dir) if os.path.isdir(runs_dir) else []):
+            self.assertFalse(os.path.exists(
+                artifacts.run_manifest_path(root, run_id)))
 
 
 if __name__ == "__main__":

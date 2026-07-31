@@ -1673,6 +1673,77 @@ history and preserving live duration touch writer and schema surfaces whose full
 determined without opening the change, and a partial guess is exactly the failure mode E9-13 records.
 **A separate scope preflight is required before `S9-5C` can be approved.**
 
+---
+
+## S9-5C1 AS EXECUTED — actual run timing · **COMPLETE**
+
+The read-only S9-5C scope preflight split the three S9-5 observability corrections into **C1
+(timing) · C2 (duplicate observability) · C3 (rejection-history layout)**, proving the split rather
+than assuming it: no two share a production owner, a schema, or a recovery concern. **C1 owns timing
+evidence only. C2 and C3 remain unapproved and unstarted**, and C3's artifact-layout questions
+(comparator scope, the run-directory guard, the 18/24/42/60 arithmetic) are **not opened here**.
+
+### The contract
+
+- The **first** UTC read at `run()` entry remains the artifact timestamp authority: the run id, every
+  `generated_at`, `discovered_at`, rejection and ledger stamp, alias-conflict `detected_at` — all
+  still pinned to that one instant.
+- A **second** UTC read, taken after every cell has run and every pre-manifest artifact is written,
+  supplies **only** manifest `finished_at` and `RunResult.finished_at`. There is no third read.
+  `finished_at` is the completion observation immediately before manifest construction — **not** a
+  measurement of when the pointer moved.
+- Per-cell duration comes from **`time.monotonic`** via the module-private `_monotonic()`, read once
+  either side of each `_run_one_cell` call, and reaches `run_manifest.cells[].elapsed_sec` rounded
+  once at `ELAPSED_PRECISION = 3`. **Wall-clock subtraction is never used for a duration**, and
+  `RequestBudget` keeps its own untouched monotonic clock as the budget authority.
+- A **negative** monotonic delta is **refused**, not clamped — clamping would publish a fabricated
+  measurement.
+- A cell that raised, or that was never selected (`not_run`), gets **no** `elapsed_sec` — omitted,
+  never zero.
+- **`cell_artifact.metadata.sources[].elapsed_sec` is a different, pre-existing field** (per-source
+  fetch timing) and is untouched. No cell-level duration was added to the cell artifact.
+
+**No schema change.** `run_manifest.v1.json` already declares `cells[].elapsed_sec` as an optional
+non-negative number, and `cells[]` requires only `cell_id`/`topic_slug`/`category_slug`/`status`.
+**No harness, wrapper, routing, validator, comparator, production-CLI or config change.** Wrapper
+inventory stays **62**.
+
+### E9-18 — the determinism guards were CORRECTED, not weakened
+
+**The scope preflight missed three whole-tree byte-identity guards** — two in
+`tests/harvest/test_run_cells.py` (`TestDeterminism`) and one in `tests/harvest/test_cli.py`
+(`TestOmissionIsByteCompatible`). It had searched for assertions *naming* `started_at`/`elapsed_sec`
+and found none, which was true and materially misleading: the assertions that actually break are
+whole-tree hashes that name no field at all. **Implementation stopped before committing and
+reported**, and the scope was expanded from four to five paths by adding
+`tests/harvest/test_cli.py`.
+
+**This is not the retirement of a spent guard.** All three remain **exact byte-identity proofs**:
+nothing is excluded, normalized, zeroed, ignored in a recursive diff, or compared as a subset. What
+changed is that the tests now pin **both** nondeterministic inputs. The durable contract is:
+
+> Equal logical inputs · equal configured ordering · equal injected **UTC** clock · equal injected
+> **monotonic** clock ⇒ **byte-identical complete trees**.
+
+UTC was always injectable; the monotonic clock is simply the second authority, injected the same
+way — through the internal `run_cells._monotonic` owner, never `time.monotonic` process-wide and
+never `RequestBudget`. **Production continues to record actual elapsed duration**, and two separate
+real executions are *not* expected to agree, because their monotonic clocks are not pinned. That is
+the measurement working, not determinism failing.
+
+Each corrected guard also gained **anti-vacuity**: the trees must agree *because* both recorded the
+same real durations, not because neither recorded any.
+
+### As delivered
+
+Five paths: `src/harvest/run_cells.py` · `tests/harvest/test_run_cells.py` ·
+`tests/harvest/test_cli.py` · this plan · `TODO.md`. Focused validation: run_cells **115**, recovery
+**74**, cli **58**, smoke **56**, all green, plus an explicit-mode harness run over `run_cells.py`.
+
+**C1 is evidence-only.** It changes no verdict, ordering, bound, artifact identity or publication
+decision; **the retained M2/M3 runs remain valid without migration or backfill**, since manifests
+without `cells[].elapsed_sec` stay schema-valid; and **no fresh live smoke pair is required**.
+
 ### S9-6 — linkcheck implementation
 
 | Field | Value |

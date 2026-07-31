@@ -198,6 +198,76 @@ stage_9_l2_l3_execution:     BOTH COMPLETE — **M2 AND M3 ACHIEVED**.
                              started_at == finished_at and cell elapsed_sec is None, so
                              the ~54.7 s (run 1) wall clock survives only in the
                              external command logs.
+stage_9_5c_preflight:        COMPLETE, read-only. Split the three S9-5 observability
+                             corrections into C1 (timing) / C2 (duplicate
+                             observability) / C3 (rejection-history layout),
+                             PROVEN not assumed: no two share a production owner,
+                             a schema or a recovery concern. C2 needs
+                             request_accounting additionalProperties:false relaxed;
+                             C3 needs comparator scope, the runvalidate
+                             run-directory guard and the 18/24/42/60 arithmetic all
+                             decided first. C2 AND C3 REMAIN UNAPPROVED AND
+                             UNSTARTED.
+stage_9_5c1_timing:          COMPLETE. FIVE paths: src/harvest/run_cells.py,
+                             tests/harvest/test_run_cells.py,
+                             tests/harvest/test_cli.py, the plan, this file.
+                             CONTRACT: first UTC read stays the artifact-timestamp
+                             authority (run id, generated_at, discovered_at,
+                             rejection/ledger stamps, detected_at); a SECOND UTC
+                             read after all cells and all pre-manifest artifact
+                             work supplies ONLY manifest + RunResult finished_at
+                             (no third read; it is NOT post-pointer); per-cell
+                             duration comes from time.monotonic via the private
+                             _monotonic(), one read either side of each
+                             _run_one_cell, rounded once at ELAPSED_PRECISION=3
+                             into run_manifest.cells[].elapsed_sec. Negative delta
+                             REFUSED, never clamped. A raised or not_run cell gets
+                             NO elapsed_sec — omitted, never zero. Wall-clock
+                             subtraction is never a duration; RequestBudget keeps
+                             its own untouched monotonic authority.
+                             cell_artifact.metadata.sources[].elapsed_sec is a
+                             DIFFERENT pre-existing per-source field and is
+                             untouched; no cell-level duration was added there.
+                             NO schema change (cells[].elapsed_sec already optional
+                             and non-negative), no harness/routing/validator/
+                             comparator/CLI/config change, wrapper inventory
+                             stays 62.
+stage_9_5c1_scope_expansion: RATIFIED, one path (four -> FIVE). The scope preflight
+                             MISSED three whole-tree byte-identity guards —
+                             TestDeterminism x2 in test_run_cells.py and
+                             TestOmissionIsByteCompatible in test_cli.py. It had
+                             searched for assertions NAMING started_at/elapsed_sec
+                             and found none, which was true and misleading: the
+                             breaking assertions are whole-tree hashes that name no
+                             field. Implementation STOPPED WITHOUT COMMITTING and
+                             reported; tests/harvest/test_cli.py was then added by
+                             explicit approval.
+                             THIS IS NOT RETIREMENT OF A SPENT GUARD. All three stay
+                             EXACT byte-identity proofs — nothing excluded,
+                             normalized, zeroed, diff-ignored or compared as a
+                             subset. The durable contract is now: equal inputs +
+                             equal ordering + equal injected UTC clock + equal
+                             injected MONOTONIC clock => byte-identical trees. UTC
+                             was always injectable; monotonic is the second
+                             authority, injected the same way via the internal
+                             run_cells._monotonic (never time.monotonic
+                             process-wide, never RequestBudget). Production still
+                             records ACTUAL durations, so two real executions are
+                             NOT expected to agree — that is the measurement
+                             working, not determinism failing. Each corrected guard
+                             gained anti-vacuity: the trees must agree BECAUSE both
+                             recorded the same real durations.
+stage_9_5c1_validation:      FOCUSED ONLY, all green — run_cells 115 (incl. 16 new
+                             timing tests), recovery 74, cli 58, smoke 56 — plus
+                             py_compile x3 and one explicit-mode harness run over
+                             src/harvest/run_cells.py at exit 0, every routed
+                             wrapper exactly once, zero WARN skips. `--all` was NOT
+                             run. NO network. C1 is EVIDENCE-ONLY: no verdict,
+                             ordering, bound, artifact identity or publication
+                             change; retained M2/M3 runs remain valid WITHOUT
+                             migration or backfill (manifests lacking
+                             cells[].elapsed_sec stay schema-valid); NO fresh live
+                             smoke pair required.
 stage_9_5_calibration:       COMPLETE, documentation only, two paths (this file + the plan).
                              PRIMARY DECISION: **THRESHOLDS STAY PROVISIONAL**.
                              Evidence: 2 runs ~32 min apart, ONE reproduced corpus =

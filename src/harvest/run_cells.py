@@ -71,6 +71,7 @@ import os
 import re
 import shutil
 import tempfile
+import time
 
 from . import adapters
 from . import aliases as aliases_mod
@@ -371,6 +372,46 @@ def _default_clock():
             raise RunCellsError("HARVEST_CLOCK_UTC=%r is not %s (%s)"
                                 % (pinned, STAMP_FORMAT, exc)) from exc
     return datetime.datetime.now(datetime.timezone.utc)
+
+
+# How a measured duration is rounded before it reaches an artifact. One place,
+# one precision, matching the committed `budget.py` reporting precision — a
+# duration rendered two different ways in two documents of the same run is the
+# same disagreement `_default_clock` exists to prevent.
+ELAPSED_PRECISION = 3
+
+
+def _monotonic():
+    """The run driver's monotonic reader — DURATIONS ONLY, never a timestamp.
+
+    Deliberately separate from `_default_clock`, which is the UTC authority for
+    every artifact timestamp. The two answer different questions and must not be
+    substituted for each other: a wall clock can step backwards or sideways, so
+    subtracting two UTC reads is not a duration, and a monotonic reading is not a
+    time of day and can never be written as one.
+
+    `RequestBudget` keeps its own monotonic clock and remains the authority for
+    budget enforcement. This reads the same source for EVIDENCE only; it neither
+    consults nor modifies the budget.
+    """
+    return time.monotonic()
+
+
+def _measure(started, finished, label):
+    """One non-negative, rounded duration — or a refusal.
+
+    A negative delta means the injected monotonic source went backwards, which a
+    monotonic clock may not do. Clamping it to zero would silently publish a
+    fabricated measurement, so this refuses instead: a broken clock is evidence,
+    not a number to round away.
+    """
+    delta = finished - started
+    if delta < 0:
+        raise RunCellsError(
+            "monotonic clock went backwards while measuring %s: %r -> %r. A "
+            "duration is never negative, and clamping it would publish a "
+            "fabricated measurement." % (label, started, finished))
+    return round(delta, ELAPSED_PRECISION)
 
 
 # ------------------------------------------------------------ configuration
@@ -770,7 +811,7 @@ def _zero_result_reason(run):
                                          ZERO_RESULT_PRECEDENCE.index(value)))
 
 
-def _cell_row(run, artifact_records):
+def _cell_row(run, artifact_records, *, elapsed_sec=None):
     """One manifest `cells[]` row. Counts describe what the cell PROCESSED.
 
     `candidates`/`accepted`/`rejected` are about the candidates this cell
@@ -778,6 +819,14 @@ def _cell_row(run, artifact_records):
     Those are usually the same set and are deliberately not forced to be: a cell
     finding an item that belongs to another category is a real outcome, and
     conflating discovery with ownership would hide it.
+
+    `elapsed_sec` (S9-5C1) is the ONE monotonic measurement of this cell's own
+    execution, or `None` when the cell was not measured. Omitted rather than
+    written as `0` in that case: the committed schema makes the key optional, and
+    a zero would claim a cell finished instantly when the truth is that nobody
+    timed it. It is the run's DURATION evidence and is unrelated to
+    `metadata.sources[].elapsed_sec` in the cell artifact, which is per-source
+    fetch timing and is not touched here.
     """
     accepted = run.accepted
     row = {
@@ -788,6 +837,8 @@ def _cell_row(run, artifact_records):
         "requests_made": sum(int(s["requests_made"]) for s in run.sources),
         "adapters_used": sorted({s["adapter"] for s in run.sources if s["adapter"]}),
     }
+    if elapsed_sec is not None:
+        row["elapsed_sec"] = elapsed_sec
 
     if accepted or artifact_records:
         row["status"] = STATUS_OK
@@ -1096,6 +1147,10 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
 
         # ---------------------------------------------------- sequential drive
         runs = []
+        # cell_id -> measured seconds, populated only by a cell whose call
+        # returned. Keyed rather than positional so a row can never inherit a
+        # neighbour's duration.
+        elapsed_by_cell = {}
         # RUN-scoped, not cell-scoped: this is what makes one canonical target
         # identity a single fetch across every cell and every topic in the run.
         # The pool already owns the ownership gate; this map holds the one outcome
@@ -1116,14 +1171,24 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
             for cell in selected:                   # one cell at a time. See §9.1.
                 if bounds is not None:
                     budget.check_time()
-                runs.append(_run_one_cell(cell, cache=cache, client=client,
-                                          budget=budget, policy=policy,
-                                          clock=verify_clock,
-                                          pool=pool if enrich else None,
-                                          outcomes=(target_outcomes if enrich
-                                                    else None),
-                                          canon_policy=canon_policy,
-                                          bounds=bounds))
+                # S9-5C1. One monotonic read either side of the call, and nothing
+                # in between: the measurement covers the cell's execution and not
+                # the budget checks that bracket it. Recorded only when the call
+                # RETURNS — a cell that raised publishes no row at all, and a cell
+                # that was never selected is `not_run` and never reaches here, so
+                # neither can acquire a fabricated duration.
+                cell_started = _monotonic()
+                run_ = _run_one_cell(cell, cache=cache, client=client,
+                                     budget=budget, policy=policy,
+                                     clock=verify_clock,
+                                     pool=pool if enrich else None,
+                                     outcomes=(target_outcomes if enrich
+                                               else None),
+                                     canon_policy=canon_policy,
+                                     bounds=bounds)
+                elapsed_by_cell[cell["cell_id"]] = _measure(
+                    cell_started, _monotonic(), "cell %s" % cell["cell_id"])
+                runs.append(run_)
                 if bounds is not None:
                     budget.check_time()
     finally:
@@ -1330,10 +1395,21 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
             artifacts.alias_conflicts_path(root, harvest_run_id), alias_conflicts))
 
         # -------------------------------------------------------------- manifest
-        rows = [_cell_row(run_, by_cell[run_.cell_id]) for run_ in runs]
+        # S9-5C1. The SECOND and last UTC read of the run, taken here: every cell
+        # has run and every pre-manifest artifact is already written, so this is
+        # the completion observation the manifest reports. It is deliberately NOT
+        # after `publish_run` — `finished_at` describes when the work finished,
+        # not when the pointer moved, and a third read would give the run two
+        # competing accounts of its own end.
+        finished = (clock() if clock is not None else _default_clock())
+        finished_stamp = finished.strftime(STAMP_FORMAT)
+        rows = [_cell_row(run_, by_cell[run_.cell_id],
+                          elapsed_sec=elapsed_by_cell.get(run_.cell_id))
+                for run_ in runs]
         accounting = pool.accounting()
         manifest = artifacts.build_run_manifest(
-            harvest_run_id=harvest_run_id, started_at=stamp, finished_at=stamp,
+            harvest_run_id=harvest_run_id, started_at=stamp,
+            finished_at=finished_stamp,
             cells=rows, mode=run_mode,
             config=_config_block(configured, max_cells, enrich=enrich,
                                  bounds=bounds),
@@ -1373,7 +1449,10 @@ def run(root, *, cells=None, clock=None, fixtures_dir=None, max_cells=MAX_CELLS,
 
     # The journal has swept on the way out of the block above; on a clean run
     # there is nothing to sweep, and saying so is worth more than assuming it.
+    # `finished_at` is READ BACK from the manifest rather than carried beside it,
+    # so the result object and the published document can never disagree about
+    # when the run ended.
     return RunResult(run_id=harvest_run_id, root=root, started_at=stamp,
-                     finished_at=stamp, cells=manifest["cells"],
+                     finished_at=manifest["finished_at"], cells=manifest["cells"],
                      records=all_records, manifest=manifest, coverage=coverage,
                      paths=paths, ran=sorted(ran), swept=tuple(journal.swept))

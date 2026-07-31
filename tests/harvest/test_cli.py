@@ -233,16 +233,46 @@ class TestLeaseRootOwnership(TempRoots):
 
 
 # --------------------------------------------------------- byte compatibility
+def _step_monotonic(start=100.0, step=0.25):
+    """A deterministic, unbounded monotonic source for byte-identity comparisons.
+
+    S9-5C1 made `cells[].elapsed_sec` a real measurement, so the two call shapes
+    below must be given the same monotonic clock as well as the same UTC clock.
+    This is the second injected authority, not an exemption: nothing is excluded
+    from the comparison, and the guard below remains a raw byte-for-byte proof.
+    """
+    state = {"t": float(start)}
+
+    def monotonic():
+        value = state["t"]
+        state["t"] += step
+        return value
+    return monotonic
+
+
 class TestOmissionIsByteCompatible(TempRoots):
     """The old call shape and the new all-None shape must be indistinguishable."""
+
+    def _pinned_run(self, root, **kwargs):
+        """One run under the pinned UTC clock AND a fresh pinned monotonic clock.
+
+        Patches only `run_cells._monotonic` — never `time.monotonic` globally and
+        never `RequestBudget`, which keeps its own untouched monotonic authority.
+        """
+        real = run_cells._monotonic
+        run_cells._monotonic = _step_monotonic()
+        try:
+            return run_cells.run(root, clock=clock, **kwargs)
+        finally:
+            run_cells._monotonic = real
 
     def test_full_tree_is_byte_identical_and_the_comparison_is_not_vacuous(self):
         old_root = self.temp("old_")
         new_root = self.temp("new_")
 
-        old = run_cells.run(old_root, clock=clock)
-        new = run_cells.run(new_root, clock=clock, transport=None, mode=None,
-                            enrich=None, source_preflight=None)
+        old = self._pinned_run(old_root)
+        new = self._pinned_run(new_root, transport=None, mode=None,
+                               enrich=None, source_preflight=None)
 
         self.assertEqual(old.run_id, new.run_id)
         old_files, new_files = listing(old_root), listing(new_root)
@@ -260,6 +290,21 @@ class TestOmissionIsByteCompatible(TempRoots):
         for rel in old_files:
             self.assertEqual(read(old_root, rel), read(new_root, rel),
                              "%s differs between the old and new call shapes" % rel)
+
+        # Anti-vacuity for the S9-5C1 measurement: the trees must agree BECAUSE
+        # both recorded the same real durations, not because neither recorded any.
+        old_rows = {r["cell_id"]: r for r in manifest["cells"]}
+        new_rows = {r["cell_id"]: r
+                    for r in manifest_of(new_root, new.run_id)["cells"]}
+        self.assertEqual(set(old_rows), set(new_rows))
+        for cell_id, row in old_rows.items():
+            self.assertIn("elapsed_sec", row, cell_id)
+            self.assertIn("elapsed_sec", new_rows[cell_id], cell_id)
+            self.assertEqual(row["elapsed_sec"], new_rows[cell_id]["elapsed_sec"],
+                             "%s timed differently across the two call shapes"
+                             % cell_id)
+        self.assertTrue(any(r["elapsed_sec"] > 0 for r in old_rows.values()),
+                        "at least one cell must carry a positive duration")
 
     def test_no_new_config_key_or_moving_field_appeared(self):
         root = self.temp()
