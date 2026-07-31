@@ -116,6 +116,12 @@ roadmap:                     docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md — 
                              file-set accounting, command-to-artifact matrix, product
                              milestones M1-M7, remaining-checkpoint forecast, and the gap
                              register G1-G17. Read it before scoping Stage 9.
+stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPOSED —
+                             S9-0 ONLY APPROVED. Settles D9-A (external retained state
+                             root) and D9-B (harvest.sh + cli.py; run_cells.run()
+                             generalized, no new engine; one atomic Transport seam),
+                             every command contract, wrappers 58 -> 63, and the exit
+                             criteria. STAGE 9 IS NOT OPEN FOR IMPLEMENTATION.
 ```
 
 ## Progress dashboard
@@ -1546,19 +1552,38 @@ change what Stage 9 *is*:
 prose. The `model_search` adapter raises a typed `AdapterNotImplemented`. None of these has a
 producer.
 
-- [ ] `scripts/harvest/{smoke,smoke_model}.sh` + `preflight-sources` — **none implemented**
-- [ ] 12-category smoke, `--no-enrich`, twice, + `compare-runs --normalize` — **no producer for
-      `compare-runs`, and its output form is undefined**
-- [ ] `linkcheck --sample 20` — **not implemented**
-- [ ] Threshold calibration deferred from S4-4A — will collide with **CF-6**, now grown to 33 of 39
-      wrappers asserting `config/` is unmodified
-- [ ] **Requires explicit user confirmation** — outbound requests and production runtime state.
-      **Every live execution needs approval twice**: once as a checkpoint, once immediately before
-      the outbound request
+**Plan of record: `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md`** — `PROPOSED — S9-0 ONLY APPROVED`,
+baseline `2bbc236a`. It settles **D9-A** (the Stage 9 runtime root: an explicitly supplied, retained
+**external** state root outside the repository — the Stage 8 runtime guard is not weakened) and
+**D9-B** (a thin `scripts/harvest/harvest.sh` dispatcher over one `src/harvest/cli.py` owner, with
+`run_cells.run()` **generalized** by keyword-only default-`None` parameters on the committed D6-A /
+S6-6A sentinel idiom — **no new engine module**, and one atomic `Transport` seam so a live opener can
+never be paired with disabled pacing). It also settles every command contract, the wrapper plan
+(**58 → 63**), the validation policy and the exit criteria.
 
-The roadmap recommends decomposing this into **S9-0 · S9-1 · S9-2 · S9-3 · S9-4 · S9-5 · S9-6 ·
-S9-C**, alternating code checkpoints with network executions (§10). **That is a recommendation only
-and approves nothing.**
+**Writing that plan approved no implementation and no live command.** Each checkpoint below needs its
+own approval **by name**, with its exact allowed-path set declared up front. Code checkpoints and
+network executions are strictly separate, and **every live execution needs approval twice** — once as
+a checkpoint, once immediately before the outbound request.
+
+- [x] **S9-0** plan of record, documentation only (`docs(harvest): plan stage 9 live validation`) —
+      `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md` plus this section. Exactly the two paths declared
+      up front. L0 validation only. **Approves nothing further.**
+- [ ] **S9-1** live execution seam and CLI foundation — code, **no network**
+- [ ] **S9-2** source-preflight implementation — code, **no network**
+- [ ] **S9-L1** live source-preflight execution — **NETWORK**, verification-only, no commit
+- [ ] **S9-3** smoke and `validate --run-id` implementation — code, **no network**
+- [ ] **S9-4** `compare-runs` and `diff --run-id` implementation — code, **no network**
+- [ ] **S9-L2** first bounded live smoke — **NETWORK**, verification-only, no commit · **this is M2**
+- [ ] **S9-L3** second bounded live smoke + normalized comparison — **NETWORK**, no commit
+- [ ] **S9-5** live-corpus calibration decision — documentation only; **no config or code change**
+      (a correction needs its own approved `S9-5C` under the CF-6 committed-tree procedure)
+- [ ] **S9-6** linkcheck implementation — code, **no network**
+- [ ] **S9-L4** bounded live linkcheck execution — **NETWORK**, no commit
+- [ ] **S9-C** Stage 9 closeout — documentation only; push and memory sync remain separate approvals
+
+**Stage 9 is not open for implementation.** S9-0 is complete; **S9-1 and every live checkpoint remain
+unapproved.**
 
 ## Stage 10 — final report ⟵ **NOT OPEN.**
 
