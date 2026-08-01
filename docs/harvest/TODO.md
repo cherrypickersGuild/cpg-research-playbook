@@ -552,6 +552,191 @@ stage_9_6_validation:        FOCUSED ONLY, all green, each command run EXACTLY
                              retained Stage 9 root was neither read nor written.
                              S9-L4 and closeout REMAIN UNAPPROVED AND UNSTARTED;
                              publication and promotion remain ZERO.
+stage_9_gate_63_at_8479095:  **RAN EXACTLY ONCE AND FAILED — exit code 1.** Valid
+                             historical evidence for tip 8479095, and it MUST NOT
+                             BE RERUN AT THAT TIP. `bash scripts/validate_task.sh
+                             --all`, one invocation, no retry, no individual
+                             wrapper rerun. 63 wrappers DISCOVERED and 63
+                             EXECUTED, EACH EXACTLY ONCE: 61 passed, 2 FAILED,
+                             ZERO "WARN - skipping". Final line
+                             "== validate_task.sh: FAIL ==". Unittest 43 suites /
+                             2,384 tests / 9 failures / 0 errors. The two failing
+                             wrappers: test_taxonomy_target_determinism.sh (8) and
+                             test_taxonomy_linkcheck.sh (1).
+                             THE REPOSITORY AND RETAINED ROOT WERE UNCHANGED:
+                             HEAD = main = origin/main = 8479095, 0 behind /
+                             0 ahead, worktree clean, index empty, protected
+                             18/18, untracked 508/508 drift 0, wrappers 63, four
+                             runtime paths ABSENT before and after, production
+                             state/ unchanged; retained root byte-identical at
+                             1dcdfff3642e3abded6d8edd95810db4fa37dd497e9a1db9b27d3eea0fd58a94
+                             (80 files) with pointer 20260731T120702Z-20188. NO
+                             network request. Evidence outside the repository:
+                             ../scratchpad/s9_authoritative_63_gate_20260801T035233Z.{stdout.log,stderr.log,rc}
+                             LAUNCHER EVIDENCE DISTINCTION — record it exactly:
+                             "The gate itself exited 1, preserved in the external
+                             rc file and corroborated by stdout and wrapper
+                             results. The enclosing background compound command
+                             surfaced 0 because its trailing command replaced the
+                             outward shell status." The launcher preserved the
+                             value ONLY IN THE FILE, not at the process boundary.
+                             REQUIRED STRUCTURE FOR EVERY FUTURE FULL-GATE LAUNCH:
+                               bash scripts/validate_task.sh --all >"$stdout" 2>"$stderr"
+                               rc=$?
+                               printf '%s\n' "$rc" >"$rc_file"
+                               exit "$rc"
+stage_9_6a_repair:           **IMPLEMENTATION AND FOCUSED VALIDATION COMPLETE.**
+                             FOUR paths exactly:
+                             tests/harvest/test_target_determinism.py,
+                             tests/harvest/test_linkcheck.py, the plan, this file.
+                             NO production, schema, fixture, config, harness,
+                             wrapper, validator or comparator change; WRAPPER
+                             INVENTORY REMAINS 63 and ISOLATED[] is untouched.
+                             NAMED S9-6A, NOT S9-5C4: the S9-5C series is closed
+                             in full (C1 landed, C2 landed, C3 explicitly
+                             deferred) and its subject was the three calibration
+                             observability corrections, which neither finding is.
+                             THE TWO FINDINGS HAVE DIFFERENT ORIGINS.
+                             FINDING A (E9-21) — the FOURTH C1 whole-tree guard
+                             site. cells[].elapsed_sec is a real monotonic
+                             measurement, and this suite pinned only the UTC
+                             clock. C1 corrected three such guards
+                             (test_run_cells.py x2, test_cli.py) and missed this
+                             one because the harness routes run_cells.py to
+                             run_cells/recovery/cli/smoke while this suite routes
+                             from targetfetch.py, and NEITHER C1 NOR C2 RAN
+                             `--all`. The suite was green at 238df98, before C1.
+                             DURABLE LESSON: a checkpoint that changes what
+                             run_cells.run() writes must search EVERY suite that
+                             compares two runs' bytes, not only the suites its own
+                             routing arm selects.
+                             REPAIR: a suite-local step_monotonic() plus a
+                             restoration-safe pinned_monotonic() context manager
+                             patching ONLY run_cells._monotonic — never
+                             time.monotonic process-wide, never RequestBudget —
+                             with a FRESH SEQUENCE PER RUN at exactly four sites:
+                             harvest(), TestBudgetSkipMakesARunIneligible.
+                             setUpClass, its capped repeat, and the successful
+                             retry in TestInterruptedFetchPhasePublishesNothing.
+                             Each executed cell consumes two reads, so every cell
+                             measures exactly `step` INDEPENDENT OF ORDER, which
+                             keeps the shuffled-cell guard exact. NOT pinned, by
+                             decision: one_cell() (no manifest duration), the
+                             interrupted run (raises, publishes nothing), the
+                             finished-run refusal (one root vs itself).
+                             NOTHING WEAKENED: no tree hash removed, no content
+                             normalized, elapsed_sec NOT deleted/ignored/filtered/
+                             zeroed, no subset comparison, and elapsed_sec NOT
+                             added to CLOCK_DERIVED / MANIFEST_EXTRA /
+                             REJECTION_EXTRA / LEDGER_LEAVES — in the cross-clock
+                             enumeration it is absent because both runs now carry
+                             an EQUAL injected monotonic clock, not because it was
+                             excused. ANTI-VACUITY added in the same-clock area:
+                             for BOTH compared runs every executed cell row must
+                             contain elapsed_sec, be > 0 and equal the pinned
+                             0.25, plus an equality proving the timed rows are
+                             exactly the rows whose status is not "not_run".
+                             FINDING B — the S9-6 SPENT schema working-tree
+                             census. test_only_the_manifest_schema_moved asserted
+                             a NON-EMPTY `git diff --name-only HEAD --
+                             schemas/harvest`, valid only while S9-6 was
+                             uncommitted; after the commit the diff is correctly
+                             empty, so it FAILED BECAUSE THE CHECKPOINT SUCCEEDED
+                             — E9-9's spent-guard family for the sixth time, and
+                             the first spent by its own checkpoint's commit.
+                             RETIRED AND REPLACED, NOT DELETED, by
+                             test_the_schema_tree_is_clean_relative_to_HEAD
+                             (`git diff --exit-code --quiet HEAD --
+                             schemas/harvest` == 0), the same idiom as its two
+                             durable siblings and the one gap they leave. STATED
+                             PLAINLY: this is a DIFFERENT AND WEAKER contract —
+                             "no schema is uncommitted", not "exactly this schema
+                             moved"; the historical fact belongs to the S9-6
+                             COMMIT and is unrecoverable from a clean worktree.
+                             The schema's SHAPE stays owned by test_manifest.py::
+                             TestBaseRunLineage, so nothing is duplicated. NO
+                             manifest-shape, lineage, mode-aware validator,
+                             deterministic-sampling, append-only link_history,
+                             base-run-immutability or outbound-guard test touched.
+                             NEITHER FINDING IS A PRODUCTION DEFECT. elapsed_sec
+                             remains REAL EVIDENCE, neither normalized nor
+                             excluded. Retained M2/M3 evidence UNTOUCHED; NO live
+                             smoke, migration or backfill required; publication
+                             and promotion remain ZERO; S9-5C3 REMAINS DEFERRED
+                             and is not reopened; S9-L4 and closeout REMAIN
+                             UNAPPROVED AND UNSTARTED.
+                             TRAP: `validate_task.sh tests/harvest/<module>.py`
+                             routes to ZERO wrappers (tests/harvest/** is not
+                             routed in changed mode — a documented Stage 8
+                             limitation), so an empty harness run MUST NEVER be
+                             reported as validation. The meaningful focused gate
+                             is direct wrapper invocation.
+stage_9_6a_validation:       **COMPLETE AND GREEN.** SIX approved commands, EACH
+                             EXECUTED EXACTLY ONCE, no retry and no individual
+                             unittest rerun; every one exited 0 and preserved its
+                             status BOTH in its external rc file AND at the
+                             process boundary.
+                               py_compile test_target_determinism.py    rc 0
+                               py_compile test_linkcheck.py             rc 0
+                               test_taxonomy_target_determinism.sh   90 tests
+                               test_taxonomy_linkcheck.sh            48 tests
+                               test_taxonomy_run_cells.sh           137 tests
+                               test_taxonomy_cli.sh                  58 tests
+                               AGGREGATE 333 tests · 0 failures · 0 errors
+                                         · 0 skips
+                             Each wrapper printed a BARE "OK"; unittest appends
+                             "(skipped=N)" whenever anything is skipped, so the
+                             bare form is POSITIVE EVIDENCE of zero skips.
+                             COUNTS EXPLAINED, NOT EXCUSED: target determinism
+                             rose 88 -> 90 because S9-6A added exactly two
+                             anti-vacuity tests; run_cells is CORRECTLY 137 and
+                             NOT the stale C1-era 115, because S9-5C2 added 22
+                             sighting tests after C1 recorded 115 — S9-6A adds no
+                             test there and modifies neither test_run_cells.py nor
+                             run_cells.py.
+                             All ten determinism guards ran and passed: both
+                             same-clock trees byte-identical, whole-tree hashes
+                             agreeing, shuffled cell order identical, both
+                             composed-corpus repeats identical, capped baseline
+                             equal to capped repeat, interrupted-run retry equal
+                             to the clean run, and the cross-UTC enumeration NO
+                             LONGER REPORTING elapsed_sec as a differing leaf with
+                             all four permitted-leaf sets byte-unmodified. Both
+                             new anti-vacuity tests passed, proving on BOTH
+                             compared runs that every executed cell row carries
+                             elapsed_sec == 0.25 and > 0, and that the
+                             duration-bearing rows are exactly the rows whose
+                             status is not "not_run".
+                             LINKCHECK: the replacement
+                             test_the_schema_tree_is_clean_relative_to_HEAD
+                             passed, test_only_the_manifest_schema_moved no longer
+                             exists, and NO manifest-shape, base_run_id lineage,
+                             mode-aware validator, deterministic-sampling,
+                             append-only link_history, base-run-immutability or
+                             outbound-guard test failed or skipped. The benign
+                             ResourceWarning (unclosed socket) came from the
+                             DELIBERATELY TRIPPED outbound guard; that test PASSED
+                             and NO REMEDIATION was required or made.
+                             `git diff --check` rc 0. THE TWO VALIDATED TEST FILES
+                             WERE NOT MODIFIED DURING FOCUSED VALIDATION, proved
+                             by SHA-256 before and after. Repository and retained
+                             root UNCHANGED apart from the four approved tracked
+                             modifications: untracked 508/508 drift 0, protected
+                             18/18, wrappers 63, four runtime paths absent,
+                             retained pointer and 80-file manifest byte-identical.
+                             NO `validate_task.sh --all` invocation occurred
+                             during S9-6A focused validation, and NO LIVE URL WAS
+                             CONTACTED. NO migration, backfill or new live smoke
+                             is required.
+                             THE FOCUSED WRAPPERS DO NOT SUPERSEDE the failed
+                             authoritative gate at 8479095, which remains
+                             historical evidence for that tip.
+                             **S9-6A implementation and focused validation are
+                             complete. The next required boundary after this
+                             checkpoint is a separately approved authoritative
+                             63/63 gate at the committed S9-6A tip.** S9-L4 and
+                             Stage 9 closeout REMAIN UNAPPROVED AND UNSTARTED;
+                             publication and promotion remain ZERO.
 stage_9_5c3_deferral:        **EXPLICITLY DEFERRED — not part of Stage 9
                              implementation.** A DECISION, not an omission.
                              Documentation-only checkpoint, TWO paths (the plan +

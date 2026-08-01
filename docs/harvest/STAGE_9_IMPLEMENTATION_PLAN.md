@@ -2067,6 +2067,226 @@ contributes no code and no wrapper.
 the retained Stage 9 root was neither read nor written, and publication and
 promotion remain **zero**.
 
+## THE AUTHORITATIVE 63/63 GATE AT `8479095` — RAN ONCE, **FAILED**, exit 1
+
+A recorded result, **not** a void run. It **must not be rerun at that tip**.
+
+```text
+command             bash scripts/validate_task.sh --all      ONE invocation, no retry
+original exit code  1
+final stdout line   == validate_task.sh: FAIL ==
+wrappers discovered 63      wrappers executed 63      each EXACTLY ONCE
+passed              61      FAILED 2      WARN - skipping 0
+unittest            43 suites · 2,384 tests · 9 failures · 0 errors
+repository          HEAD/main/origin/main 8479095, 0/0, worktree clean, index empty,
+                    protected 18/18, untracked 508/508 drift 0, wrappers 63,
+                    four runtime paths ABSENT before and after, state/ unchanged
+retained root       BYTE-IDENTICAL before and after — 80 files, aggregate
+                    1dcdfff3642e3abded6d8edd95810db4fa37dd497e9a1db9b27d3eea0fd58a94,
+                    pointer 20260731T120702Z-20188
+network             none
+evidence            ../scratchpad/s9_authoritative_63_gate_20260801T035233Z.{stdout.log,stderr.log,rc}
+```
+
+The two failing wrappers: `tests/test_taxonomy_target_determinism.sh` and
+`tests/test_taxonomy_linkcheck.sh`. **Neither failure is a production defect.**
+
+### The launcher evidence distinction — recorded so it is never misread
+
+> The gate itself exited 1, preserved in the external rc file and corroborated by
+> stdout and wrapper results. The enclosing background compound command surfaced
+> 0 because its trailing command replaced the outward shell status.
+
+The previous launcher preserved the value **only in the separate file, not at the
+process boundary**. Every future full-gate launch must use:
+
+```bash
+bash scripts/validate_task.sh --all >"$stdout" 2>"$stderr"
+rc=$?
+printf '%s\n' "$rc" >"$rc_file"
+exit "$rc"
+```
+
+## S9-6A — repair the authoritative full-gate findings · **IMPLEMENTATION AND FOCUSED VALIDATION COMPLETE**
+
+Named `S9-6A` and deliberately **not** `S9-5C4`: the S9-5C series is closed in full
+(C1 landed, C2 landed, C3 explicitly deferred) and its defining subject was the
+three S9-5 *calibration observability* corrections, which neither finding is. The
+two findings have **different origins**, and the name does not hide that — S9-6A is
+defined by the gate S9-6 owed, and repairs everything that gate found.
+
+| Field | Value |
+|---|---|
+| Purpose | Make the authoritative 63/63 gate green without weakening one guard |
+| Allowed paths | **FOUR, exactly**: `tests/harvest/test_target_determinism.py` · `tests/harvest/test_linkcheck.py` · this plan · `TODO.md` |
+| Risk tier | Test-only — **no** production, schema, fixture, config, harness, wrapper, validator or comparator change |
+| Wrapper inventory | **stays 63**; `ISOLATED[]` untouched, no routing arm changed |
+| Network | **No** |
+| External state written | **None** — the retained Stage 9 root is neither read nor written |
+
+### E9-21 — Finding A: the FOURTH C1 whole-tree guard site
+
+`run_manifest.cells[].elapsed_sec` is a real monotonic measurement (S9-5C1), so two
+independently executed runs differ in duration bytes. `test_target_determinism.py`
+compares two runs while pinning **only** the UTC clock, and eight of its guards
+broke — six as tree hashes, one as a named byte diff (`0.451` vs `0.436` in
+`manifest.json`), and one as the cross-clock leaf enumeration reporting
+`'elapsed_sec'` outside the permitted set.
+
+**Why C1 missed it.** C1's scope preflight was corrected once already — it searched
+for assertions *naming* the timing fields and missed whole-tree hashes that name no
+field — and it then found **three** such guards (`test_run_cells.py` ×2,
+`test_cli.py`). There is a **fourth**. It was invisible to C1 because the harness
+routes `src/harvest/run_cells.py` to run_cells / recovery / cli / smoke
+(`scripts/validate_task.sh:208`) while this suite is routed only from
+`targetfetch.py` (`:212`), and **neither C1 nor C2 ran `--all`**. The gate is the
+first execution of the suite since `elapsed_sec` landed; it was green at `238df98`,
+before C1.
+
+**The durable lesson:** a checkpoint that changes what `run_cells.run()` writes must
+search **every** suite that compares two runs' bytes — not only the suites its own
+routing arm selects. C1's correction was right and still incomplete.
+
+**The repair.** A suite-local deterministic monotonic source, by the same definition
+`test_run_cells.py` and `test_cli.py` each carry (a local copy per owner is the
+committed S9-5C1 precedent, not an oversight), plus a restoration-safe
+`pinned_monotonic()` context manager that patches **only** `run_cells._monotonic` —
+never `time.monotonic` process-wide, never `RequestBudget`. A **fresh sequence per
+run** is applied at exactly four sites: the cached `harvest()` factory ·
+`TestBudgetSkipMakesARunIneligible.setUpClass` · its capped repeat · the successful
+retry in `TestInterruptedFetchPhasePublishesNothing`. Because `run()` takes exactly
+two reads around each executed cell, every cell is measured at exactly `step`
+**independent of the order it ran in**, which is what keeps the shuffled-cell guard
+an exact comparison.
+
+**Deliberately NOT pinned**, each a decision rather than an omission: `one_cell()`,
+which calls `_run_one_cell` and produces no manifest duration · the interrupted run,
+which raises and publishes nothing · the finished-run refusal, which compares one
+root against itself · any call that compares no independently executed tree.
+
+**Nothing was weakened.** No tree hash removed, no content normalized, no
+`elapsed_sec` deleted, ignored, filtered or zeroed, no subset comparison
+substituted, and **`elapsed_sec` was NOT added to `CLOCK_DERIVED`, `MANIFEST_EXTRA`,
+`REJECTION_EXTRA` or `LEDGER_LEAVES`**. In the cross-clock enumeration it is absent
+because both runs now carry an **equal** injected monotonic clock, not because it
+was excused. **Anti-vacuity** was added in the same-clock area: for **both** compared
+runs, every executed cell row must contain `elapsed_sec`, be `> 0`, and equal the
+pinned `0.25` — plus an equality proving the timed rows are exactly the rows whose
+status is not `not_run`, so the C1 omission contract is asserted without a branch
+this corpus would never take.
+
+The contract is unchanged and now holds at all four sites:
+
+```text
+equal logical inputs + equal configured ordering
++ equal injected UTC clock + equal injected MONOTONIC clock
+= byte-identical complete trees
+```
+
+**Production runs still record ACTUAL durations** and are not expected to be
+byte-identical merely because their UTC timestamps agree. That is the measurement
+working, not determinism failing.
+
+### Finding B — the S9-6 spent schema working-tree census
+
+`tests/harvest/test_linkcheck.py::TestBoundary::test_only_the_manifest_schema_moved`
+asserted `git diff --name-only HEAD -- schemas/harvest` equalled
+`["schemas/harvest/run_manifest.v1.json"]` — a **non-empty** working-tree diff, true
+only while S9-6 was uncommitted. After the S9-6 commit the diff is correctly empty,
+so the guard **fails because the checkpoint succeeded**. **E9-9's spent-guard family
+for the sixth time**, and the first to be spent by its own checkpoint's commit.
+
+**Retired and replaced, not deleted:** `test_the_schema_tree_is_clean_relative_to_HEAD`
+asserts `git diff --exit-code --quiet HEAD -- schemas/harvest` returns `0`, adopting
+the identical idiom as its two durable siblings (`src/harvest` owners, fixture
+corpus) and filling the one gap they leave. **Stated plainly: this is a different
+and weaker contract** — "no schema is uncommitted" rather than "exactly this schema
+moved". The historical fact belongs to the S9-6 **commit**, not to a permanent
+working-tree assertion, and is unrecoverable from a clean worktree. The schema's own
+shape (`base_run_id` optional at the root, conditionally required for
+`mode: "linkcheck"`) stays owned by `test_manifest.py::TestBaseRunLineage`, so the
+replacement duplicates nothing.
+
+**No linkcheck manifest-shape, lineage, mode-aware validator, deterministic-sampling,
+append-only `link_history`, base-run-immutability or outbound-guard test was touched.**
+
+### What S9-6A does NOT change
+
+`elapsed_sec` remains **real evidence**, neither normalized nor excluded. The
+retained M2/M3 evidence is **untouched**; **no live smoke, migration or backfill is
+required**; **publication and promotion remain ZERO**; **S9-5C3 remains deferred and
+is not reopened**; and **S9-L4 and Stage 9 closeout remain unapproved and unstarted**.
+
+### Focused validation — COMPLETE AND GREEN
+
+Six approved commands, **each executed exactly once**, no retry and no individual
+unittest rerun. Every one exited **0**, and every one preserved its status **both in
+its external rc file and at the process boundary**.
+
+```text
+python -m py_compile tests/harvest/test_target_determinism.py     rc 0   no output
+python -m py_compile tests/harvest/test_linkcheck.py              rc 0   no output
+
+tests/test_taxonomy_target_determinism.sh    90 tests · 0 failures · 0 errors · 0 skips
+tests/test_taxonomy_linkcheck.sh             48 tests · 0 failures · 0 errors · 0 skips
+tests/test_taxonomy_run_cells.sh            137 tests · 0 failures · 0 errors · 0 skips
+tests/test_taxonomy_cli.sh                   58 tests · 0 failures · 0 errors · 0 skips
+                                            ---
+aggregate                                   333 tests, ALL GREEN
+```
+
+Each wrapper printed a bare `OK`; unittest appends `(skipped=N)` whenever anything
+is skipped, so the bare form is positive evidence of **zero skips**.
+
+**The two counts that differ from the C1-era figures, explained rather than
+excused:**
+
+- **target determinism 88 → 90.** S9-6A added exactly two anti-vacuity tests.
+- **run cells is correctly 137, NOT the stale C1-era 115.** S9-5C2 added 22 sighting
+  tests after C1's validation recorded 115. S9-6A adds no test to that suite and
+  modifies neither `test_run_cells.py` nor `run_cells.py`.
+
+All ten determinism guards named in the repair contract ran and passed: both
+same-clock trees byte-identical · whole-tree hashes agreeing · shuffled cell order
+identical · both composed-corpus repeats identical · capped baseline equal to capped
+repeat · interrupted-run retry equal to the clean run · and the cross-UTC
+enumeration **no longer reporting `elapsed_sec` as a differing leaf**, with all four
+permitted-leaf sets byte-unmodified. Both new anti-vacuity tests passed, proving on
+**both** compared runs that every executed cell row carries `elapsed_sec` equal to
+the pinned `0.25` and greater than zero, and that the duration-bearing rows are
+exactly the rows whose status is not `not_run`.
+
+On the linkcheck side the replacement `test_the_schema_tree_is_clean_relative_to_HEAD`
+passed, `test_only_the_manifest_schema_moved` no longer exists, and no
+manifest-shape, `base_run_id` lineage, mode-aware validator, deterministic-sampling,
+append-only `link_history`, base-run-immutability or outbound-guard test failed or
+skipped. The benign `ResourceWarning: unclosed socket` came from the **deliberately
+tripped** outbound guard; that test passed and **no remediation was required or
+made**.
+
+`git diff --check` returned **rc 0**. **The two validated test files were NOT
+modified during focused validation**, proved by SHA-256 before and after. The
+repository and the retained root were unchanged apart from the four approved tracked
+modifications — untracked baseline 508/508 drift 0, protected 18/18, wrappers 63,
+four runtime paths absent, retained pointer and 80-file manifest byte-identical.
+**No `validate_task.sh --all` invocation occurred**, and **no live URL was
+contacted**.
+
+**The focused wrappers do NOT supersede the failed authoritative gate at `8479095`**
+— that remains historical evidence for that tip. **No migration, backfill or new
+live smoke is required.**
+
+Note the routing trap:
+`bash scripts/validate_task.sh tests/harvest/test_target_determinism.py` routes to
+**zero wrappers** (`tests/harvest/**` is not routed in changed mode, a documented
+Stage 8 limitation), so an empty harness run **must never be reported as
+validation**; direct wrapper invocation is the meaningful focused gate.
+
+**S9-6A implementation and focused validation are complete. The next required
+boundary after this checkpoint is a separately approved authoritative 63/63 gate at
+the committed S9-6A tip.** **S9-L4 and Stage 9 closeout remain unapproved and
+unstarted**, and **publication and promotion remain ZERO**.
+
 ### S9-6 — linkcheck implementation (as planned)
 
 | Field | Value |

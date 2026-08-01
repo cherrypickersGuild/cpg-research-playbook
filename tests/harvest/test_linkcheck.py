@@ -499,11 +499,31 @@ class TestBoundary(Base):
                               "--", "tests/fixtures/harvest"], cwd=ROOT)
         self.assertEqual(rc, 0)
 
-    def test_only_the_manifest_schema_moved(self):
-        proc = subprocess.run(["git", "diff", "--name-only", "HEAD", "--",
-                               "schemas/harvest"], cwd=ROOT, capture_output=True)
-        changed = [p for p in proc.stdout.decode().split() if p]
-        self.assertEqual(changed, ["schemas/harvest/run_manifest.v1.json"])
+    def test_the_schema_tree_is_clean_relative_to_HEAD(self):
+        """S9-6A. The predecessor was a SPENT checkpoint census, retired here.
+
+        It asserted `git diff --name-only HEAD -- schemas/harvest` equalled
+        `["schemas/harvest/run_manifest.v1.json"]`, which held only while S9-6 was
+        written and not yet committed. Once S9-6 was committed the diff is
+        correctly EMPTY, so the assertion became impossible to satisfy at any
+        clean tip — it failed precisely because the checkpoint succeeded. That is
+        E9-9's spent-guard problem, and the historical fact that exactly one
+        schema moved belongs to the S9-6 COMMIT, not to a permanent working-tree
+        assertion.
+
+        Retirement AND replacement, not deletion. This is a different and
+        deliberately weaker contract — "no schema is uncommitted" rather than
+        "exactly this schema moved" — but it is the boundary this class can still
+        establish at any tip, and it is the one nothing else covers: the siblings
+        above hold the `src/harvest` owners and the fixture corpus, and the
+        schema's own SHAPE (`base_run_id` optional at the root, conditionally
+        required for `mode: "linkcheck"`) is owned by
+        `test_manifest.py::TestBaseRunLineage`. Driving a linkcheck must leave the
+        schema tree exactly as it found it.
+        """
+        rc = subprocess.call(["git", "diff", "--exit-code", "--quiet", "HEAD",
+                              "--", "schemas/harvest"], cwd=ROOT)
+        self.assertEqual(rc, 0)
 
     def test_the_outbound_guard_is_genuinely_installed(self):
         with self.assertRaises(AssertionError) as caught:

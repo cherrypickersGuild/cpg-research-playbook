@@ -11,7 +11,10 @@ healthy-path run:
   * BYTES THAT MOVE ON THEIR OWN. Two equivalent runs must be byte-identical, and
     two runs at different instants must differ at an ENUMERATED set of leaves —
     never a normalized-away one. A normalizer hides whatever it was not told
-    about; enumeration turns a new moving field into a failure.
+    about; enumeration turns a new moving field into a failure. Since S9-5C1 made
+    `cells[].elapsed_sec` a REAL measurement there are TWO nondeterministic
+    inputs, so every cross-run byte comparison below pins both the UTC artifact
+    clock and the monotonic duration clock (S9-6A). Neither is normalized away.
   * ORDER LEAKING INTO OUTPUT. If which cell, which source or which candidate went
     first can change a byte, the artifacts are a function of scheduling rather
     than of content, and every hash in the tree becomes meaningless.
@@ -46,6 +49,7 @@ WHAT THIS SUITE DELIBERATELY DOES NOT DO:
 
 Offline throughout: the opener is the committed `FixtureOpener` over a temp tree.
 """
+import contextlib
 import copy
 import datetime
 import hashlib
@@ -273,6 +277,57 @@ def temp_root(prefix="s6_7_"):
     return root
 
 
+# ------------------------------------------------------- the monotonic clock
+# S9-6A. The suite-local copy of the C1 instrument, by the same definition as
+# `test_run_cells.py` and `test_cli.py` carry — each owner keeps its own rather
+# than importing across test modules, which is the committed S9-5C1 precedent.
+#
+# Byte determinism was never a claim about wall time. It is the claim that equal
+# inputs and equal CLOCKS give equal bytes, and since S9-5C1 there are two
+# clocks: the UTC artifact authority, always injectable, and the monotonic
+# duration authority behind `run_manifest.cells[].elapsed_sec`. Pinning the
+# second changes NOTHING about what is compared — no field is excluded,
+# normalized, zeroed or diffed as a subset; both sides simply record the same
+# real duration, which is what makes their equality meaningful.
+def step_monotonic(start=100.0, step=0.25):
+    """A deterministic monotonic source: unbounded, positive, exactly reproducible.
+
+    Unbounded by construction rather than a fixed list, which would exhaust and
+    silently change a test's meaning if the implementation ever read one more
+    time. `run()` takes exactly two reads around each executed cell, so every
+    cell in every pinned run is measured at exactly `step` — INDEPENDENT of the
+    position it ran in, which is what keeps the shuffled-cell-order guard an
+    exact byte comparison rather than a weakened one.
+    """
+    state = {"t": float(start)}
+
+    def monotonic():
+        value = state["t"]
+        state["t"] += step
+        return value
+    return monotonic
+
+
+PINNED_ELAPSED_SEC = 0.25   # what `step` yields once `_measure` has rounded it
+
+
+@contextlib.contextmanager
+def pinned_monotonic(start=100.0, step=PINNED_ELAPSED_SEC):
+    """Pin `run_cells._monotonic` for one run, restored on every exit path.
+
+    Patches the INTERNAL owner S9-5C1 introduced and nothing else: never
+    `time.monotonic` process-wide, and never `RequestBudget`, whose own monotonic
+    clock stays the untouched budget authority. A fresh sequence per `run()` is
+    the point — two runs that are expected to match must each start at `start`.
+    """
+    real = run_cells._monotonic
+    run_cells._monotonic = step_monotonic(start, step)
+    try:
+        yield
+    finally:
+        run_cells._monotonic = real
+
+
 def harvest(key, *, clock=T1, fixtures_dir=None, cells=None, root=None):
     """One completed run, cached by key.
 
@@ -285,8 +340,12 @@ def harvest(key, *, clock=T1, fixtures_dir=None, cells=None, root=None):
     """
     if key not in _RUNS:
         target = root or temp_root("s6_7_%s_" % key)
-        result = run_cells.run(target, clock=lambda: clock,
-                               fixtures_dir=fixtures_dir, cells=cells)
+        # A fresh pinned monotonic sequence per cached run (S9-6A). Every run
+        # this factory produces participates in some cross-run comparison, so
+        # each starts its duration clock from the same place.
+        with pinned_monotonic():
+            result = run_cells.run(target, clock=lambda: clock,
+                                   fixtures_dir=fixtures_dir, cells=cells)
         _RUNS[key] = (target, result)
     return _RUNS[key]
 
@@ -386,8 +445,14 @@ class TreeCase(unittest.TestCase):
 
 # ---------------------------------------------- 1 · same-clock byte determinism
 class TestSameClockWholeTreeDeterminism(TreeCase):
-    """Two equivalent runs, one pinned clock, two roots: the same 43 files and
-    the same bytes in every one of them."""
+    """Two equivalent runs, two pinned clocks, two roots: the same 43 files and
+    the same bytes in every one of them.
+
+    Both clocks since S9-5C1 — the UTC artifact clock and the monotonic duration
+    clock behind `cells[].elapsed_sec`. The comparison itself is unchanged and
+    still EXACT: nothing is excluded, normalized, zeroed or compared as a subset,
+    and the anti-vacuity tests below prove the durations are really present.
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -425,6 +490,50 @@ class TestSameClockWholeTreeDeterminism(TreeCase):
         self.assertEqual(len([r for r in rels if "/topics/" in r]), 3)
         self.assertEqual(len([r for r in rels if r.startswith("rejections/")]), 12)
         self.assertEqual(len([r for r in rels if r.startswith("ledgers/")]), 12)
+
+    def manifest_rows(self, root, result):
+        return load(root, "runs/%s/manifest.json" % result.run_id)["cells"]
+
+    def ran(self, rows):
+        """The rows for cells that actually executed.
+
+        `not_run` is the production vocabulary for a cell the run never selected
+        (`run_cells.py:1143`), and such a row carries no duration by contract.
+        Nothing here invents a second meaning for "completed".
+        """
+        return [row for row in rows if row["status"] != "not_run"]
+
+    def test_both_runs_really_recorded_the_pinned_durations(self):
+        """ANTI-VACUITY for the two byte-identity guards above (S9-6A).
+
+        They must agree BECAUSE both runs measured a real duration under an equal
+        injected monotonic clock — not because `elapsed_sec` quietly went
+        missing. Two trees with the field absent from both sides would hash
+        identically and prove nothing at all, which is exactly the failure mode a
+        normalizer introduces and this suite refuses.
+        """
+        for label, root, result in (("a", self.root_a, self.result_a),
+                                    ("b", self.root_b, self.result_b)):
+            rows = self.ran(self.manifest_rows(root, result))
+            self.assertTrue(rows, "run %s executed no cell" % label)
+            for row in rows:
+                with self.subTest(run=label, cell=row["cell_id"]):
+                    self.assertIn("elapsed_sec", row)
+                    self.assertGreater(row["elapsed_sec"], 0)
+                    self.assertEqual(row["elapsed_sec"], PINNED_ELAPSED_SEC)
+
+    def test_the_duration_evidence_belongs_to_exactly_the_cells_that_ran(self):
+        """The C1 omission contract, stated as an equality rather than a branch
+        that this corpus would never take: every executed cell is timed and only
+        executed cells are."""
+        for label, root, result in (("a", self.root_a, self.result_a),
+                                    ("b", self.root_b, self.result_b)):
+            rows = self.manifest_rows(root, result)
+            with self.subTest(run=label):
+                self.assertEqual(
+                    sorted(row["cell_id"] for row in rows
+                           if "elapsed_sec" in row),
+                    sorted(row["cell_id"] for row in self.ran(rows)))
 
     def test_every_artifact_validates(self):
         self.assertEveryArtifactValidates(self.root_a)
@@ -704,6 +813,13 @@ class TestCrossClockEnumeration(unittest.TestCase):
                                            self.first.run_id))["conflicts"], [])
 
     def test_the_manifest_differs_in_the_five_plus_its_own_two_instants(self):
+        """`elapsed_sec` is deliberately ABSENT from this enumeration.
+
+        Not excused and not added to a permitted set: both runs come from
+        `harvest()`, so both carry an equal injected monotonic clock and their
+        durations are equal bytes. What differs here is what the UTC clock moved,
+        which is the only thing this test was ever about (S9-6A).
+        """
         names = leaf_names(self.differing(*self.both("manifest.json")))
         self.assertEqual(names, (CLOCK_DERIVED | MANIFEST_EXTRA) & names)
         self.assertLessEqual(names, CLOCK_DERIVED | MANIFEST_EXTRA)
@@ -995,7 +1111,8 @@ class TestBudgetSkipMakesARunIneligible(TreeCase):
         original = run_cells.MAX_TARGET_FETCHES_PER_CELL
         run_cells.MAX_TARGET_FETCHES_PER_CELL = 2
         try:
-            cls.result = run_cells.run(cls.root, clock=lambda: T1)
+            with pinned_monotonic():
+                cls.result = run_cells.run(cls.root, clock=lambda: T1)
         finally:
             run_cells.MAX_TARGET_FETCHES_PER_CELL = original
         cls.manifest = load(cls.root, "runs/%s/manifest.json" % cls.result.run_id)
@@ -1021,7 +1138,10 @@ class TestBudgetSkipMakesARunIneligible(TreeCase):
         original = run_cells.MAX_TARGET_FETCHES_PER_CELL
         run_cells.MAX_TARGET_FETCHES_PER_CELL = 2
         try:
-            again = run_cells.run(again_root, clock=lambda: T1)
+            # The same fresh pinned sequence setUpClass used, so the two capped
+            # runs differ in nothing at all (S9-6A).
+            with pinned_monotonic():
+                again = run_cells.run(again_root, clock=lambda: T1)
         finally:
             run_cells.MAX_TARGET_FETCHES_PER_CELL = original
         repeat = sorted(
@@ -1199,9 +1319,16 @@ class TestInterruptedFetchPhasePublishesNothing(unittest.TestCase):
         self.assertEqual(self.temps_after_interruption, [])
 
     def test_the_retry_is_an_ordinary_fresh_run_with_identical_output(self):
-        """No resume, and none needed: the same clock in the same root produces
-        exactly the tree a clean run produces elsewhere."""
-        result = run_cells.run(self.root, clock=lambda: T1)
+        """No resume, and none needed: the same clocks in the same root produce
+        exactly the tree a clean run produces elsewhere.
+
+        Both clocks, since S9-5C1: the comparand is a `harvest()` run, so this
+        retry takes the same fresh pinned monotonic sequence (S9-6A). The
+        interrupted run above is deliberately NOT pinned — it raises, publishes
+        no manifest, and a cell that raised carries no duration at all.
+        """
+        with pinned_monotonic():
+            result = run_cells.run(self.root, clock=lambda: T1)
         base_root, base = harvest("clean_t1")
         self.assertEqual(result.run_id, base.run_id)
         self.assertEqual(tree_hash(self.root), tree_hash(base_root))
