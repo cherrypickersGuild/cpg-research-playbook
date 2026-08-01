@@ -83,17 +83,19 @@ stage_8_1_validation:        focused only — bash -n; a 39-check static invento
 stage_7_entity_assessment:   docs/harvest/ENTITY_REGISTRY_MIGRATION_ASSESSMENT.md   generated,
                              read-only; 1,161 entities assessed, 0 migrated
 implementation_start_anchor: 8865c54e2cc8d879410576f247baac4aea149f34   protected-baseline anchor
-push_state:                  SYNCHRONIZED. HEAD = local main = local origin/main =
-                             bf067303a01fa80d1421f9eef7030cbadf805733, 0 behind / 0 ahead.
-                             Stage 7 implementation and closeout through
-                             e5dc558234727ea58ffeea269b7d52d6f65a603a were published to
-                             origin/main on 2026-07-31 by safe_push_main.sh --execute as a
-                             fast-forward from 0d2da64; all three Stage 8 commits (S8-0,
-                             S8-1, S8-C) were published on top of that on the same day, and
-                             bf067303 is the published Stage 8 tip. This records the state
-                             at the 2026-07-31 roadmap checkpoint, not the live status of
-                             any later commit; verify refs with local refs before new work.
-                             Every future push still needs its own explicit approval, via
+stage_10_entry_anchor:       c3497fa18ed05268edd456472c738a800d0ee21f
+                             docs(harvest): record stage 9 completion   (the S9-C closeout)
+                             A HISTORICAL CHECKPOINT ANCHOR — the published repository tip
+                             at which Stage 10 was opened. It is NOT a live-HEAD claim and
+                             goes out of date the moment any Stage 10 commit lands; always
+                             verify refs locally before new work. This entry REPLACES the
+                             former `push_state` line, which recorded bf067303 (the Stage 8
+                             published tip) in live-HEAD shape and was therefore stale by
+                             construction. Historical publication record, unchanged: Stage 7
+                             through e5dc5582 and all three Stage 8 commits were published
+                             on 2026-07-31, making bf067303 the Stage 8 tip; Stage 9 was
+                             published through ec9bedc and closed at c3497fa.
+                             EVERY future push still needs its own explicit approval, via
                              safe_push_main.sh --check then a separately approved --execute.
 gate_after_stage_8:          `bash scripts/validate_task.sh --all` is now the closing gate
                              and CONTAINS the taxonomy gate: 58 wrappers (19 legacy + 39
@@ -115,7 +117,10 @@ roadmap:                     docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md — 
                              cross-stage map: artifact lifecycle and JSON catalog, exact
                              file-set accounting, command-to-artifact matrix, product
                              milestones M1-M7, remaining-checkpoint forecast, and the gap
-                             register G1-G17. Read it before scoping Stage 9.
+                             register G1-G18. Read it before scoping any new stage. The
+                             register grew to G18 (the cli.py pre-request refusal comment,
+                             wrong for linkcheck) during Stage 9; G18 is OPEN and carried
+                             forward, and recording it here resolves nothing.
 stage_9_state:               **STAGE 9 COMPLETE — CLOSED BY S9-C.**
                              S9-0 through S9-6 and S9-6A APPROVED, COMPLETE and
                              PUBLISHED; S9-L1 through S9-L4 ALL COMPLETE (live
@@ -1074,6 +1079,61 @@ stage_9_1_validation:        FOCUSED ONLY, 366 assertions green — cli 57, run_
                              WARN skips. `--all` was NOT run: §8.2 places the
                              authoritative full gate at the final code baseline before
                              the first live smoke. NO network request of any kind.
+stage_10_state:              **STAGE 10 OPEN FOR DOCUMENTATION-ONLY CLOSEOUT WORK.**
+                             Opened by S10-0, the plan-of-record checkpoint whose commit
+                             contains this entry; its SHA is intentionally NOT
+                             self-recorded and its publication is a SEPARATE approval.
+                             Stage 10 is TWO markdown deliverables plus their closeout:
+                             docs/harvest/IMPLEMENTATION_REPORT.md and
+                             docs/harvest/CONVERGENCE_NOTE.md. It CREATES NO JSON and
+                             PUBLISHES NOTHING. Four planned commit checkpoints —
+                             S10-0, S10-1, S10-2, S10-C — NONE of which is approved by
+                             the plan; each needs its own approval by name with an exact
+                             allowed-path set. NO operational checkpoint, NO network step,
+                             NO executable, schema, config or test change; wrapper
+                             inventory stays 63 and the closing executable implementation
+                             baseline stays ec9bedc.
+                             **M2, M3 AND M4 ACHIEVED. M5 UNOPENED. M6 AND M7 NOT
+                             STARTED. Publication, promotion and website consumption
+                             ZERO.** Stage 10 closes ONLY the originally described
+                             Stage 0-10 implementation task and achieves no milestone.
+stage_10_plan_of_record:     docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md   OPEN —
+                             S10-0 APPROVED AND COMPLETE; S10-1, S10-2 and S10-C
+                             UNAPPROVED. Ratifies the Stage 10 contract, the D10-A
+                             matrix-unification definition, the D10-B five reconsideration
+                             gates, the four later checkpoint scopes and the L0-only
+                             validation policy. Errata E10-1 (the five gates were NEVER
+                             enumerated anywhere; S10-0 AUTHORS them - never describe them
+                             as recovered from an older document), E10-2 ("matrix
+                             unification" was used but never defined; S10-0 ratifies a
+                             NEW planning definition), E10-3 (the roadmap's 1-2 checkpoint
+                             estimate is a FORECAST VARIANCE superseded by four; four were
+                             NOT always planned), E10-4 (HANDOFF_CURRENT.md is stale and
+                             is updated only at S10-C), E10-5 (this header's push_state
+                             and G1-G17 debt, corrected at S10-0 - neither correction
+                             closes a gap) and E10-6 (the new-document text format is
+                             MEASURED, not assumed: the rule is "worktree EOL matching
+                             sibling docs", and all 26 docs/harvest/** markdown files are
+                             LF-only on disk - the read-only audit's CRLF claim was wrong
+                             and is corrected; core.autocrlf is true with no
+                             .gitattributes, but these files were authored here and never
+                             checked out, so nothing ever converted them).
+stage_10_validation:         L0 ONLY for every Stage 10 checkpoint — exact approved
+                             path-scope check, git diff --check, protected baseline 18/18,
+                             preservation of the ORIGINAL 508-path untracked baseline,
+                             wrapper inventory 63, the four repository runtime paths
+                             absent, and a CHEAP retained-root identity check
+                             (LATEST_RUN_ID 20260801T085829Z-40852, 3 run directories,
+                             99 regular files, 54 directories). NO test wrapper, NO full
+                             gate, NO live command, NO fetch and NO network. The green
+                             63/63 gate at ec9bedc is NOT rerun to restate Stage 9
+                             evidence. An approved new untracked document temporarily
+                             makes the untracked count 509; that is NOT baseline drift.
+stage_10_retained_root:      RETAIN THE STAGE 9 EVIDENCE ROOT UNCHANGED through Stage 10.
+                             No write, no revalidation, no smoke, no linkcheck, no lock
+                             cleaning, no pointer move, no reuse for Stage 10 output. Its
+                             disposition is a SEPARATE future approval that Stage 10 does
+                             NOT discharge.
 ```
 
 ## Progress dashboard
@@ -2743,14 +2803,133 @@ and M2 is unmet**. Each remaining checkpoint needs
 its own approval by name with its exact allowed-path set; every live execution needs approval twice,
 the second immediately before the outbound request.
 
-## Stage 10 — final report ⟵ **NOT OPEN.**
+## Stage 10 — final report ⟵ **OPEN FOR DOCUMENTATION-ONLY CLOSEOUT WORK.**
 
-**Stage 10 creates no JSON and publishes nothing.** It is two markdown documents. "Stage 10 — final"
-does not mean "final delivery".
+Plan of record: `docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md`. Entry anchor
+`c3497fa18ed05268edd456472c738a800d0ee21f`.
 
-- [ ] `docs/harvest/IMPLEMENTATION_REPORT.md` — every file created/changed, exact commands, results
-- [ ] `docs/harvest/CONVERGENCE_NOTE.md` — 5 gates before matrix unification is reconsidered
-- [ ] Unresolved issues, limitations, blocked sources, recommended follow-up
+**Stage 10 creates no JSON and publishes nothing.** It is two markdown documents plus their
+closeout. "Stage 10 — final" does not mean "final delivery". Stage 10 closes **only** the originally
+described Stage 0-10 implementation task: it runs no harvest, produces no reviewed production
+candidate, promotes nothing, publishes nothing, integrates with no website, establishes no recurring
+refresh, **achieves neither M5 nor M6 nor M7**, changes no executable behaviour, and modifies no
+protected matrix path.
+
+### The two substantive deliverables
+
+- [ ] `docs/harvest/IMPLEMENTATION_REPORT.md` — every tracked file created/changed across the whole
+      task, exact commands, results. The file inventory is **generated deterministically from Git**
+      (`git diff --name-status 8865c54e..c3497fa`), never reconstructed from memory, and the report
+      **cites** the per-stage handoffs rather than re-deriving them. It must **not** record its own
+      future commit SHA. Sixteen required content heads: plan §5.1
+- [ ] `docs/harvest/CONVERGENCE_NOTE.md` — assesses the **five reconsideration gates newly authored
+      and ratified at S10-0**, explains the semantic fork, states what remains deferred, defines the
+      evidence required for reconsideration, **authorizes no code change**, and restates that the
+      matrix path is not deprecated
+- [ ] Unresolved issues, limitations, blocked sources and recommended follow-up — **content inside
+      the two documents**, not a third file
+
+### The four planned commit checkpoints — **only S10-0 is approved**
+
+- [x] **S10-0** plan of record — TWO paths: `docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md` (new) ·
+      `docs/harvest/TODO.md`. Ratifies the Stage 10 contract, the matrix-unification definition, the
+      five gates, the later checkpoint scopes and the L0-only validation policy
+- [ ] **S10-1** implementation report — candidate paths: `docs/harvest/IMPLEMENTATION_REPORT.md`
+      (new) · the Stage 10 plan · this file
+- [ ] **S10-2** convergence note — candidate paths: `docs/harvest/CONVERGENCE_NOTE.md` (new) · the
+      Stage 10 plan · this file. Its subject is the **protected** matrix family, so its L0 run
+      asserts the 18/18 protected baseline explicitly and by name
+- [ ] **S10-C** documentation closeout — candidate paths:
+      `docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_<completion-date>.md` (new) ·
+      `docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md` · the Stage 10 plan · this file ·
+      `docs/harvest/HANDOFF_CURRENT.md`. The completion date is fixed and approved **at the S10-C
+      boundary**; do not guess it and do not create the handoff early
+
+**Forecast variance, recorded as a variance and not as history.** The roadmap forecast Stage 10 at
+**1-2 checkpoints**; it is planned as **four**. Four were **not** always planned. The causes: the
+five gates required a new approved definition; the report and the note have different subjects and
+different failure modes; the closeout authorities have a separate path scope; and commit, push and
+project-memory synchronization remain separate boundaries. See plan erratum **E10-3**.
+
+### The five reconsideration gates — **newly authored and ratified at S10-0**
+
+**They were never enumerated in any earlier document** (plan erratum E10-1). The three pre-existing
+references — two in this file, one in the roadmap — were all forward references to a
+`CONVERGENCE_NOTE.md` that did not exist. Never describe these gates as recovered or restored.
+
+```text
+Gate 1   Product identity semantics — a NAMED product decision resolving the fork
+         between matrix (category, topic, name) and taxonomy identity_url plus
+         precedence; needs a decision authority, accepted duplicate and
+         cross-category semantics, provenance / cell-membership treatment, and
+         worked examples
+Gate 2   Lossless contract mapping — field-by-field and artifact-by-artifact, with
+         explicit handling of information present in one pipeline and absent in the
+         other, a schema/version compatibility strategy, and NO assumption that
+         similarly named artifacts are semantically equivalent
+Gate 3   Operational-contract compatibility — every difference classified equivalent,
+         intentionally different, or blocking, across bounded concurrency,
+         determinism, atomic persistence, resume and recovery, failure isolation,
+         query expansion, ledger ownership, robots and network behaviour, throttling,
+         and run identity and pointers. It requires EVIDENCE, not implementation
+Gate 4   Stable independent baselines and comparison evidence — the protected matrix
+         baseline intact, authoritative regression evidence for BOTH families,
+         representative outputs comparable WITHOUT mutating retained Stage 9
+         evidence, documented differences / data-loss risks / rollback constraints,
+         and NO unified implementation or migration experiment authorized merely to
+         satisfy this gate
+Gate 5   Ownership, migration and rollback authority — implementation owner, product
+         decision owner, proposed migration boundary, compatibility and deprecation
+         policy, rollback criteria, protected-path approval process, and explicit
+         confirmation that the matrix path remains supported until a later approved
+         decision says otherwise
+```
+
+**S10-0 defines the gates and marks none of them satisfied.** `CONVERGENCE_NOTE.md` must assess the
+current status of each; five unmet gates is a legitimate outcome.
+
+**Matrix unification, as ratified at S10-0** (plan §3, a NEW planning definition — the term was
+previously used but never defined): a future product-and-architecture decision to replace the
+current deliberate separation between the protected matrix harvest family and the taxonomy harvest
+family with a shared canonical implementation or semantic contract, especially for identity,
+duplicate handling, merge behaviour, artifact lifecycle and orchestration. Isolated reuse of a
+helper that provably preserves both pipelines' contracts is **not** automatically unification;
+replacing matrix identity semantics, deprecating matrix scripts, making taxonomy semantics canonical
+for matrix output, or consolidating both behind one canonical artifact/merge contract **is**.
+**The matrix path is not deprecated, this authorizes no code change, and any future modification of
+a protected matrix path needs its own approved implementation checkpoint.**
+
+### Carried forward INTO Stage 10 — recorded, and none of it resolved
+
+Every limitation carried out of Stage 9 stays open, and Stage 10 closes none of them: editorial
+thresholds provisional · the 12/5 caps provisional and not fully attributable · **S9-5C3 explicitly
+deferred** (a new design and explicit approval to reopen; never a small additive schema change) ·
+run-1 rejection reasons unrecoverable · **no production `harvest` command** · `smoke-model` and
+`refresh` absent · M5 review artifact and acceptance process undefined · promotion implementation
+absent · website integration unowned · domain-throttle signatures unresolved · changed-mode routing
+does not select `tests/harvest/*.py` · per-record fetch accounting not retained · the `cli.py`
+`CliError` comment stale for linkcheck (**G18**) · the 508 untracked baseline out of scope (**G17**)
+· the matrix identity fork open · **the retained Stage 9 root retained unchanged pending a separate
+disposition checkpoint**. Recording an item resolves nothing; each needs its own approved checkpoint
+by name.
+
+### After S10-C — three separate boundaries, none of them part of Stage 10
+
+- [ ] **push** — `safe_push_main.sh --check`, then a separately approved `--execute`
+- [ ] **project-memory synchronization** — separate approval, after publication; it authorizes nothing
+- [ ] **retained Stage 9 root disposition** — separate future approval, with its own before/after
+      evidence
+
+### `HANDOFF_CURRENT.md` — stale, and updated only at S10-C
+
+`docs/harvest/HANDOFF_CURRENT.md` calls itself "Pointer file. Read this first." and was last updated
+on 2026-07-28 at Stage 2.5. It points at the Stage 2.5 handoff and records
+`push_state: local only — nothing pushed to origin/main`; all of that is now false, and it appears
+in neither the roadmap's evidence index nor the project-memory reading order.
+
+- [ ] **At S10-C**, point it at the Stage 10 completion authority and explain that the Stage 10
+      handoff closes the original Stage 0-10 documentation task **while M5, M6 and M7 remain open**.
+      **S10-0 does not modify it** (plan erratum E10-4)
 
 ## After Stage 10 — additional production milestones, none opened or owned
 
@@ -2779,7 +2958,10 @@ post-Stage-9 milestones, mostly undesigned; see `ROADMAP_AND_ARTIFACT_LIFECYCLE.
    decision — this task added exactly one ignore rule, for its own runtime namespace.
 2. **Entity registry migration.** 1,161 entities are assessed (Stage 7) but not migrated; their
    destination taxonomy is an open product decision. No `Dev Tools` topic was invented.
-3. **Matrix convergence.** Gated behind the 5 criteria in `CONVERGENCE_NOTE.md`. The matrix path is
-   not deprecated.
+3. **Matrix convergence.** Gated behind the **five reconsideration gates newly authored and ratified
+   at S10-0** and recorded in `docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md` §4; `CONVERGENCE_NOTE.md`
+   will assess their current status. They were **not** enumerated in any earlier document. The matrix
+   path is **not deprecated**, and neither the gates nor the ratified definition of matrix unification
+   authorizes any code change.
 4. **GitHub star backfill** (handoff item 3) and the **harvest→pipeline bridge** (handoff item 5)
    remain open in the legacy pipeline and are untouched here.
