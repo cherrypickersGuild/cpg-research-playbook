@@ -163,9 +163,11 @@ stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPO
                              STILL OWED: the 63/63 gate after S9-6, one bounded
                              linkcheck run, and the completion handoff.
                              S9-5C1 and S9-5C2 are COMPLETE AND PUBLISHED; S9-5C3
-                             is EXPLICITLY DEFERRED from Stage 9; S9-6, S9-L4 and
-                             closeout REMAIN UNAPPROVED. The next boundary is
-                             S9-6 CONTRACT/PREFLIGHT APPROVAL.
+                             is EXPLICITLY DEFERRED from Stage 9; S9-6 is COMPLETE
+                             (committed, not yet pushed); S9-L4 and closeout
+                             REMAIN UNAPPROVED. Wrapper inventory is now 63 and
+                             the authoritative 63/63 gate is STILL OWED as a
+                             separately approved operation before S9-L4.
 stage_9_l2_l3_execution:     BOTH COMPLETE — **M2 AND M3 ACHIEVED**.
                              S9-L2 smoke ONCE, rc 0, run 20260731T113526Z-23992;
                              S9-L3 smoke ONCE, rc 0, run 20260731T120702Z-20188.
@@ -415,6 +417,141 @@ stage_9_5c2_validation:      FOCUSED ONLY, all green, each command run EXACTLY
                              contributes no code and no wrapper. NO network, NO
                              live smoke rerun. Wrapper paths are
                              tests/test_taxonomy_*.sh (NOT tests/harvest/*.sh).
+stage_9_6_linkcheck:         COMPLETE, committed, NOT pushed. THIRTEEN paths, not
+                             the seven the plan declared. The four-path expansion
+                             was RATIFIED before implementation after a read-only
+                             audit found two errors in the declared scope; keep
+                             both corrections attached.
+                             (1) VALIDATOR CONTRADICTION: the plan said a linkcheck
+                             validates "through the same validate --run-id as any
+                             other run" while implying runvalidate.py needed no
+                             change. Both could not hold — the committed validator
+                             rejected any mode != "smoke" and would have REFUSED a
+                             correct linkcheck run. SAME SCHEMA IS NOT THE SAME
+                             SEMANTIC VALIDATOR. runvalidate.py + its owner suite
+                             tests/harvest/test_smoke.py entered scope.
+                             (2) TERMINAL PLANNED_COMMANDS: linkcheck was the LAST
+                             planned command, so implementing it empties the
+                             registry. test_preflight.py carried
+                             assertTrue(cli.PLANNED_COMMANDS, "something must still
+                             be planned") which FAILS on a correct tree, and
+                             removing the empty "Planned and NOT implemented" help
+                             section deleted the only "NOT implemented" string from
+                             --help, breaking an assertion in test_cli.py. E9-9's
+                             spent-guard problem AGAIN — the plan's claim that
+                             "S9-6 will not re-encounter" it held only for the
+                             PARTITION invariants, not these two.
+                             CONTRACT: harvest.sh linkcheck --state-root PATH
+                             --run-id BASE --sample N. New run id + own runs/
+                             directory; SAME 43-path shape; cell/topic artifacts
+                             REBUILT from the base run's records; link_history
+                             APPEND-ONLY (checked_at + access_status required);
+                             sample = first N accepted FULL records in committed
+                             records.sort_key order (no RNG/clock/set iteration);
+                             ONE fetch per canonical identity via the committed
+                             pool.acquire_target_fetch; LATEST_RUN_ID moves LAST;
+                             base-run immutability ABSOLUTE (hashed before/after);
+                             mode "linkcheck" => publication_eligible false BY
+                             DERIVATION. NO record is ever deleted: availability is
+                             not truth, a 404 today does not unmake a case.
+                             Added beyond plan 6.6: --sample above the committed
+                             MAX_TARGET_FETCHES_PER_CELL is REFUSED NOT CLAMPED; a
+                             base run with no accepted full record is refused
+                             BEFORE publication; changed_materially is derived only
+                             when BOTH content hashes exist, omitted otherwise.
+stage_9_6_lineage:           base_run_id — a new OPTIONAL root property on
+                             run_manifest.v1.json (committed run-id pattern), made
+                             CONDITIONALLY REQUIRED for mode "linkcheck" via
+                             if/then. That shape is exactly why NO schema_version
+                             bump is needed: every pre-S9-6 manifest carries no
+                             base_run_id, the condition never fires, and they stay
+                             valid UNTOUCHED. compare.py needed NO change — the
+                             property enters its schema-derived content
+                             classification automatically. The SCHEMA pins the
+                             shape; RUNVALIDATE owns the semantics (differs from
+                             the current run; names a run directory AND manifest
+                             that exist). A schema cannot compare two properties,
+                             and a test records that split so nobody assumes it can.
+stage_9_6_manifest_semantics: For linkcheck: config.enrich TRUE (it exists to
+                             fetch); config.bounds.sample = N; source_preflight
+                             EMPTY (a linkcheck contacts sampled TARGET pages only
+                             and probes no source); a cell is "ok" when it held a
+                             record checked THIS run and "not_run" when it held
+                             none; at least one cell must be "ok"; NO OTHER STATUS
+                             is emitted, because a link-health RESULT is a finding
+                             about a page, not a failure of the cell that found it.
+                             The C2 SIGHTING TUPLE IS ABSENT — a linkcheck performs
+                             no discovery/dedupe measurement and fabricating zeroes
+                             would claim one. One pinned injected UTC value stamps
+                             every new link_history[].checked_at, so equal inputs
+                             and equal clocks give byte-identical trees.
+stage_9_6_validator:         E9-20. runvalidate.validate_run gained a SEMANTIC MODE
+                             SECTION and nothing else. Structural half untouched
+                             and mode-agnostic: 43-path topology, every schema,
+                             record counts and id agreement, C2 arithmetic when
+                             present, alias-conflict agreement, pointer
+                             consistency, temp-debris scan. publication_eligible
+                             false is now checked for BOTH modes with MODE-NEUTRAL
+                             wording (a linkcheck is not a smoke; calling it one in
+                             an error message is the small lie that makes a report
+                             untrustworthy). SMOKE-ONLY checks kept their meaning
+                             EXACTLY. LINKCHECK-ONLY: mode, lineage, enrich true,
+                             sample in range, empty preflight, ok/not_run with at
+                             least one ok, and at least one record carrying a
+                             link_history entry stamped with THIS run's instant —
+                             so an artifact holding only a previous run's history
+                             cannot validate while proving nothing.
+                             harvest / refresh / smoke_model / migration REMAIN
+                             REFUSED: a validator with no semantics for a mode must
+                             refuse it, not agree with it. runvalidate imports NO
+                             linkcheck, target-fetch, HTTP, adapter or writer
+                             owner, recomputes nothing, reads retained fields only.
+stage_9_6_terminal_surface:  PLANNED_COMMANDS == {} and COMMANDS holds the complete
+                             SIX-command surface. The registry STAYS: the partition
+                             invariant is defined over both halves and an empty
+                             planned half is a meaningful state ("everything the
+                             plan describes is implemented"), not a reason to
+                             delete the concept. All FIVE disjoint-union guards
+                             across four suites survive UNMODIFIED. The retired
+                             non-emptiness assertion is REPLACED by an explicit
+                             PLANNED_COMMANDS == {} plus a full-surface check —
+                             the stronger statement, and what keeps the five
+                             now-empty PLANNED_COMMANDS loops from being vacuous by
+                             accident. The empty "Planned and NOT implemented" help
+                             section was REMOVED rather than rendered as a heading
+                             with nothing under it; linkcheck was added to the
+                             implemented-command help. The former smoke-only
+                             validator test was CORRECTED not deleted: the durable
+                             property was never "only smoke" but "a validator with
+                             no semantics for a mode refuses it".
+stage_9_6_validation:        FOCUSED ONLY, all green, each command run EXACTLY
+                             ONCE — linkcheck 48 (new), cli 58, preflight 66,
+                             smoke 64, compare 48, manifest 71, target_fetch 61,
+                             target_ownership 30 — plus py_compile over the eight
+                             changed Python modules and ONE explicit-mode harness
+                             invocation over linkcheck.py + cli.py +
+                             runvalidate.py + run_manifest.v1.json: EXIT 0, PASS,
+                             SIX wrappers routed (linkcheck, cli, preflight, smoke,
+                             compare, manifest) EACH EXACTLY ONCE, zero
+                             WARN-skipping, zero FAIL, runtime paths absent, state/
+                             unchanged. ANTI-VACUITY NEEDED SYNTHETIC BASE RUNS:
+                             the committed corpus's accepted targets are all
+                             REACHABLE, so base runs are produced by the real driver
+                             and only their target URLs rewritten to the committed
+                             404/410/301 target fixtures — and a stub reporting
+                             every target "ok" is PROVED to defeat the guard, so
+                             the guard is known capable of failing. The fixture
+                             corpus is byte-frozen and was NOT touched.
+                             INVENTORY 62 + tests/test_taxonomy_linkcheck.sh = 63;
+                             the prior 62 remain an unchanged ordered PREFIX of
+                             ISOLATED[]. `--all` was NOT run — the authoritative
+                             63/63 gate is a SEPARATELY APPROVED post-S9-6
+                             operation, still owed before S9-L4, covering the code
+                             that ACTUALLY LANDED (S9-1..S9-4 + C1 + C2 + S9-6) and
+                             NOT the deferred C3. NO network request was made; the
+                             retained Stage 9 root was neither read nor written.
+                             S9-L4 and closeout REMAIN UNAPPROVED AND UNSTARTED;
+                             publication and promotion remain ZERO.
 stage_9_5c3_deferral:        **EXPLICITLY DEFERRED — not part of Stage 9
                              implementation.** A DECISION, not an omission.
                              Documentation-only checkpoint, TWO paths (the plan +

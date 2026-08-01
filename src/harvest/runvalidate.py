@@ -36,7 +36,9 @@ directory and updates the same 24 shared ones. This module therefore enforces th
 18 exactly, the 24 exactly, and the pointer — while permitting other complete
 historical run directories to exist alongside.
 
-Not here: comparison of two runs (S9-4), link health (S9-6), promotion (M6).
+Not here: comparison of two runs (S9-4), the PRODUCTION of link-health
+evidence (S9-6 `linkcheck.py`), promotion (M6). This module validates a linkcheck
+run's artifact; it never performs one, and imports nothing that could.
 """
 import json
 import os
@@ -44,6 +46,26 @@ import os
 from . import artifacts
 from . import run_cells
 from . import schema as schema_mod
+
+# S9-6. The modes `validate --run-id` answers for. A run is validatable here when
+# it publishes the ordinary 43-path tree and is not publishable output: `smoke`
+# and `linkcheck` both qualify. `harvest`, `refresh`, `smoke_model` and
+# `migration` stay REFUSED - each would need its own semantics, and a validator
+# that accepted them without having them would be agreeing rather than checking.
+MODE_SMOKE = "smoke"
+MODE_LINKCHECK = "linkcheck"
+VALIDATABLE_MODES = (MODE_SMOKE, MODE_LINKCHECK)
+
+# The cell status a linkcheck may report beside `not_run`. Spelled here rather
+# than imported from the producer: this module validates retained fields and must
+# not depend on the module that wrote them.
+STATUS_OK = "ok"
+
+# The ceiling on a linkcheck's `config.bounds.sample`, read from the committed
+# per-cell target-fetch bound rather than retyped, so the validator's ceiling and
+# the producer's cannot drift. `run_cells` is already imported for the configured
+# cell and topic sets; `linkcheck` is deliberately NOT imported.
+MAX_LINKCHECK_SAMPLE = run_cells.MAX_TARGET_FETCHES_PER_CELL
 
 # The committed schema that owns each document family.
 SCHEMA_FOR = {
@@ -213,6 +235,126 @@ def _check_sightings(rows, errors):
                    unique + repeated))
 
 
+def _check_smoke_manifest(manifest, rows, errors):
+    """The smoke-only semantics. Unchanged in meaning by S9-6.
+
+    A smoke runs every configured cell with enrichment OFF, under caps it must
+    state, having probed every configured source exactly once.
+    """
+    for row in rows:
+        if row.get("status") == artifacts.STATUS_NOT_RUN:
+            errors.append("manifest.json: cell %s is not_run; a full smoke "
+                          "runs every configured cell" % row.get("cell_id"))
+
+    config = manifest.get("config") or {}
+    if config.get("enrich") is not False:
+        errors.append("manifest.json: config.enrich is %r, expected false"
+                      % config.get("enrich"))
+    bounds = config.get("bounds") or {}
+    for key in ("max_candidates_per_cell", "max_accepted_per_cell",
+                "smoke_budget_sec"):
+        if key not in bounds:
+            errors.append("manifest.json: config.bounds is missing %s, so the "
+                          "run does not say which smoke cap it enforced" % key)
+
+    preflight = manifest.get("source_preflight") or []
+    expected_sources = sorted(
+        source["source_id"] for cell in run_cells.configured_cells()
+        for source in cell["sources"])
+    got = [row.get("source_id") for row in preflight]
+    if got != sorted(got):
+        errors.append("manifest.json: source_preflight is not sorted by source_id")
+    if sorted(got) != expected_sources:
+        errors.append("manifest.json: source_preflight covers %d id(s), "
+                      "expected the %d configured sources exactly once"
+                      % (len(got), len(expected_sources)))
+
+
+def _check_linkcheck_manifest(root, run_id, manifest, rows, cells, errors):
+    """The linkcheck-only semantics (S9-6).
+
+    A linkcheck is DERIVED: it re-checks another run's targets, so it must say
+    which run, and that lineage must be checkable rather than merely declared.
+    Everything here reads retained fields only - this module imports no
+    `linkcheck`, no target-fetch owner, no HTTP or adapter owner and no writer,
+    and it re-derives nothing. Whether the fetches were correct is the producer's
+    contract; whether the ARTIFACT is coherent is this one's.
+    """
+    base = manifest.get("base_run_id")
+    if base is None:
+        errors.append("manifest.json: mode is 'linkcheck' but base_run_id is "
+                      "absent; a derived run must name the run it measured")
+    else:
+        if base == run_id:
+            errors.append("manifest.json: base_run_id equals this run (%s); a "
+                          "linkcheck is a NEW run and may never name itself"
+                          % run_id)
+        elif not os.path.isdir(artifacts.run_dir(root, base)):
+            errors.append("manifest.json: base_run_id %s has no run directory in "
+                          "this state root" % base)
+        elif not os.path.isfile(artifacts.run_manifest_path(root, base)):
+            errors.append("manifest.json: base_run_id %s has no manifest; the "
+                          "lineage names an incomplete run" % base)
+
+    config = manifest.get("config") or {}
+    if config.get("enrich") is not True:
+        errors.append("manifest.json: config.enrich is %r, expected true; a "
+                      "linkcheck exists to fetch target pages"
+                      % config.get("enrich"))
+    sample = (config.get("bounds") or {}).get("sample")
+    if (isinstance(sample, bool) or not isinstance(sample, int)
+            or sample < 1 or sample > MAX_LINKCHECK_SAMPLE):
+        errors.append("manifest.json: config.bounds.sample is %r; expected an "
+                      "integer in 1..%d, so the run states the bound it enforced"
+                      % (sample, MAX_LINKCHECK_SAMPLE))
+
+    if manifest.get("source_preflight"):
+        errors.append("manifest.json: source_preflight is non-empty on a "
+                      "linkcheck; a linkcheck contacts sampled TARGET pages only "
+                      "and probes no source")
+
+    # Cell status is about whether this run CHECKED anything there - never about
+    # what the check found. A 404 is a finding about a page, not a broken cell.
+    ok_cells = set()
+    for row in rows:
+        status = row.get("status")
+        if status == STATUS_OK:
+            ok_cells.add(row.get("cell_id"))
+        elif status != artifacts.STATUS_NOT_RUN:
+            errors.append("manifest.json: cell %s has status %r; a linkcheck cell "
+                          "is 'ok' when it checked a record and 'not_run' when it "
+                          "held none, and a link-health RESULT never sets a cell "
+                          "status" % (row.get("cell_id"), status))
+    if not ok_cells:
+        errors.append("manifest.json: every cell is not_run; a linkcheck that "
+                      "checked nothing reports nothing and is not a check")
+
+    # The history must actually have been written THIS run: an artifact carrying
+    # only a previous run's entries would validate while proving nothing.
+    stamp = manifest.get("started_at")
+    checked_by_cell = {}
+    for cell_id, document in cells.items():
+        count = 0
+        for record in document.get("records") or ():
+            for entry in record.get("link_history") or ():
+                if entry.get("checked_at") == stamp:
+                    count += 1
+                    break
+        checked_by_cell[cell_id] = count
+    if not any(checked_by_cell.values()):
+        errors.append("manifest.json: no full record carries a link_history entry "
+                      "stamped %r; this run appended no history and cannot be "
+                      "reporting a check it performed" % stamp)
+    for cell_id, count in sorted(checked_by_cell.items()):
+        if cell_id in ok_cells and count == 0:
+            errors.append("cells/%s.json: the manifest calls this cell 'ok' but no "
+                          "record was checked in this run" % cell_id)
+        if cell_id not in ok_cells and count:
+            errors.append("cells/%s.json: %d record(s) were checked in this run "
+                          "but the manifest calls the cell 'not_run'"
+                          % (cell_id, count))
+
+
 def validate_run(root, run_id):
     """Validate the LATEST complete run in `root`. Returns the report document.
 
@@ -353,42 +495,27 @@ def validate_run(root, run_id):
         declared_ids = sorted(row.get("cell_id") for row in rows)
         if declared_ids != cell_ids:
             errors.append("manifest.json: cell rows do not match the configured set")
-        for row in rows:
-            if row.get("status") == artifacts.STATUS_NOT_RUN:
-                errors.append("manifest.json: cell %s is not_run; a full smoke "
-                              "runs every configured cell" % row.get("cell_id"))
         _check_sightings(rows, errors)
 
-        if manifest.get("mode") != "smoke":
-            errors.append("manifest.json: mode is %r, expected 'smoke'"
-                          % manifest.get("mode"))
-        config = manifest.get("config") or {}
-        if config.get("enrich") is not False:
-            errors.append("manifest.json: config.enrich is %r, expected false"
-                          % config.get("enrich"))
-        bounds = config.get("bounds") or {}
-        for key in ("max_candidates_per_cell", "max_accepted_per_cell",
-                    "smoke_budget_sec"):
-            if key not in bounds:
-                errors.append("manifest.json: config.bounds is missing %s, so the "
-                              "run does not say which smoke cap it enforced" % key)
+        # ------------------------------------------------- common to every mode
+        # `publication_eligible` is false for BOTH validatable modes, and the
+        # wording is mode-neutral: a linkcheck is not a smoke, and calling it one
+        # in an error message would be the small lie that makes a report
+        # untrustworthy.
         if manifest.get("publication_eligible") is not False:
-            errors.append("manifest.json: publication_eligible is %r; a smoke is "
+            errors.append("manifest.json: publication_eligible is %r; a %s run is "
                           "infrastructure, not publishable output"
-                          % manifest.get("publication_eligible"))
+                          % (manifest.get("publication_eligible"),
+                             manifest.get("mode")))
 
-        preflight = manifest.get("source_preflight") or []
-        expected_sources = sorted(
-            source["source_id"] for cell in run_cells.configured_cells()
-            for source in cell["sources"])
-        got = [row.get("source_id") for row in preflight]
-        if got != sorted(got):
-            errors.append("manifest.json: source_preflight is not sorted by "
-                          "source_id")
-        if sorted(got) != expected_sources:
-            errors.append("manifest.json: source_preflight covers %d id(s), "
-                          "expected the %d configured sources exactly once"
-                          % (len(got), len(expected_sources)))
+        mode = manifest.get("mode")
+        if mode not in VALIDATABLE_MODES:
+            errors.append("manifest.json: mode is %r, expected one of %s"
+                          % (mode, ", ".join(repr(m) for m in VALIDATABLE_MODES)))
+        elif mode == MODE_SMOKE:
+            _check_smoke_manifest(manifest, rows, errors)
+        else:
+            _check_linkcheck_manifest(root, run_id, manifest, rows, cells, errors)
 
         if conflicts is not None:
             declared = manifest.get("alias_conflicts_count")

@@ -756,7 +756,19 @@ class TestCliSurface(unittest.TestCase):
                           "%r is planned but absent from help" % name)
             self.assertIn(owner, proc.stdout,
                           "help must name the checkpoint that owns %r" % name)
-        self.assertIn("NOT implemented", proc.stdout)
+        # S9-6 CORRECTION. This asserted `"NOT implemented"` appears in the help
+        # text. That string lived only in the "Planned and NOT implemented"
+        # heading, and S9-6 removed that whole section when `linkcheck` became the
+        # last command to be implemented — rendering an empty heading would be a
+        # dangling claim about commands that no longer exist. The durable property
+        # is the one below: help describes exactly the implemented surface and
+        # advertises nothing that is not there.
+        if cli.PLANNED_COMMANDS:
+            self.assertIn("NOT implemented", proc.stdout)
+        else:
+            self.assertNotIn("Planned and NOT implemented", proc.stdout,
+                             "an empty planned section must be removed, not "
+                             "rendered as a heading with nothing under it")
 
     def test_parser_helpers_exist_for_later_checkpoints(self):
         parser = cli.add_state_root_argument(cli.build_parser("smoke", "x"))

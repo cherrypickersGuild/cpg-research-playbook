@@ -492,13 +492,37 @@ class TestCommandSurface(NoOutboundNetwork):
         `validate`. Iterating `PLANNED_COMMANDS` instead keeps the property —
         nothing merely planned may exit 0 — true at every checkpoint, while the
         durable partition invariant in `test_cli.py` keeps that registry honest.
+
+        S9-6 CORRECTION. This carried `assertTrue(cli.PLANNED_COMMANDS,
+        "something must still be planned")` as an anti-vacuity guard, on the
+        assumption that some command would always remain planned. S9-6 implemented
+        `linkcheck`, the last one, so that assumption expired and the guard would
+        fail on a correct tree. It is REPLACED, not deleted: the loop below still
+        holds for any future planned command, and the terminal state it now has to
+        reach is asserted explicitly in `test_the_planned_registry_is_terminal`
+        rather than left as a silently-passing empty loop.
         """
-        self.assertTrue(cli.PLANNED_COMMANDS, "something must still be planned")
         for name in sorted(cli.PLANNED_COMMANDS):
             self.assertNotIn(name, cli.COMMANDS)
             proc = run_cli(name)
             self.assertEqual(proc.returncode, 2, name)
             self.assertIn(b"NOT implemented", proc.stderr)
+
+    def test_the_planned_registry_is_terminal(self):
+        """S9-6 completed the Stage 9 surface: nothing is planned any more.
+
+        This is what replaces the retired non-emptiness guard, and it is the
+        stronger statement — "the planned set is EXACTLY empty and every command
+        the plan names is implemented" pins the end state, where the old assertion
+        only said something was left. It also keeps the five `PLANNED_COMMANDS`
+        loops from being vacuous by accident: their premise (nothing merely
+        planned may exit 0) is now discharged by there being nothing planned, and
+        that fact is asserted rather than assumed.
+        """
+        self.assertEqual(cli.PLANNED_COMMANDS, {})
+        self.assertEqual(set(cli.COMMANDS),
+                         {"preflight-sources", "smoke", "validate",
+                          "compare-runs", "diff", "linkcheck"})
 
     def test_preflight_sources_is_no_longer_reported_as_planned(self):
         self.assertNotIn("preflight-sources", cli.PLANNED_COMMANDS)

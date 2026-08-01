@@ -520,5 +520,71 @@ class TestSightingCounterSchema(unittest.TestCase):
                 self.assertNotIn(forbidden, properties)
 
 
+class TestBaseRunLineage(unittest.TestCase):
+    """S9-6 — `base_run_id`, required exactly where it is meaningful.
+
+    A linkcheck run is DERIVED: it re-checks another run's targets and is
+    unreadable without saying which. Every other mode stands alone, so the
+    property is OPTIONAL at the root and made mandatory by a conditional
+    `if/then` on `mode`. That shape is what lets every pre-S9-6 manifest stay
+    valid untouched, which is in turn why this needs no `schema_version` bump.
+
+    Whether the lineage names a run that EXISTS is a semantic question, not a
+    schema one; `runvalidate` owns it and `test_linkcheck.py` proves it.
+    """
+
+    BASE = "20260730T110000Z-1111"
+
+    def test_a_linkcheck_manifest_with_lineage_is_valid(self):
+        doc = manifest(mode="linkcheck")
+        doc["base_run_id"] = self.BASE
+        self.assertEqual(schema.validate(doc, "run_manifest.v1.json"), [])
+
+    def test_a_linkcheck_manifest_without_lineage_is_refused(self):
+        doc = manifest(mode="linkcheck")
+        self.assertNotEqual(schema.validate(doc, "run_manifest.v1.json"), [])
+
+    def test_a_malformed_lineage_is_refused(self):
+        for bad in ("not-a-run-id", "", "20260730T110000Z", 42, None, []):
+            with self.subTest(repr(bad)):
+                doc = manifest(mode="linkcheck")
+                doc["base_run_id"] = bad
+                self.assertNotEqual(schema.validate(doc, "run_manifest.v1.json"), [])
+
+    def test_old_smoke_manifests_without_lineage_remain_valid(self):
+        """Every M2/M3 manifest is this shape. S9-6 must not invalidate them."""
+        doc = manifest(mode="smoke")
+        self.assertNotIn("base_run_id", doc)
+        self.assertEqual(schema.validate(doc, "run_manifest.v1.json"), [])
+
+    def test_lineage_is_optional_for_every_other_mode(self):
+        for mode in ("harvest", "smoke", "smoke_model", "refresh", "migration"):
+            with self.subTest(mode):
+                self.assertEqual(
+                    schema.validate(manifest(mode=mode), "run_manifest.v1.json"),
+                    [])
+
+    def test_a_same_as_current_lineage_still_passes_the_SCHEMA(self):
+        """Deliberate: the schema cannot compare two properties.
+
+        A run naming ITSELF as its base is incoherent, and it is caught by
+        `runvalidate`, not here. Recording the split stops a later reader from
+        assuming the schema already refuses it.
+        """
+        doc = manifest(mode="linkcheck")
+        doc["base_run_id"] = doc["harvest_run_id"]
+        self.assertEqual(schema.validate(doc, "run_manifest.v1.json"), [])
+
+    def test_the_schema_version_is_unchanged_by_the_addition(self):
+        doc = schema.load_schema("run_manifest.v1.json")
+        self.assertEqual(doc["properties"]["schema_version"]["const"], 1)
+        self.assertEqual(manifest()["schema_version"], 1)
+
+    def test_the_root_still_refuses_an_invented_property(self):
+        doc = manifest()
+        doc["invented_lineage"] = "x"
+        self.assertNotEqual(schema.validate(doc, "run_manifest.v1.json"), [])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

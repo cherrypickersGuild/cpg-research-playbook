@@ -102,6 +102,13 @@ ISOLATED=(
   # roots it names are temp directories or paths it deliberately leaves absent —
   # the repository's data/harvested/ is never created, looked at only.
   test_taxonomy_compare.sh
+  # --- Stage 9, S9-6: bounded link-health re-checking -----------------------
+  # Same criterion. Every linkcheck it drives uses the FIXTURE transport, a
+  # socket-level guard refuses every non-loopback host and is proved wired by
+  # tripping it, and every base run and linkcheck run it writes lands under a
+  # `mktemp -d` directory the suite removes. It names no external Stage 9 state
+  # root and creates none; the retained evidence root is never read or written.
+  test_taxonomy_linkcheck.sh
 )
 is_isolated() {
   local b; b="$(basename "$1")"
@@ -189,14 +196,15 @@ for f in "${FILES[@]:-}"; do
     src/harvest/fixtures.py)                      add_test tests/test_taxonomy_adapters.sh; add_test tests/test_taxonomy_source_cache.sh; add_test tests/test_taxonomy_target_fixtures.sh ;;
     src/harvest/httpclient.py)                    add_test tests/test_taxonomy_http.sh; add_test tests/test_taxonomy_domain_throttle.sh ;;
     src/harvest/ledger.py)                        add_test tests/test_taxonomy_ledger.sh ;;
+    src/harvest/linkcheck.py)                     add_test tests/test_taxonomy_linkcheck.sh ;;
     src/harvest/migrate/*.py)                     add_test tests/test_taxonomy_migration.sh ;;
     src/harvest/pool.py)                          add_test tests/test_taxonomy_pool.sh ;;
     src/harvest/preflight.py)                     add_test tests/test_taxonomy_preflight.sh ;;
-    src/harvest/runvalidate.py)                   add_test tests/test_taxonomy_smoke.sh ;;
+    src/harvest/runvalidate.py)                   add_test tests/test_taxonomy_smoke.sh; add_test tests/test_taxonomy_linkcheck.sh ;;
     src/harvest/records.py)                       add_test tests/test_taxonomy_records.sh; add_test tests/test_taxonomy_schema.sh ;;
     src/harvest/request_key.py)                   add_test tests/test_taxonomy_pool.sh; add_test tests/test_taxonomy_dedupe.sh ;;
     src/harvest/compare.py)                       add_test tests/test_taxonomy_compare.sh ;;
-    src/harvest/cli.py)                           add_test tests/test_taxonomy_cli.sh; add_test tests/test_taxonomy_preflight.sh; add_test tests/test_taxonomy_smoke.sh; add_test tests/test_taxonomy_compare.sh ;;
+    src/harvest/cli.py)                           add_test tests/test_taxonomy_cli.sh; add_test tests/test_taxonomy_preflight.sh; add_test tests/test_taxonomy_smoke.sh; add_test tests/test_taxonomy_compare.sh; add_test tests/test_taxonomy_linkcheck.sh ;;
     src/harvest/run_cells.py)                     add_test tests/test_taxonomy_run_cells.sh; add_test tests/test_taxonomy_recovery.sh; add_test tests/test_taxonomy_cli.sh; add_test tests/test_taxonomy_smoke.sh ;;
     src/harvest/schema.py)                        add_test tests/test_taxonomy_schema.sh; add_test tests/test_taxonomy_records.sh ;;
     src/harvest/slug.py)                          add_test tests/test_taxonomy_facet_identity.sh; add_test tests/test_taxonomy_facets.sh; add_test tests/test_taxonomy_config.sh ;;

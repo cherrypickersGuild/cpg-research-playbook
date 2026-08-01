@@ -832,15 +832,54 @@ class TestSightingArithmetic(Base):
         self.assertEqual([n for n in ast.walk(tree) if isinstance(n, ast.Assert)],
                          [])
 
-    def test_validate_run_is_still_smoke_only(self):
-        """C2 did not broaden the validator to production modes."""
+    def test_the_validator_refuses_production_modes(self):
+        """S9-6 CORRECTION of `test_validate_run_is_still_smoke_only`.
+
+        C2 asserted the validator was smoke-only and pinned the literal message
+        `"expected 'smoke'"`. S9-6 made it MODE-AWARE, because a valid
+        `mode: "linkcheck"` run publishes the same 43-path tree and must validate
+        through the same command — an unchanged validator would have rejected it.
+
+        Corrected, not deleted. The durable property was never "only smoke": it is
+        that a validator with no semantics for a mode must REFUSE it rather than
+        agree with it. `harvest`, `refresh`, `smoke_model` and `migration` still
+        have none, and are still refused.
+        """
         root = self.valid_root()
-        self.rewrite_manifest(
-            root, RUN_A, lambda doc: doc.__setitem__("mode", "harvest"))
-        report = runvalidate.validate_run(root, RUN_A)
-        self.assertFalse(report["valid"])
-        self.assertTrue(any("expected 'smoke'" in e for e in report["errors"]),
-                        report["errors"])
+        for mode in ("harvest", "refresh", "smoke_model", "migration"):
+            with self.subTest(mode=mode):
+                self.rewrite_manifest(
+                    root, RUN_A, lambda doc, m=mode: doc.__setitem__("mode", m))
+                report = runvalidate.validate_run(root, RUN_A)
+                self.assertFalse(report["valid"])
+                self.assertTrue(
+                    any("expected one of" in e for e in report["errors"]),
+                    report["errors"])
+
+    def test_the_validatable_modes_are_exactly_smoke_and_linkcheck(self):
+        """Both publish the ordinary tree and neither is publishable output."""
+        self.assertEqual(tuple(runvalidate.VALIDATABLE_MODES),
+                         ("smoke", "linkcheck"))
+
+    def test_the_smoke_checks_kept_their_meaning(self):
+        """Mode-awareness must not have loosened what a SMOKE has to satisfy."""
+        root = self.valid_root()
+        for mutate, expected in (
+                (lambda d: d["config"].__setitem__("enrich", True),
+                 "expected false"),
+                (lambda d: d["config"]["bounds"].pop("max_candidates_per_cell"),
+                 "which smoke cap it enforced"),
+                (lambda d: d.__setitem__("source_preflight", []),
+                 "source_preflight covers"),
+                (lambda d: d["cells"][0].__setitem__("status", "not_run"),
+                 "a full smoke runs every configured cell")):
+            with self.subTest(expected):
+                fresh = self.valid_root()
+                self.rewrite_manifest(fresh, RUN_A, mutate)
+                report = runvalidate.validate_run(fresh, RUN_A)
+                self.assertTrue(any(expected in e for e in report["errors"]),
+                                report["errors"])
+        self.assertTrue(runvalidate.validate_run(root, RUN_A)["valid"])
 
 
 if __name__ == "__main__":

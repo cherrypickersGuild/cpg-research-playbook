@@ -13,6 +13,11 @@
     "schema_version": { "type": "integer", "const": 1 },
     "harvest_run_id": { "type": "string", "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9]+$" },
     "mode": { "type": "string", "enum": ["harvest", "smoke", "smoke_model", "refresh", "linkcheck", "migration"] },
+    "base_run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9]+$",
+      "description": "S9-6. The run this one was DERIVED from, recorded so lineage survives in the artifact rather than only in the command that produced it. Required for mode 'linkcheck', which re-checks an existing run's targets; optional and normally absent otherwise, so every pre-S9-6 manifest stays valid untouched. That it differs from harvest_run_id and names an existing run directory is a semantic check, not a schema one."
+    },
     "started_at": { "type": "string" },
     "finished_at": { "type": ["string", "null"] },
 
@@ -277,5 +282,13 @@
         "budget_exhausted_cells": { "type": "array", "items": { "type": "string" } }
       }
     }
-  }
+  },
+
+  "allOf": [
+    {
+      "$comment": "S9-6. Lineage is mandatory exactly where it is meaningful. A linkcheck run is DERIVED from another run and is unreadable without saying which; every other mode stands alone, so `base_run_id` stays optional there and no pre-S9-6 manifest is invalidated. Conditional rather than globally required, which is why this needs no schema_version bump.",
+      "if": { "properties": { "mode": { "const": "linkcheck" } }, "required": ["mode"] },
+      "then": { "required": ["base_run_id"] }
+    }
+  ]
 }

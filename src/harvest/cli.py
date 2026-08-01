@@ -46,6 +46,7 @@ import time
 from . import artifacts
 from . import compare as compare_mod
 from . import httpclient
+from . import linkcheck as linkcheck_mod
 from . import preflight as preflight_mod
 from . import run_cells
 from . import runvalidate
@@ -78,9 +79,13 @@ PROHIBITED_RUNTIME_PATHS = (
 # specific answer instead of a bare "unknown", and so nobody has to grep the plan
 # to find out why it is missing. Membership here confers nothing, and an entry is
 # removed only by the checkpoint that implements it.
-PLANNED_COMMANDS = {
-    "linkcheck": "S9-6 (implementation) then S9-L4 (live execution)",
-}
+# S9-6 emptied this: `linkcheck` was the last planned command, and implementing it
+# completed the six-command Stage 9 surface. The registry stays because the
+# partition invariant is defined over both halves and an empty planned half is a
+# meaningful state — "everything the plan describes is implemented" — not a
+# reason to delete the concept. A future stage that plans a seventh command adds
+# it back here.
+PLANNED_COMMANDS = {}
 
 # The upper bound on `--timeout-sec`. Read from the committed policy rather than
 # typed here, so the ceiling is the configured request timeout and a preflight can
@@ -524,6 +529,68 @@ def cmd_diff(argv):
     return 0
 
 
+# ------------------------------------------------------------ linkcheck (S9-6)
+def cmd_linkcheck(argv):
+    """Re-check a sample of a completed run's targets. Publishes a NEW run.
+
+    Everything decidable without traffic is decided first — the state root, the
+    sample bound, the base run's completeness — so a typo costs no request. Only
+    then is a live transport built and `linkcheck.run()` called EXACTLY ONCE.
+    There is no automatic retry: a failed linkcheck is evidence.
+
+    `mode="linkcheck"` is a non-`harvest` mode, so `publication_eligible: false`
+    follows from the COMMITTED derivation; this adds no predicate. The base run is
+    opened read-only and every byte written lands under the new run's directory.
+    """
+    parser = build_parser(
+        "linkcheck",
+        "Re-check a sample of a completed run's target pages. Never modifies the "
+        "base run.")
+    add_state_root_argument(parser)
+    parser.add_argument("--run-id", required=True, metavar="BASE",
+                        help="the completed run whose targets are re-checked")
+    parser.add_argument("--sample", default=None, metavar="N",
+                        help="how many accepted full records to check (default %d)"
+                             % linkcheck_mod.DEFAULT_SAMPLE)
+    args = parser.parse_args(argv)
+
+    state_root = validate_state_root(args.state_root)
+    base_run_id = runvalidate.validate_run_id(args.run_id)
+    sample = linkcheck_mod.DEFAULT_SAMPLE
+    if args.sample is not None:
+        sample = _positive_int("--sample", args.sample, linkcheck_mod.MAX_SAMPLE)
+
+    transport = live_transport(state_root)
+    try:
+        result = linkcheck_mod.run(state_root, base_run_id, sample=sample,
+                                   transport=transport)
+    except linkcheck_mod.LinkcheckError as exc:
+        raise CliError(str(exc))
+
+    written = [path for path in result["paths"] if path.endswith(".json")]
+    pointer = artifacts.read_latest_run_id(state_root)
+    if len(written) != runvalidate.SELECTED_RUN_JSON or pointer != result["run_id"]:
+        sys.stderr.write(
+            "%s: linkcheck did not publish completely — %d selected-run JSON "
+            "artifacts (expected %d) and LATEST_RUN_ID names %r. Nothing was "
+            "removed; the tree is evidence.\n"
+            % (PROG, len(written), runvalidate.SELECTED_RUN_JSON, pointer))
+        return 1
+
+    sys.stdout.buffer.write(artifacts.serialize({
+        "run_id": result["run_id"],
+        "base_run_id": result["base_run_id"],
+        "mode": linkcheck_mod.MODE_LINKCHECK,
+        "sample": result["sample"],
+        "records_checked": result["checked"],
+        "identities_fetched": result["identities_fetched"],
+        "pointer": artifacts.LATEST_RUN_ID_NAME,
+        "publication_eligible": False,
+    }))
+    sys.stdout.buffer.flush()
+    return 0
+
+
 # Registered subcommands: name -> callable(argv) -> exit code. A command appears
 # here only in the checkpoint that implements it.
 COMMANDS = {
@@ -532,6 +599,7 @@ COMMANDS = {
     "validate": cmd_validate,
     "compare-runs": cmd_compare_runs,
     "diff": cmd_diff,
+    "linkcheck": cmd_linkcheck,
 }
 
 
@@ -564,17 +632,16 @@ commands:
                       read-only; writes, stages and promotes nothing.
                       --state-root PATH --run-id ID [--publication-root DIR]
                       exit 0 once read; an absent publication root is a result.
+  linkcheck           re-check a sample of a completed run's target pages and
+                      append link_history. Publishes a NEW run; the base run is
+                      never modified.
+                      --state-root PATH --run-id BASE [--sample N]
+                      exit 0 once the linkcheck run is published.
   --help, -h          show this text
-
-Planned and NOT implemented. Stage 9 registers each in the checkpoint that
-implements it:
-
-%s
 
 A retained Stage 9 run lives under an explicit --state-root OUTSIDE the
 repository. No implemented command selects such a path or creates one.
-""" % (PROG, "\n".join("  %-18s %s" % (name, PLANNED_COMMANDS[name])
-                       for name in sorted(PLANNED_COMMANDS))))
+""" % (PROG,))
 
 
 def main(argv=None):
