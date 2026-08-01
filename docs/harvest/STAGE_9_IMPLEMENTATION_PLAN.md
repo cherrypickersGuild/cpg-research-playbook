@@ -1650,9 +1650,9 @@ Auxiliary decisions:
 |---|---|---|
 | 12 / 5 smoke caps | **STAY PROVISIONAL** — 10 of 12 cells at the candidate cap, truncation unprovable | evidence/observability-only |
 | Source roster and robots-denied entries | **STAY PROVISIONAL** — no change approved; denials are blocked observations | — |
-| Timing evidence | **NEEDS CORRECTION** — `started_at == finished_at`, cell `elapsed_sec: None`; live duration survives only in external logs | evidence/observability-only |
-| Rejection-history retention | **NEEDS CORRECTION** — run-2 overwrite makes per-run rejection history unrecoverable | evidence/observability-only |
-| Duplicate-rate observability | **NEEDS CORRECTION** — no retained numerator/denominator encodes an in-run rate | evidence/observability-only |
+| Timing evidence | **NEEDS CORRECTION** — `started_at == finished_at`, cell `elapsed_sec: None`; live duration survives only in external logs · **CORRECTED by S9-5C1 at `f228cb4`** | evidence/observability-only |
+| Rejection-history retention | **NEEDS CORRECTION** — run-2 overwrite makes per-run rejection history unrecoverable · **SUPERSEDED: EXPLICITLY DEFERRED from Stage 9, see the S9-5C3 deferral decision** | evidence/observability-only |
+| Duplicate-rate observability | **NEEDS CORRECTION** — no retained numerator/denominator encodes an in-run rate · **CORRECTED by S9-5C2 at `05ef9e4`** | evidence/observability-only |
 
 **Every recommended correction is evidence/observability-only. None is verdict-affecting.** None
 changes a threshold, vocabulary, source or scoring rule, so **none would require a fresh pair of live
@@ -1663,15 +1663,26 @@ would be mandatory.
 **This decision applies to the present staged calibration only. It is not a claim of production
 readiness.**
 
-### 5.9 Proposed `S9-5C` — NOT approved, NOT started
+### 5.9 Proposed `S9-5C` — **SUPERSEDED · fully resolved, nothing pending**
 
-A corrective checkpoint is **warranted** for the three observability gaps above. It is recorded here
-as a **proposal only**.
+*Historical, as written at S9-5.* A corrective checkpoint is **warranted** for the three
+observability gaps above. It is recorded here as a **proposal only**.
 
 **Its exact path set could not be established read-only within S9-5**: retaining per-run rejection
 history and preserving live duration touch writer and schema surfaces whose full extent cannot be
 determined without opening the change, and a partial guess is exactly the failure mode E9-13 records.
 **A separate scope preflight is required before `S9-5C` can be approved.**
+
+**Disposition — this proposal is now closed in full:**
+
+| Correction | Outcome |
+|---|---|
+| C1 — actual run timing | **IMPLEMENTED AND PUBLISHED** at `f228cb4` |
+| C2 — in-run candidate sightings | **IMPLEMENTED AND PUBLISHED** at `05ef9e4` |
+| C3 — immutable per-run rejection snapshots | **EXPLICITLY DEFERRED — not part of Stage 9 implementation** |
+
+**Nothing from `S9-5C` remains pending, unapproved-but-expected, or blocking.** Read this section as
+the record of what was proposed, not as outstanding work.
 
 ---
 
@@ -1680,8 +1691,10 @@ determined without opening the change, and a partial guess is exactly the failur
 The read-only S9-5C scope preflight split the three S9-5 observability corrections into **C1
 (timing) · C2 (duplicate observability) · C3 (rejection-history layout)**, proving the split rather
 than assuming it: no two share a production owner, a schema, or a recovery concern. **C1 owns timing
-evidence only. C2 and C3 remain unapproved and unstarted**, and C3's artifact-layout questions
-(comparator scope, the run-directory guard, the 18/24/42/60 arithmetic) are **not opened here**.
+evidence only.** *(Historical, as written at C1: C2 and C3 were both unapproved and unstarted then.
+C2 has since landed at `05ef9e4`, and C3 is now **EXPLICITLY DEFERRED** — see the C3 deferral
+decision below.)* C3's artifact-layout questions (comparator scope, the run-directory guard, the
+18/24/42/60 arithmetic) are **not opened here**.
 
 ### The contract
 
@@ -1849,8 +1862,54 @@ sighting and **no** uncanonicalizable target — all twelve cells report 0 and 0
 byte-frozen, so the repeat cases are built in-test from the real `AdapterResult` / `RawCandidate`
 through the real `dedupe.group`, the same technique S6-7 used to prove a shared identity.
 
-**C3 remains UNAPPROVED and UNSTARTED. S9-6 remains unstarted.** The `63/63` gate owed before
-S9-L4 will cover C1 and C2; **it covers C3 only if C3 is separately approved and landed before it.**
+**S9-6 remains unstarted.** For C3's disposition see the deferral decision immediately below.
+
+---
+
+## S9-5C3 — immutable per-run rejection snapshots · **EXPLICITLY DEFERRED — not part of Stage 9 implementation**
+
+This is a **decision, not an omission**. C3 was one of the three evidence-only corrections S9-5
+identified; C1 and C2 landed, and **C3 is deliberately not being implemented in Stage 9**.
+
+### What C3 would have addressed
+
+The 12 rejection logs are **shared, cross-run documents updated in place**: they retain the *latest*
+state rather than an immutable per-run history. S9-5 hit that limit directly — its rejection evidence
+is **108 entries from run 2 only**, because run 2 overwrote run 1's logs.
+
+### Why it is deferred rather than implemented
+
+- **C3 cannot repair the evidence that motivated it.** Run-1 rejection history is **already
+  unrecoverable**; no future retention mechanism can reconstruct it. C3 would improve *future* runs
+  only, and Stage 9 has no further live smoke planned.
+- **It is not a small additive schema change.** It would move artifacts: implementing it changes the
+  **selected-run artifact topology** and forces separate decisions on
+  **comparator scope** (whether rejection snapshots are excluded from `compare-runs` or compared
+  under their own timing contract) · **`rejected_at` clock classification** (it is not in the
+  9-field permitted-clock set, so a compared snapshot would fail as `unclassified_field`) ·
+  **run-directory validation** (deliberately widening the `runvalidate` guard) ·
+  **artifact-count compatibility** (the committed 18 / 24 / 42 / 43 arithmetic, and the two-run
+  60 + 1 shape) · and **live-rerun policy**.
+- **That breadth is disproportionate to a late-stage evidence correction.** C3 is the only one of the
+  three that moves artifacts, counts, the validator, seven test modules and published plan text. C1
+  and C2 each touched one owner and changed no artifact identity; C3 does not fit that shape.
+
+### What remains true, stated with the limitation attached
+
+- **The retained M2/M3 runs remain valid calibration evidence**, carrying this limitation explicitly:
+  their rejection logs are latest-state, not per-run history, and **run-1 rejection reasons are gone**.
+  Any future reading of that corpus must say so rather than implying a per-run rejection distribution
+  exists for run 1.
+- The S9-5 decision is unaffected: **editorial thresholds stay provisional**, and the 12/5 caps remain
+  provisional and not fully observable.
+- **Publication and promotion remain ZERO.** Deferring C3 changes nothing about eligibility.
+
+### If C3 is ever reopened
+
+It requires **its own design and its own approval by name**, with the five decisions above settled
+up front and an exact allowed-path set declared before any file changes. **It must not be treated as
+a small additive schema change** — that framing is precisely what this deferral rejects. Nothing in
+this plan authorizes it, and no later checkpoint inherits authority to start it.
 
 ### S9-6 — linkcheck implementation
 
@@ -1924,7 +1983,10 @@ Applies to: S9-0, S9-5, S9-C.
   zero `WARN - skipping`, exit 0**, no runtime leak, no production-state change (**corrected by
   E9-17**: 62 is the inventory at that baseline; 63 arrives only with S9-6). A later corrective code
   commit (S9-5C, S9-6) requires a **new** authoritative run before the next live execution that
-  depends on it — and the post-S9-6 run, owed before S9-L4, expects **63/63**.
+  depends on it — and the post-S9-6 run, owed before S9-L4, expects **63/63**. **That gate covers the
+  Stage 9 code that ACTUALLY LANDED — S9-1…S9-4 plus S9-5C1 and S9-5C2 and S9-6 — and not the
+  deferred C3, which contributes no code and no wrapper.** The inventory arithmetic is unchanged by
+  the deferral: C1 and C2 each added zero wrappers, so 62 + S9-6's one = 63.
 
   **Neither authoritative run has happened.** As of S9-4 the full gate has not been run at all.
 
@@ -1986,9 +2048,14 @@ Stage 9 may close only when **all** of the following hold. **Status as of S9-5:*
 18. **MET** — M5 remains unopened.
 
 **Stage 9 therefore remains OPEN.** The outstanding criteria are **3** (the 63/63 gate), **10**
-(linkcheck), and **16** (the handoff). The next checkpoint is **S9-6, unapproved** — or, if the
-observability corrections are taken first, the **proposed `S9-5C`**, which is likewise unapproved and
-needs a separate scope preflight before it can even be scoped (§5.9).
+(linkcheck), and **16** (the handoff).
+
+The observability corrections are now settled: **C1 landed at `f228cb4`, C2 landed at `05ef9e4`, and
+C3 is EXPLICITLY DEFERRED from Stage 9.** Nothing from `S9-5C` is left pending.
+
+**The next boundary is therefore `S9-6` contract / preflight approval** — the approval itself, not
+its implementation. S9-6 remains unapproved and unstarted, and this deferral authorizes no part of
+it.
 
 ### 9.1 What Stage 9 completion must NOT claim
 

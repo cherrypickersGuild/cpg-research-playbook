@@ -162,8 +162,10 @@ stage_9_plan_of_record:      docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md   PROPO
                              and S9-5 is COMPLETE. **M2 AND M3 ACHIEVED; M4 UNMET.**
                              STILL OWED: the 63/63 gate after S9-6, one bounded
                              linkcheck run, and the completion handoff.
-                             S9-5C1 and S9-5C2 are now COMPLETE; S9-6, S9-L4,
-                             closeout AND S9-5C3 REMAIN UNAPPROVED.
+                             S9-5C1 and S9-5C2 are COMPLETE AND PUBLISHED; S9-5C3
+                             is EXPLICITLY DEFERRED from Stage 9; S9-6, S9-L4 and
+                             closeout REMAIN UNAPPROVED. The next boundary is
+                             S9-6 CONTRACT/PREFLIGHT APPROVAL.
 stage_9_l2_l3_execution:     BOTH COMPLETE — **M2 AND M3 ACHIEVED**.
                              S9-L2 smoke ONCE, rc 0, run 20260731T113526Z-23992;
                              S9-L3 smoke ONCE, rc 0, run 20260731T120702Z-20188.
@@ -214,7 +216,9 @@ stage_9_5c_preflight:        COMPLETE, read-only. Split the three S9-5 observabi
                              key space that a sighting count does not belong in.
                              C3 needs comparator scope, the runvalidate
                              run-directory guard and the 18/24/42/60 arithmetic all
-                             decided first. C3 REMAINS UNAPPROVED AND UNSTARTED.
+                             decided first. [SUPERSEDED — those decisions were NOT
+                             taken; C3 is EXPLICITLY DEFERRED from Stage 9 rather
+                             than left pending. See stage_9_5c3_deferral.]
 stage_9_5c1_timing:          COMPLETE. FIVE paths: src/harvest/run_cells.py,
                              tests/harvest/test_run_cells.py,
                              tests/harvest/test_cli.py, the plan, this file.
@@ -406,10 +410,61 @@ stage_9_5c2_validation:      FOCUSED ONLY, all green, each command run EXACTLY
                              and after, production state/ unchanged. NO routing
                              edit and NO new wrapper: inventory stays 62.
                              `--all` was NOT run — the 63/63 gate owed before
-                             S9-L4 will cover C1 and C2, and covers C3 ONLY if C3
-                             is separately approved and landed before it. NO
-                             network, NO live smoke rerun. Wrapper paths are
+                             S9-L4 covers the Stage 9 code that ACTUALLY LANDED,
+                             including C1 and C2, but NOT the deferred C3, which
+                             contributes no code and no wrapper. NO network, NO
+                             live smoke rerun. Wrapper paths are
                              tests/test_taxonomy_*.sh (NOT tests/harvest/*.sh).
+stage_9_5c3_deferral:        **EXPLICITLY DEFERRED — not part of Stage 9
+                             implementation.** A DECISION, not an omission.
+                             Documentation-only checkpoint, TWO paths (the plan +
+                             this file); no production, schema, test, harness,
+                             config or memory file changed.
+                             WHAT C3 WOULD HAVE ADDRESSED: the 12 rejection logs
+                             are SHARED CROSS-RUN documents updated IN PLACE, so
+                             they retain LATEST STATE rather than immutable
+                             per-run history. S9-5 hit that limit directly — its
+                             rejection evidence is 108 entries from RUN 2 ONLY,
+                             because run 2 overwrote run 1's logs.
+                             WHY DEFERRED: (1) C3 CANNOT REPAIR THE EVIDENCE THAT
+                             MOTIVATED IT — run-1 rejection history is ALREADY
+                             UNRECOVERABLE and no retention mechanism can
+                             reconstruct it; C3 would improve FUTURE runs only,
+                             and Stage 9 plans no further live smoke. (2) IT IS
+                             NOT A SMALL ADDITIVE SCHEMA CHANGE — it changes the
+                             SELECTED-RUN ARTIFACT TOPOLOGY and forces separate
+                             decisions on comparator scope, `rejected_at` clock
+                             classification (it is NOT in the 9-field permitted
+                             clock set, so a compared snapshot would fail as
+                             unclassified_field), the runvalidate run-directory
+                             guard, the committed 18/24/42/43 and two-run 60+1
+                             artifact arithmetic, and live-rerun policy. (3) That
+                             breadth is DISPROPORTIONATE to a late-stage evidence
+                             correction: C3 is the only one of the three that
+                             moves artifacts, counts, the validator, seven test
+                             modules and published plan text, whereas C1 and C2
+                             each touched one owner and changed no artifact
+                             identity.
+                             WHAT REMAINS TRUE: the retained M2/M3 runs REMAIN
+                             VALID CALIBRATION EVIDENCE **with this limitation
+                             stated explicitly** — their rejection logs are
+                             latest-state, not per-run history, and RUN-1
+                             REJECTION REASONS ARE GONE; never imply a run-1
+                             rejection distribution exists. Thresholds stay
+                             provisional; caps stay provisional and not fully
+                             observable. PUBLICATION AND PROMOTION REMAIN ZERO —
+                             deferring C3 changes nothing about eligibility.
+                             IF REOPENED: a future C3 checkpoint requires ITS OWN
+                             DESIGN AND ITS OWN APPROVAL BY NAME, with the five
+                             decisions above settled up front and an exact
+                             allowed-path set declared before any file changes.
+                             **IT MUST NOT BE TREATED AS A SMALL ADDITIVE SCHEMA
+                             CHANGE** — that framing is exactly what this deferral
+                             rejects. Nothing here authorizes it.
+                             NEXT BOUNDARY AFTER THIS CHECKPOINT: **S9-6
+                             CONTRACT/PREFLIGHT APPROVAL** — the approval itself,
+                             not its implementation. S9-6 remains unapproved and
+                             unstarted.
 stage_9_5_calibration:       COMPLETE, documentation only, two paths (this file + the plan).
                              PRIMARY DECISION: **THRESHOLDS STAY PROVISIONAL**.
                              Evidence: 2 runs ~32 min apart, ONE reproduced corpus =
@@ -467,6 +522,10 @@ stage_9_5_calibration:       COMPLETE, documentation only, two paths (this file 
                              S9-5C PROPOSED ONLY — not approved, not started; its exact
                              path set could NOT be established read-only, so a SEPARATE
                              SCOPE PREFLIGHT is required before it can be approved.
+                             [SUPERSEDED — that proposal is now CLOSED IN FULL: C1
+                             implemented at f228cb4, C2 implemented at 05ef9e4, C3
+                             EXPLICITLY DEFERRED from Stage 9. Nothing from S9-5C
+                             remains pending. See stage_9_5c3_deferral below.]
                              NO config, schema, code, retained-root byte or operational
                              log was changed.
 stage_9_l1_execution:        COMPLETE. `preflight-sources --timeout-sec 20` executed
