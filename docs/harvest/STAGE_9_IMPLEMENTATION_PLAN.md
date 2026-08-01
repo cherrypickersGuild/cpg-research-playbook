@@ -1,19 +1,33 @@
 # Stage 9 — bounded live validation: plan of record
 
 ```text
-Status                    PROPOSED — S9-0, S9-1, S9-2 AND S9-3 APPROVED AND COMPLETE
-                          S9-L1 remains MANDATORY and UNAPPROVED (E9-7 reorders it
-                          after S9-3/S9-4; it still gates S9-L2)
-                          S9-4 and every later checkpoint remain UNAPPROVED
+Status                    STAGE 9 CLOSED by the S9-C closeout commit — the commit
+                          containing this section. Its SHA is intentionally NOT
+                          self-recorded, and this plan asserts nothing about whether
+                          that commit has been published.
+Closing executable        ec9bedc5f209927ffd2899126ff20c2b31af0245
+implementation baseline   test(harvest): repair authoritative full-gate findings
+                          The S9-C closeout commit contains NO executable change.
+Checkpoints               S9-0, S9-1, S9-2, S9-3, S9-4, S9-5, S9-5C1, S9-5C2, the
+                          S9-5C3 DEFERRAL, S9-6 and S9-6A — all COMPLETE and PUBLISHED
+Operational checkpoints   S9-L1, S9-L2, S9-L3 and S9-L4 — ALL COMPLETE (no commits)
 Plan baseline             2bbc236a43bf76dc4aa241c8384911d8e5fda6dd
                           docs(harvest): correct roadmap stage percentage
 S9-0 published at         720f114c6c3a840ab790935a2faaecec5762edd5
                           docs(harvest): plan stage 9 live validation
-Next product milestone    M2 — the first real staged taxonomy dataset, UNMET
-Live requests to date     ZERO. No live command is operational
+Milestones                M2 ACHIEVED · M3 ACHIEVED · M4 ACHIEVED · M5 UNOPENED
+Live requests to date     FOUR separately approved executions: S9-L1 preflight,
+                          S9-L2 smoke, S9-L3 smoke, S9-L4 linkcheck
+Publication / promotion   ZERO. data/harvested/ remains absent; no promotion code
 Roadmap authority         docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md
+Completion authority      docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md
 Prior stage authority     docs/harvest/handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md
 ```
+
+**Stage 9 completion is NOT production readiness.** It delivered a retained, validated,
+**unpublished** evidence corpus — two smoke calibration runs and one linkcheck evidence run, none of
+which is a production candidate. Stage 10, M5, promotion, publication, website integration and any
+future network activity each require their own separate approval.
 
 ## 0 · Errata
 
@@ -318,10 +332,12 @@ completed and PUBLISHED (tip `238df98`), the authoritative pre-S9-L2 offline gat
 PASSED 62/62 at exit 0, the external retained root
 `C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4_stage9_retained` has been selected and
 verified, and the operational checkpoints S9-L1, S9-L2 and S9-L3 have each been approved, executed
-exactly once and completed — achieving M2 and M3. S9-5 is COMPLETE (§S9-5 AS EXECUTED). S9-6, S9-L4
-and closeout remain unapproved**; nothing else below is scheduled. `preflight-sources`, `smoke`,
-`validate`, `compare-runs` and `diff` are implemented; **`diff` has never been run against real
-data**. **M4 is UNMET, and publication and promotion remain zero.**
+exactly once and completed — achieving M2 and M3. S9-5 is COMPLETE (§S9-5 AS EXECUTED). **S9-6,
+S9-6A, S9-L4 and closeout have since ALL been approved by name and completed**; nothing else below
+is scheduled. All six commands — `preflight-sources`, `smoke`, `validate`, `compare-runs`, `diff`
+and `linkcheck` — are implemented; **`diff` alone has never been run against real data**.
+**M4 is ACHIEVED, and publication and promotion remain zero.** *(The paragraph above records the
+position as of S9-5 and is retained as historical context.)*
 
 **Every later checkpoint requires its own separate approval by name, with its exact allowed-path set
 declared up front.** If a path outside that set turns out to be required, the checkpoint stops and
@@ -800,7 +816,7 @@ Every question the roadmap flagged as unspecified is settled here.
 | Request cap | `--sample N`, default **20**; hard-capped by the committed per-cell `cell_max_requests` (60) and `MAX_TARGET_FETCHES_PER_CELL` (25), and echoed into `config.bounds`. arXiv's 15 s crawl-delay is honoured, which `policy.v1.json` explicitly frames as the point of the exercise |
 | One fetch per canonical identity? | **Yes** — the committed S6-4 run-scoped ownership guarantee, reused unchanged. A URL shared by two records is fetched once and both owners see the same outcome object |
 | `LATEST_RUN_ID` movement | **It moves**, to the linkcheck run, by the committed `publish_run` — pointer last, or not at all. The pointer means "newest complete run", not "newest harvest" |
-| Base-run immutability | **Absolute.** The linkcheck writes only under its own `runs/<new_run_id>/` plus the cross-run `ledgers/`. A test hashes the base run's directory before and after and requires byte identity |
+| Base-run immutability | **Absolute.** The linkcheck writes **only** under its own `runs/<new_run_id>/`, plus `LATEST_RUN_ID` and the domain lock state its pacing requires. A test hashes the base run's directory before and after and requires byte identity. **CORRECTED at S9-C:** this row previously said "plus the cross-run `ledgers/`". **The implementation writes NO ledger and NO rejection log** — proved by S9-L4, after which all 24 shared documents were byte-identical |
 | Validation | Through the same `validate --run-id` as any other run — 43 paths, every schema, pointer consistency |
 | Why it cannot delete a record | The schema says so (`link_history` is *"the retained history"`), and a link check measures **availability**, not **truth**. A 404 today does not unmake a case that existed |
 | Why it is not promotion | `mode: "linkcheck"` is a non-`harvest` mode ⇒ `publication_eligible: false` by derivation; it writes under the external state root; and no promotion code exists |
@@ -1914,8 +1930,9 @@ this plan authorizes it, and no later checkpoint inherits authority to start it.
 ## S9-6 AS EXECUTED — bounded link checking · **COMPLETE**
 
 Offline implementation and testing only. **No network request was made**; the
-first real linkcheck traffic belongs to **S9-L4**, which stays unapproved and
-needs its own approval twice over.
+first real linkcheck traffic belonged to **S9-L4**, which was approved twice over
+— as a checkpoint and again immediately before the request — and is now COMPLETE
+(§S9-L4 AS EXECUTED).
 
 ### Scope — THIRTEEN paths, not the seven this plan declared
 
@@ -2058,14 +2075,15 @@ corpus itself is byte-frozen and was not touched.
 ```
 
 The prior 62 remain an unchanged ordered prefix of `ISOLATED[]`. **`--all` was NOT
-run:** the authoritative **63/63** gate is a **separately approved post-S9-6
-operation**, still owed before S9-L4, and it covers the Stage 9 code that actually
-landed — S9-1…S9-4 plus C1, C2 and S9-6 — **not the deferred C3**, which
-contributes no code and no wrapper.
+run AT S9-6:** the authoritative **63/63** gate was a **separately approved
+post-S9-6 operation** covering the Stage 9 code that actually landed — S9-1…S9-4
+plus C1, C2 and S9-6 — **not the deferred C3**, which contributes no code and no
+wrapper. It has since run twice: **FAILED rc 1 at `8479095`**, then **PASSED at
+`ec9bedc`** after S9-6A.
 
-**S9-L4 remains unapproved and unstarted**, as does closeout. No live run occurred,
-the retained Stage 9 root was neither read nor written, and publication and
-promotion remain **zero**.
+*Historical, as of S9-6:* no live run had occurred, the retained Stage 9 root was
+neither read nor written, and S9-L4 was unapproved and unstarted. **S9-L4 has since
+completed (M4).** Publication and promotion remain **zero**.
 
 ## THE AUTHORITATIVE 63/63 GATE AT `8479095` — RAN ONCE, **FAILED**, exit 1
 
@@ -2215,7 +2233,8 @@ append-only `link_history`, base-run-immutability or outbound-guard test was tou
 `elapsed_sec` remains **real evidence**, neither normalized nor excluded. The
 retained M2/M3 evidence is **untouched**; **no live smoke, migration or backfill is
 required**; **publication and promotion remain ZERO**; **S9-5C3 remains deferred and
-is not reopened**; and **S9-L4 and Stage 9 closeout remain unapproved and unstarted**.
+is not reopened**. *(As of S9-6A, S9-L4 and closeout were still unapproved; both have
+since been approved and completed.)*
 
 ### Focused validation — COMPLETE AND GREEN
 
@@ -2282,10 +2301,104 @@ Note the routing trap:
 Stage 8 limitation), so an empty harness run **must never be reported as
 validation**; direct wrapper invocation is the meaningful focused gate.
 
-**S9-6A implementation and focused validation are complete. The next required
-boundary after this checkpoint is a separately approved authoritative 63/63 gate at
-the committed S9-6A tip.** **S9-L4 and Stage 9 closeout remain unapproved and
-unstarted**, and **publication and promotion remain ZERO**.
+**S9-6A implementation and focused validation are complete**, and it was published at `ec9bedc`.
+
+## THE AUTHORITATIVE 63/63 GATE AT `ec9bedc` — RAN ONCE, **PASSED**, exit 0
+
+The replacement for the failed run at `8479095`. **Both are real results; never conflate them.**
+
+```text
+command             bash scripts/validate_task.sh --all      ONE invocation, no retry
+exit code           0 in the external rc file AND at the outward process status — they AGREE
+final stdout line   == validate_task.sh: PASS ==
+wrappers            63 discovered · 63 executed · 63 distinct · each EXACTLY ONCE
+                    executed set EXACTLY equal to the on-disk tests/*.sh set
+WARN - skipping     0        FAIL 0
+unittest            43 suites · 2,386 tests · 0 failures · 0 errors · 0 skips
+                    (2,384 at the failed run + the two S9-6A anti-vacuity tests;
+                     every suite printed a BARE "OK", which is proof of zero skips)
+repository          ec9bedc, 0/0, clean, 508 untracked, protected 18/18, wrappers 63,
+                    four runtime paths ABSENT before and after, state/ unchanged
+retained root       BYTE-IDENTICAL before and after (80-file manifest at that time)
+network             none
+evidence            ../scratchpad/s9_authoritative_63_gate_ec9bedc_20260801T064238Z.{stdout.log,stderr.log,rc}
+```
+
+**The pre-S9-L4 authoritative 63/63 requirement is SATISFIED.** Every earlier sentence in this plan
+saying that gate is "still owed" describes the pre-`ec9bedc` state and is historical.
+
+## S9-L4 AS EXECUTED — bounded live linkcheck · **COMPLETE** · **M4 ACHIEVED**
+
+**The first target-page fetching this pipeline has ever performed.** One invocation on 2026-08-01
+through the committed live transport against real hosts, separately approved immediately before the
+request. **No retry, no manual termination, no second linkcheck, and NO repository commit** — the
+executable baseline stayed `ec9bedc`.
+
+```text
+base_run_id            20260731T120702Z-20188
+run_id                 20260801T085829Z-40852
+mode                   linkcheck
+sample requested       20        (accepted full records available: 19)
+records checked        19
+logical identities     19
+publication_eligible   false     BY DERIVATION from the non-harvest mode
+rc                     0 in the rc file AND at the process boundary · stderr EMPTY
+```
+
+> **`identities_fetched` is the number of logical outcome owners — NOT a physical HTTP request count
+> and NOT a count of successfully downloaded pages.**
+
+#### Link-health outcomes
+
+```text
+current-run link_history entries 19 · missing 0 · duplicates 0 · not_checked 0
+access_status   ok 14   ·   robots_denied 5
+cells           ok 7    ·   not_run 5
+```
+
+All 14 `ok` entries returned **HTTP 200** with a content hash present; the five `robots_denied`
+entries carry no HTTP status and no content hash. **`changed_materially` is absent on all 19** —
+correctly, because the base records carried no prior content hash and a `false` would claim a page
+was unchanged when nobody could tell. **`robots_denied` is legitimate link-health evidence, not a
+failed command:** availability is not truth, and no record was deleted, downgraded or re-judged.
+
+#### Run-level accounting
+
+```text
+target_http_attempts 19 · target_retries 0 · target_redirect_hops 5
+target_fetch_owners 19  · conditional_revalidations 0
+```
+
+> **Per-record attribution of target attempts, retries and redirect hops is not retained and cannot
+> be reconstructed exactly.** *(Inference only, never per-record evidence: the five denials are
+> consistent with an initial request succeeding through the lease and returning a redirect whose
+> destination was disallowed — robots is re-checked on every hop.)*
+
+#### Offline validation, and why it was not treated as sufficient
+
+```text
+valid true · errors [] · json_documents_checked 42 · paths_checked 43
+pointer_run_id == run_id == 20260801T085829Z-40852 · rc 0 · stderr EMPTY
+```
+
+**M4 was declared achieved only after BOTH the validator and a separate 19-entry completeness
+inspection**, because `runvalidate` never inspects `access_status`: a run whose entries were all
+`not_checked` would validate cleanly while proving nothing about link health.
+
+#### The authorized retained-root transition
+
+```text
+NEW        runs/20260801T085829Z-40852/**   exactly 18 selected-run JSON
+           locks/arxiv.org/next_allowed_at  first ever arxiv.org TARGET pacing —
+                                            the smokes only ever paced rss.arxiv.org
+CHANGED    LATEST_RUN_ID · six pre-existing selected-host next_allowed_at files
+UNCHANGED  both smoke run directories (the BASE byte-identical) · all 12 ledgers ·
+           all 12 rejection logs · repository and baselines · the external report
+DEBRIS     0 slot_*.lease · 0 owner · 0 pace.lock · 0 .tmp_*
+counts     80 → 99 regular files · 49 → 54 directories
+```
+
+Exactly the seven selected hosts moved and no other.
 
 ### S9-6 — linkcheck implementation (as planned)
 
@@ -2398,40 +2511,63 @@ observation**, never a resolution. No permanent-flake status may be granted. **N
 
 ## 9 · Stage 9 exit criteria
 
-Stage 9 may close only when **all** of the following hold. **Status as of S9-5:**
+Stage 9 may close only when **all** of the following hold. **Status at S9-C closeout: ALL 18 MET.**
 
 1. **MET** — live CLI and transport seam implemented and offline-tested (S9-1).
-2. **MET** — every new wrapper wired into `scripts/validate_task.sh` (62; 63 after S9-6).
-3. **PARTLY MET** — the authoritative offline harness runs are green: **62/62 before S9-L2 PASSED at
-   exit 0**; the **63/63 run after S9-6 and before S9-L4 is still OWED** (E9-17). Two runs, not one.
+2. **MET** — every new wrapper wired into `scripts/validate_task.sh`; inventory **63**, the planned
+   Stage 9 final, `ISOLATED[]` equal to the on-disk `tests/*.sh` set.
+3. **MET** — both authoritative offline harness runs are green (E9-17): **62/62 before S9-L2, exit
+   0**, and **63/63 at `ec9bedc`, exit 0**. It took three invocations, because the first 63/63 run
+   at `8479095` **FAILED rc 1** and S9-6A repaired its two findings — see §"The authoritative 63/63
+   gate". The failed run remains valid historical evidence for that tip.
 4. **MET** — live source preflight executed **once** (S9-L1, rc 1, 19 ok / 6 robots-denied) and
    reviewed.
 5. **MET** — the first real 12-cell staged run `20260731T113526Z-23992` exists in the external
    retained root **and validates** (M2).
-6. **MET** — a second staged run `20260731T120702Z-20188` exists **and validates**.
+6. **MET** — a second staged run `20260731T120702Z-20188` exists **and validates** (M3).
 7. **MET** — comparison passes the identity/idempotency invariants: 0 violations, `idempotent: true`.
 8. **MET** — content changes reported **separately**: 197 permitted, 23 content, 0 violations.
 9. **MET** — the calibration decision is **documented**: **STAY PROVISIONAL** (§S9-5 AS EXECUTED).
-10. **OPEN** — one bounded linkcheck run exists **and validates** (needs S9-6 then S9-L4).
-11. **MET so far** — `data/harvested/` remains **absent**; `diff` has never been run against it.
+10. **MET** — one bounded linkcheck run exists **and validates**: `20260801T085829Z-40852`, derived
+    from `20260731T120702Z-20188`, `valid: true` (S9-L4, M4).
+11. **MET** — `data/harvested/` remains **absent**; `diff` has never been run against it.
 12. **MET** — no production promotion occurred.
 13. **MET** — no website integration occurred.
-14. **MET** — the external live root is recorded: path, D9-A verification, and its two-run contents.
-15. **MET** — every network execution (S9-L1, S9-L2, S9-L3) was separately approved immediately
-    before its request, ran **exactly once**, and was never retried.
-16. **OPEN** — the completion handoff does not exist.
-17. **MET as of S9-5** — **M2 ACHIEVED · M3 ACHIEVED · M4 UNMET**.
+14. **MET** — the external live root is recorded: path, D9-A verification, and its **three-run**
+    contents with pointer, counts and aggregate.
+15. **MET** — every network execution (S9-L1, S9-L2, S9-L3, S9-L4) was separately approved
+    immediately before its request, ran **exactly once**, and was never retried.
+16. **MET** — the completion handoff exists:
+    `docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md`.
+17. **MET** — **M2 ACHIEVED · M3 ACHIEVED · M4 ACHIEVED**.
 18. **MET** — M5 remains unopened.
 
-**Stage 9 therefore remains OPEN.** The outstanding criteria are **3** (the 63/63 gate), **10**
-(linkcheck), and **16** (the handoff).
+**Stage 9 is therefore CLOSED.** No criterion is outstanding.
 
-The observability corrections are now settled: **C1 landed at `f228cb4`, C2 landed at `05ef9e4`, and
+The observability corrections are settled: **C1 landed at `f228cb4`, C2 landed at `05ef9e4`, and
 C3 is EXPLICITLY DEFERRED from Stage 9.** Nothing from `S9-5C` is left pending.
 
-**The next boundary is therefore `S9-6` contract / preflight approval** — the approval itself, not
-its implementation. S9-6 remains unapproved and unstarted, and this deferral authorizes no part of
-it.
+### S9-C AS EXECUTED — closeout
+
+```text
+Allowed paths     FOUR, exactly:
+                    docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md
+                    docs/harvest/TODO.md
+                    docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md
+                    docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md (new)
+Risk tier         Documentation only — NO executable change
+Validation        L0 ONLY — path-scope diff, `git diff --check`, baselines.
+                  NO test, wrapper, gate or syntax command was run or is required.
+Network           NONE
+Retained root     NOT mutated, NOT cleaned, NOT moved
+Project memory    NOT edited by this checkpoint
+Commit            Its own closeout commit — the commit containing this section
+Push / memory     SEPARATELY APPROVED later checkpoints; not asserted here
+```
+
+**The next boundary is review of the four-document diff, then separate approval of one atomic S9-C
+closeout commit.** Publication of that commit and project-memory synchronization are each their own
+checkpoint.
 
 ### 9.1 What Stage 9 completion must NOT claim
 

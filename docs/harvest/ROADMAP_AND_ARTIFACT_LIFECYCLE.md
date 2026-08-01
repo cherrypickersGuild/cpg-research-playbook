@@ -5,9 +5,15 @@ deliberately do not: *what exists in code right now*, *what JSON any of it actua
 still has no implementation at all*, and *how far the project is from a published dataset*.
 
 **Authority.** Committed code and executable tests outrank `IMPLEMENTATION_PLAN.md` wherever they
-differ. Every capability claim below was checked against the tree at `bf067303`; where the master
-plan describes something with no executable owner, that is recorded as a gap rather than as a
-feature. Inference is labelled inference.
+differ. **Every capability claim below was re-checked at Stage 9 closeout against the closing
+executable baseline `ec9bedc5f209927ffd2899126ff20c2b31af0245`** (the S9-C documentation commit
+contains no executable change); where the master plan describes something with no executable owner,
+that is recorded as a gap rather than as a feature. Inference is labelled inference.
+
+**Current authorities:** `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md` and
+`docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md`.
+`docs/harvest/IMPLEMENTATION_PLAN.md` remains **design input only** — committed code and
+current-stage records supersede it.
 
 **This document opens nothing.** It is not a Stage 9 plan, it does not approve a checkpoint, and it
 does not authorize a network request, a migration apply, or a promotion.
@@ -17,50 +23,66 @@ does not authorize a network request, a migration apply, or a promotion.
 ## 0 · The eight layers, and why "done" is never enough on its own
 
 Every status word in this file is qualified by exactly one of these. They are ordered by increasing
-distance from a real product artifact, and **nothing in this repository has ever reached layer 6, 7
-or 8.**
+distance from a real product artifact, and **nothing has ever reached layer 5, 6, 7 or 8.**
+Stage 9 reached **layer 3** — but externally, and as *evidence*, not as a candidate.
 
 | # | Layer | Meaning | Reached? |
 |---|---|---|---|
 | 1 | **Fixture run** | The pipeline driven over `tests/fixtures/harvest/**`, synthetic hand-authored inputs, no socket | **Yes**, routinely |
 | 2 | **Temporary-root run** | Real writer code writing a real tree, into an injected `tmp` root that is deleted afterwards | **Yes**, routinely |
-| 3 | **Retained runtime run** | Artifacts left on disk under `state/taxonomy_harvest/` for a human to read | **No** — the path does not exist |
+| 3 | **Retained runtime run** | Artifacts left on disk for a human to read | **YES — externally.** Three runs in the retained Stage 9 root (two smokes + one linkcheck). The repository path `state/taxonomy_harvest/` deliberately still does not exist |
 | 4 | **Migration bundle** | The AX corpus converted to `record.v1.json` rows and published as one 3-file bundle | Temp-root only (layer 2) |
-| 5 | **Candidate output** | A retained run's records, staged and awaiting human review | **No** — no producer, no retained run |
+| 5 | **Candidate output** | A retained run's records, staged and awaiting human review | **No.** Retained runs now exist, but a smoke and a linkcheck can never be candidates — `derive_publication_eligibility` refuses every non-`harvest` mode, and no production `harvest` command exists |
 | 6 | **Publication-eligible candidate** | A reviewed candidate set that `promote` would accept | **No** |
 | 7 | **Promoted publication** | JSON committed under `data/harvested/**` | **No** — directory absent, no promotion code |
 | 8 | **Website-consumed dataset** | `cherryinthehaystack.com` reading that JSON | **No** — no consumer, no owner, no interface |
 
-A **retained runtime run** (3) is the first layer whose output survives the process that made it. It
-is the next observable data-producing milestone, and it has **no implemented command**.
+A **retained runtime run** (3) is the first layer whose output survives the process that made it.
+**Stage 9 delivered it** — three runs, externally retained and validated. The next unreached layer is
+**5**, and its blocking dependency is no longer a driver: it is that **no production `harvest`
+command exists** and no human-review process is defined.
 
 ---
 
 ## 1 · Executive status
 
 ```text
-authoritative tip        bf067303a01fa80d1421f9eef7030cbadf805733
-                         docs(harvest): record stage 8 completion
-sync                     HEAD = local main = local origin/main, 0 behind / 0 ahead
-completed stage          Stage 8 — CLOSED and PUBLISHED
-next stage               Stage 9 — NOT OPEN, NOT APPROVED, no plan of record exists
-runtime output state     NONE. state/taxonomy_harvest/, runs/, LATEST_RUN_ID all ABSENT
+closing executable       ec9bedc5f209927ffd2899126ff20c2b31af0245
+baseline                 test(harvest): repair authoritative full-gate findings
+                         The S9-C documentation commit is the commit containing these
+                         closeout records; its SHA is intentionally not self-recorded
+                         and its publication is a separate checkpoint.
+completed stage          Stage 9 — CLOSED
+next stage               Stage 10 — NOT OPENED
+repository runtime paths ABSENT: state/taxonomy_harvest/, data/harvested/, runs/, LATEST_RUN_ID
+external retained state  PRESENT — three runs in the retained Stage 9 root (§7.1a)
 publication output state NONE. data/harvested/ ABSENT; no promotion code exists anywhere
 migration state          Implemented and offline-proven; ZERO operational applies. No bundle retained
-live-network state       ZERO requests ever made by this pipeline, at any stage, in its entire history
+live-network state       FOUR separately approved executions, each run exactly once:
+                           S9-L1 source preflight · S9-L2 smoke · S9-L3 smoke · S9-L4 linkcheck
+milestones               M2 ACHIEVED · M3 ACHIEVED · M4 ACHIEVED · M5 UNOPENED
 ```
+
+**Stage 9 completion is not production readiness.** It delivered a retained, validated,
+**unpublished** evidence corpus. Publication, promotion and website consumption remain **zero**.
+
+*Loopback traffic bound by a test suite on `127.0.0.1` is **not** live external traffic and is never
+counted here; only the four checkpoints above contacted real hosts.*
 
 **Core pipeline implementation and offline verification.** The discovery → extraction →
 classification → verification → faceting → record → artifact chain is implemented end to end in
-`src/harvest/**` and verified offline: `bash scripts/validate_task.sh --all` exercises **58 wrappers
-(19 legacy + 39 taxonomy), each exactly once, zero skips, exit 0** — one authoritative run at S8-2,
-736 s. That is layer 1/2 verification of a **library and its driver function**, not of an operable
-system.
+`src/harvest/**` and verified offline: `bash scripts/validate_task.sh --all` now exercises **63
+wrappers (19 legacy + 44 taxonomy), each exactly once, zero skips, exit 0** — the authoritative gate,
+green at `ec9bedc` with 43 unittest suites and 2,386 tests (§5a).
 
-**Has a real live taxonomy harvest occurred?** No. Stronger than "not yet approved": `run_cells.run()`
-constructs its opener unconditionally as `fixtures.FixtureOpener` (`src/harvest/run_cells.py:794-806`).
-There is no parameter, flag, or branch that would let it issue a network request. **A live harvest is
-not currently possible without new production code.**
+**Has a real live taxonomy harvest occurred?** **No — and the reason has changed.** The old blocker
+is gone: `run_cells.run()` takes an injected `Transport`, `cli.py` owns the single live-opener
+decision, and real requests have been made. The blocker now is that **no CLI command performs a
+production `harvest`**: `cli.COMMANDS` holds `preflight-sources`, `smoke`, `validate`,
+`compare-runs`, `diff` and `linkcheck` — there is no `"harvest"` key. `mode: "harvest"` exists in the
+driver and is the **only** mode `derive_publication_eligibility` accepts, but **it has never run
+live**. Every live run so far was a `smoke` or a `linkcheck`, and neither can ever be a production
+candidate.
 
 **Has an operational AX migration apply occurred?** No. `migrate.sh ax-cases --apply --state-root
 PATH` works and is proven, but every apply in the repository's history went to an injected temporary
@@ -72,9 +94,9 @@ root that was then deleted. `state/taxonomy_harvest/` does not exist.
 `schemas/`, `config/` or `tests/`. Promotion exists only as design prose in
 `IMPLEMENTATION_PLAN.md` §7.
 
-**Next observable data-producing milestone.** A **retained runtime run** — 43 real files under
-`state/taxonomy_harvest/`. Its blocking dependency is not approval; it is that **no command exists
-that calls `run_cells.run()`**.
+**Next observable data-producing milestone.** **M5 — a reviewed production candidate.** Its blocking
+dependencies are that no production `harvest` command exists and that human review has no artifact,
+no acceptance criteria and no owner. M5 is **unopened**.
 
 ### 1.1 Four percentages, four different denominators
 
@@ -83,14 +105,21 @@ comparable to one another and must never be averaged.
 
 | Dimension | Denominator | Value | Basis |
 |---|---|---|---|
-| **Named stage completion** | The **12** named stage labels: 0, 1, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10 | **10 of 12 closed = 83 %** | Stages 0, 1, 2, 2.5, 3, 4, 5, 6, 7, 8 closed; 9 and 10 not opened |
-| **Implementation capability** | The 13 subsystems the master plan names as commands or producers (harvest driver, migrate, preflight-sources, smoke, smoke-model, compare-runs, linkcheck, refresh, promote, diff, publication manifest, promotion journal, `harvest.sh` dispatcher) | **2 of 13 = 15 %** | Only the run driver (as a *function*, not a command) and `migrate.sh` exist |
-| **Live operational validation** | Any single live request | **0 of 1 = 0 %** | No request has ever been made |
-| **Production publication** | 16 expected stable published JSON files (§6.3) | **0 of 16 = 0 %** | `data/harvested/` absent |
+| **Named stage completion** | The **12** named stage labels: 0, 1, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10 | **11 of 12 closed = 92 %** | Stages 0, 1, 2, 2.5, 3, 4, 5, 6, 7, 8, 9 closed; **Stage 10 not opened** |
+| **Implementation capability** | The **same 13** subsystems the master plan names as commands or producers (harvest driver, migrate, preflight-sources, smoke, smoke-model, compare-runs, linkcheck, refresh, promote, diff, publication manifest, promotion journal, `harvest.sh` dispatcher) | **8 of 13 = 62 %** | Implemented: run driver · `migrate` · `preflight-sources` · `smoke` · `compare-runs` · `linkcheck` · `diff` · the `harvest.sh` dispatcher. **Still absent: `smoke-model`, `refresh`, `promote`, the publication-manifest producer, the promotion journal** |
+| **Live operational validation** | Any single live request | **1 of 1 = 100 %** | Real external requests occurred through four separately approved executions (S9-L1, S9-L2, S9-L3, S9-L4) |
+| **Production publication** | 16 expected stable published JSON files (§6.3) | **0 of 16 = 0 %** | `data/harvested/` absent; no promotion code |
 
-The gap between 83 % and 15 % is the single most important fact in this document: **stage completion
-measures approved-and-verified checkpoints, not operable commands.** Stages 0–8 built a
-comprehensively tested library. They did not build a program a human can run.
+**The denominator of row 2 is deliberately unchanged at 13.** `validate` is a Stage 9 command that
+the master plan's 13-subsystem list never named; adding it would silently redefine the denominator
+and invalidate every earlier percentage in this file's history. It is recorded in the command matrix
+(§8) instead.
+
+The gap between 92 % and 62 % is still the most important fact here — and a second gap has replaced
+the old one. **Stage completion measures approved-and-verified checkpoints, not operable commands;
+and operable commands are not the same as a publishable product.** Stage 9 turned the library into a
+program a human can run against real hosts. It did **not** produce anything publishable: the last
+five subsystems are exactly the ones between evidence and a dataset.
 
 ---
 
@@ -239,33 +268,34 @@ Legend for the two evidence columns: **Temp-root only** = every write went to an
 | Completion authority | `handoffs/HANDOFF_STAGE_8_COMPLETE_2026-07-31.md` |
 | Remaining dependency | **CF-4 CLOSED — nothing else is.** CF-6 has *grown*: 33 of 39 wrappers now assert `config/` is unmodified, so no checkpoint editing `config/` can pass the gate before committing. S8-CF-1 … S8-CF-7 open (harness has no self-test; `CLAUDE.md` still calls `validate_task.sh` the single entry point without mentioning `--all`; `tests/harvest/*.py` unrouted in changed mode; `hash_tree.py` and `oss-milestones.v1.json` have zero consumers) |
 
-### Stage 9 — bounded deterministic live smoke
+### Stage 9 — bounded live validation
 
 | Field | Value |
 |---|---|
-| Purpose | *As currently sketched in `TODO.md`:* `smoke`/`smoke_model` scripts + `preflight-sources`, a 12-category `--no-enrich` smoke run twice, `compare-runs --normalize`, `linkcheck --sample 20` |
-| Status | **NOT OPEN, NOT APPROVED.** No `STAGE_9_IMPLEMENTATION_PLAN.md` exists |
-| Principal capability | **None delivered** |
-| Wrote only to temp roots? | n/a |
-| Contacted network? | n/a — would be the **first** network contact in the project's history |
-| Retained runtime output? | n/a — would be the first retained runtime output |
-| Published output? | No — a smoke run is `publication_eligible: false` by derivation |
-| Completion authority | n/a |
-| Remaining dependency | **Every one of its named deliverables is unimplemented**, and so is the *prerequisite* nobody has scoped: a command that runs the pipeline at all, and a code path that lets it use the network. See §9 item G1 |
+| Purpose | A live transport seam and CLI, source preflight, two bounded smoke runs, run validation and comparison, a live-corpus calibration decision, and bounded link-health checking |
+| Status | **CLOSED.** Plan of record `STAGE_9_IMPLEMENTATION_PLAN.md`; closing executable baseline `ec9bedc` |
+| Principal capability | A **six-command CLI surface** — `preflight-sources`, `smoke`, `validate`, `compare-runs`, `diff`, `linkcheck` — over the existing library, plus one atomic `Transport` seam that couples opener, pacing and lease root so a live opener can never be paired with disabled pacing |
+| Wrote only to temp roots? | **No, by design.** Live runs wrote to an **explicitly supplied external retained root**; the four repository runtime paths remain **absent** |
+| Contacted network? | **YES — four separately approved executions**, each run exactly once and never retried: S9-L1 preflight (rc 1, 19 ok / 6 robots-denied), S9-L2 smoke, S9-L3 smoke, S9-L4 linkcheck |
+| Retained runtime output? | **YES — externally.** Three runs: two smokes and one linkcheck (§7.1a) |
+| Published output? | **No.** Every retained run is `publication_eligible: false` **by derivation** — `smoke` and `linkcheck` are non-`harvest` modes |
+| Completion authority | `docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md` |
+| Milestones | **M2, M3 and M4 ACHIEVED** |
+| Remaining dependency | **None for Stage 9.** What remains belongs to M5 and later: a production `harvest` command, human review, promotion, publication and website integration — all outside Stage 9's scope |
 
 ### Stage 10 — final report
 
 | Field | Value |
 |---|---|
 | Purpose | `IMPLEMENTATION_REPORT.md` (every file created/changed, exact commands, results) and `CONVERGENCE_NOTE.md` (5 gates before matrix unification is reconsidered), plus unresolved issues and follow-ups |
-| Status | **NOT OPEN** |
+| Status | **NOT OPENED.** Its prerequisite is now satisfied — Stage 9 is closed — but Stage 10 has not been approved, scoped or started |
 | Principal capability | None delivered |
 | Wrote only to temp roots? | n/a |
 | Contacted network? | n/a |
 | Retained runtime output? | **No — and it never would.** Stage 10 is two markdown documents |
 | Published output? | **No.** Stage 10 does **not** create or publish production JSON. Nothing in the committed tree or in `TODO.md` gives it that scope |
 | Completion authority | n/a |
-| Remaining dependency | Stage 9 |
+| Remaining dependency | **Satisfied** (Stage 9 closed). Opening Stage 10 still needs its own approval by name |
 
 ---
 
@@ -287,52 +317,57 @@ described completes the *original task*, and leaves the product at M3/M4 at best
 - **Approval required:** none remaining.
 - **Scope:** part of the original task.
 
-### M2 — first real staged taxonomy output
+### M2 — first real staged taxonomy output · **COMPLETE**
 
-- **Definition of done:** one **retained** run under `state/taxonomy_harvest/` — 43 real paths a
-  human can open — produced from live sources.
-- **Status:** **NOT STARTED, and blocked by missing code**, not only by missing approval. Two hard
-  blockers: there is no command that invokes `run_cells.run()`, and `run()` cannot use the network.
-- **Owner:** Stage 9 (the live-execution part), preceded by an unscoped implementation checkpoint.
-- **Prerequisite:** M1; a run command; a live opener path; live-source preflight; explicit network
-  approval immediately before the request.
-- **Visible artifact:** `state/taxonomy_harvest/runs/<run_id>/**` + `ledgers/` + `rejections/` +
-  `LATEST_RUN_ID` (43 paths).
-- **Approval required:** **Yes — twice.** Once for the checkpoint, once immediately before the
-  outbound request.
-- **Scope:** part of the original task (Stage 9).
+- **Definition of done:** one **retained** run — 43 real paths a human can open — produced from live
+  sources.
+- **Status:** **ACHIEVED 2026-07-31 (S9-L2).** Run `20260731T113526Z-23992`, rc 0, one invocation.
+  42 JSON + `LATEST_RUN_ID`; 10 `ok` cells / 2 `zero_result`; 32 records. Validated offline:
+  `valid: true`, 42 documents / 43 paths.
+- **Owner:** Stage 9. **Delivered.**
+- **Visible artifact:** `runs/20260731T113526Z-23992/**` + shared `ledgers/` + `rejections/` +
+  `LATEST_RUN_ID`, in the **external retained root** — deliberately *not* under
+  `state/taxonomy_harvest/`, which remains absent.
+- **Not a production candidate:** `publication_eligible: false` by derivation from `mode: "smoke"`.
 
-### M3 — repeatability and calibration
+### M3 — repeatability and calibration · **COMPLETE**
 
-- **Definition of done:** two live smokes under a pinned bound, `compare-runs --normalize` showing
-  only the enumerated clock-derived movement, and an explicit calibration decision on the S4-4A
-  thresholds against **live** data.
-- **Status:** **NOT STARTED.** `compare-runs` has no implementation anywhere in the tree.
-- **Owner:** Stage 9.
-- **Prerequisite:** M2 twice.
-- **Visible artifact:** two run trees plus a comparison result (**no producer exists; the output
-  form is undefined — the master plan §8 describes `content_changes[]` but names no file**).
-- **Approval required:** Yes — a second live execution.
-- **Scope:** part of the original task.
+- **Definition of done:** two live smokes under a pinned bound, a comparison showing only enumerated
+  clock-derived movement, and an explicit calibration decision against **live** data.
+- **Status:** **ACHIEVED 2026-07-31 (S9-L3 + S9-5).** Second run `20260731T120702Z-20188`, rc 0,
+  validated. `compare-runs`: 18 documents compared, 24 shared excluded, **197 permitted clock changes,
+  23 content changes (all manifest `source_preflight[].elapsed_ms`), 0 invariant violations,
+  `idempotent: true`**. Run 1 stayed byte-identical throughout.
+- **Comparison output form:** **unpersisted stdout JSON** over the **18 selected-run documents only**.
+  It writes no file. **There is no `--normalize`** (E9-14): differing paths are enumerated and
+  classified into `permitted_changes` / `content_changes` / `invariant_violations`, and an
+  unclassifiable field fails loudly rather than being normalized away.
+- **Calibration decision:** **EDITORIAL THRESHOLDS STAY PROVISIONAL** — `quality` and `audience_fit`
+  were saturated at 1.000 and rejected nothing; `relevance` was the only discriminating gate.
+- **Owner:** Stage 9. **Delivered.**
 
-### M4 — link-health validation
+### M4 — link-health validation · **COMPLETE**
 
-- **Definition of done:** `linkcheck --sample 20` over a retained run, producing a run in
+- **Definition of done:** a bounded `linkcheck` over a retained run, producing a run in
   `mode: "linkcheck"`.
-- **Status:** **NOT STARTED.** `linkcheck` exists only as a `mode` enum value in
-  `run_manifest.v1.json` and as prose; no producer.
-- **Owner:** Stage 9.
-- **Prerequisite:** M2.
-- **Visible artifact:** a further run tree with `mode: "linkcheck"`.
-- **Approval required:** Yes — live requests, and deliberately to arXiv, whose 15 s crawl-delay the
-  plan treats as the point of the exercise.
-- **Scope:** part of the original task.
+- **Status:** **ACHIEVED 2026-08-01 (S9-L4).** One live invocation, rc 0. Base
+  `20260731T120702Z-20188` → run `20260801T085829Z-40852`; `--sample 20` over the 19 accepted full
+  records available; **19 records checked, 19 logical identities**. Validated offline: `valid: true`,
+  42 documents / 43 paths, pointer agreeing.
+- **Link health:** 19 current-run `link_history` entries, 0 missing, 0 duplicate, **0 `not_checked`**;
+  **14 `ok` / 5 `robots_denied`**; cells 7 `ok` / 5 `not_run`.
+- **arXiv:** 8 of the 19 targets are `arxiv.org`, whose 15 s crawl-delay the plan treated as the point
+  of the exercise. `locks/arxiv.org/` did not previously exist — the smokes only ever paced
+  `rss.arxiv.org` — so this was the first target-page pacing on that host.
+- **Owner:** Stage 9. **Delivered.**
+- **Not a production candidate:** `publication_eligible: false` by derivation from the non-`harvest`
+  mode.
 
 ### M5 — reviewed production candidate
 
 - **Definition of done:** an **enrichment-complete** run (not `--no-enrich`), of publication quality,
   reviewed by a human against a defined acceptance record, with zero unresolved alias conflicts.
-- **Status:** **NOT STARTED and UNOWNED.** No stage in `TODO.md` owns a production-quality enriched
+- **Status:** **UNOPENED and UNOWNED.** No stage in `TODO.md` owns a production-quality enriched
   run. `IMPLEMENTATION_PLAN.md` §7.1 explicitly disqualifies live *smoke* output from promotion and
   requires "a reviewed run ID · schema validity · zero unresolved conflicts · an explicit reason",
   rejecting `"initial deterministic smoke"` by name — but assigns that work to no stage.
@@ -394,7 +429,27 @@ exact-allowed-path unit of the size Stages 5–8 actually used. Calendar time is
 observed checkpoint duration in this project varies by more than an order of magnitude, and the
 binding constraint is human approval latency, not machine time.
 
-### 4.1 Close the currently described Stage 0–10 plan
+### 4.0 Current forecast, from Stage 9 closeout onward
+
+**Stages 0–9 are closed. Everything in §§4.1–4.2 below is a RETROSPECTIVE record of what was
+forecast before Stage 9 ran; it is retained for calibration and is NOT a current estimate.**
+
+| To reach | Checkpoints (range) | Note |
+|---|---|---|
+| **Stage 10** — report + convergence note | **1 – 2** | Documentation only; creates no JSON |
+| **M5** — reviewed production candidate | **7 – 10** | Unopened and undesigned; needs a production `harvest` command first |
+| **M6** — published JSON | **+8 – 10** | `promote` does not exist in any form |
+| **M7** — website integration / recurring refresh | **+6 – 10** | Outside this repository; unowned |
+| **Remaining total, Stage 9 close → M7** | **22 – 32** | Low confidence beyond M5 |
+
+**Actual Stage 9 outcome, against the pre-stage forecast of 13–18 checkpoints for "close the
+described Stage 0–10 plan":** Stage 9 alone consumed **13 commits** plus **four live executions**,
+**three authoritative gate invocations** (one of which failed and required the S9-6A repair) and
+several read-only audits — and it did **not** include Stage 10. The forecast's shape held; its
+scope did not. **The corrective-checkpoint precedent was correct**: S9-5C1, S9-5C2, the S9-5C3
+deferral and S9-6A were all unplanned corrective units.
+
+### 4.1 *(RETROSPECTIVE)* Close the currently described Stage 0–10 plan
 
 | Field | Value |
 |---|---|
@@ -405,7 +460,7 @@ binding constraint is human approval latency, not machine time.
 | External dependency | 25 real source endpoints must still exist, still serve the expected shape, and still permit crawling under RFC 9309 |
 | Live/network approval | **Yes** — for `preflight-sources`, both smokes, and `linkcheck`. Four separate outbound-request approvals minimum |
 
-### 4.2 Generate the first real staged JSON set (M2)
+### 4.2 *(RETROSPECTIVE — M2 ACHIEVED 2026-07-31)* Generate the first real staged JSON set
 
 | Field | Value |
 |---|---|
@@ -449,16 +504,16 @@ binding constraint is human approval latency, not machine time.
 | External dependency | Total |
 | Live/network approval | **Yes** — deployment and external side effects |
 
-### 4.6 Roll-up
+### 4.6 Roll-up *(the M2/M4 rows are now HISTORY, not forecast)*
 
-| To reach | Checkpoints (range) |
-|---|---|
-| M2 — first staged dataset | 5 – 7 |
-| End of the described Stage 0–10 plan (≈ M4) | 13 – 18 |
-| M5 — reviewed production candidate | +7 – 10 |
-| M6 — published JSON | +8 – 10 |
-| M7 — website integration | +6 – 10 |
-| **M1 → M7 total** | **34 – 48 checkpoints** |
+| To reach | Checkpoints (range) | Status |
+|---|---|---|
+| M2 — first staged dataset | 5 – 7 | **ACHIEVED** |
+| End of the described Stage 0–10 plan (≈ M4) | 13 – 18 | **M4 ACHIEVED**; Stage 10 not opened |
+| M5 — reviewed production candidate | +7 – 10 | unopened |
+| M6 — published JSON | +8 – 10 | not started |
+| M7 — website integration | +6 – 10 | not started |
+| **M1 → M7 total** | **34 – 48 checkpoints** | ~22–32 remain (§4.0) |
 
 **Stage 10 does not create or publish production JSON.** It writes two markdown documents. Anyone
 reading "only Stages 9 and 10 remain" as "publication is two stages away" is reading it wrong: the
@@ -781,6 +836,55 @@ zero-result**, every one reporting `all_below_relevance_threshold`. That is a re
 corpus, not a harness failure — the bar was not lowered. A live run's *shape* will be these 43 paths;
 its *content* is unknown.
 
+### 6.1a The retained Stage 9 root — CURRENT STATE
+
+```text
+C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4_stage9_retained
+```
+
+**This is where every live Stage 9 artifact lives.** The repository's four runtime paths
+(`state/taxonomy_harvest/`, `data/harvested/`, `runs/`, `LATEST_RUN_ID`) remain **absent by design**,
+and the validation harness asserts their absence before and after every run.
+
+| Run ID | Mode | Checkpoint | Milestone |
+|---|---|---|---|
+| `20260731T113526Z-23992` | `smoke` | S9-L2 | M2 |
+| `20260731T120702Z-20188` | `smoke` | S9-L3 | M3 — and the linkcheck base |
+| `20260801T085829Z-40852` | `linkcheck` | S9-L4 | M4 |
+
+```text
+3 run directories x 18 selected-run JSON   = 54
+12 ledgers                                 = 12
+12 rejection logs                          = 12
+1 LATEST_RUN_ID pointer                    =  1
+20 next_allowed_at lock files              = 20
+                                    total  = 99 regular files - 54 directories
+
+LATEST_RUN_ID  20260801T085829Z-40852
+aggregate      0a14269a00695fb2b259816b570c88a4df40a64f88e782d447f6a1abccab18e3
+transient      0 slot_*.lease - 0 owner - 0 pace.lock - 0 .tmp_*
+```
+
+**Do not describe this root as "one 43-file run".** The 43-path contract is what **one run** is
+validated against, and it is *not* the same as the root's file count:
+
+- **18 selected-run JSON** live under `runs/<run_id>/` and are that run's own immutable output;
+- **24 shared JSON** (12 ledgers + 12 rejection logs) are **cross-run documents updated in place** —
+  a second run adds its own 18 and *updates the same 24* (E9-11), which is why three runs give
+  54 + 24, not 3 x 42;
+- **1 pointer** completes the 43 paths `validate --run-id` checks (42 JSON + `LATEST_RUN_ID`);
+- **`locks/` is separate pacing infrastructure**, outside the 43-path contract entirely. It holds one
+  `next_allowed_at` per host directory and must be **preserved, never cleaned** — it is operational
+  evidence in its own right.
+
+**Disposition: retain unchanged** through Stage 10 and until a separately approved disposition
+checkpoint. All three runs are **evidence only** — none is a production candidate, none is
+publication-eligible, none has been promoted, none is consumed by any website.
+
+*Historical: before S9-L4 the root held two runs, 80 regular files, and aggregate
+`1dcdfff3642e3abded6d8edd95810db4fa37dd497e9a1db9b27d3eea0fd58a94`. That value is the pre-S9-L4
+baseline only.*
+
 ### 6.2 AX migration apply
 
 ```text
@@ -929,30 +1033,45 @@ source (feed / jsonapi / seed)
 
 ## 8 · Command-to-artifact matrix
 
-"Exists now?" means an executable owner was found in the tree. Planned syntax is **not** presented as
-executable.
+**Re-audited at Stage 9 closeout against `ec9bedc`.** Five words are kept distinct and must not be
+collapsed: **implemented** (an executable owner exists) · **executed** (it has actually been run) ·
+**networked** (it contacted a real external host) · **retained output** (its artifacts survive on
+disk) · **publication capability** (it can write `data/harvested/**` — nothing has this).
 
-| Command | Exists now? | Owner | Network? | Writes real runtime state? | Files created/changed | Retained? | Publication impact | Approval required | Execution history | Milestone owner |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `bash scripts/validate_task.sh --all` | **Yes** | `scripts/validate_task.sh` | **No** — offline by construction, mocked agents, temp state | **No** — and it *asserts* the four runtime paths are absent before **and** after, never deleting what it finds | None in the repository; temp trees only | No | None | No (routine gate) | **Run once authoritatively at S8-2** — exit 0, 736 s, 58/58 wrappers, zero skips | M1, done |
-| `migrate.sh entity-assess` | **Yes** | `src/harvest/migrate/entity_assess.py` | No | **No** — stdout only, unless `--output PATH` | None (or exactly one explicit `--output` file) | Only if `--output` given | None | No | Run in S7-1/S7-4/S7-6; **1,161 entities assessed, 0 migrated** | Stage 7, done |
-| `migrate.sh ax-cases --dry-run` (the default) | **Yes** | `src/harvest/migrate/ax_cases.py` | No | **No** — reads the protected registry, writes nothing | None | No | None | No | Run repeatedly; **231/231 accepted, exit 0**, byte-identical across runs | Stage 7, done |
-| `migrate.sh ax-cases --apply --state-root <tmp>` | **Yes** | `ax_cases.apply_migration()` | No | **Into the injected root only** | 3 JSON in one bundle (§6.2) | Deleted after every test | **None** — not publication | Yes, per invocation | Run **only** under temp roots; an AST scan forbids `--apply` without `--state-root` | Stage 7, done |
-| `migrate.sh ax-cases --apply` **against the default state root** | Recognised; **operationally unapproved** | same | No | **Yes** — would create `state/taxonomy_harvest/` | 3 JSON + 3 dirs | **Yes, permanently** | None — still not publication | **Yes, separately and explicitly** | **Never executed** | Unowned; would be its own checkpoint |
-| **A command that runs a taxonomy harvest** | **NOT IMPLEMENTED** | — | — | — | — | — | — | — | — | **Unowned — the blocking gap for M2** (§9 G1) |
-| `harvest.sh preflight-sources` | **NOT IMPLEMENTED** | — | Would be **first ever** network contact | Would | Undefined | — | None | Yes ×2 | Never | Stage 9 |
-| `harvest.sh smoke` (first) | **NOT IMPLEMENTED** | — | Yes | Yes — 43 paths | 43 | Yes | `publication_eligible: false` by derivation | Yes ×2 | Never | Stage 9 / M2 |
-| `harvest.sh smoke` (second) | **NOT IMPLEMENTED** | — | Yes | Yes — a second 43-path tree | 43 | Yes | None | Yes ×2 | Never | Stage 9 / M3 |
-| `harvest.sh compare-runs --normalize` | **NOT IMPLEMENTED** — zero occurrences in the tree | — | No | Unknown — **output form undefined** | Undefined | Undefined | None | Yes (checkpoint) | Never | Stage 9 / M3 |
-| `harvest.sh linkcheck --sample 20` | **NOT IMPLEMENTED** | — | Yes | Yes — a `mode: "linkcheck"` run | 43 (inferred) | Yes | None | Yes ×2 | Never | Stage 9 / M4 |
-| `harvest.sh refresh` | **NOT IMPLEMENTED** as a taxonomy command | — | Yes | Yes | Undefined | — | None | Yes ×2 | Never | **Unowned** (M7) |
-| `harvest.sh promote` | **NOT IMPLEMENTED** — zero occurrences | — | No | Yes — **writes tracked `data/harvested/**`** | Up to 16 stable JSON + a transient journal | **Yes, tracked** | **This is publication** | **Yes, strictest** | Never | **Unowned** (M6) |
-| `harvest.sh smoke-model` | **NOT IMPLEMENTED**; its `model_search` adapter raises `AdapterNotImplemented` | — | Yes | Yes | Undefined | — | None | Yes ×2 | Never | Stage 9, opt-in (plan §14 cmd 24) |
+### 8.1 The Stage 9 command surface — all six implemented
 
-**`scripts/harvest/harvest.sh` does not exist.** The master plan's acceptance commands invoke it
-about ten times. `scripts/harvest/` contains exactly: `check_config.py`, `check_facets.py`,
-`check_fixtures.py`, `gen_facet_schema.py`, `gen_protected_baseline.sh`, `hash_tree.py`,
-`migrate.sh`, `protected_baseline.py`, `verify_protected_baseline.sh`.
+`src/harvest/cli.py` registers exactly six commands and `PLANNED_COMMANDS` is empty. **There is no
+`harvest` key**, so no operator can perform a production harvest.
+
+| Command | Implemented | Executed live | Retained output | Publication capability |
+|---|---|---|---|---|
+| `preflight-sources` | Yes | **Once** (S9-L1, rc 1 — 25 rows, 19 ok / 6 robots-denied). rc 1 means "a source failed", not a crash | None — writes nothing, owns one transient lease root it removes | No |
+| `smoke` | Yes | **Twice** (S9-L2, S9-L3; rc 0 each) | **Yes** — two 43-path runs in the external retained root | **No** — `publication_eligible: false` by derivation |
+| `validate` | Yes | **Three times against real data** (both smokes, then the linkcheck run; rc 0, `valid: true` each) | None — read-only, offline, writes nothing | No |
+| `compare-runs` | Yes | **Once against two real runs** (rc 0, 0 invariant violations, `idempotent: true`) | None — **unpersisted stdout only**, over the 18 selected-run documents; the 24 shared ones are excluded by E9-15. **No `--normalize` exists** | No |
+| `diff` | Yes | **Never against real publication data** — temp roots and an absent `data/harvested/` only | None — read-only; `data/harvested/` is looked at and never created | No |
+| `linkcheck` | Yes | **Once** (S9-L4, rc 0) | **Yes** — a third run, `mode: "linkcheck"`, derived from the second smoke | **No** — non-`harvest` mode |
+
+**`identities_fetched: 19` in the linkcheck's stdout is a count of logical outcome owners.** It is
+**not** 19 downloaded pages: of those 19, **14 returned HTTP 200 and 5 were `robots_denied`**.
+
+### 8.2 Absent commands and producers
+
+| Surface | Status | What it blocks |
+|---|---|---|
+| a production `harvest` command | **Not implemented.** `mode: "harvest"` exists in the driver and is the only mode `derive_publication_eligibility` accepts, but no CLI command drives it live | M5 — the publication-eligible run itself |
+| `promote` | **Not implemented** — zero occurrences of the promotion vocabulary in `src/`, `scripts/`, `schemas/`, `config/` or `tests/` | M6 |
+| `refresh` | Not implemented as a taxonomy command | M7 |
+| `smoke-model` | Not implemented; its `model_search` adapter raises `AdapterNotImplemented` | Optional |
+| publication-manifest producer | Not implemented | M6 |
+| promotion journal | Not implemented | M6 |
+
+### 8.3 Migration commands *(unchanged by Stage 9)*
+
+`migrate.sh entity-assess` and `migrate.sh ax-cases --dry-run` are implemented, offline, and have
+run (1,161 entities assessed / 0 migrated; 231 of 231 accepted). `migrate.sh ax-cases --apply` works
+**only under an injected `--state-root`**; an apply against the repository default root remains
+**operationally unapproved and never executed**, and `state/taxonomy_harvest/` does not exist.
 
 ---
 
@@ -961,6 +1080,42 @@ about ten times. `scripts/harvest/` contains exactly: `check_config.py`, `check_
 Classified, not solved. Categories: **[R]** already resolved · **[S9]** Stage 9 planning decision ·
 **[PM]** later production milestone · **[OOS]** explicit out-of-scope follow-up · **[C]**
 contradiction requiring correction before implementation.
+
+### 9.0 Disposition at Stage 9 closeout
+
+**Nothing is deleted or renumbered.** Each item keeps its original text below; this table records
+what Stage 9 actually did to it.
+
+| Gap | Disposition |
+|---|---|
+| **G1** — no command runs the pipeline | **RESOLVED.** `harvest.sh` + `cli.py` exist; `smoke` and `linkcheck` have run live |
+| **G2** — stage completion ≠ dataset creation | **RESOLVED IN FACT** — three retained runs now exist. The *lesson* stands permanently |
+| **G3** — fixture success ≠ live success | **RESOLVED BY EVIDENCE.** Live contact happened four times; robots proved time-varying, and 5 of 19 linkcheck targets were denied |
+| **G4** — production-quality enriched run has no owner | **OPEN.** No production `harvest` command; M5 unopened |
+| **G5** — "candidate output" ambiguity | **OPEN** as a naming contradiction; no candidate producer exists |
+| **G6** — `refresh` collides with the legacy pipeline | **OPEN.** `refresh` remains unimplemented |
+| **G7** — promotion designed, not implemented | **OPEN.** Zero promotion code |
+| **G8** — Stage 9 as sketched is too broad | **RESOLVED.** Decomposed into S9-0…S9-6, S9-6A, S9-L1…S9-L4 and S9-C |
+| **G9** — human review has no artifact or process | **OPEN.** Blocks M5 |
+| **G10** — website integration unowned | **OPEN** |
+| **G11** — master plan runtime layout partly fictional | **PARTLY RESOLVED.** `harvest.sh` now exists; the repository runtime paths remain deliberately absent because Stage 9 state is external |
+| **G12** — manifest advertises unimplemented modes | **PARTLY RESOLVED.** `smoke` and `linkcheck` now have producers; `smoke_model`, `refresh` and `migration` do not, and `runvalidate` **refuses** them |
+| **G13** — domain-throttle instability | **OPEN.** It passed in every gate, but that is an observation, not a resolution; never accept it as a permanent flake |
+| **G14** — CF-6 blocks any `config/` edit | **OPEN and confirmed in practice.** No Stage 9 checkpoint edited `config/` |
+| **G15** — source tiers configured but unreachable | **OPEN** |
+| **G16** — Stage 10 does not publish | **STANDS.** Stage 10 is two markdown documents |
+| **G17** — 508 untracked scratch files | **OPEN, out of scope.** The baseline held at exactly 508 through every Stage 9 checkpoint and is used as an invariant |
+
+**New at Stage 9 closeout — G18, carried forward, deliberately NOT fixed by S9-C:**
+
+### G18 — `cli.py`'s pre-request refusal comment is wrong for `linkcheck` · **[C]**
+
+`src/harvest/cli.py`'s `CliError` handler comments that *"Nothing has been probed at this point:
+every such refusal happens before the first request."* That holds for the other five commands. It is
+**false for `linkcheck`**, whose "no cell received a checked record" and manifest-validation refusals
+fire **after fetching and after partial writes** — so a `CliError` exit 2 from `linkcheck` does
+**not** guarantee that no artifact was written. **S9-C recorded this and did not fix it:** it is a
+production-path edit and needs its own maintenance checkpoint with its own allowed-path set.
 
 ### G1 — There is no command that runs the pipeline · **[C]**
 
@@ -1143,28 +1298,32 @@ Read in this order; each outranks the one below it where they differ.
 | # | Source | What it is authoritative for |
 |---|---|---|
 | 1 | Committed code under `src/harvest/**`, `scripts/harvest/**` | What actually exists and runs |
-| 2 | `tests/**` (58 wrappers, 39 taxonomy) | What is proven, and at which layer |
+| 2 | `tests/**` (**63 wrappers**, 44 taxonomy) | What is proven, and at which layer |
 | 3 | `schemas/harvest/*.v1.json`, `config/harvest/**` | The data contracts and the 12-cell taxonomy |
-| 4 | `docs/harvest/handoffs/HANDOFF_STAGE_<N>_COMPLETE_*.md` | Per-stage delivery record, measurements, carried-forward findings |
-| 5 | `docs/harvest/STAGE_<N>_IMPLEMENTATION_PLAN.md` | The approved plan and errata for stages 2.5 – 8 |
-| 6 | `docs/harvest/TODO.md` | The live checklist and current position |
-| 7 | **This file** | Cross-stage roadmap, artifact lifecycle, gap register |
-| 8 | `docs/harvest/IMPLEMENTATION_PLAN.md` | **Design input only.** Pre-Stage-3 in places, superseded by Stage 7 §11, and describes commands and paths that do not exist (G11) |
+| 4 | `docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md` | **The current completion authority** — Stage 9 delivery record, commit chain, live evidence, retained-root disposition, carried-forward work |
+| 5 | `docs/harvest/handoffs/HANDOFF_STAGE_<N>_COMPLETE_*.md` | Per-stage delivery record for earlier stages |
+| 6 | `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md` | **The Stage 9 plan of record** — every command contract, D9-A/D9-B, and errata E9-1 … E9-21 |
+| 7 | `docs/harvest/STAGE_<N>_IMPLEMENTATION_PLAN.md` | The approved plan and errata for stages 2.5 – 8 |
+| 8 | `docs/harvest/TODO.md` | The live checklist and current position |
+| 9 | **This file** | Cross-stage roadmap, artifact lifecycle, gap register |
+| 10 | `docs/harvest/IMPLEMENTATION_PLAN.md` | **Design input only.** Pre-Stage-3 in places, superseded by Stage 7 §11, and describes commands and paths that do not exist (G11) |
 
 **Specific claims and where they were checked:**
 
 - 43-path run set — `tests/harvest/test_target_determinism.py:149` (`expected_paths`) and `:397`
   (`test_the_tree_is_exactly_the_43_expected_paths`).
-- Unconditional fixture opener — `src/harvest/run_cells.py:794-806`.
-- No run CLI — no `__main__` or `argparse` in `src/harvest/run_cells.py`; `scripts/harvest/` listing.
+- *(Superseded by Stage 9)* Unconditional fixture opener — `src/harvest/run_cells.py:794-806`.
+  `run()` now takes an injected `Transport`; `cli.py` owns the single live-opener decision.
+- *(Superseded by Stage 9)* No run CLI. `scripts/harvest/harvest.sh` and `src/harvest/cli.py` exist,
+  registering six commands. **There is still no `"harvest"` key in `cli.COMMANDS`.**
 - 3-file migration bundle — `src/harvest/migrate/base.py:200-210` (`BUNDLE_RELATIVE_PATHS`).
 - Migration source corpus — `ax_cases.py:517` `DEFAULT_REGISTRY = "state/ax_case_harvest_registry.json"`,
   one of the 18 paths in `tests/fixtures/taxonomy/protected_paths.txt`.
 - Runtime-path guard — `scripts/validate_task.sh:250` (`RUNTIME_PATHS`), checked before and after.
-- Absent producers — repository-wide searches for `promotion_receipt`, `promotion_journal`,
-  `publication_manifest`, `compare-runs`, `compare_runs`, `preflight-sources`, `preflight_sources`,
-  `promote_staging`, `promote_rollback`, `--publication-root`: **zero matches** in `src/`, `scripts/`,
-  `schemas/`, `config/`, `tests/`.
+- Absent producers, **re-checked at `ec9bedc`** — `promotion_receipt`, `promotion_journal`,
+  `publication_manifest`, `promote_staging`, `promote_rollback`, `--publication-root`: **still zero
+  matches** in `src/`, `scripts/`, `schemas/`, `config/`, `tests/`. *(`compare-runs` and
+  `preflight-sources` were on this list before Stage 9 and are now implemented — see §8.1.)*
 - 12 cells / 25 sources / 3 topics — `config/harvest/topics/*.v1.json` and
   `run_cells.configured_cells()`.
 - Published-set derivation — `IMPLEMENTATION_PLAN.md` §1 path contract × the committed taxonomy.
