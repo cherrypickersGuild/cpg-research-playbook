@@ -1097,9 +1097,63 @@ stage_10_state:              **STAGE 10 OPEN FOR DOCUMENTATION-ONLY CLOSEOUT WOR
                              STARTED. Publication, promotion and website consumption
                              ZERO.** Stage 10 closes ONLY the originally described
                              Stage 0-10 implementation task and achieves no milestone.
+                             POSITION (never approval): S10-0 PUBLISHED at ab99b32 ·
+                             S10-1 PUBLISHED at b3b7ad9 · S10-2 note-drafting
+                             boundary complete with the CHECKPOINT INCOMPLETE
+                             (see stage_10_2_state) · S10-C UNAPPROVED. A published
+                             checkpoint authorizes neither the next checkpoint nor
+                             its validation, commit or push.
+stage_10_1_commit:           b3b7ad92994148b7ccde18827ac9cef3cfc4dc5b   docs(harvest):
+                             record the implementation report — S10-1, THREE
+                             documentation paths, parent ab99b32. COMPLETE,
+                             VALIDATED, COMMITTED AND PUBLISHED.
+                             docs/harvest/IMPLEMENTATION_REPORT.md is the
+                             AUTHORITATIVE WHOLE-TASK RETROSPECTIVE over the fixed
+                             historical range 8865c54e..c3497fa (73 commits · 269
+                             tracked paths · 267 A / 2 M; full inventory in its
+                             Appendix A). Its own §17 records only the S10-1
+                             DRAFTING boundary because it was written before both
+                             the L0 validation and the commit — correct at the time,
+                             superseded by this entry, and NOT to be edited.
+                             NO executable, schema, config or test byte changed;
+                             wrapper inventory stays 63 and the closing executable
+                             baseline stays ec9bedc.
+stage_10_2_state:            **NOTE-DRAFTING BOUNDARY COMPLETE; THE S10-2 CHECKPOINT
+                             IS INCOMPLETE.** docs/harvest/CONVERGENCE_NOTE.md exists
+                             in the working tree, UNCOMMITTED and UNVALIDATED.
+                             It assesses all five S10-0 gates against committed
+                             evidence and concludes MATRIX UNIFICATION REMAINS
+                             DEFERRED — Gate 1 UNMET (no named product decision
+                             authority for the identity fork), Gate 2 UNMET (no
+                             field- or artifact-level mapping exists; no matrix
+                             JSON Schema exists at all), Gate 3 PARTIALLY EVIDENCED
+                             (facts committed on both sides; the required
+                             equivalent/intentionally-different/blocking
+                             classification does not exist, and bounded concurrency
+                             and determinism are not classifiable from current
+                             evidence), Gate 4 PARTIALLY EVIDENCED (baselines,
+                             boundary enforcement and 63/63 regression evidence for
+                             BOTH families are in order; representative comparison
+                             evidence is absent because state/matrix/ has never
+                             existed, and the gate forbids building it merely to
+                             satisfy itself), Gate 5 UNMET (5 of 7 requirements
+                             absent; the protected-path approval process and
+                             continued matrix support are the two that hold).
+                             NONE SATISFIED. The note records the gates and the
+                             ratified definition as AUTHORED AT S10-0, states the
+                             MATRIX PATH IS NOT DEPRECATED, and states it AUTHORIZES
+                             NO CODE CHANGE AND NO PROTECTED-PATH CHANGE. It defines
+                             no new gate and weakens none.
+                             FORMAL L0 VALIDATION, THE ATOMIC COMMIT AND PUBLICATION
+                             ARE SEPARATE REQUIRED BOUNDARIES, and no prospective
+                             claim is made about any of them. At the close of the
+                             document-edit boundary L0 validation had not yet run.
+                             S10-C REMAINS UNAPPROVED; Stage 10 is NOT closed.
 stage_10_plan_of_record:     docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md   OPEN —
-                             S10-0 APPROVED AND COMPLETE; S10-1, S10-2 and S10-C
-                             UNAPPROVED. Ratifies the Stage 10 contract, the D10-A
+                             S10-0 AND S10-1 APPROVED, COMPLETE AND PUBLISHED;
+                             S10-2 APPROVED AND IN PROGRESS (note-drafting boundary
+                             complete, checkpoint incomplete); S10-C UNAPPROVED.
+                             Ratifies the Stage 10 contract, the D10-A
                              matrix-unification definition, the D10-B five reconsideration
                              gates, the four later checkpoint scopes and the L0-only
                              validation policy. Errata E10-1 (the five gates were NEVER
@@ -2817,15 +2871,18 @@ protected matrix path.
 
 ### The two substantive deliverables
 
-- [ ] `docs/harvest/IMPLEMENTATION_REPORT.md` — every tracked file created/changed across the whole
+- [x] `docs/harvest/IMPLEMENTATION_REPORT.md` — every tracked file created/changed across the whole
       task, exact commands, results. The file inventory is **generated deterministically from Git**
       (`git diff --name-status 8865c54e..c3497fa`), never reconstructed from memory, and the report
       **cites** the per-stage handoffs rather than re-deriving them. It must **not** record its own
-      future commit SHA. Sixteen required content heads: plan §5.1
+      future commit SHA. Sixteen required content heads: plan §5.1.
+      **DELIVERED — published at `b3b7ad9` (S10-1).**
 - [ ] `docs/harvest/CONVERGENCE_NOTE.md` — assesses the **five reconsideration gates newly authored
       and ratified at S10-0**, explains the semantic fork, states what remains deferred, defines the
       evidence required for reconsideration, **authorizes no code change**, and restates that the
-      matrix path is not deprecated
+      matrix path is not deprecated.
+      **DRAFTED — every required-content bullet satisfied; unchecked because the S10-2 checkpoint
+      still owes formal L0 validation and an atomic commit.**
 - [ ] Unresolved issues, limitations, blocked sources and recommended follow-up — **content inside
       the two documents**, not a third file
 
@@ -2834,22 +2891,35 @@ protected matrix path.
 - [x] **S10-0** plan of record — TWO paths: `docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md` (new) ·
       `docs/harvest/TODO.md`. Ratifies the Stage 10 contract, the matrix-unification definition, the
       five gates, the later checkpoint scopes and the L0-only validation policy
-- [ ] **S10-1** implementation report — candidate paths: `docs/harvest/IMPLEMENTATION_REPORT.md`
-      (new) · the Stage 10 plan · this file.
-      **S10-1 REPORT-DRAFTING BOUNDARY COMPLETE.** The report exists in the working tree, built on
+- [x] **S10-1** implementation report — THREE paths: `docs/harvest/IMPLEMENTATION_REPORT.md` (new) ·
+      the Stage 10 plan · this file.
+      **COMPLETE, VALIDATED, COMMITTED AND PUBLISHED at `b3b7ad92994148b7ccde18827ac9cef3cfc4dc5b`**
+      (`docs(harvest): record the implementation report`, parent `ab99b32`). The report is built on
       the fixed historical range `8865c54e..c3497fa` (73 commits · 269 tracked paths · 267 A / 2 M,
-      reproduced from Git) with the complete path-level inventory in its Appendix A. **Formal L0
-      validation and the atomic commit are separate required boundaries; S10-1 stays unchecked until
-      those boundaries complete.** No publication has occurred. *(At report-draft close, L0
-      validation had not yet run.)*
+      reproduced from Git) with the complete path-level inventory in its Appendix A, and is now the
+      **authoritative whole-task retrospective**. *(Historical: at the close of the S10-1
+      document-edit boundary L0 validation had not yet run; it ran and passed, and the commit
+      followed. The report's own §17 records only the drafting boundary because it predates both —
+      correct at the time and not to be edited.)*
 - [ ] **S10-2** convergence note — candidate paths: `docs/harvest/CONVERGENCE_NOTE.md` (new) · the
       Stage 10 plan · this file. Its subject is the **protected** matrix family, so its L0 run
-      asserts the 18/18 protected baseline explicitly and by name
+      asserts the 18/18 protected baseline explicitly and by name.
+      **S10-2 NOTE-DRAFTING BOUNDARY COMPLETE.** `CONVERGENCE_NOTE.md` exists in the working tree.
+      It assesses all five S10-0 gates against committed evidence and concludes **matrix
+      unification remains deferred** — Gate 1 UNMET · Gate 2 UNMET · Gate 3 PARTIALLY EVIDENCED ·
+      Gate 4 PARTIALLY EVIDENCED · Gate 5 UNMET, **none satisfied**; records the gates and the
+      ratified definition as **authored at S10-0**; states the matrix path is **not deprecated**;
+      and states it **authorizes no code change and no protected-path change**. It defines no new
+      gate and weakens none. **Formal L0 validation, the atomic commit and publication are separate
+      required boundaries; S10-2 stays unchecked until they complete**, and no prospective claim is
+      made about any of them. *(At note-draft close, L0 validation had not yet run.)*
 - [ ] **S10-C** documentation closeout — candidate paths:
       `docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_<completion-date>.md` (new) ·
       `docs/harvest/ROADMAP_AND_ARTIFACT_LIFECYCLE.md` · the Stage 10 plan · this file ·
       `docs/harvest/HANDOFF_CURRENT.md`. The completion date is fixed and approved **at the S10-C
-      boundary**; do not guess it and do not create the handoff early
+      boundary**; do not guess it and do not create the handoff early.
+      **S10-C REMAINS UNCHECKED AND UNAPPROVED**; the Stage 10 completion handoff does not exist and
+      must not be created before its own approval by name
 
 **Forecast variance, recorded as a variance and not as history.** The roadmap forecast Stage 10 at
 **1-2 checkpoints**; it is planned as **four**. Four were **not** always planned. The causes: the
@@ -2965,9 +3035,12 @@ post-Stage-9 milestones, mostly undesigned; see `ROADMAP_AND_ARTIFACT_LIFECYCLE.
 2. **Entity registry migration.** 1,161 entities are assessed (Stage 7) but not migrated; their
    destination taxonomy is an open product decision. No `Dev Tools` topic was invented.
 3. **Matrix convergence.** Gated behind the **five reconsideration gates newly authored and ratified
-   at S10-0** and recorded in `docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md` §4; `CONVERGENCE_NOTE.md`
-   will assess their current status. They were **not** enumerated in any earlier document. The matrix
-   path is **not deprecated**, and neither the gates nor the ratified definition of matrix unification
-   authorizes any code change.
+   at S10-0** and recorded in `docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md` §4. They were **not**
+   enumerated in any earlier document. `CONVERGENCE_NOTE.md` has now **assessed** them and found
+   **matrix unification remains deferred** — three gates UNMET, two PARTIALLY EVIDENCED, **none
+   satisfied** (see `stage_10_2_state`). **Assessing a gate resolves nothing**: the matrix identity
+   fork stays open, the matrix path is **not deprecated**, and neither the gates, the ratified
+   definition, nor the note authorizes any code change. Reconsideration would need a separate
+   approved product decision; implementation would need another separate approved checkpoint.
 4. **GitHub star backfill** (handoff item 3) and the **harvest→pipeline bridge** (handoff item 5)
    remain open in the legacy pipeline and are untouched here.

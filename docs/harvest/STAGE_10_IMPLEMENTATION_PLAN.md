@@ -31,6 +31,21 @@ Retained Stage 9 root     C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4_
                           SEPARATE future approval, and Stage 10 does not discharge it.
 ```
 
+**Checkpoint progress, recorded durably** (detail in §6; this block states position, never approval):
+
+```text
+S10-0   COMPLETE · VALIDATED · COMMITTED · PUBLISHED at ab99b32
+S10-1   COMPLETE · VALIDATED · COMMITTED · PUBLISHED at b3b7ad9
+S10-2   NOTE-DRAFTING BOUNDARY COMPLETE. The CHECKPOINT is INCOMPLETE:
+        formal L0 validation is a separate required boundary, the atomic
+        commit is a separate later boundary, and publication is a further
+        separate boundary. No prospective claim is made about any of them.
+S10-C   UNAPPROVED. Stage 10 is NOT closed.
+```
+
+**Nothing above approves anything below it.** A published checkpoint authorizes neither the next
+checkpoint nor its validation, commit or push.
+
 **Stage 10 closes only the originally described Stage 0–10 implementation task.** It is two markdown
 documents plus their closeout. It creates no JSON, runs no harvest, produces no reviewed production
 candidate, promotes nothing, publishes nothing, integrates with no website, establishes no recurring
@@ -434,6 +449,11 @@ Required content:
 
 The note may name the matrix path and `state/matrix/**` (§3.3). It may not modify them.
 
+**Status of this contract.** The note has been drafted and satisfies every required-content bullet
+above; see the S10-2 progress block in §6. Its **checkpoint** completion still depends on formal L0
+validation and an atomic commit, each a separate boundary — a satisfied content contract is not a
+completed checkpoint.
+
 ### 5.3 What Stage 10 does not create
 
 ```text
@@ -467,19 +487,21 @@ since Stage 4's closeout and that S9-1, S9-2 and S9-4 each hit in practice.
 | Does NOT authorize | either deliverable · the closeout handoff · `HANDOFF_CURRENT.md` · the roadmap · formal L0 validation · staging · commit · push · memory synchronization |
 | Why separate | The gate set had to be defined before the note that assesses it. A note that defined its own gates would be self-authorizing |
 
-### S10-1 — implementation report · **IN PROGRESS — REPORT-DRAFTING BOUNDARY COMPLETE**
+### S10-1 — implementation report · **COMPLETE, VALIDATED, COMMITTED AND PUBLISHED**
 
-> **S10-1 progress.** `docs/harvest/IMPLEMENTATION_REPORT.md` **has been drafted**, and the fixed
-> historical range and its inventory were generated deterministically from Git —
-> `8865c54e..c3497fa`, 73 commits · 269 tracked paths · 267 A / 2 M, with the complete path-level
-> listing in the report's Appendix A.
+> **S10-1 is complete.** `docs/harvest/IMPLEMENTATION_REPORT.md` was drafted, formally validated at
+> L0, committed atomically over its three approved paths, and **published at
+> `b3b7ad92994148b7ccde18827ac9cef3cfc4dc5b`** — `docs(harvest): record the implementation report`,
+> parent `ab99b32` (S10-0). The fixed historical range and its inventory were generated
+> deterministically from Git — `8865c54e..c3497fa`, 73 commits · 269 tracked paths · 267 A / 2 M,
+> with the complete path-level listing in the report's Appendix A.
 >
-> **Formal L0 validation is a separate required boundary, and its result is not recorded
-> prospectively here. The atomic commit is a later separate boundary. S10-1 remains INCOMPLETE until
-> validation passes and the validated three-path set is committed.** No publication has occurred, and
-> **S10-2 and S10-C remain UNAPPROVED**.
+> The report is now the **authoritative whole-task retrospective** for the Stage 0–9 implementation.
 >
-> *Historical note: at the close of the document-edit boundary, validation had not yet run.*
+> *Historical note: at the close of the S10-1 document-edit boundary, formal L0 validation had not
+> yet run; it ran and passed afterwards, and the commit followed it. The report's own §17 records
+> only the drafting boundary because it was written before either — that is a correct
+> point-in-time statement of a document that must not be edited to describe its own successor.*
 
 | Field | Value |
 |---|---|
@@ -495,7 +517,24 @@ since Stage 4's closeout and that S9-1, S9-2 and S9-4 each hit in practice.
 | Does NOT authorize | closing any carried-forward item · any milestone claim · the convergence note · the closeout |
 | Why separate | Different subject and different failure mode from S10-2, and it must be able to land even if the convergence decision stalls |
 
-### S10-2 — convergence note
+### S10-2 — convergence note · **IN PROGRESS — NOTE-DRAFTING BOUNDARY COMPLETE**
+
+> **S10-2 progress.** `docs/harvest/CONVERGENCE_NOTE.md` **has been drafted**. It assesses each of
+> the five S10-0 gates against committed evidence and reaches **matrix unification remains
+> deferred** — Gate 1 UNMET · Gate 2 UNMET · Gate 3 PARTIALLY EVIDENCED · Gate 4 PARTIALLY
+> EVIDENCED · Gate 5 UNMET; **no gate satisfied**. It records the gates and the ratified definition
+> as **authored at S10-0**, states that the matrix path is **not deprecated**, and states that it
+> **authorizes no code change and no protected-path change**. **S10-2 defines no new gate and
+> weakens no existing gate.**
+>
+> **Formal L0 validation is a separate required boundary, and its result is not recorded
+> prospectively here. The atomic commit is a later separate boundary, and publication is a further
+> separate boundary. The S10-2 checkpoint as a whole remains INCOMPLETE until validation passes and
+> the validated three-path set is committed.** **S10-C remains UNAPPROVED**, and Stage 10 is not
+> closed.
+>
+> *Historical note: at the close of the S10-2 document-edit boundary, formal L0 validation had not
+> yet run.*
 
 | Field | Value |
 |---|---|
