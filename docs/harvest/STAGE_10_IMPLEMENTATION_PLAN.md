@@ -467,7 +467,19 @@ since Stage 4's closeout and that S9-1, S9-2 and S9-4 each hit in practice.
 | Does NOT authorize | either deliverable · the closeout handoff · `HANDOFF_CURRENT.md` · the roadmap · formal L0 validation · staging · commit · push · memory synchronization |
 | Why separate | The gate set had to be defined before the note that assesses it. A note that defined its own gates would be self-authorizing |
 
-### S10-1 — implementation report
+### S10-1 — implementation report · **IN PROGRESS — REPORT-DRAFTING BOUNDARY COMPLETE**
+
+> **S10-1 progress.** `docs/harvest/IMPLEMENTATION_REPORT.md` **has been drafted**, and the fixed
+> historical range and its inventory were generated deterministically from Git —
+> `8865c54e..c3497fa`, 73 commits · 269 tracked paths · 267 A / 2 M, with the complete path-level
+> listing in the report's Appendix A.
+>
+> **Formal L0 validation is a separate required boundary, and its result is not recorded
+> prospectively here. The atomic commit is a later separate boundary. S10-1 remains INCOMPLETE until
+> validation passes and the validated three-path set is committed.** No publication has occurred, and
+> **S10-2 and S10-C remain UNAPPROVED**.
+>
+> *Historical note: at the close of the document-edit boundary, validation had not yet run.*
 
 | Field | Value |
 |---|---|

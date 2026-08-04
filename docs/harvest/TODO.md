@@ -2835,7 +2835,13 @@ protected matrix path.
       `docs/harvest/TODO.md`. Ratifies the Stage 10 contract, the matrix-unification definition, the
       five gates, the later checkpoint scopes and the L0-only validation policy
 - [ ] **S10-1** implementation report — candidate paths: `docs/harvest/IMPLEMENTATION_REPORT.md`
-      (new) · the Stage 10 plan · this file
+      (new) · the Stage 10 plan · this file.
+      **S10-1 REPORT-DRAFTING BOUNDARY COMPLETE.** The report exists in the working tree, built on
+      the fixed historical range `8865c54e..c3497fa` (73 commits · 269 tracked paths · 267 A / 2 M,
+      reproduced from Git) with the complete path-level inventory in its Appendix A. **Formal L0
+      validation and the atomic commit are separate required boundaries; S10-1 stays unchecked until
+      those boundaries complete.** No publication has occurred. *(At report-draft close, L0
+      validation had not yet run.)*
 - [ ] **S10-2** convergence note — candidate paths: `docs/harvest/CONVERGENCE_NOTE.md` (new) · the
       Stage 10 plan · this file. Its subject is the **protected** matrix family, so its L0 run
       asserts the 18/18 protected baseline explicitly and by name
