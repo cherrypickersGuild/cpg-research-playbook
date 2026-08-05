@@ -1,7 +1,12 @@
 # Stage 10 — final report and convergence note: plan of record
 
 ```text
-Status                    STAGE 10 OPEN FOR DOCUMENTATION-ONLY CLOSEOUT WORK.
+Status                    STAGE 10 CLOSED BY THE S10-C COMMIT CONTAINING THIS PLAN
+                          AND HANDOFF_STAGE_10_COMPLETE_2026-08-04.md. The closeout
+                          commit SHA is intentionally NOT self-recorded, and this plan
+                          asserts nothing about the S10-C L0 result or publication.
+                          [HISTORICAL, as written at S10-0:]
+                          STAGE 10 OPEN FOR DOCUMENTATION-ONLY CLOSEOUT WORK.
                           S10-0 is the commit containing this file. Its SHA is
                           intentionally NOT self-recorded, and this plan asserts
                           nothing about whether that commit has been published.
@@ -36,12 +41,24 @@ Retained Stage 9 root     C:\Users\SJ\Documents\ClaudeWorkspace\axCaseResearch4_
 ```text
 S10-0   COMPLETE · VALIDATED · COMMITTED · PUBLISHED at ab99b32
 S10-1   COMPLETE · VALIDATED · COMMITTED · PUBLISHED at b3b7ad9
-S10-2   NOTE-DRAFTING BOUNDARY COMPLETE. The CHECKPOINT is INCOMPLETE:
-        formal L0 validation is a separate required boundary, the atomic
-        commit is a separate later boundary, and publication is a further
-        separate boundary. No prospective claim is made about any of them.
-S10-C   UNAPPROVED. Stage 10 is NOT closed.
+S10-2   COMPLETE · FORMALLY L0-VALIDATED · ATOMICALLY COMMITTED ·
+        PUBLISHED at 4e7abaf
+S10-C   The closing checkpoint represented by the commit CONTAINING this plan
+        and docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_2026-08-04.md.
 ```
+
+**S10-C, stated durably.** The S10-C closeout document set is authored **for** the S10-C commit
+containing these files. **That commit closes Stage 10 and the original Stage 0–10 documentation
+task.** The closeout commit SHA is **intentionally not self-recorded**. **Formal L0 validation is a
+separate required boundary before commit; publication is a separate later boundary; project-memory
+synchronization is another separate later boundary.** This document does not prospectively assert the
+result of any later boundary.
+
+*Historical note: at the close of the S10-C document-edit boundary, formal L0 validation had not yet
+run.*
+
+**Stage 10 is closed by the S10-C commit containing the completion handoff.** The uncommitted
+working-tree draft does not itself constitute the completed checkpoint.
 
 **Nothing above approves anything below it.** A published checkpoint authorizes neither the next
 checkpoint nor its validation, commit or push.
@@ -517,24 +534,23 @@ since Stage 4's closeout and that S9-1, S9-2 and S9-4 each hit in practice.
 | Does NOT authorize | closing any carried-forward item · any milestone claim · the convergence note · the closeout |
 | Why separate | Different subject and different failure mode from S10-2, and it must be able to land even if the convergence decision stalls |
 
-### S10-2 — convergence note · **IN PROGRESS — NOTE-DRAFTING BOUNDARY COMPLETE**
+### S10-2 — convergence note · **COMPLETE, L0-VALIDATED, COMMITTED AND PUBLISHED**
 
-> **S10-2 progress.** `docs/harvest/CONVERGENCE_NOTE.md` **has been drafted**. It assesses each of
-> the five S10-0 gates against committed evidence and reaches **matrix unification remains
-> deferred** — Gate 1 UNMET · Gate 2 UNMET · Gate 3 PARTIALLY EVIDENCED · Gate 4 PARTIALLY
-> EVIDENCED · Gate 5 UNMET; **no gate satisfied**. It records the gates and the ratified definition
-> as **authored at S10-0**, states that the matrix path is **not deprecated**, and states that it
-> **authorizes no code change and no protected-path change**. **S10-2 defines no new gate and
-> weakens no existing gate.**
+> **S10-2 is complete.** `docs/harvest/CONVERGENCE_NOTE.md` was drafted, formally validated at L0,
+> committed atomically over its three approved paths, and **published at
+> `4e7abaf3a359d24661c7cb9121a7d24635de660a`** — `docs(harvest): record the convergence assessment`,
+> parent `b3b7ad9` (S10-1). It assesses each of the five S10-0 gates against committed evidence and
+> reaches **matrix unification remains deferred** — Gate 1 UNMET · Gate 2 UNMET · Gate 3 PARTIALLY
+> EVIDENCED · Gate 4 PARTIALLY EVIDENCED · Gate 5 UNMET; **no gate satisfied**. It records the gates
+> and the ratified definition as **authored at S10-0**, states that the matrix path is **not
+> deprecated**, and states that it **authorizes no code change and no protected-path change**.
+> **S10-2 defined no new gate and weakened no existing gate.**
 >
-> **Formal L0 validation is a separate required boundary, and its result is not recorded
-> prospectively here. The atomic commit is a later separate boundary, and publication is a further
-> separate boundary. The S10-2 checkpoint as a whole remains INCOMPLETE until validation passes and
-> the validated three-path set is committed.** **S10-C remains UNAPPROVED**, and Stage 10 is not
-> closed.
->
-> *Historical note: at the close of the S10-2 document-edit boundary, formal L0 validation had not
-> yet run.*
+> *Historical note: two L0 runs failed before the passing one — the first on absolute
+> matrix-history and operational-behaviour claims that exceeded their evidence, the second on
+> merging live output with production-state output. Both were corrected under separately approved
+> bounded document-edit boundaries. The failed runs are evidence for their own candidates and are
+> never described as superseded.*
 
 | Field | Value |
 |---|---|
@@ -550,7 +566,20 @@ since Stage 4's closeout and that S9-1, S9-2 and S9-4 each hit in practice.
 | Does NOT authorize | any matrix change · any taxonomy identity change · deprecating the matrix path · reopening S9-5C3 · any reconsideration of unification |
 | Why separate | Its subject is a different, protected pipeline, and its principal risk — an undefined or overstated gate set — is unrelated to the report's |
 
-### S10-C — documentation closeout
+### S10-C — documentation closeout · **CLOSEOUT DOCUMENT SET AUTHORED FOR THE COMMIT CONTAINING IT**
+
+> **S10-C position.** The five-path closeout set has been authored for the S10-C commit containing
+> it: `docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_2026-08-04.md` (new), the roadmap, this plan,
+> `TODO.md` and `HANDOFF_CURRENT.md`. **The completion date `2026-08-04` was fixed at this boundary
+> using the actual Seoul date and does not move if a later boundary crosses midnight.**
+>
+> **That commit closes Stage 10 and the original Stage 0–10 documentation task.** Its SHA is
+> **intentionally not self-recorded**. **Formal L0 validation is a separate required boundary before
+> commit, publication is a separate later boundary, and project-memory synchronization is another
+> separate later boundary** — no result is asserted for any of them here.
+>
+> *Historical note: at the close of the S10-C document-edit boundary, formal L0 validation had not
+> yet run.*
 
 | Field | Value |
 |---|---|
@@ -714,10 +743,18 @@ retained Stage 9 root ........ RETAIN UNCHANGED pending a separate disposition c
 The report (§5.1 head 11) and the closeout handoff must both carry this set. The convergence note
 carries only the matrix identity fork; the others are not its subject.
 
-## 10 · `HANDOFF_CURRENT.md` disposition · **approved for S10-C, not for S10-0**
+## 10 · `HANDOFF_CURRENT.md` disposition · **DISCHARGED AT S10-C**
 
-`docs/harvest/HANDOFF_CURRENT.md` describes itself as *"Pointer file. Read this first."* It was last
-updated on **2026-07-28** in the Stage 2.5 session, points at
+> **Status: done.** At S10-C the file was **replaced with a concise pointer** at
+> `docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_2026-08-04.md`, dated `2026-08-04`. Every
+> Stage 2.5-era statement below was removed — the old pointer, the Stage 3 blocker, the
+> "nothing pushed" state, the assertion and wrapper counts, the verification command block, the file
+> map and the seven Stage 3 invariants. The paragraph that follows is the **historical record of the
+> defect**, retained so the disposition can be audited; it is no longer a description of the file.
+
+**Historical — the state that made this disposition necessary.**
+`docs/harvest/HANDOFF_CURRENT.md` described itself as *"Pointer file. Read this first."* It was last
+updated on **2026-07-28** in the Stage 2.5 session, pointed at
 `handoffs/HANDOFF_STAGE_2_5_COMPLETE_2026-07-28.md`, and records
 `push_state: local only — nothing pushed to origin/main`. All three statements are now false, and it
 appears in neither the roadmap §11 evidence index nor the project-memory reading order — so the tree

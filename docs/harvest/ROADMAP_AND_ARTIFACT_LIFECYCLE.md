@@ -10,8 +10,12 @@ executable baseline `ec9bedc5f209927ffd2899126ff20c2b31af0245`** (the S9-C docum
 contains no executable change); where the master plan describes something with no executable owner,
 that is recorded as a gap rather than as a feature. Inference is labelled inference.
 
-**Current authorities:** `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md` and
-`docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md`.
+**Current authorities:** `docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_2026-08-04.md` — the
+current overall completion authority — and `docs/harvest/STAGE_10_IMPLEMENTATION_PLAN.md`.
+**Retained as per-stage evidence, not superseded:**
+`docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md` remains Stage 9's completion
+authority, `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md` remains the Stage 9 plan of record, and the
+earlier per-stage handoffs remain authoritative for their own stages.
 `docs/harvest/IMPLEMENTATION_PLAN.md` remains **design input only** — committed code and
 current-stage records supersede it.
 
@@ -52,8 +56,10 @@ baseline                 test(harvest): repair authoritative full-gate findings
                          The S9-C documentation commit is the commit containing these
                          closeout records; its SHA is intentionally not self-recorded
                          and its publication is a separate checkpoint.
-completed stage          Stage 9 — CLOSED
-next stage               Stage 10 — NOT OPENED
+completed stage          Stage 10 — CLOSED by S10-C
+next stage               none defined or approved
+next observable          M5 — UNOPENED and UNAPPROVED. Closing Stage 10 does NOT open,
+product milestone        approve, start or authorize it
 repository runtime paths ABSENT: state/taxonomy_harvest/, data/harvested/, runs/, LATEST_RUN_ID
 external retained state  PRESENT — three runs in the retained Stage 9 root (§7.1a)
 publication output state NONE. data/harvested/ ABSENT; no promotion code exists anywhere
@@ -105,7 +111,7 @@ comparable to one another and must never be averaged.
 
 | Dimension | Denominator | Value | Basis |
 |---|---|---|---|
-| **Named stage completion** | The **12** named stage labels: 0, 1, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10 | **11 of 12 closed = 92 %** | Stages 0, 1, 2, 2.5, 3, 4, 5, 6, 7, 8, 9 closed; **Stage 10 not opened** |
+| **Named stage completion** | The **12** named stage labels: 0, 1, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10 | **12 of 12 closed = 100 %** | All twelve closed; **Stage 10 closed by S10-C** |
 | **Implementation capability** | The **same 13** subsystems the master plan names as commands or producers (harvest driver, migrate, preflight-sources, smoke, smoke-model, compare-runs, linkcheck, refresh, promote, diff, publication manifest, promotion journal, `harvest.sh` dispatcher) | **8 of 13 = 62 %** | Implemented: run driver · `migrate` · `preflight-sources` · `smoke` · `compare-runs` · `linkcheck` · `diff` · the `harvest.sh` dispatcher. **Still absent: `smoke-model`, `refresh`, `promote`, the publication-manifest producer, the promotion journal** |
 | **Live operational validation** | Any single live request | **1 of 1 = 100 %** | Real external requests occurred through four separately approved executions (S9-L1, S9-L2, S9-L3, S9-L4) |
 | **Production publication** | 16 expected stable published JSON files (§6.3) | **0 of 16 = 0 %** | `data/harvested/` absent; no promotion code |
@@ -115,11 +121,14 @@ the master plan's 13-subsystem list never named; adding it would silently redefi
 and invalidate every earlier percentage in this file's history. It is recorded in the command matrix
 (§8) instead.
 
-The gap between 92 % and 62 % is still the most important fact here — and a second gap has replaced
-the old one. **Stage completion measures approved-and-verified checkpoints, not operable commands;
-and operable commands are not the same as a publishable product.** Stage 9 turned the library into a
-program a human can run against real hosts. It did **not** produce anything publishable: the last
-five subsystems are exactly the ones between evidence and a dataset.
+The gap between **100 %** and 62 % is still the most important fact here, and closing Stage 10 has
+widened it rather than narrowed it. **Stage completion measures approved-and-verified checkpoints,
+not operable commands; and operable commands are not the same as a publishable product.** Every named
+stage is now closed, and the product is no closer to publication than it was at the Stage 9 closeout:
+Stage 10 delivered two markdown documents and changed no executable byte. Stage 9 turned the library
+into a program a human can run against real hosts. Neither stage produced anything publishable — the
+last five subsystems are exactly the ones between evidence and a dataset. **100 % of the named stages
+is not 100 % of the work.**
 
 ---
 
@@ -288,14 +297,14 @@ Legend for the two evidence columns: **Temp-root only** = every write went to an
 | Field | Value |
 |---|---|
 | Purpose | `IMPLEMENTATION_REPORT.md` (every file created/changed, exact commands, results) and `CONVERGENCE_NOTE.md` (5 gates before matrix unification is reconsidered), plus unresolved issues and follow-ups |
-| Status | **NOT OPENED.** Its prerequisite is now satisfied — Stage 9 is closed — but Stage 10 has not been approved, scoped or started |
-| Principal capability | None delivered |
-| Wrote only to temp roots? | n/a |
-| Contacted network? | n/a |
+| Status | **CLOSED by S10-C.** Four commit checkpoints: S10-0 `ab99b32` · S10-1 `b3b7ad9` · S10-2 `4e7abaf` · S10-C (the commit containing the completion handoff; its SHA is intentionally not self-recorded) |
+| Principal capability | `IMPLEMENTATION_REPORT.md` · `CONVERGENCE_NOTE.md` · the Stage 10 documentation closeout. **No executable capability was delivered or intended** |
+| Wrote only to temp roots? | n/a — Stage 10 ran no command at all |
+| Contacted network? | **No.** Zero live requests; Stage 10 had no network step |
 | Retained runtime output? | **No — and it never would.** Stage 10 is two markdown documents |
-| Published output? | **No.** Stage 10 does **not** create or publish production JSON. Nothing in the committed tree or in `TODO.md` gives it that scope |
-| Completion authority | n/a |
-| Remaining dependency | **Satisfied** (Stage 9 closed). Opening Stage 10 still needs its own approval by name |
+| Published output? | **No.** Stage 10 **created no production JSON, delivered no candidate and published no harvest data.** Closing it is a Git documentation event, not a dataset release |
+| Completion authority | `docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_2026-08-04.md` |
+| Remaining dependency | **None for Stage 10.** Every successor — M5, promotion, publication, website integration, recurring refresh, the retained-root disposition — needs its own separate approval by name |
 
 ---
 
@@ -412,10 +421,16 @@ described completes the *original task*, and leaves the product at M3/M4 at best
 
 ### 3.1 The five distinctions, stated plainly
 
+**Rows 2–5 of this table were written before Stage 9 and are kept as a HISTORICAL snapshot of the
+pre-Stage-9 position. Two of them have since moved and the current values are §1 and §3, not this
+table: live staged datasets now exist (M2/M3/M4, three retained runs, four live executions), while
+the publication, promotion and website rows remain accurate at zero. Row 1 is updated below because
+it is a current-position statement about stage completion.**
+
 | Claim | True today? | What actually holds |
 |---|---|---|
-| "Implementation task complete" | **Nearly** — 10 of 12 stages | The library is built and offline-verified. Stages 9 and 10 remain |
-| "First live staged dataset exists" | **No** | Zero live requests ever; no run command; `run()` cannot reach the network |
+| "Implementation task complete" | **All 12 named stages closed — and that is not the same claim** | The library is built, offline-verified and live-validated to M4. **Stage completion is not product completion**: 8 of 13 subsystems exist, and M5, M6 and M7 remain roughly 22–32 checkpoints away |
+| *(historical, pre-Stage-9)* "First live staged dataset exists" | **No** | Zero live requests ever; no run command; `run()` cannot reach the network. **Superseded: M2, M3 and M4 are achieved — see §1 and §3** |
 | "Publication-eligible candidate exists" | **No** | No retained run, no review process, no candidate artifact producer |
 | "JSON is promoted into `data/harvested/`" | **No** | Directory absent; zero lines of promotion code exist |
 | "The website consumes it" | **No** | No consumer, no interface, no owner |
@@ -429,18 +444,40 @@ exact-allowed-path unit of the size Stages 5–8 actually used. Calendar time is
 observed checkpoint duration in this project varies by more than an order of magnitude, and the
 binding constraint is human approval latency, not machine time.
 
-### 4.0 Current forecast, from Stage 9 closeout onward
+### 4.0 Current forecast, from Stage 10 closeout onward
 
-**Stages 0–9 are closed. Everything in §§4.1–4.2 below is a RETROSPECTIVE record of what was
-forecast before Stage 9 ran; it is retained for calibration and is NOT a current estimate.**
+**Stages 0–10 are ALL closed. Everything in §§4.1–4.2 below is a RETROSPECTIVE record of what was
+forecast before Stage 9 ran; it is retained for calibration and is NOT a current estimate. The
+Stage 10 row below is likewise RETROSPECTIVE.**
 
 | To reach | Checkpoints (range) | Note |
 |---|---|---|
-| **Stage 10** — report + convergence note | **1 – 2** | Documentation only; creates no JSON |
+| ~~**Stage 10** — report + convergence note~~ *(RETROSPECTIVE)* | **1 – 2** | The original forecast, preserved unrewritten. Documentation only; creates no JSON |
 | **M5** — reviewed production candidate | **7 – 10** | Unopened and undesigned; needs a production `harvest` command first |
 | **M6** — published JSON | **+8 – 10** | `promote` does not exist in any form |
 | **M7** — website integration / recurring refresh | **+6 – 10** | Outside this repository; unowned |
 | **Remaining total, Stage 9 close → M7** | **22 – 32** | Low confidence beyond M5 |
+
+**Actual Stage 10 outcome, against the 1–2 checkpoint forecast above.** The forecast is preserved as
+written; **four were not always planned.** Recorded as a variance, not as history:
+
+```text
+forecast   1 – 2 checkpoints
+actual     4 commit checkpoints
+             S10-0  ab99b32  plan of record          2 paths
+             S10-1  b3b7ad9  implementation report   3 paths
+             S10-2  4e7abaf  convergence note        3 paths
+             S10-C  the commit containing the completion handoff, SHA not
+                    self-recorded                    5 paths
+```
+
+Causes, each a genuine difference in ownership, risk, reviewability or path scope (plan erratum
+**E10-3**): the five reconsideration gates needed a new approved definition before any note could
+assess them; the report and the note have different subjects and different failure modes; the closeout
+authorities have a separate path scope; and commit, push and project-memory synchronization have been
+separate boundaries since Stage 6. **Two S10-2 L0 runs failed before the passing one**, each repaired
+under its own bounded document-edit approval — further evidence that the corrective-checkpoint
+precedent holds for documentation as well as code.
 
 **Actual Stage 9 outcome, against the pre-stage forecast of 13–18 checkpoints for "close the
 described Stage 0–10 plan":** Stage 9 alone consumed **13 commits** plus **four live executions**,
@@ -509,16 +546,17 @@ deferral and S9-6A were all unplanned corrective units.
 | To reach | Checkpoints (range) | Status |
 |---|---|---|
 | M2 — first staged dataset | 5 – 7 | **ACHIEVED** |
-| End of the described Stage 0–10 plan (≈ M4) | 13 – 18 | **M4 ACHIEVED**; Stage 10 not opened |
+| End of the described Stage 0–10 plan (≈ M4) | 13 – 18 | **M4 ACHIEVED; Stage 10 CLOSED by S10-C** — the described plan is complete |
 | M5 — reviewed production candidate | +7 – 10 | unopened |
 | M6 — published JSON | +8 – 10 | not started |
 | M7 — website integration | +6 – 10 | not started |
 | **M1 → M7 total** | **34 – 48 checkpoints** | ~22–32 remain (§4.0) |
 
-**Stage 10 does not create or publish production JSON.** It writes two markdown documents. Anyone
-reading "only Stages 9 and 10 remain" as "publication is two stages away" is reading it wrong: the
-described plan ends at M3/M4, and M5, M6 and M7 are roughly **21–30 further checkpoints** that are
-currently unowned and mostly undesigned.
+**Stage 10 did not create or publish production JSON.** It wrote two markdown documents and their
+closeout. Anyone reading "every named stage is closed" as "publication has happened" is reading it
+wrong: the described plan ends at M3/M4, and M5, M6 and M7 are roughly **21–30 further checkpoints**
+that are currently unowned and mostly undesigned. **G16 STANDS** — closing Stage 10 does not resolve
+it, because not publishing is exactly what Stage 10 was.
 
 ---
 
@@ -1300,7 +1338,8 @@ Read in this order; each outranks the one below it where they differ.
 | 1 | Committed code under `src/harvest/**`, `scripts/harvest/**` | What actually exists and runs |
 | 2 | `tests/**` (**63 wrappers**, 44 taxonomy) | What is proven, and at which layer |
 | 3 | `schemas/harvest/*.v1.json`, `config/harvest/**` | The data contracts and the 12-cell taxonomy |
-| 4 | `docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md` | **The current completion authority** — Stage 9 delivery record, commit chain, live evidence, retained-root disposition, carried-forward work |
+| 4 | `docs/harvest/handoffs/HANDOFF_STAGE_10_COMPLETE_2026-08-04.md` | **The current overall completion authority** — Stage 10 delivery record, the four-checkpoint chain, the convergence decision, repository invariants, retained-root disposition, carried-forward work, and the closure of the original Stage 0–10 documentation task |
+| 4a | `docs/harvest/handoffs/HANDOFF_STAGE_9_COMPLETE_2026-08-01.md` | **Stage 9's completion authority** — Stage 9 delivery record, commit chain, live evidence, retained-root disposition, carried-forward work |
 | 5 | `docs/harvest/handoffs/HANDOFF_STAGE_<N>_COMPLETE_*.md` | Per-stage delivery record for earlier stages |
 | 6 | `docs/harvest/STAGE_9_IMPLEMENTATION_PLAN.md` | **The Stage 9 plan of record** — every command contract, D9-A/D9-B, and errata E9-1 … E9-21 |
 | 7 | `docs/harvest/STAGE_<N>_IMPLEMENTATION_PLAN.md` | The approved plan and errata for stages 2.5 – 8 |
