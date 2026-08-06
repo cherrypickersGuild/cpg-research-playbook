@@ -1,22 +1,30 @@
 ---
 title: "Cherry Harvest Engine — PRD"
-status: draft
+status: final
 created: 2026-08-05
-updated: 2026-08-05
+updated: 2026-08-06
 project: Cherry-in-the-haystack
 stakes: commercial-launch
 working_mode: coaching (entry point — Vision + Features)
-revision: "post-review bounded edit checkpoint"
 ---
 
 # Cherry Harvest Engine — PRD
 
-> **DRAFT — revised after a full review gate; not finalized.** Eight reviewers (quality rubric,
-> adversarial, edge-case sweep, four input reconciliations, memlog audit) produced ~250 raw
-> findings, deduplicated to 10 blockers / 15 majors / 8 minors / 3 accepted risks. This revision
-> closes the blockers and the product decisions attached to them. Remaining majors are listed in
-> §18 with their disposition. Checkpoint `7a9dc65` on branch `prd/cherry-harvest-engine`
-> preserves the pre-answer state.
+> **FINAL.** This PRD is complete and ready to be built from. It passed a full review gate — eight
+> reviewers (quality rubric, adversarial, edge-case sweep, four input reconciliations, memlog
+> audit) produced roughly 250 raw findings, deduplicated to 10 blockers, 15 majors, 8 minors and
+> 3 accepted risks. Every blocker is closed, and the product decisions attached to them are
+> recorded in the sections below.
+>
+> **What "final" does and does not mean here.** The requirements, the state and gate model, and
+> the product decisions are settled; changing them means a new revision. It does not mean nothing
+> is left open. §18 classifies every remaining item by when it must be resolved — two were
+> decided to close Finalize, four are architecture work, four belong to implementation and
+> operations, and four are accepted risks. **§17 records a constraint that must be resolved before
+> implementation begins**, and NFR-5's counsel review is a pre-launch obligation.
+>
+> Downstream: UX, architecture, and epic/story creation can all source from this document.
+> §13 is the contract for anything consuming the published artifact.
 
 ---
 
