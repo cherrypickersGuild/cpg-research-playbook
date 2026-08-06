@@ -45,7 +45,7 @@ blocks, verify them, judge their commercial usability, and produce publishable d
 - KaaS (separate sub-project with its own PRD)
 
 **Boundary discipline.** This engine emits data and states the guarantees attached to it. Where
-a guarantee only holds if the consuming site behaves in a particular way, that obligation is
+a guarantee only holds if the consuming surface behaves in a particular way, that obligation is
 recorded in **§13 Downstream Consumer Contract** as a condition on the engine's guarantee — not
 as a requirement this PRD imposes on the website. The engine never asserts authority over UI.
 
@@ -107,9 +107,9 @@ The repository already contains a working *collector*. It does not contain a *ju
 - **G9 / G10** — human review had no artifact, schema, process, acceptance criteria or owner
   *within this repository*; §14 FG-J and §8 now supply them, and §18 records that the upstream
   platform already operates a review process this engine must connect to rather than duplicate.
-- **G14 — a hard implementation constraint.** 33 of 39 taxonomy wrappers assert `config/` is
-  unmodified, so no checkpoint that edits `config/` can pass `validate_task.sh`. Several
-  requirements in §14 are configuration changes by nature. See §17.
+- **G14 — a hard implementation constraint.** The repository's validation gate forbids modifying
+  `config/`, and several requirements in §14 are configuration changes by nature. Stated in full,
+  with its two admissible resolutions, in §17.
 
 **Two pipelines coexist.** The legacy bash entity harvest holds the 1,161 tool records. The
 Python taxonomy pipeline (Stages 0–10, scoring, facets, atomic artifacts, a committed
@@ -292,7 +292,7 @@ marketplace listings where terms permit · no-code and low-code marketplaces, wh
 structure is itself machine-checkable evidence for `code_required: false`.
 
 **Coverage honesty is a requirement, not a nicety.** The engine publishes, per audience segment,
-both its coverage and its **`unknown` rate** (FR-71). Items with absent or weak audience evidence
+both its coverage and its **`indeterminate` rate** (FR-71). Items with absent or weak audience evidence
 stay unresolved; non-developer suitability is **never assumed**.
 
 > Non-developers are **in scope with staged data coverage**, not deferred.
@@ -322,8 +322,15 @@ information. The distinction is load-bearing: these are things we checked and fo
 | `PRIV_*` | the privacy conditions in §7.4 |
 
 `EXIST_UNIDENTIFIABLE` and `LIC_INFRINGEMENT` both require **corroborating evidence from an
-identifiable source**; neither may be asserted on inference alone (§18 records the residual
-exposure).
+identifiable source**; neither may be asserted on inference alone.
+
+**Adverse reason codes are internal, never published.** A reason code that constitutes an
+accusation against a named third party — infringement, deception, sanction, malicious design,
+unidentifiability — is a gate input only. The published artifact conveys that a record was
+withheld or cautioned; it never conveys why in those terms (FR-68). This limits the scope of
+automatically published adverse factual claims and reduces legal risk on the public surface. The
+residual standard-of-proof question stays with internal decisions and remains subject to NFR-5's
+counsel review, which no longer has to precede publication.
 
 ### 7.2 Cautions — recorded, not disqualifying
 
@@ -675,24 +682,57 @@ Neither existing pipeline is adopted wholesale or discarded wholesale.
 ## 13. Downstream Consumer Contract
 
 The engine emits data and states what is guaranteed about it. Several guarantees hold **only if**
-the consuming site behaves in a defined way. Those conditions live here, as conditions on the
-engine's guarantee — not as requirements this PRD imposes on the website.
+the consuming surface behaves in a defined way. Those conditions live here, as conditions on the
+engine's guarantee — not as requirements this PRD imposes on any UI.
+
+### 13.1 The contract is consumer-independent
+
+The publication artifact has no named consumer, and waiting for one is not necessary. **Consumer
+identity determines delivery and mapping; it does not determine content.** The contract below is
+defined now, in full, without reference to any particular surface — a later-named consumer
+changes how the artifact is transported and how its fields are projected, not what it means.
+
+The minimal contract has five properties, and nothing in it is UI-specific:
+
+1. **Self-describing.** The artifact declares its own schema version, the vocabularies it uses
+   (evidence states, dispositions, gates, reason codes, usage contexts, audience values), and the
+   run that produced it. A consumer that has never seen this engine can interpret a record from
+   the artifact alone, without out-of-band documentation.
+2. **Stable identity.** Every record carries the identifier of FR-8, stable across runs, so a
+   consumer can diff, update and remove without heuristics.
+3. **Claims carry their basis.** Every gate outcome is accompanied by the dispositions that
+   produced it, and every non-affirmative disposition by its state — so a consumer can always
+   distinguish *"we checked and it is fine"*, *"we checked and it is not"*, and *"we did not
+   establish this"* without inferring from absence.
+4. **Coverage is stated, not implied.** The artifact carries its own scope and limits — per
+   audience segment, per assessed domain (FR-71). Absence of a record never has to be interpreted.
+5. **Change is governed.** Schema evolution follows a declared compatibility policy (FR-98), so a
+   consumer built against version *n* has defined behaviour against version *n+1*.
+
+What remains genuinely consumer-dependent, and is therefore **deferred to architecture**:
+transport and delivery mechanism, authentication, refresh cadence negotiation, and the projection
+of our vocabulary onto any consumer's own taxonomy — including the upstream platform's
+`building-blocks` sub-tags, which have no value corresponding to `skill` (§18).
+
+### 13.2 Conditional guarantees
 
 | The engine emits | The consumer must | If not |
 |---|---|---|
-| Records with `caution_flags[]` and licence cautions | display cautions alongside the record | the engine's C10 liability position does not hold; the guarantee is void |
-| `commercially_usable` as a per-context boolean | filter on the same context the visitor intends | the claim is misapplied and the engine's precision figure does not transfer |
-| `visual_asset.disposition` | render a neutral placeholder for anything not `cleared` | trademark exposure passes to the consumer |
-| Per-segment coverage and `unknown` rate (FR-71) | not present coverage as broader than published | NFR-10's honesty guarantee is void |
-| A retraction signal (FR-72) | remove or re-render the affected record | a withdrawn claim stays public |
+| Records with `caution_flags[]` and licence cautions | present cautions together with the record | the engine's C10 liability position does not hold; the guarantee is void |
+| `commercially_usable` as a per-context value | evaluate it against the context the visitor intends | the claim is misapplied and the engine's precision figure does not transfer |
+| `visual_asset.disposition` | substitute a neutral placeholder for anything not `cleared` | trademark exposure passes to the consumer |
+| Per-segment coverage and `indeterminate` rates (FR-71) | not represent coverage as broader than published | NFR-10's honesty guarantee is void |
+| A retraction signal (FR-72) | withdraw or re-derive the affected record | a withdrawn claim stays public |
 
-**Consumer identification is an open item.** §18 records that no upstream document places this
-engine inside the platform and that FR-67's artifact has no named consumer.
+These are obligations on whoever consumes the artifact, stated so the engine's guarantees are
+falsifiable. **The engine specifies what must survive presentation, never how anything is
+presented.**
 
 ## 14. Feature groups and functional requirements
 
-Requirement numbering is continuous with the pre-review revision. Modified requirements keep
-their number; new numbers are used only for independently testable new behaviour.
+Numbering is stable across revisions: a requirement keeps its number when its content changes,
+and a new number is issued only for independently testable new behaviour. Numbers are therefore
+safe to cite from downstream documents.
 
 ### FG-A — Source management and discovery
 
@@ -709,7 +749,7 @@ their number; new numbers are used only for independently testable new behaviour
   applies to every ingest, including re-collection of legacy seed entries (§12.1).
 - **FR-5** The engine SHALL record per source the last successful harvest and the count of new
   entities yielded.
-- **FR-6** *(modified)* A source yielding no new entities across a configured threshold —
+- **FR-6** A source yielding no new entities across a configured threshold —
   **default three consecutive runs** — SHALL be flagged exhausted, reported, and removed from
   the active rotation until replenished. Exhaustion SHALL raise a **replenishment task**
   identifying the affected audience segment, so a known-exhausted lane is not silently starved.
@@ -720,17 +760,17 @@ their number; new numbers are used only for independently testable new behaviour
 
 - **FR-8** Every entity SHALL carry a stable, globally unique identifier that survives
   re-harvest and is never re-issued by a later run.
-- **FR-9** *(modified)* Identity SHALL be resolved on the canonical target URL **together with a
+- **FR-9** Identity SHALL be resolved on the canonical target URL **together with a
   continuity check**: where a URL's ownership, namespace or maintainer changes, the engine SHALL
   treat it as a **new identity**, invalidate inherited assertions, and SHALL NOT carry forward
   prior human review decisions (FR-65).
 - **FR-10** The engine SHALL NOT emit a sentinel string such as `"unknown"` in a URL field; an
   absent URL SHALL be null with a recorded reason code.
-- **FR-11** *(modified)* The same entity discovered through multiple sources SHALL merge into one
+- **FR-11** The same entity discovered through multiple sources SHALL merge into one
   record carrying a multi-source provenance list. Merge SHALL be refused where the candidates
   disagree on canonical identity, and SHALL NOT merge two entities that share a URL without
   sharing an identity.
-- **FR-12** *(modified)* Conflicting field values from different sources SHALL set the affected
+- **FR-12** Conflicting field values from different sources SHALL set the affected
   assertion's evidence state to `conflicting` (§8.1) and record each source's claim. They SHALL
   NOT be silently overwritten, and SHALL NOT be auto-resolved in favour of any single source
   type.
@@ -742,16 +782,16 @@ their number; new numbers are used only for independently testable new behaviour
 
 - **FR-14** For each official URL the engine SHALL record HTTP status, fetch timestamp and
   content hash.
-- **FR-15** *(modified)* Unreachable official links SHALL produce reason code
+- **FR-15** Unreachable official links SHALL produce reason code
   `EXIST_UNREACHABLE` and a `blocked` existence disposition — **only after** FR-16's window is
   exhausted, and **only where** the failure is attributable to the target rather than to our own
   fetch being refused (FR-42).
-- **FR-16** *(modified)* The engine SHALL distinguish transient failure from persistent
+- **FR-16** The engine SHALL distinguish transient failure from persistent
   unavailability, requiring a configured number of failures across a configured window —
   **default three failures across fourteen days** — before declaring discontinuation.
 - **FR-17** The engine SHALL detect explicit end-of-life signals — repository archived flags,
   sunset notices, deprecation banners — producing `EXIST_DISCONTINUED`.
-- **FR-18** *(modified)* The engine SHALL corroborate that a claimed official source belongs to
+- **FR-18** The engine SHALL corroborate that a claimed official source belongs to
   the tool, using at least two of: vendor domain correspondence, repository owner correspondence,
   cross-reference from an independent official source, or package-registry ownership metadata.
   `EXIST_UNIDENTIFIABLE` SHALL be asserted only when corroboration fails **and** the failure is
@@ -761,7 +801,7 @@ their number; new numbers are used only for independently testable new behaviour
 
 - **FR-19** The engine SHALL collect multiple currency signals: last commit, last release,
   release cadence, issue and PR activity, and whether the hosted service responds.
-- **FR-20** *(modified)* A currency verdict SHALL be derived from at least two independent
+- **FR-20** A currency verdict SHALL be derived from at least two independent
   signals **available for that entity type** — for entities with no repository, the applicable
   signals are service responsiveness, documentation/changelog updates, and published release or
   status notices. Where signals disagree, the currency disposition SHALL be `indeterminate` and
@@ -775,21 +815,21 @@ their number; new numbers are used only for independently testable new behaviour
 
 ### FG-E — Licence and commercial usability
 
-- **FR-24** *(modified)* Licence SHALL be resolved from **primary sources for the artifact
+- **FR-24** Licence SHALL be resolved from **primary sources for the artifact
   type** — the repository for code artifacts, and the §9.5 evidence path for artifacts with no
   repository. It SHALL never be taken from a registry or directory listing (C2).
 - **FR-25** Licence detection SHALL scan multiple locations: `LICENSE*`, `COMM-LICENSE*`,
   `licenses/`, per-directory licence files, `NOTICE`, package manifests, README licence
   sections, and `/ee` or `/enterprise` subdirectories. Where subdirectory terms differ from the
   root, both SHALL be recorded and the stricter SHALL govern the disposition.
-- **FR-26** *(modified)* Licence SHALL be stored in the **three-slot model of §9.1** — code,
+- **FR-26** Licence SHALL be stored in the **three-slot model of §9.1** — code,
   data, model-artifact — each slot carrying its class, SPDX expression where applicable, raw
   licence-text hash, ScanCode category, and its own evidence record. Conflicting evidence SHALL
   be representable via `conflicts[]`.
 - **FR-27** `license_evidence` SHALL be a structured record — detected identifier, detector,
   confidence, source path and line range, manifest value, disagreement flags, category, reviewer
   and date. Never a bare string.
-- **FR-28** *(modified)* Licence disposition SHALL take a value from §8.2 (`cleared`,
+- **FR-28** Licence disposition SHALL take a value from §8.2 (`cleared`,
   `cleared_with_conditions`, `blocked`, `indeterminate`, `review_required`) and SHALL be derived
   by the five-bucket policy in §9.2. The previous five-value `license_status` vocabulary is
   replaced; its distinctions are preserved as slot class (§9.1) plus evidence state (§8.1).
@@ -800,30 +840,30 @@ their number; new numbers are used only for independently testable new behaviour
   act.
 - **FR-31** Rider-bearing licences and modified texts of known licences SHALL route to human
   review (C3).
-- **FR-32** *(modified)* Thresholds and conditions expressed in licence prose SHALL be captured
+- **FR-32** Thresholds and conditions expressed in licence prose SHALL be captured
   as structured `conditions[]` and `restrictions[]` entries carrying type, comparator, value,
   unit and scope — expressive enough to represent MAU counts, revenue limits, company size,
   territorial exclusions, field-of-use restrictions, and naming or attribution obligations.
-- **FR-33** *(modified)* The engine SHALL record the ownership and commercial terms of
+- **FR-33** The engine SHALL record the ownership and commercial terms of
   **generated output** where the entity publishes them, and SHALL set that component to
   `indeterminate` with reason code `LIC_OUTPUT_TERMS_ABSENT` where it does not. Absence SHALL
   NOT block `commercially_usable` **for usage contexts that do not involve generated output**,
   and SHALL block it for contexts that do.
 - **FR-34** The engine SHALL record whether an enterprise licence or additional contract is
   required.
-- **FR-35** *(modified)* Free-tier versus paid-tier commercial terms SHALL be recorded separately
+- **FR-35** Free-tier versus paid-tier commercial terms SHALL be recorded separately
   from any open-source licence, sourced from the §9.5 evidence path, and SHALL be
   `indeterminate` where the vendor does not publish them.
 - **FR-36** Licence determination SHALL be pinned to a specific commit SHA or product version.
-- **FR-87** *(new)* The licence disposition SHALL be computed from ScanCode category, detected
+- **FR-87** The licence disposition SHALL be computed from ScanCode category, detected
   riders, detected thresholds, evidence state and usage context. **A disposition SHALL NOT be
   derived from an SPDX identifier alone**, and no allow/deny decision may be implemented as a
   lookup keyed only on an identifier.
-- **FR-88** *(new)* `end_user_use` SHALL be resolved **per usage context** (`internal_use`,
+- **FR-88** `end_user_use` SHALL be resolved **per usage context** (`internal_use`,
   `redistribution`, `hosted_service`, `model_training`) from conditions, restrictions, usage
   context and evidence source, per §9.3. A single scalar commercial-use verdict SHALL NOT be
   emitted.
-- **FR-89** *(new)* For entities with no repository the engine SHALL resolve licence and
+- **FR-89** For entities with no repository the engine SHALL resolve licence and
   commercial terms from official terms of service, pricing pages, privacy policy, published
   commercial-use terms, and official product documentation, recording which of these supplied
   each assertion.
@@ -831,53 +871,53 @@ their number; new numbers are used only for independently testable new behaviour
 ### FG-F — Catalog rights (`catalog_use`)
 
 - **FR-37** `catalog_use` SHALL be assessed independently of FG-E (§9.4).
-- **FR-38** *(modified)* The engine SHALL check `robots.txt` and record the specific directive
+- **FR-38** The engine SHALL check `robots.txt` and record the specific directive
   applying to its own user agent. Where no directive is found, `catalog_use` for crawling SHALL
   be `allowed` by default and recorded as such — absence of a directive is a permissive fact, not
-  an unknown.
-- **FR-39** *(modified)* The engine SHALL check terms of service and API terms for restrictions
+  an `indeterminate` one.
+- **FR-39** The engine SHALL check terms of service and API terms for restrictions
   on reuse or redistribution of metadata **where such terms are published and machine-reachable**,
   and SHALL set `indeterminate` with a reason code where they are not. This requirement SHALL NOT
   be read as requiring legal interpretation of every entity's ToS.
-- **FR-40** *(modified)* Attribution requirements SHALL be recorded per entity where stated by
+- **FR-40** Attribution requirements SHALL be recorded per entity where stated by
   the source, and SHALL default to `indeterminate` where not stated.
 - **FR-41** `catalog_use` SHALL take one of: `allowed`, `allowed_with_conditions`, `restricted`,
   `indeterminate`.
-- **FR-42** *(modified)* Crawl restrictions SHALL be respected at fetch time. A fetch refused by
+- **FR-42** Crawl restrictions SHALL be respected at fetch time. A fetch refused by
   our own compliance SHALL be recorded with evidence state `unavailable` and SHALL NOT produce
   `EXIST_UNREACHABLE` (FR-15).
 
 ### FG-G — Audience and non-developer usability
 
 - **FR-43** Every entity SHALL carry the `audience` object defined in §6.1.
-- **FR-44** *(modified)* Every entity SHALL carry the `non_developer_usability` object defined in
+- **FR-44** Every entity SHALL carry the `non_developer_usability` object defined in
   §6.2, populated from primary evidence — the product's own site, documentation, pricing page, or
   a marketplace listing whose structure is itself evidence.
 - **FR-45** Audience suitability SHALL be expressed positively. A negative-only
   `developer_only`-style flag SHALL NOT be used.
 - **FR-46** Where evidence is absent or weak, audience fields SHALL remain `indeterminate`.
   Non-developer suitability SHALL NEVER be assumed.
-- **FR-47** *(modified)* Every non-developer suitability determination SHALL carry
+- **FR-47** Every non-developer suitability determination SHALL carry
   `evidence_urls` pointing to **primary or official sources**. Third-party directory or affiliate
   listings SHALL NOT satisfy this requirement on their own.
-- **FR-48** *(modified)* The engine SHALL report corpus coverage **per audience segment**,
+- **FR-48** The engine SHALL report corpus coverage **per audience segment**,
   including the proportion of entities whose audience disposition is `indeterminate`.
 
 ### FG-H — Security and privacy screening
 
 - **FR-49** The engine SHALL query a vulnerability data source (OSV, GitHub Advisory, CVE) —
   a **new capability** not present today.
-- **FR-50** *(modified)* Until FR-49 is implemented, the security evidence state SHALL be
+- **FR-50** Until FR-49 is implemented, the security evidence state SHALL be
   `unchecked`. Under §8.3 this prevents `commercially_usable`, does not affect
   `corpus_included`, and does not queue review. The engine SHALL NOT claim security verification
   is complete.
-- **FR-51** *(modified)* A confirmed unresolved serious vulnerability SHALL set the security
+- **FR-51** A confirmed unresolved serious vulnerability SHALL set the security
   disposition to `blocked` with reason code `SEC_VULN_UNRESOLVED`. Where an entity has no
   package coordinates and cannot be queried, the state is `unchecked`, not `cleared`.
 - **FR-52** A recent security issue whose resolution is unconfirmed SHALL produce a caution
   (§7.2), not a `blocked` disposition.
 - **FR-53** Every entity SHALL carry the `privacy` object defined in §7.4.
-- **FR-54** *(modified)* The privacy disposition SHALL be `blocked` only for the evidenced
+- **FR-54** The privacy disposition SHALL be `blocked` only for the evidenced
   conditions in §7.4, each carrying its reason code and corroborating evidence. Opacity SHALL
   produce a caution and an `indeterminate` disposition.
 - **FR-55** Detected spam, impersonation or malware distribution SHALL set the safety disposition
@@ -885,47 +925,47 @@ their number; new numbers are used only for independently testable new behaviour
 
 ### FG-I — State, disposition and gating
 
-- **FR-56** *(modified)* Every record SHALL carry per-domain dispositions (§8.2), the reason
+- **FR-56** Every record SHALL carry per-domain dispositions (§8.2), the reason
   codes producing any `blocked` state, and the display `caution_flags[]` drawn from
   `needs-review` · `caution` · `possibly-inactive` (§7.2).
-- **FR-57** *(modified)* The engine SHALL compute the four gates of §8.3 —`corpus_included`,
+- **FR-57** The engine SHALL compute the four gates of §8.3 —`corpus_included`,
   `publicly_listed`, `commercially_usable`, `asset_reusable` — as **derived properties**,
   recomputed from current dispositions on every assessment and never stored as independent truth.
-- **FR-58** *(modified)* `commercially_usable` SHALL require **all** of: `publicly_listed`;
+- **FR-58** `commercially_usable` SHALL require **all** of: `publicly_listed`;
   licence disposition `cleared` or `cleared_with_conditions`; `end_user_use` for the requested
   context `allowed` or `allowed_with_conditions`; privacy disposition neither `blocked` nor
   `indeterminate`; security disposition neither `blocked` nor `indeterminate`.
 - **FR-59** `asset_reusable` SHALL require a `cleared` visual-asset disposition (§11).
-- **FR-60** *(modified)* Gates requiring confirmed evidence SHALL be satisfied **only** by an
+- **FR-60** Gates requiring confirmed evidence SHALL be satisfied **only** by an
   explicit affirmative disposition (`cleared` or `cleared_with_conditions`), evaluated as an
   allowlist. `indeterminate`, `unchecked` and `unavailable` SHALL NOT satisfy them.
   `corpus_included` is exempt: it is refused only by a confirmed failure (§8.4).
 - **FR-61** Every gate decision SHALL be explainable — storing the rule applied, the dispositions
   relied on, and the evidence behind each.
-- **FR-83** *(new)* Every assertion SHALL carry an evidence record with `{state, reason_code,
+- **FR-83** Every assertion SHALL carry an evidence record with `{state, reason_code,
   evidence_urls[], method, detector, confidence, checked_at}`, where `state` is one of the six
   values in §8.1. `absent`, `unchecked` and `unavailable` SHALL be distinguishable and SHALL NOT
   be collapsed into a single value at any layer, including the published artifact.
-- **FR-84** *(new)* Each domain SHALL resolve to exactly one disposition from §8.2. A `blocked`
+- **FR-84** Each domain SHALL resolve to exactly one disposition from §8.2. A `blocked`
   disposition SHALL always carry a reason code; a disposition SHALL NOT be `blocked` on the basis
   of missing evidence alone.
-- **FR-85** *(new)* `corpus_included` SHALL be TRUE unless the existence disposition is `blocked`,
+- **FR-85** `corpus_included` SHALL be TRUE unless the existence disposition is `blocked`,
   or the safety or privacy disposition is `blocked` for a `SAFE_*` or `PRIV_MALICIOUS_DESIGN`
   reason code. `indeterminate` SHALL NOT reduce corpus membership.
-- **FR-86** *(new)* `publicly_listed` SHALL be TRUE when `corpus_included` is TRUE, the existence
+- **FR-86** `publicly_listed` SHALL be TRUE when `corpus_included` is TRUE, the existence
   disposition is `cleared` or `cleared_with_conditions`, no domain is `blocked`, and catalog
   rights are `cleared` or `cleared_with_conditions`. A licence disposition of `indeterminate`
   SHALL NOT prevent public listing.
 
 ### FG-J — Human review
 
-- **FR-62** *(modified)* The engine SHALL provide a human review queue with a defined artifact
+- **FR-62** The engine SHALL provide a human review queue with a defined artifact
   schema. **Accountability sits with the existing Knowledge Team.** The role performing
   individual reviews is the **Catalog Review Operator**, defined as a role and **not** requiring
   a new standing team; it may be discharged by existing staff, rotation, or contracted
   specialists. The role's competency requirement — licence election is a legal act (FR-30) — is
   stated so staffing can be matched to it.
-- **FR-63** *(modified)* An item SHALL enter the queue **only** when an unresolved judgement
+- **FR-63** An item SHALL enter the queue **only** when an unresolved judgement
   could materially change `publicly_listed`, `commercially_usable`, or an already-published
   high-risk claim (§8.5). Qualifying triggers are the human-review row of §9.2, plus
   **high-confidence permissive detections whose licence text hash does not match the canonical
@@ -934,13 +974,13 @@ their number; new numbers are used only for independently testable new behaviour
   `unavailable` caused by an external outage.
 - **FR-64** Reviewer decisions SHALL record reviewer identity, date, rationale and the evidence
   consulted.
-- **FR-65** *(modified)* Reviewer decisions SHALL survive re-harvest and SHALL NOT be overwritten
+- **FR-65** Reviewer decisions SHALL survive re-harvest and SHALL NOT be overwritten
   by automated re-assessment without flagging the change — **except** where FR-9's continuity
   check or FR-82's change detection invalidates the basis of the decision, in which case the
   decision SHALL be invalidated and re-queued.
-- **FR-66** *(modified)* Queue depth, queue age, decision throughput and time-to-decision SHALL
+- **FR-66** Queue depth, queue age, decision throughput and time-to-decision SHALL
   be reportable.
-- **FR-92** *(new)* The queue SHALL have a declared **capacity** and a **processing SLA** by
+- **FR-92** The queue SHALL have a declared **capacity** and a **processing SLA** by
   priority class, and SHALL define **over-capacity behaviour**: when open items exceed capacity,
   the engine SHALL throttle intake of review-generating assessments — not collection — and SHALL
   leave the affected strong claims unmade rather than approximated. Over-capacity events SHALL be
@@ -948,18 +988,32 @@ their number; new numbers are used only for independently testable new behaviour
 
 ### FG-K — Publication output
 
-- **FR-67** The engine SHALL produce a versioned publication artifact against an explicit,
-  documented schema contract.
-- **FR-68** *(modified)* Only records satisfying `publicly_listed` SHALL be emitted. The artifact
-  SHALL carry each record's dispositions, reason codes and cautions, not only its positives.
-- **FR-69** *(modified)* Each emitted record SHALL carry the caution and disposition data the
+- **FR-67** The engine SHALL produce a versioned publication artifact against an
+  explicit, documented schema contract that is **consumer-independent and self-describing** per
+  §13.1: it declares its own schema version, the vocabularies it uses, and the producing run, and
+  it SHALL NOT embed assumptions about any particular consuming surface.
+- **FR-68** Only records satisfying `publicly_listed` SHALL be emitted. The artifact
+  SHALL carry each record's dispositions, its gate outcomes with the dispositions that produced
+  them, and its cautions — not only its positives. **Reason codes constituting an adverse
+  assertion about a named third party — `LIC_INFRINGEMENT`, `EXIST_UNIDENTIFIABLE`,
+  `PRIV_SANCTIONED`, `PRIV_DECEPTIVE_COLLECTION`, `SAFE_MALICIOUS` — SHALL NOT be published.**
+  They remain internal gate reasons; the artifact conveys only that the record is withheld or
+  cautioned, never the accusation.
+- **FR-69** Each emitted record SHALL carry the caution and disposition data the
   consumer needs to satisfy §13. The engine SHALL NOT specify how the consumer renders it.
 - **FR-70** Publication SHALL be atomic and idempotent and SHALL produce a manifest.
-- **FR-71** *(modified)* The artifact SHALL carry a **coverage statement per audience segment,
+- **FR-71** The artifact SHALL carry a **coverage statement per audience segment,
   including the `indeterminate` rate per assessed domain**, so a consumer cannot present coverage
   as broader than the data supports.
 - **FR-72** The engine SHALL provide a retraction path that removes a previously published record
   and records why.
+- **FR-98** The publication schema SHALL carry a declared **compatibility policy**: which
+  changes are additive and safe for an existing consumer, which are breaking, how the version
+  identifier reflects each, and for how long a superseded version remains readable. A consumer
+  built against one version SHALL have defined behaviour against the next. Vocabulary values —
+  evidence states, dispositions, reason codes, usage contexts, audience values — SHALL be
+  enumerated in the artifact rather than assumed, so an added value is detectable rather than
+  silently misread.
 
 ### FG-L — Automation and operations
 
@@ -968,7 +1022,7 @@ their number; new numbers are used only for independently testable new behaviour
   limits).
 - **FR-75** Concurrency SHALL be capped and configurable. *(Configuration dependency — §17.)*
 - **FR-76** Each run SHALL emit a manifest with counts by evidence state, disposition and gate.
-- **FR-77** *(modified)* Failure of one lane SHALL NOT fail the whole run **where the failure is
+- **FR-77** Failure of one lane SHALL NOT fail the whole run **where the failure is
   lane-local**. Shared-quota exhaustion SHALL be recognised as a run-level condition, SHALL
   suspend the run, and SHALL leave completed work resumable rather than discarded.
 - **FR-78** A child process exiting 0 SHALL NOT be treated as evidence the target was met;
@@ -980,10 +1034,10 @@ their number; new numbers are used only for independently testable new behaviour
 - **FR-80** Re-verification cadence SHALL be configurable **per assertion class** — licence,
   currency, availability, privacy, security, audience, quality. *(Configuration dependency —
   §17.)*
-- **FR-81** *(modified)* Assertions older than their cadence SHALL move to evidence state
+- **FR-81** Assertions older than their cadence SHALL move to evidence state
   `unchecked`, which under §8.3 withdraws the gates requiring confirmation while leaving corpus
   membership intact. Decay SHALL NOT by itself enqueue human review (§8.5).
-- **FR-82** *(modified)* On detecting a relicensing or terms change — via the pinned SHA/version
+- **FR-82** On detecting a relicensing or terms change — via the pinned SHA/version
   of FR-36, a licence text-hash change, or a published terms update — the engine SHALL execute
   the transition: **(1)** invalidate the affected assertions and any human decision resting on
   them; **(2)** recompute all four gates; **(3)** enqueue human review where the change is
@@ -994,7 +1048,7 @@ their number; new numbers are used only for independently testable new behaviour
 
 ### FG-N — Quality assessment *(new group)*
 
-- **FR-90** *(new)* The engine SHALL assess quality against the criteria in §10 —
+- **FR-90** The engine SHALL assess quality against the criteria in §10 —
   documentation adequacy, getting-started integrity, maintenance responsiveness, release
   discipline, operational stability, provenance clarity, description integrity — each recorded as
   its own assertion with evidence, and SHALL resolve a quality disposition per §8.2. Popularity
@@ -1002,31 +1056,31 @@ their number; new numbers are used only for independently testable new behaviour
 
 ### FG-O — Legacy corpus and component reuse *(new group)*
 
-- **FR-91** *(new)* The existing 1,161 records SHALL be frozen as a **legacy seed manifest**
+- **FR-91** The existing 1,161 records SHALL be frozen as a **legacy seed manifest**
   preserving discovery facts only (§12.1). No prior verification, licence, quality, privacy,
   security or commercial-usability claim SHALL be inherited, and no legacy record SHALL be
   published until re-collected and passed through §8.3.
-- **FR-96** *(new)* An existing pipeline component SHALL be reused only where it passes the
+- **FR-96** An existing pipeline component SHALL be reused only where it passes the
   schema contract and behavioural contract defined in this PRD; components that do not SHALL be
   replaced incrementally behind the same contract (§12.2).
 
 ### FG-P — Measurement and evaluation *(new group)*
 
-- **FR-93** *(new)* The engine SHALL maintain a **gold set** of entities with human-adjudicated
+- **FR-93** The engine SHALL maintain a **gold set** of entities with human-adjudicated
   licence, commercial-usability and quality verdicts, spanning permissive, copyleft,
   network-copyleft, source-available, rider-bearing, absent-licence and non-repository cases.
   Each release SHALL be evaluated against it and SHALL report precision and recall per
   disposition bucket.
-- **FR-94** *(new)* The engine SHALL draw a periodic random **audit sample** from published
+- **FR-94** The engine SHALL draw a periodic random **audit sample** from published
   records asserting `commercially_usable`, have it adjudicated by a Catalog Review Operator, and
   report the observed false-permissive rate. NFR-1 is measured by this sample; without it the
   claim is unverifiable.
-- **FR-95** *(new)* The engine SHALL emit the success metrics and counter-metrics of §16 as run
+- **FR-95** The engine SHALL emit the success metrics and counter-metrics of §16 as run
   outputs, and SHALL make a release's metric deltas available before publication.
 
 ### FG-Q — Configuration and implementation constraints *(new group)*
 
-- **FR-97** *(new)* Requirements that depend on changing committed configuration — source
+- **FR-97** Requirements that depend on changing committed configuration — source
   registry (FR-1, FR-3, FR-7), vocabularies and thresholds (FR-6, FR-16, FR-28, FR-41),
   concurrency (FR-75), cadences (FR-80), audience axes (FR-43) — SHALL be implementable without
   violating the repository's validation gate. Because 33 of 39 wrappers currently assert `config/`
@@ -1036,12 +1090,12 @@ their number; new numbers are used only for independently testable new behaviour
 
 ## 15. Non-functional requirements
 
-- **NFR-1** *(modified)* **Claim safety.** No record may present as commercially usable without
+- **NFR-1** **Claim safety.** No record may present as commercially usable without
   an affirmative licence disposition and an affirmative `end_user_use` for the requested context.
   This is enforced structurally by FR-58 and FR-60, and **measured** by FR-94's audit sample.
   False positives on this claim are the product's most serious defect class; the target is
   ≥99% precision on the audit sample (§16 SM-2 / CM-1).
-- **NFR-2** *(modified)* **Review capacity.** The human review load target is **15–20% of
+- **NFR-2** **Review capacity.** The human review load target is **15–20% of
   assessed items — an initial measurement target, not a guarantee.** The system SHALL declare a
   queue capacity and a processing SLA (FR-92), SHALL define over-capacity behaviour, and SHALL
   report actual load against target. If measured load materially exceeds target, the response is
@@ -1052,13 +1106,13 @@ their number; new numbers are used only for independently testable new behaviour
 - **NFR-4** **Freshness.** Availability and currency assertions SHALL be re-verified on a cadence
   short enough that a discontinued tool does not remain listed as live. Licence assertions SHALL
   be re-verified on a cadence appropriate to observed relicensing frequency.
-- **NFR-5** *(modified)* **Legal readiness.** Counsel-reviewed disclaimer language SHALL be in
+- **NFR-5** **Legal readiness.** Counsel-reviewed disclaimer language SHALL be in
   place **before** launch, covering the commercial-usability claim, the verification claim, and
   their stated limits — specifically: artifact-scoped only (no transitive-dependency analysis,
   addendum §2.3), point-in-time validity, and per-usage-context applicability.
 - **NFR-6** **Collection etiquette.** The engine SHALL identify itself by user agent, honour
   `robots.txt`, and respect published rate limits. Restrictions are enforced, not merely logged.
-- **NFR-7** *(modified)* **Reproducibility.** Given the same inputs and pinned versions, a run
+- **NFR-7** **Reproducibility.** Given the same inputs and pinned versions, a run
   SHALL produce the same dispositions and gate outcomes. Model-driven steps SHALL record their
   inputs and outputs so a verdict can be explained and replayed after the fact.
 - **NFR-8** **Data integrity.** Writes SHALL be atomic; a partial run SHALL NOT produce a partial
@@ -1068,15 +1122,15 @@ their number; new numbers are used only for independently testable new behaviour
   assessment gated on prior existence and accessibility checks and cached against a content hash.
 - **NFR-10** **Coverage honesty.** The published data SHALL carry its own coverage limits and
   `indeterminate` rates (FR-71). The engine's guarantee is conditioned on §13.
-- **NFR-11** *(modified)* **Degradation.** When an external dependency is unavailable, affected
+- **NFR-11** **Degradation.** When an external dependency is unavailable, affected
   assertions SHALL be recorded as `unavailable` — distinct from `absent` and `unchecked`.
   Previously confirmed assertions SHALL retain their state until their cadence lapses, so a
   dependency outage SHALL NOT cause mass withdrawal of existing claims.
-- **NFR-12** *(new)* **Automation rate.** The engine SHALL target **80–85% of assessed items
+- **NFR-12** **Automation rate.** The engine SHALL target **80–85% of assessed items
   auto-dispositioned without human review** — an initial measurement target derived from the
   research, to be re-measured against our own corpus. Actual rate SHALL be reported per run
   (§16 SM-1).
-- **NFR-13** *(new)* **Detectability.** Every NFR making a numeric claim SHALL have a
+- **NFR-13** **Detectability.** Every NFR making a numeric claim SHALL have a
   corresponding measurement in §16 and a harness that can observe a violation. An NFR with no
   instrument SHALL NOT be stated as a guarantee.
 
@@ -1117,42 +1171,74 @@ implementation surprise.
 
 ## 18. Open items
 
-**Carried, with disposition:**
+Each item is classified by **when it must be resolved**. Nothing here is left unclassified, and
+nothing classified as deferred is load-bearing for a requirement in this document.
 
-- **Downstream consumer is unidentified.** FR-67's artifact has no named consumer, and no
-  upstream document places this engine inside the platform — `docs/README.md` was never written
-  and `product-scope.md` cites it anyway (§3). §13 states the contract; the counterparty is
-  still unnamed. *Blocking for FR-67's schema design.*
-- **Upstream review process overlap.** The platform already operates a Knowledge Team weekly
-  review in Notion with its own status model. FR-62 assigns accountability there, but the
-  integration — whether the Catalog Review Operator works inside that process or alongside it —
-  is unresolved, as are the competency, capacity and cadence mismatches the review gate
-  identified (licence election vs. summarisation; continuous vs. weekly batch).
-- **Upstream tag vocabulary does not cover `skill`.** The platform's `building-blocks` sub-tags
-  are `building-blocks-mixed` / `agents` / `mcp` / `prompt`. `skill` is this engine's largest
-  topic (359 of 1,161) and its only unexhausted seed.
-- **Non-developer audience has no upstream consumer.** The upstream document is titled "Cherry
-  for AI Engineers" and contains no non-developer concept. §6 makes non-developer assessment
-  mandatory and the addendum names it the most expensive path. The consumer for that field is
-  unconfirmed.
-- **Competitor landscape is unevidenced.** The commissioned survey delivered only its licence
-  section. No evidenced view of who else does this or how they gate quality.
-- **`EXIST_UNIDENTIFIABLE` and `LIC_INFRINGEMENT` carry residual exposure.** Both are
-  publishable adverse assertions about a named third party. FR-18 and §7.1 require corroborating
-  evidence, but the standard of proof is a legal question for NFR-5's counsel review.
-- **C7's base rate is 2015-era and non-peer-reviewed.** §9's trade-off is sized off it. SM-1
-  re-measures it against our own corpus; until then the sizing is provisional.
-- **Seed replenishment is a task, not a plan.** FR-6 raises replenishment tasks; which sources
-  fill the exhausted `agent` and `prompt` lanes is undecided.
+### 18.1 Resolved to close Finalize
 
-**Accepted risks:**
+Two items were blocking and are now decided. They are recorded here rather than removed, because
+the reasoning is the point.
 
-- **No transitive-dependency licence analysis** (addendum §2.3). Documented, disclaimed under
-  NFR-5, and revisited if a production-grade term-level analyser appears.
-- **Artifact-scoped, point-in-time claims only.** The engine never asserts anything about a
-  dependency closure or about future releases.
+- **Publication contract, decided: define it consumer-independently.** FR-67's artifact still has
+  no named consumer, and no upstream document places this engine inside the platform —
+  `docs/README.md` was never written and `product-scope.md` cites it anyway (§3). This was treated
+  as blocking on the assumption that a contract needs a counterparty. It does not: **consumer
+  identity determines delivery and projection, not meaning.** §13.1 defines the five properties
+  that make the artifact interpretable by a consumer we have not met — self-describing, stable
+  identity, claims carrying their basis, coverage stated, change governed (FR-98). What genuinely
+  depends on the consumer is deferred to architecture (§18.2).
+- **Adverse assertions, decided: internal only, never published.** `LIC_INFRINGEMENT`,
+  `EXIST_UNIDENTIFIABLE`, `PRIV_SANCTIONED`, `PRIV_DECEPTIVE_COLLECTION` and `SAFE_MALICIOUS` are
+  accusations about named third parties, and are now **gate inputs that never reach the artifact**
+  (§7.1, FR-68), where the scope and the limits of that decision are set out. The effect on
+  Finalize is that the residual standard-of-proof judgement is an internal matter for NFR-5's
+  counsel review, and **no longer has to be settled before publication**.
+
+### 18.2 Deferred to architecture
+
+Real design work, none of it changing a requirement here.
+
+- **Delivery and projection of the publication artifact** — transport, authentication, refresh
+  cadence negotiation, and mapping our vocabulary onto whatever taxonomy a consumer uses.
+- **Mapping to the upstream `building-blocks` sub-tags**, which have no value corresponding to
+  `skill` — this engine's largest topic (359 of 1,161) and its only unexhausted seed. Under
+  §13.1 this is a projection concern, not a contract defect: the engine publishes `skill`
+  regardless, and a consumer that cannot represent it says so at integration time.
+- **Integration with the platform's existing review process.** Accountability is settled — the
+  Knowledge Team owns it (FR-62), and that is not reopened here. What is not settled is the
+  mechanism: whether the Catalog Review Operator works inside the existing Notion weekly cycle or
+  alongside it, and how the continuous decay-driven producer meets a weekly batch consumer.
+- **Where the non-developer fields are consumed.** The upstream document is titled "Cherry for AI
+  Engineers" and has no non-developer concept. §6 makes the assessment mandatory and the addendum
+  names it the most expensive path, so the engine produces the data either way; which surface
+  presents it is a downstream design and product question.
+
+### 18.3 Deferred to implementation and operations
+
+- **Review capacity sizing.** FR-92 requires a declared capacity, SLA and over-capacity
+  behaviour; the numbers are set against measured throughput, not guessed before the first run.
+- **Re-measuring C7's base rate.** The ~20% figure is 2015-era and non-peer-reviewed, and §9's
+  trade-off is sized off it. SM-1 replaces it with a figure measured on our own corpus at the
+  baseline-setting run; until then the sizing is explicitly provisional.
+- **Seed replenishment.** FR-6 raises a replenishment task per exhausted lane; which concrete
+  sources fill the exhausted `agent` and `prompt` lanes is an operational backlog item. The known
+  400+ uncatalogued `skill` entries are the obvious first draw.
+- **Choosing the `config/` resolution.** §17 and FR-97 present two admissible options; picking
+  one is an implementation decision that must happen before building, not before finalizing.
+
+### 18.4 Explicitly accepted risks
+
+- **Claims are artifact-scoped and point-in-time.** The engine assesses the artifact, never its
+  dependency closure, and never asserts anything about future releases — so there is no
+  transitive-dependency licence analysis (addendum §2.3). Disclaimed under NFR-5; revisit if a
+  production-grade term-level analyser appears.
 - **`unavailable` is not reviewed.** An external outage leaves claims withdrawn by cadence rather
-  than escalated; this trades some freshness for a queue that stays staffable.
+  than escalated — trading some freshness for a queue that stays staffable.
+- **The competitor landscape is unevidenced.** The commissioned survey delivered only its licence
+  section, so this PRD has no evidenced view of who else does this or how they gate quality.
+  **Accepted for v1**: no requirement in this document depends on it, and the product's
+  differentiation claims are deliberately absent rather than asserted without support. Revisit
+  before any positioning or pricing decision — those are the decisions it would actually inform.
 
 ## 19. Provenance
 

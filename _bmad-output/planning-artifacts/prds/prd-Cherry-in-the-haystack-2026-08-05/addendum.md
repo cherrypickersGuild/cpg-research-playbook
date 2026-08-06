@@ -171,6 +171,52 @@ revision wrongly recorded it as absent; only the producer is missing).
 reused only where it passes the new schema and behavioural contract; the PRD is authoritative.
 This keeps the decision per-component and evidence-based rather than ideological.
 
+### 1.11 Wait for a named consumer before defining the publication contract
+
+**Rejected.** The review gate called the unnamed consumer "blocking for FR-67's schema design,"
+and that framing was wrong — it assumed a data contract needs a counterparty before it can be
+written.
+
+It does not. **Consumer identity determines delivery and projection; it does not determine
+meaning.** Whether the artifact is fetched over HTTP, dropped in a bucket, or synced into Notion
+changes nothing about what a record *asserts*. Whether a consumer calls our `skill` topic
+something else changes nothing about whether the entity is a skill.
+
+Waiting would also have been circular: the platform has no document placing this engine inside
+it, so there was no counterparty to wait for. The PRD would have finalized with a blocking
+dependency on a conversation nobody had scheduled.
+
+**What was taken instead.** PRD §13.1 defines the contract on five consumer-independent
+properties — self-describing, stable identity, claims carrying their basis, coverage stated,
+change governed. The test applied throughout was: *could a consumer who has never spoken to us
+interpret this record correctly from the artifact alone?* Everything that failed that test was
+either fixed or explicitly deferred to architecture as delivery/projection work.
+
+FR-98 (compatibility policy) exists because of this decision. A contract with a known consumer
+can evolve by conversation; a contract without one has to say in advance how it will change, or
+the first schema revision silently breaks whoever adopted it.
+
+### 1.12 Publish the adverse reason codes
+
+**Rejected.** The transparency argument is real — a reader is better served by "withheld because
+the licence is being infringed" than by "withheld." It is nonetheless the wrong trade.
+
+`LIC_INFRINGEMENT`, `EXIST_UNIDENTIFIABLE`, `PRIV_SANCTIONED`, `PRIV_DECEPTIVE_COLLECTION` and
+`SAFE_MALICIOUS` are accusations about named companies and named maintainers. Publishing them
+would make the product a publisher of adverse factual claims about identifiable third parties,
+at automated scale, on evidence gathered by crawlers — with a standard of proof nobody has set.
+The upside is marginal explanatory value; the downside is a category of legal exposure entirely
+unlike being wrong about a licence identifier.
+
+**What was taken instead.** PRD §7.1 and FR-68 make these codes internal gate inputs. The
+artifact conveys that a record is withheld or cautioned, never the accusation. The engine still
+*records* them internally with corroborating evidence (FR-18), so decisions stay auditable
+(NFR-3).
+
+A side benefit decided the timing: this converts the standard-of-proof question from a launch
+blocker into an internal-process question. NFR-5's counsel review still needs to happen; it no
+longer gates publication.
+
 ---
 
 ## 2. Mechanism notes
@@ -258,53 +304,60 @@ assessment against a content hash of the product page so unchanged pages are not
 
 ## 3. Notes for downstream documents
 
-**For architecture.** The four gates in PRD §8.3 are computed properties, not stored state — they
-must be re-derivable from the underlying assertions on every assessment (FR-57), or they will
-drift out of agreement with the evidence. Related: FR-65 makes reviewer verdicts *inputs* to gate
-computation, not overrides applied afterwards — with two invalidation paths (FR-9 identity
-discontinuity, FR-82 change detection) that must be able to revoke a human decision.
+### 3.1 For architecture
 
-**For architecture.** The three-axis model (PRD §8) is the load-bearing structure. Evidence
-records attach to assertions, dispositions attach to domains, gates attach to the record. Any
-implementation that flattens these — a single status column, or a stored gate boolean — reopens
-the fail-open defect the review gate found. The six evidence states must remain distinguishable
-all the way into the published artifact (FR-83).
+- **The three-axis model (PRD §8) is the load-bearing structure.** Evidence records attach to
+  assertions, dispositions attach to domains, gates attach to the record. Any implementation that
+  flattens these — a single status column, or a stored gate boolean — reopens the fail-open defect
+  the review gate found. The six evidence states must stay distinguishable all the way into the
+  published artifact (FR-83).
+- **The four gates are computed properties, not stored state.** They must be re-derivable from the
+  underlying assertions on every assessment (FR-57), or they drift out of agreement with the
+  evidence. Related: FR-65 makes reviewer verdicts *inputs* to gate computation rather than
+  overrides applied afterwards, with two paths — FR-9 identity discontinuity and FR-82 change
+  detection — that must be able to revoke a human decision.
+- **The record is an accumulation of source-attributed assertions, not a flat document.** That
+  follows from FR-11 (multi-source merge) and FR-12 (conflict recording) together. The existing
+  `conflicting_evidence_log` is the right instinct at the wrong granularity. Note FR-11's refusal
+  condition: two entities sharing a URL is not evidence they share an identity — the existing
+  corpus has 36 URLs across 77 rows precisely because that was assumed.
+- **PRD §13.1 fixes what the artifact *means*; delivery and projection are yours.** Transport,
+  authentication, refresh negotiation, and mapping our vocabulary onto a consumer's taxonomy are
+  open by design. One known projection gap: the upstream `building-blocks` sub-tags have no value
+  for `skill`, our largest topic — the engine publishes it regardless, and the mismatch surfaces at
+  integration rather than being papered over upstream of it. FR-98's compatibility policy is what
+  makes adopting the artifact safe for a consumer we have not met.
+- **FR-97 and PRD §17 are a pre-implementation blocker, not a note.** The validation gate forbids
+  editing `config/`, and ten requirements are configuration changes by nature. Choose one of the
+  two resolutions before building anything that touches vocabularies, thresholds, cadences or the
+  source registry.
 
-**For architecture.** FR-11 (multi-source merge) and FR-12 (conflict recording) together imply
-the record is an accumulation of source-attributed assertions rather than a flat document. The
-existing `conflicting_evidence_log` in the current schema is the right instinct at the wrong
-granularity. Note FR-11's added refusal condition: two entities sharing a URL is not evidence
-they share an identity — the existing corpus has 36 URLs across 77 rows precisely because that
-was assumed.
+### 3.2 For UX
 
-**For architecture.** FR-97 and PRD §17 are a pre-implementation blocker, not a note. The
-validation gate forbids editing `config/`, and ten requirements are configuration changes by
-nature. Choose one of the two resolutions before building anything that touches vocabularies,
-thresholds, cadences or the source registry.
+- **PRD §13.2 is the contract to read first.** The engine's guarantees are *conditional* on
+  consumer behaviour — cautions presented, per-context evaluation, neutral placeholders, coverage
+  not overstated, retractions honoured — and each row names what breaks if the condition is not
+  met. The engine specifies what must survive presentation, never how anything is presented.
+- **Withheld records carry no reason a reader can see** (§1.12). The interface has no adverse
+  explanation to display and must not invent one.
+- **The neutral placeholder (PRD §11) will be visible on a large fraction of entries at launch**,
+  and the unclear-licence caution is a legal position (C10), not a minor annotation.
+- **PRD §6 requires one catalogue to serve developers and non-developers on different comparison
+  criteria.** The data model supports it; whether that becomes one adapting view or two entry
+  paths is not settled here. PRD §18 records that the non-developer fields have no confirmed
+  upstream consumer.
 
-**For UX.** PRD §13 is the contract to read first. The engine's guarantees are *conditional* on
-consumer behaviour — cautions displayed, per-context filtering, neutral placeholders, coverage
-not overstated, retractions honoured. Each row of that table names what breaks if the condition
-is not met. The engine does not specify rendering; it specifies what must survive rendering.
+### 3.3 For operations
 
-**For UX.** The neutral placeholder (§11) will be visible on a large fraction of entries at
-launch, and the unclear-licence caution is a legal position (C10), not a minor annotation.
-
-**For UX.** §6 requires the same catalogue to serve developers and non-developers with different
-comparison criteria. The data model supports it; the interface question — one view that adapts,
-or two entry paths — is not settled here. §18 records that the non-developer field has no
-confirmed upstream consumer.
-
-**For operations.** Accountability for review sits with the existing Knowledge Team; the
-executing role is the **Catalog Review Operator** (FR-62), deliberately defined as a role rather
-than a new standing team so it can be discharged by rotation or contract. Two things must be
-sized before launch: the queue capacity and SLA of FR-92, and the competency match — FR-30 calls
-licence election a legal act, which is not the same skill as the summarisation and scoring the
-Knowledge Team performs today.
-
-**For operations.** NFR-2's 15–20% and NFR-12's 80–85% are **initial measurement targets derived
-from external research, not guarantees**. SM-1 and CM-1 exist to replace them with figures
-measured on our own corpus. Treat the first full run as the baseline-setting run.
+- **Accountability for review sits with the existing Knowledge Team**; the executing role is the
+  **Catalog Review Operator** (FR-62), deliberately defined as a role rather than a new standing
+  team so it can be discharged by rotation or contract. Two things must be sized before launch:
+  the queue capacity and SLA of FR-92, and the competency match — FR-30 calls licence election a
+  legal act, which is not the same skill as the summarisation and scoring the Knowledge Team
+  performs today.
+- **NFR-2's 15–20% and NFR-12's 80–85% are initial measurement targets derived from external
+  research, not guarantees.** SM-1 and CM-1 exist to replace them with figures measured on our own
+  corpus. Treat the first full run as the baseline-setting run.
 
 ---
 
